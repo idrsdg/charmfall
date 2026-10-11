@@ -96,6 +96,9 @@
   .toast { position: fixed; left: 50%; top: 42%; transform: translate(-50%, -50%) scale(.4); font-size: clamp(40px, 9vw, 68px); font-weight: 900; letter-spacing: -.03em; color: #fff; -webkit-text-stroke: 2px #4a0c8c; paint-order: stroke fill; text-shadow: 0 6px 0 #4a0c8c, 0 14px 40px rgba(0, 0, 0, .7); pointer-events: none; opacity: 0; z-index: 9; white-space: nowrap; }
   .toast.show { animation: toastIn 1.1s cubic-bezier(.2, 1.5, .4, 1) both; }
   @keyframes toastIn { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.3) rotate(-8deg); } 18% { opacity: 1; transform: translate(-50%, -50%) scale(1.15) rotate(2deg); } 30% { transform: translate(-50%, -50%) scale(1) rotate(0); } 75% { opacity: 1; transform: translate(-50%, -52%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -70%) scale(1.1); } }
+  .toast.long { top: 21%; font-size: clamp(24px, 6.4vw, 40px); white-space: normal; text-align: center; width: min(92vw, 520px); }
+  .toast.long.show { animation: toastLong 3.5s both; }
+  @keyframes toastLong { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.6); } 5% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); } 9%, 88% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -62%) scale(1); } }
   .fly { position: fixed; z-index: 8; font-size: 30px; pointer-events: none; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .5)); }
 </style>
 </head>
@@ -619,14 +622,14 @@ async function lose() {
   await sleep(500); $("mEnd").hidden = false;
 }
 function mkBtn(parent, label, fn, ghost) { const b = document.createElement("button"); b.className = "btn" + (ghost ? " ghost" : ""); b.textContent = label; b.addEventListener("click", fn); $(parent).appendChild(b); }
-let toastT = 0; function toast(t) { if (!t) return; const el = $("toast"); el.textContent = t; el.classList.remove("show"); void el.offsetWidth; el.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("show"), 1150); }
+let toastT = 0; function toast(t, long) { if (!t) return; const el = $("toast"); el.textContent = t; el.classList.remove("show"); el.classList.toggle("long", !!long); void el.offsetWidth; el.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("show"), long ? 3500 : 1150); }   // long = instructions that must stay readable for 3 s
 function bump(id) { const el = $(id); el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); }
 
 // ---------------------------------------------------------------- boosters
 document.querySelectorAll(".boost").forEach(el => el.addEventListener("click", async () => {
-  if (!G || G.busy || G.over) return; const k = el.dataset.b; if (!save.boost[k]) { toast("None left"); return; }
-  if (k === "moves") { save.boost.moves--; G.moves += 5; persist(); updateHud(); toast("+5 moves"); return; }
-  G.boost = G.boost === k ? null : k; G.sel = null; updateHud(); toast(G.boost === "hammer" ? "Tap a gem to smash" : G.boost === "switch" ? "Swap any two neighbours" : "");
+  if (!G || G.busy || G.over) return; const k = el.dataset.b; if (!save.boost[k]) { toast("None left", true); return; }
+  if (k === "moves") { save.boost.moves--; G.moves += 5; persist(); updateHud(); toast("+5 moves", true); return; }
+  G.boost = G.boost === k ? null : k; G.sel = null; updateHud(); toast(G.boost === "hammer" ? "Tap a gem to smash" : G.boost === "switch" ? "Swap any two neighbours" : "", true);
 }));
 async function useHammer(r, c) {
   const g = cell(r, c); if (!g && !G.block[r][c]) return; save.boost.hammer--; G.boost = null; persist(); G.busy = true;
