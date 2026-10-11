@@ -133,6 +133,7 @@
   <div class="goalrow" id="sRow"></div>
   <button class="btn" id="sCont" hidden>▶ Continue</button>
   <button class="btn" id="sPlay">Play</button>
+  <button class="btn ghost" type="button" data-arcade-room>👥 Play with friends</button>
 </div></div>
 <div class="modal" id="mPause" hidden><div class="card">
   <h2>Paused</h2><p>Your board is saved. Come back any time.</p>
@@ -939,6 +940,8 @@ function bestMove() {
 }
 window.__g = { pause: () => pauseGame(), resume: () => resumeGame(), get G() { return G; }, best: bestMove, start: (i) => startLevel(i), swap: trySwap, move: findMove, set: (r, c, color, special) => { const g = G.grid[r][c] || (G.grid[r][c] = mkGem(color, r, c)); g.kind = 'gem'; g.color = color; g.special = special || null; g.lock = false; }, cell: (r, c) => { const g = G.grid[r][c]; return g ? { color: g.color, special: g.special, kind: g.kind } : null; }, state: () => G && ({ moves: G.moves, score: G.score, over: G.over, busy: G.busy, left: goalLeft(), grid: G.grid.map(r => r.map(g => g ? (g.kind === "ing" ? "K" : g.color + (g.special || "")) : ".").join(" ")) }), levels: LEVELS.length, save };
 window.__shareText = () => { const stars = document.querySelectorAll("#eStars b i").length; return "Prism Pop 💎 " + ((document.getElementById("eTitle")||{}).textContent||"") + " · " + ((document.getElementById("eText")||{}).textContent||"") + (stars ? " · " + "★".repeat(stars) : "") + ". Can you beat it?"; };
+window.__arcade = { score: () => G ? G.score : 0, status: () => G ? "L" + (G.level + 1) + " · " + G.moves + " moves" : "", done: () => !!(G && G.over), config: () => ({ level: G ? G.level : (typeof pendingLevel === "number" && !$("mStart").hidden ? pendingLevel : highest()) }),
+  start: (seed, cfg) => { for (const id of ["mStart", "mEnd", "mPause", "mLives"]) $(id).hidden = true; clearProgress(); const lv = Math.max(0, Math.min(LEVELS.length - 1, (cfg && cfg.level) | 0)); Arcade.seeded(seed, () => startLevel(lv)); } };
 </script>
 </body>
 </html>
