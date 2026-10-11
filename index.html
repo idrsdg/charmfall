@@ -253,7 +253,7 @@ const LEVELS = [
   { goal: "jelly", moves: 26, colors: 5, jelly: ["jjj...jjj", "jjj...jjj", "jjj...jjj", ".........", ".........", ".........", "jjj...jjj", "jjj...jjj", "jjj...jjj"] },
   { goal: "ingredients", need: 2, moves: 25, colors: 5 },
   { goal: "blockers", moves: 28, colors: 5, layout: [".........", ".........", "..fffff..", "..f...f..", "..f...f..", "..f...f..", "..fffff..", ".........", "........."] },
-  { goal: "jelly", moves: 44, colors: 6, mask: M.ring, jelly: ["jjjjjjjjj", "jjjjjjjjj", "jj.....jj", "jj.....jj", "jj.....jj", "jj.....jj", "jj.....jj", "jjjjjjjjj", "jjjjjjjjj"] },
+  { goal: "jelly", moves: 44, colors: 6, jelly: ["jjjjjjjjj", "jjjjjjjjj", "jj.....jj", "jj.....jj", "jj.....jj", "jj.....jj", "jj.....jj", "jjjjjjjjj", "jjjjjjjjj"] },
   { goal: "score", target: 9000, moves: 25, colors: 6, mask: M.diamond },
   { goal: "ingredients", need: 3, moves: 30, colors: 5, layout: [".........", ".........", ".........", ".........", "..lll.lll", ".........", ".........", ".........", "........."] },
   { goal: "blockers", moves: 30, colors: 5, layout: ["c........", ".........", ".........", "....F....", "...FGF...", "....F....", ".........", ".........", "........c"] },
@@ -281,6 +281,8 @@ const LEVELS = [
 
 // ---------------------------------------------------------------- persistence
 const SAVE = "prismpop.v1";
+// The first 20 levels are deliberately easy and quick: fewer colours (bigger cascades), more moves, lower score targets.
+LEVELS.slice(0, 20).forEach((L, i) => { L.colors = i < 12 ? 4 : 5; L.moves = Math.round(L.moves * 1.35); if (L.target) L.target = Math.round(L.target * 0.45 / 100) * 100; });
 const BOOST0 = { hammer: 3, moves: 3, switch: 3, cross: 2, undo: 3 };
 let save = { stars: {}, best: {}, lives: 5, lifeAt: Date.now(), boost: {}, daily: { last: "", streak: 0 }, ach: {}, stats: {} };
 try { Object.assign(save, JSON.parse(localStorage.getItem(SAVE) || "{}")); } catch (e) {}
