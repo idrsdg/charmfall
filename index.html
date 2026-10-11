@@ -388,6 +388,8 @@ const CAL = [29, 12, 25, 21600, 19, 12, 16100, 17, 12, 31, 20, 14, 20, 7400, 50,
     LEVELS.push(L);
   }
 })();
+// All 100 levels made half again as hard: score levels need 1.5x the points, every other level has its moves divided by 1.5.
+LEVELS.forEach((L) => { if (L.goal === "score") L.target *= 1.5; else L.moves = Math.max(6, Math.round(L.moves / 1.5)); });
 // One star is always 1,000 points: the HUD, goals and results talk in stars, never in raw points.
 const STAR = 1000, starsOf = (pts) => Math.floor(pts / STAR);
 LEVELS.forEach((L) => { if (L.target) L.target = Math.max(STAR, Math.round(L.target / STAR) * STAR); });
@@ -486,7 +488,7 @@ function buildMap() {
   pts.forEach((p, i) => {
     const n = document.createElement("div"); n.className = "node" + (save.stars[i] ? " done" : i === cur ? " current" : i > cur ? " locked" : "") + (LEVELS[i].fuse ? " fz" : "");
     n.style.left = p[0] / 420 * 100 + "%"; n.style.top = p[1] + "px"; n.textContent = i + 1; n.style.setProperty("--d", Math.min(.45, Math.abs(i - cur) * .05) + "s");
-    if (save.stars[i]) { const s = document.createElement("div"); s.className = "stars"; s.textContent = "♛".repeat(save.stars[i]); n.appendChild(s); }
+    if (save.stars[i]) { const s = document.createElement("div"); s.className = "stars"; s.textContent = "✦".repeat(save.stars[i]); n.appendChild(s); }
     if (i <= cur) n.addEventListener("click", () => openLevel(i)); path.appendChild(n);
   });
   const yOf = (i) => Math.max(0, pts[i][1] - innerHeight * .55), target = yOf(cur), from = lastCur < 0 ? target + 240 : lastCur !== cur ? yOf(lastCur) : null; lastCur = cur;
@@ -548,9 +550,9 @@ const ACH = [
   { id: "streak3", icon: "📅", name: "Regular", desc: "Reach a 3-day login streak", ok: () => save.daily.streak >= 3, prog: () => [save.daily.streak, 3] },
   { id: "big", icon: "💰", name: "High Roller", desc: "Score 50,000 in one level", ok: s => s.bestScore >= 50000 },
   { id: "stars30", icon: "⭐", name: "Star Collector", desc: "Earn 30 stars", ok: () => totalStars() >= 30, prog: () => [totalStars(), 30] },
-  { id: "perfect", icon: "🏅", name: "Perfectionist", desc: "Get 3 crowns on 10 levels", ok: () => Object.values(save.stars).filter(v => v >= 3).length >= 10, prog: () => [Object.values(save.stars).filter(v => v >= 3).length, 10] },
+  { id: "perfect", icon: "🏅", name: "Perfectionist", desc: "Get 3 sparks on 10 levels", ok: () => Object.values(save.stars).filter(v => v >= 3).length >= 10, prog: () => [Object.values(save.stars).filter(v => v >= 3).length, 10] },
   { id: "l20", icon: "🏆", name: "Classic Champion", desc: "Beat level 20", ok: () => !!save.stars[19] },
-  { id: "l30", icon: "👑", name: "Prism Master", desc: "Beat level 30", ok: () => !!save.stars[29] }
+  { id: "l30", icon: "💎", name: "Prism Master", desc: "Beat level 30", ok: () => !!save.stars[29] }
 ];
 let achQ = 0;
 function achPop(a) {
@@ -990,7 +992,7 @@ async function win() {
   const st = starTargets(G.L), stars = G.score >= st[2] ? 3 : G.score >= st[1] ? 2 : 1;
   save.stars[G.level] = Math.max(save.stars[G.level] || 0, stars); save.best[G.level] = Math.max(save.best[G.level] || 0, G.score); delete save.inProgress;
   save.stats.wins++; save.stats.bestScore = Math.max(save.stats.bestScore, G.score); persist(); checkAch();
-  $("eTitle").textContent = "Level " + (G.level + 1) + " complete"; $("eStars").innerHTML = "<b>" + Array.from({ length: stars }, (_, i) => `<i style="--d:${.25 + i * .22}s">♛</i>`).join("") + "</b><s>" + "♛".repeat(3 - stars) + "</s>"; $("eSub").textContent = "Goal complete · ❤️ " + save.lives + " lives";
+  $("eTitle").textContent = "Level " + (G.level + 1) + " complete"; $("eStars").innerHTML = "<b>" + Array.from({ length: stars }, (_, i) => `<i style="--d:${.25 + i * .22}s">✦</i>`).join("") + "</b><s>" + "✦".repeat(3 - stars) + "</s>"; $("eSub").textContent = "Goal complete · ❤️ " + save.lives + " lives";
   $("eBtns").innerHTML = ""; const next = G.level + 1 < LEVELS.length;
   const lv = G.level; mkBtn("eBtns", next ? "Next level" : "Back to map", () => { hide("mEnd"); showMap(); if (next) openLevel(lv + 1); });
   mkBtn("eBtns", window.__nativeApp ? "↻ Replay" : "↻ Replay level", () => { hide("mEnd"); clearProgress(); startLevel(lv); }, true);
@@ -1436,7 +1438,7 @@ function bestMove() {
 window.__g = { pause: () => pauseGame(), resume: () => resumeGame(), get G() { return G; }, best: bestMove, start: (i) => startLevel(i), swap: trySwap, move: findMove, set: (r, c, color, special) => { const g = G.grid[r][c] || (G.grid[r][c] = mkGem(color, r, c)); g.kind = 'gem'; g.color = color; g.special = special || null; g.lock = false; }, cell: (r, c) => { const g = G.grid[r][c]; return g ? { color: g.color, special: g.special, kind: g.kind, fuse: g.fuse || 0 } : null; }, state: () => G && ({ moves: G.moves, score: G.score, over: G.over, busy: G.busy || !!G.paused, paused: !!G.paused, left: goalLeft(), frenzy: G.frenzy, canUndo: !!G.undo, grid: G.grid.map(r => r.map(g => g ? (g.kind === "ing" ? "K" : g.color + (g.special || "")) : ".").join(" ")) }), levels: LEVELS.length, save,
   undo: doUndo, cross: (r, c) => useCross(r, c), hammer: (r, c) => useHammer(r, c), daily: { state: dailyState, open: openDaily, claim: claimDaily }, ach: { list: ACH.map(a => a.id), check: checkAch, open: openAch }, snapshot };
 window.__roastTier = () => { const s = document.querySelectorAll("#eStars b i").length; return s >= 3 ? 2 : s >= 1 ? 1 : 0; };
-window.__shareText = () => { const stars = document.querySelectorAll("#eStars b i").length, et = document.getElementById("eText"); return "Prism Pop 💎 " + ((document.getElementById("eTitle")||{}).textContent||"") + " · " + (et ? et.dataset.final || et.textContent || "" : "") + (stars ? " · " + "♛".repeat(stars) : "") + ". Can you beat it?"; };
+window.__shareText = () => { const stars = document.querySelectorAll("#eStars b i").length, et = document.getElementById("eText"); return "Prism Pop 💎 " + ((document.getElementById("eTitle")||{}).textContent||"") + " · " + (et ? et.dataset.final || et.textContent || "" : "") + (stars ? " · " + "✦".repeat(stars) : "") + ". Can you beat it?"; };
 window.__arcade = { score: () => G ? G.score : 0, status: () => G ? "L" + (G.level + 1) + " · " + G.moves + " moves" : "", done: () => !!(G && G.over), config: () => ({ level: G ? G.level : (typeof pendingLevel === "number" && isOpen("mStart") ? pendingLevel : highest()) }),
   start: (seed, cfg) => { for (const id of ["mStart", "mEnd", "mPause", "mLives", "mDaily", "mAch"]) hide(id, true); clearProgress(); const lv = Math.max(0, Math.min(LEVELS.length - 1, (cfg && cfg.level) | 0)); Arcade.seeded(seed, () => startLevel(lv)); } };
 </script>
