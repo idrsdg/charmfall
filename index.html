@@ -605,6 +605,7 @@ async function win() {
   $("eText").textContent = "Score " + G.score.toLocaleString("en");
   $("eBtns").innerHTML = ""; const next = G.level + 1 < LEVELS.length;
   const lv = G.level; mkBtn("eBtns", next ? "Next level" : "Back to map", () => { $("mEnd").hidden = true; showMap(); if (next) openLevel(lv + 1); });
+  mkBtn("eBtns", "↻ Replay level", () => { $("mEnd").hidden = true; clearProgress(); startLevel(lv); }, true);
   if (next) mkBtn("eBtns", "Map", () => { $("mEnd").hidden = true; showMap(); }, true);
   await sleep(400); $("mEnd").hidden = false;
 }
