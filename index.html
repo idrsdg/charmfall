@@ -18,6 +18,8 @@
   .bg::before { background: radial-gradient(circle at 30% 40%, rgba(255, 47, 176, .55) 0%, rgba(255, 47, 176, 0) 32%), radial-gradient(circle at 70% 60%, rgba(25, 240, 255, .45) 0%, rgba(25, 240, 255, 0) 30%); animation: drift 26s ease-in-out infinite alternate; }
   .bg::after { background: radial-gradient(circle at 60% 30%, rgba(255, 196, 0, .35) 0%, rgba(255, 196, 0, 0) 26%), radial-gradient(circle at 25% 75%, rgba(150, 60, 255, .5) 0%, rgba(150, 60, 255, 0) 34%); animation: drift 34s ease-in-out infinite alternate-reverse; }
   @keyframes drift { from { transform: translate(-6%, -4%) rotate(0deg) scale(1); } to { transform: translate(8%, 10%) rotate(40deg) scale(1.15); } }
+  /* while a level is on screen the decorative background stands still: nothing but the game animates */
+  body:has(#game:not([hidden])) .bg::before, body:has(#game:not([hidden])) .bg::after, body:has(#game:not([hidden])) .bg i { animation-play-state: paused; }
   .bg i { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #fff; animation: tw 2.4s infinite alternate; }
   @keyframes tw { from { opacity: .25; transform: scale(.7); } to { opacity: 1; transform: scale(1.3); } }
 
@@ -528,7 +530,11 @@ document.addEventListener("visibilitychange", () => { if (document.hidden && G &
 addEventListener("pagehide", () => { if (G && !G.over) snapshot(); });
 async function introDrop() {
   // gems rain in column by column, the bottom row landing first, each with its own little bounce
-  const now = performance.now(); let total = 0; G.busy = true;
+  // park every gem above the board first and let two frames draw (sprites and caches get built there), so the rain itself never starts with a long frame
+  const g0 = G; let total = 0; G.busy = true;
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const g = G.grid[r][c]; if (!g) continue; g.fx = c; g.fy = r - ROWS - 1; g.x = c; g.y = g.fy; g.t0 = 1e15; g.dur = 430; g.ek = "fall"; }
+  if (!window.__fast) await new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res)));
+  if (G !== g0) return; const now = performance.now();
   for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const g = G.grid[r][c]; if (!g) continue;
     g.fx = c; g.fy = r - ROWS - 1; g.x = c; g.y = g.fy; g.t0 = now + 140 + c * 30 + (ROWS - 1 - r) * 24; g.dur = 430; g.ek = "fall"; g.bh = .07; g.landed = 0; g.fresh = false; g.fallD = r === G.exit[c] ? 3 : 0; total = Math.max(total, g.t0 - now + g.dur); }
   await sleep(total + 110); G.busy = false; G.hint = null; G.hintAt = performance.now() + 4000;
@@ -926,7 +932,7 @@ canvas.addEventListener("pointerup", e => {
   G.sel = cell(r, c) ? [r, c] : null; G.selT = performance.now(); SFX.swap();
 });
 canvas.addEventListener("pointercancel", () => { down = null; });
-addEventListener("resize", layout);
+addEventListener("resize", layout); Arcade.gfx.onChange(() => layout());
 
 // ---------------------------------------------------------------- rendering
 // Everything that never changes during a level is drawn once into off-screen canvases.
@@ -967,7 +973,7 @@ function badge(n) {
   ST.badge.set(n, c); return c;
 }
 function layout() {
-  if (!G) return; DPR = Math.min(devicePixelRatio || 1, 2);
+  if (!G) return; DPR = Math.min(devicePixelRatio || 1, 2) * (Arcade.gfx.quality < 0.6 ? 0.75 : 1);
   // the board is a whole number of CSS pixels per cell, so cell edges and resting gems land on exact pixels
   const wrap = $("boardWrap"), w = wrap.clientWidth - 16, h = wrap.clientHeight - 16, size = Math.floor(Math.max(198, Math.min(w, h, 621)) / COLS) * COLS;
   if (canvas.width !== size * DPR || canvas.height !== size * DPR) { canvas.width = size * DPR; canvas.height = size * DPR; canvas.style.width = canvas.style.height = size + "px"; }
