@@ -139,6 +139,9 @@
   html.app .mapset button { width: 46px; height: 46px; padding: 0; justify-content: center; font: inherit; font-size: 20px; color: #fff; border-color: #ffd76a; cursor: pointer; }
   html.app .mapset button.off { border-color: rgba(255, 255, 255, .35); background: linear-gradient(#2a2440, #17132a); }
   html.app .mapset button.off span { opacity: .45; }
+  .card p.rate, .card p.sub { font-size: 13px; opacity: .8; margin: -6px 0 14px; }
+  .card .hearts { font-size: 30px; letter-spacing: 2px; margin: 8px 0 12px; }
+  .card .hearts s { text-decoration: none; filter: grayscale(1); opacity: .35; }
   .goalrow { display: flex; justify-content: center; gap: 12px; margin: 10px 0 18px; font-weight: 900; font-size: 18px; }
   .goalrow div { background: rgba(0, 0, 0, .4); border: 2px solid rgba(255, 255, 255, .2); border-radius: 14px; padding: 10px 14px; }
   .goalrow div small { display: block; font-size: 11px; color: #7df0d0; text-transform: uppercase; letter-spacing: .06em; }
@@ -207,7 +210,7 @@
     <button class="back snd" id="btnSound" title="Sound">🔊</button>
     <div class="box"><small>Moves</small><b id="moves">0</b></div>
     <div class="box goal" id="goalBox"></div>
-    <div class="box score"><small>Score</small><b id="score">0</b></div>
+    <div class="box score"><small>Stars</small><b id="score">0</b></div>
   </div>
   <div class="bar"><i id="barFill"></i><s style="left:33%"></s><s style="left:66%"></s></div>
   <div class="frz" id="frz" title="Frenzy meter: pop gems to fill it"><span>⚡</span><div class="fbar"><i id="frzFill"></i></div>Frenzy</div>
@@ -224,6 +227,7 @@
 <div class="modal" id="mStart" hidden><div class="card">
   <h2 id="sTitle">Level 1</h2><p id="sGoal"></p><p id="sFuse" hidden style="font-size:13px;color:#ffd200"></p>
   <div class="goalrow" id="sRow"></div>
+  <p class="rate">★ 1 star = 1,000 points</p>
   <button class="btn" id="sCont" hidden>▶ Continue</button>
   <button class="btn" id="sPlay">Play</button>
   <button class="btn ghost" type="button" data-arcade-room>👥 Play with friends</button>
@@ -240,6 +244,7 @@
   <h2 id="eTitle">Level complete</h2>
   <div class="big" id="eStars"></div>
   <p id="eText"></p>
+  <p class="sub" id="eSub"></p>
   <div data-arcade-roast></div>
   <div id="eBtns"></div>
   <a class="btn" data-arcade-share style="background:#000;color:#fff;border:2px solid #fff;text-decoration:none;display:inline-block;cursor:pointer">𝕏 Share on X</a>
@@ -383,6 +388,9 @@ const CAL = [29, 12, 25, 21600, 19, 12, 16100, 17, 12, 31, 20, 14, 20, 7400, 50,
     LEVELS.push(L);
   }
 })();
+// One star is always 1,000 points: the HUD, goals and results talk in stars, never in raw points.
+const STAR = 1000, starsOf = (pts) => Math.floor(pts / STAR);
+LEVELS.forEach((L) => { if (L.target) L.target = Math.max(STAR, Math.round(L.target / STAR) * STAR); });
 const BOOST0 = { hammer: 3, moves: 3, switch: 3, cross: 2, undo: 3 };
 let save = { stars: {}, best: {}, lives: 5, lifeAt: Date.now(), boost: {}, daily: { last: "", streak: 0 }, ach: {}, stats: {} };
 try { Object.assign(save, JSON.parse(localStorage.getItem(SAVE) || "{}")); } catch (e) {}
@@ -457,7 +465,7 @@ setTimeout(() => { for (let i = 0; i < 16; i++) { const C = COLORS[i % NCOL], o 
     $("bg").insertAdjacentHTML("beforeend", `<svg viewBox="-1.5 -1.5 3 3" width="${sz}" height="${sz}" style="left:${(i * 6.4 + Math.random() * 4).toFixed(1)}%;animation-duration:${dur.toFixed(1)}s;animation-delay:-${(Math.random() * dur).toFixed(1)}s;--r0:${Math.round(Math.random() * 60 - 30)}deg;--r1:${Math.round(Math.random() * 240 - 120)}deg"><polygon points="${o.map(q => q[0].toFixed(2) + "," + q[1].toFixed(2)).join(" ")}" fill="${C.c}" stroke="${C.l}" stroke-width=".14" stroke-linejoin="round"/></svg>`); } }, 0);
 const bg = $("bg"); for (let i = 0; i < 70; i++) { const s = document.createElement("i"); s.style.left = Math.random() * 100 + "%"; s.style.top = Math.random() * 100 + "%"; s.style.animationDelay = Math.random() * 3 + "s"; bg.appendChild(s); }
 function highest() { let h = 0; while (save.stars[h]) h++; return Math.min(h, LEVELS.length - 1); }
-const totalStars = () => Object.values(save.stars).reduce((a, b) => a + b, 0);
+const totalStars = () => Object.values(save.best).reduce((a, b) => a + starsOf(b), 0);
 let mapRaf = 0, lastCur = -1;
 function scrollMap(target, from) {
   const el = $("map"); cancelAnimationFrame(mapRaf);
@@ -478,22 +486,23 @@ function buildMap() {
   pts.forEach((p, i) => {
     const n = document.createElement("div"); n.className = "node" + (save.stars[i] ? " done" : i === cur ? " current" : i > cur ? " locked" : "") + (LEVELS[i].fuse ? " fz" : "");
     n.style.left = p[0] / 420 * 100 + "%"; n.style.top = p[1] + "px"; n.textContent = i + 1; n.style.setProperty("--d", Math.min(.45, Math.abs(i - cur) * .05) + "s");
-    if (save.stars[i]) { const s = document.createElement("div"); s.className = "stars"; s.textContent = "★".repeat(save.stars[i]); n.appendChild(s); }
+    if (save.stars[i]) { const s = document.createElement("div"); s.className = "stars"; s.textContent = "♛".repeat(save.stars[i]); n.appendChild(s); }
     if (i <= cur) n.addEventListener("click", () => openLevel(i)); path.appendChild(n);
   });
   const yOf = (i) => Math.max(0, pts[i][1] - innerHeight * .55), target = yOf(cur), from = lastCur < 0 ? target + 240 : lastCur !== cur ? yOf(lastCur) : null; lastCur = cur;
   requestAnimationFrame(() => scrollMap(target, from));
 }
-function goalText(L) { return L.goal === "score" ? `Reach ${fmt(L.target)} points` : L.goal === "jelly" ? "Clear all the jelly" : L.goal === "ingredients" ? `Bring down ${L.need} keys` : "Break all the blockers"; }
+const goalShow = (v) => G && G.L.goal === "score" ? String(Math.ceil(v / STAR)) : fmt(v);
+function goalText(L) { return L.goal === "score" ? `Earn ${L.target / STAR} star${L.target / STAR === 1 ? "" : "s"}` : L.goal === "jelly" ? "Clear all the jelly" : L.goal === "ingredients" ? `Bring down ${L.need} keys` : "Break all the blockers"; }
 function openLevel(i) {
   tickLives();
   if (save.lives <= 0) { showLives(); return; }
   const L = LEVELS[i]; pendingLevel = i;
-  $("sTitle").textContent = "Level " + (i + 1); $("sGoal").textContent = { score: "🎯 ", jelly: "🟪 ", ingredients: "🔑 ", blockers: "🧊 " }[L.goal] + goalText(L);
+  $("sTitle").textContent = "Level " + (i + 1); $("sGoal").textContent = { score: "⭐ ", jelly: "🟪 ", ingredients: "🔑 ", blockers: "🧊 " }[L.goal] + goalText(L);
   $("sFuse").hidden = !L.fuse; if (L.fuse) $("sFuse").textContent = `⏱ Countdown gems lose 1 every move. Match them before they hit 0.`;
-  $("sRow").innerHTML = `<div><small>Moves</small>${L.moves}</div><div><small>Target</small>${fmt(L.target || starTargets(L)[0])}</div><div><small>Best</small>${fmt(save.best[i] || 0)}</div>`;
+  $("sRow").innerHTML = `<div><small>Moves</small>${L.moves}</div><div><small>Goal</small>${L.goal === "score" ? "★ " + L.target / STAR : L.goal === "ingredients" ? "🔑 " + L.need : L.goal === "jelly" ? "🟪 all" : "🧊 all"}</div><div><small>Best</small>★ ${starsOf(save.best[i] || 0)}</div>`;
   const cont = save.inProgress && save.inProgress.level === i; $("sCont").hidden = !cont; $("sPlay").textContent = cont ? "Start over" : "Play"; $("sPlay").classList.toggle("ghost", !!cont);
-  if (cont) $("sGoal").textContent += ` · ${save.inProgress.moves} moves left, ${fmt(save.inProgress.score)} pts`;
+  if (cont) $("sGoal").textContent += ` · ${save.inProgress.moves} moves left, ★ ${starsOf(save.inProgress.score)}`;
   show("mStart");
 }
 $("sCont").addEventListener("click", () => { hide("mStart"); startLevel(pendingLevel, save.inProgress); });
@@ -539,7 +548,7 @@ const ACH = [
   { id: "streak3", icon: "📅", name: "Regular", desc: "Reach a 3-day login streak", ok: () => save.daily.streak >= 3, prog: () => [save.daily.streak, 3] },
   { id: "big", icon: "💰", name: "High Roller", desc: "Score 50,000 in one level", ok: s => s.bestScore >= 50000 },
   { id: "stars30", icon: "⭐", name: "Star Collector", desc: "Earn 30 stars", ok: () => totalStars() >= 30, prog: () => [totalStars(), 30] },
-  { id: "perfect", icon: "🏅", name: "Perfectionist", desc: "Get 3 stars on 10 levels", ok: () => Object.values(save.stars).filter(v => v >= 3).length >= 10, prog: () => [Object.values(save.stars).filter(v => v >= 3).length, 10] },
+  { id: "perfect", icon: "🏅", name: "Perfectionist", desc: "Get 3 crowns on 10 levels", ok: () => Object.values(save.stars).filter(v => v >= 3).length >= 10, prog: () => [Object.values(save.stars).filter(v => v >= 3).length, 10] },
   { id: "l20", icon: "🏆", name: "Classic Champion", desc: "Beat level 20", ok: () => !!save.stars[19] },
   { id: "l30", icon: "👑", name: "Prism Master", desc: "Beat level 30", ok: () => !!save.stars[29] }
 ];
@@ -685,10 +694,10 @@ function defuse(g, r, c) { g.fuse = 0; save.stats.defused++; addScore(r, c, 300)
 const HUD = { score: $("score"), moves: $("moves"), bar: $("barFill"), marks: document.querySelectorAll(".bar s"), frz: $("frz"), frzFill: $("frzFill"), boosts: {}, counts: {}, goalN: null, st: [1, 2, 3], sS: 0, sT: 0, sG: 0, lS: 0, lT: 0, left: 0, mT: -1 };
 document.querySelectorAll(".boost").forEach(el => { HUD.boosts[el.dataset.b] = el; HUD.counts[el.dataset.b] = el.querySelector("u"); });
 function hudInit() {
-  const L = G.L, icon = { score: "🎯", jelly: "🟪", ingredients: "🔑", blockers: "🧊" }[L.goal], st = HUD.st = starTargets(L);
+  const L = G.L, icon = { score: "⭐", jelly: "🟪", ingredients: "🔑", blockers: "🧊" }[L.goal], st = HUD.st = starTargets(L);
   $("goalBox").innerHTML = `<span style="font-size:22px">${icon}</span><div><small>${L.goal === "score" ? "to go" : L.goal === "ingredients" ? "keys" : L.goal}</small><b id="goalN"></b></div>`;
-  HUD.goalN = $("goalN"); HUD.left = HUD.lS = HUD.lT = goalLeft(); HUD.goalN.textContent = fmt(HUD.left);
-  HUD.sS = HUD.sT = HUD.sG = G.score; HUD.score.textContent = fmt(G.score); HUD.mT = G.moves; HUD.moves.textContent = G.moves;
+  HUD.goalN = $("goalN"); HUD.left = HUD.lS = HUD.lT = goalLeft(); HUD.goalN.textContent = goalShow(HUD.left);
+  HUD.sS = HUD.sT = HUD.sG = G.score; HUD.score.textContent = "★ " + starsOf(G.score); HUD.mT = G.moves; HUD.moves.textContent = G.moves;
   HUD.marks[0].style.left = st[0] / st[2] * 100 + "%"; HUD.marks[1].style.left = st[1] / st[2] * 100 + "%";
   updateHud();
 }
@@ -704,8 +713,8 @@ function updateHud() {
 }
 function hudTick(dt) {
   const k = Math.min(1, dt * 9);
-  if (HUD.sS !== G.score) { const d = G.score - HUD.sS; HUD.sS = Math.abs(d) < 1 ? G.score : HUD.sS + d * k; const v = Math.round(HUD.sS); if (v !== HUD.sT) { HUD.sT = v; HUD.score.textContent = fmt(v); } }
-  if (HUD.lS !== HUD.left) { const d = HUD.left - HUD.lS; HUD.lS = Math.abs(d) < .5 ? HUD.left : HUD.lS + d * k; const v = Math.round(HUD.lS); if (v !== HUD.lT) { HUD.lT = v; HUD.goalN.textContent = fmt(v); } }
+  if (HUD.sS !== G.score) { const d = G.score - HUD.sS; HUD.sS = Math.abs(d) < 1 ? G.score : HUD.sS + d * k; const v = Math.round(HUD.sS); if (v !== HUD.sT) { HUD.sT = v; HUD.score.textContent = "★ " + starsOf(v); } }
+  if (HUD.lS !== HUD.left) { const d = HUD.left - HUD.lS; HUD.lS = Math.abs(d) < .5 ? HUD.left : HUD.lS + d * k; const v = Math.round(HUD.lS); if (v !== HUD.lT) { HUD.lT = v; HUD.goalN.textContent = goalShow(v); } }
 }
 
 
@@ -981,19 +990,19 @@ async function win() {
   const st = starTargets(G.L), stars = G.score >= st[2] ? 3 : G.score >= st[1] ? 2 : 1;
   save.stars[G.level] = Math.max(save.stars[G.level] || 0, stars); save.best[G.level] = Math.max(save.best[G.level] || 0, G.score); delete save.inProgress;
   save.stats.wins++; save.stats.bestScore = Math.max(save.stats.bestScore, G.score); persist(); checkAch();
-  $("eTitle").textContent = "Level " + (G.level + 1) + " complete"; $("eStars").innerHTML = "<b>" + Array.from({ length: stars }, (_, i) => `<i style="--d:${.25 + i * .22}s">★</i>`).join("") + "</b><s>" + "★".repeat(3 - stars) + "</s>";
+  $("eTitle").textContent = "Level " + (G.level + 1) + " complete"; $("eStars").innerHTML = "<b>" + Array.from({ length: stars }, (_, i) => `<i style="--d:${.25 + i * .22}s">♛</i>`).join("") + "</b><s>" + "♛".repeat(3 - stars) + "</s>"; $("eSub").textContent = "Goal complete · ❤️ " + save.lives + " lives";
   $("eBtns").innerHTML = ""; const next = G.level + 1 < LEVELS.length;
   const lv = G.level; mkBtn("eBtns", next ? "Next level" : "Back to map", () => { hide("mEnd"); showMap(); if (next) openLevel(lv + 1); });
   mkBtn("eBtns", window.__nativeApp ? "↻ Replay" : "↻ Replay level", () => { hide("mEnd"); clearProgress(); startLevel(lv); }, true);
   if (next) mkBtn("eBtns", "Map", () => { hide("mEnd"); showMap(); }, true);
-  await sleep(100); countUp($("eText"), G.score, "Score "); show("mEnd");
+  await sleep(100); countUp($("eText"), starsOf(G.score), "Stars earned ★ "); show("mEnd");
 }
 async function lose(dead) {
   G.over = true; G.undo = null; G.boost = null; closePauseIfOpen();
   if (dead) { toast("Boom!"); SFX.boom(); shock(dead.c + .5, dead.r + .5, "#ff2d55"); burst(dead.c + .5, dead.r + .5, "#ff2d55", 16, "tri"); flash(.35, 420, "#ff2d55"); G.shake = performance.now(); } else toast("Out of moves");
   SFX.lose(); save.lives = Math.max(0, save.lives - 1); delete save.inProgress; persist(); updateHud();
-  $("eTitle").textContent = dead ? "Countdown hit zero" : "Out of moves"; $("eStars").innerHTML = "<s>★★★</s>"; delete $("eText").dataset.final;
-  $("eText").textContent = dead ? "Match countdown gems before they reach 0." : goalText(G.L) + " · " + fmt(goalLeft()) + " to go";
+  $("eTitle").textContent = dead ? "Countdown hit zero" : "Out of moves"; $("eStars").innerHTML = `<div class="hearts">${"❤️".repeat(save.lives)}<s>${"❤️".repeat(5 - save.lives)}</s></div>`; $("eSub").textContent = "−1 life · " + save.lives + " of 5 left" + (save.lives < 5 ? " · a new one every 30 min" : ""); delete $("eText").dataset.final;
+  $("eText").textContent = dead ? "Match countdown gems before they reach 0." : goalText(G.L) + " · " + goalShow(goalLeft()) + " to go";
   $("eBtns").innerHTML = "";
   if (!dead && save.boost.moves) mkBtn("eBtns", "+5 moves (" + save.boost.moves + ")", () => { save.boost.moves--; persist(); G.moves += 5; G.over = false; G.busy = false; hide("mEnd"); updateHud(); G.hintAt = performance.now() + 4000; SFX.reward(); snapshot(); });
   mkBtn("eBtns", "Retry", () => { hide("mEnd"); const lv = G.level; showMap(); openLevel(lv); }, true);
@@ -1427,7 +1436,7 @@ function bestMove() {
 window.__g = { pause: () => pauseGame(), resume: () => resumeGame(), get G() { return G; }, best: bestMove, start: (i) => startLevel(i), swap: trySwap, move: findMove, set: (r, c, color, special) => { const g = G.grid[r][c] || (G.grid[r][c] = mkGem(color, r, c)); g.kind = 'gem'; g.color = color; g.special = special || null; g.lock = false; }, cell: (r, c) => { const g = G.grid[r][c]; return g ? { color: g.color, special: g.special, kind: g.kind, fuse: g.fuse || 0 } : null; }, state: () => G && ({ moves: G.moves, score: G.score, over: G.over, busy: G.busy || !!G.paused, paused: !!G.paused, left: goalLeft(), frenzy: G.frenzy, canUndo: !!G.undo, grid: G.grid.map(r => r.map(g => g ? (g.kind === "ing" ? "K" : g.color + (g.special || "")) : ".").join(" ")) }), levels: LEVELS.length, save,
   undo: doUndo, cross: (r, c) => useCross(r, c), hammer: (r, c) => useHammer(r, c), daily: { state: dailyState, open: openDaily, claim: claimDaily }, ach: { list: ACH.map(a => a.id), check: checkAch, open: openAch }, snapshot };
 window.__roastTier = () => { const s = document.querySelectorAll("#eStars b i").length; return s >= 3 ? 2 : s >= 1 ? 1 : 0; };
-window.__shareText = () => { const stars = document.querySelectorAll("#eStars b i").length, et = document.getElementById("eText"); return "Prism Pop 💎 " + ((document.getElementById("eTitle")||{}).textContent||"") + " · " + (et ? et.dataset.final || et.textContent || "" : "") + (stars ? " · " + "★".repeat(stars) : "") + ". Can you beat it?"; };
+window.__shareText = () => { const stars = document.querySelectorAll("#eStars b i").length, et = document.getElementById("eText"); return "Prism Pop 💎 " + ((document.getElementById("eTitle")||{}).textContent||"") + " · " + (et ? et.dataset.final || et.textContent || "" : "") + (stars ? " · " + "♛".repeat(stars) : "") + ". Can you beat it?"; };
 window.__arcade = { score: () => G ? G.score : 0, status: () => G ? "L" + (G.level + 1) + " · " + G.moves + " moves" : "", done: () => !!(G && G.over), config: () => ({ level: G ? G.level : (typeof pendingLevel === "number" && isOpen("mStart") ? pendingLevel : highest()) }),
   start: (seed, cfg) => { for (const id of ["mStart", "mEnd", "mPause", "mLives", "mDaily", "mAch"]) hide(id, true); clearProgress(); const lv = Math.max(0, Math.min(LEVELS.length - 1, (cfg && cfg.level) | 0)); Arcade.seeded(seed, () => startLevel(lv)); } };
 </script>
