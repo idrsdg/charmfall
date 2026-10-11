@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>Prism Pop</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Cpath d=%2732 4 60 32 32 60 4 32z%27 fill=%27%234d8dff%27/%3E%3Cpath d=%2732 4 60 32 32 32z%27 fill=%27%23a9ccff%27/%3E%3C/svg%3E">
-<meta name="description" content="Match three gems, make specials, clear jelly, bring down keys. Thirty levels, daily rewards, boosters and a frenzy meter.">
+<meta name="description" content="Match three gems, make specials, clear jelly, bring down keys. One hundred levels, daily rewards, boosters and a frenzy meter.">
 <meta name="theme-color" content="#07061c">
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -19,7 +19,9 @@
   .bg::after { background: radial-gradient(circle at 60% 30%, rgba(255, 196, 0, .35) 0%, rgba(255, 196, 0, 0) 26%), radial-gradient(circle at 25% 75%, rgba(150, 60, 255, .5) 0%, rgba(150, 60, 255, 0) 34%); animation: drift 34s ease-in-out infinite alternate-reverse; }
   @keyframes drift { from { transform: translate(-6%, -4%) rotate(0deg) scale(1); } to { transform: translate(8%, 10%) rotate(40deg) scale(1.15); } }
   /* while a level is on screen the decorative background stands still: nothing but the game animates */
-  body:has(#game:not([hidden])) .bg::before, body:has(#game:not([hidden])) .bg::after, body:has(#game:not([hidden])) .bg i { animation-play-state: paused; }
+  body:has(#game:not([hidden])) .bg::before, body:has(#game:not([hidden])) .bg::after, body:has(#game:not([hidden])) .bg i, body:has(#game:not([hidden])) .bg svg { animation-play-state: paused; }
+  .bg svg { position: absolute; top: -12vh; opacity: .2; animation: charmfall linear infinite; will-change: transform; }
+  @keyframes charmfall { from { transform: translateY(0) rotate(var(--r0)); } to { transform: translateY(128vh) rotate(var(--r1)); } }
   .bg i { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #fff; animation: tw 2.4s infinite alternate; }
   @keyframes tw { from { opacity: .25; transform: scale(.7); } to { opacity: 1; transform: scale(1.3); } }
 
@@ -65,7 +67,7 @@
   .bar s { position: absolute; top: -3px; width: 3px; height: 16px; background: #ffd200; transition: background .25s, scale .35s cubic-bezier(.3, 1.8, .5, 1); }
   .bar s.hit { background: #fff; scale: 1.6 1; }
   #boardWrap { flex: 1; display: grid; place-items: center; padding: 8px; min-height: 0; }
-  #c { display: block; touch-action: none; border-radius: 16px; background: #05040f; box-shadow: 0 0 0 3px rgba(255, 255, 255, .3), 0 24px 50px rgba(0, 0, 0, .6); }
+  #c { display: block; touch-action: none; border-radius: 16px; background: #05040f; box-shadow: 0 0 0 2px #fff0b0, 0 0 0 8px #e0a92e, 0 0 0 10px #7a4a00, 0 24px 50px rgba(0, 0, 0, .6); outline: 3px dotted #fff6d0; outline-offset: 2.5px; }
   .boosters { display: flex; justify-content: center; gap: 10px; padding: 8px 0 max(14px, env(safe-area-inset-bottom)); }
   .boost { position: relative; width: 60px; height: 60px; border-radius: 18px; border: 2.5px solid rgba(255, 255, 255, .4); background: linear-gradient(#3a2a8a, #1e1552); display: grid; place-items: center; font-size: 28px; cursor: pointer; box-shadow: 0 5px 0 #0d0930, 0 10px 20px rgba(0, 0, 0, .4); transition: translate .12s cubic-bezier(.3, 1.5, .5, 1), box-shadow .12s, opacity .25s, filter .25s; }
   .boost { width: 64px; height: 64px; border: 3px solid #ffd76a; background: radial-gradient(circle at 50% 28%, #6a4ae0, #22146a 72%); box-shadow: 0 5px 0 #8a5200, 0 10px 20px rgba(0, 0, 0, .45), inset 0 2px 0 rgba(255, 255, 255, .45), inset 0 -8px 12px rgba(0, 0, 0, .35); }
@@ -295,6 +297,56 @@ const SAVE = "prismpop.v1";
 LEVELS.slice(0, 20).forEach((L, i) => { L.colors = i < 12 ? 4 : 5; L.moves = Math.round(L.moves * 1.35); if (L.target) L.target = Math.round(L.target * 0.45 / 100) * 100; });
 // Every level then gets 20% fewer moves.
 LEVELS.forEach((L) => { L.moves = Math.max(8, Math.round(L.moves * 0.8)); });
+// ---- levels 31-100 are built by rule: a seeded pick of board shape, goal and obstacle mix that gets heavier every ten levels.
+// CAL holds the tuned number for each one (moves, or the score target on score levels), measured with the solver.
+Object.assign(M, {
+  plus: ["###...###", "###...###", "###...###", ".........", ".........", ".........", "###...###", "###...###", "###...###"],
+  octagon: ["##.....##", "#.......#", ".........", ".........", ".........", ".........", ".........", "#.......#", "##.....##"],
+  bowtie: ["...###...", "....#....", ".........", ".........", ".........", ".........", ".........", "....#....", "...###..."],
+  pillars: [".........", ".........", "..#...#..", "..#...#..", "..#...#..", "..#...#..", "..#...#..", ".........", "........."],
+  windows: [".........", ".........", "..##.##..", "..##.##..", ".........", "..##.##..", "..##.##..", ".........", "........."],
+  split: [".........", "....#....", "....#....", "....#....", "....#....", "....#....", "....#....", "....#....", "........."],
+  dots: [".........", ".........", "..#...#..", ".........", "....#....", ".........", "..#...#..", ".........", "........."],
+  castle: ["#.#.#.#.#", ".........", ".........", ".........", ".........", ".........", ".........", ".........", "#.......#"],
+  funnel: [".........", ".........", ".........", ".........", "#.......#", "##.....##", "##.....##", "###...###", "###...###"]
+});
+const CAL = [29, 12, 25, 21600, 19, 12, 16100, 17, 12, 31, 20, 14, 20, 7400, 50, 13, 18500, 15, 13, 68, 46, 38, 26, 12200, 45, 23, 18000, 43, 23, 80, 32, 18, 22, 13400, 52, 22, 20600, 18, 54, 65, 55, 16, 84, 17400, 38, 39, 14800, 25, 16, 65, 36, 28, 35, 24600, 21, 42, 4200, 25, 20, 52, 48, 50, 28, 21100, 53, 26, 3000, 30, 60, 69];
+(() => {
+  const SAFE = [null, null, M.cross, M.diamond, M.plus, M.octagon, M.bowtie, M.castle, M.funnel, M.heart], ANY = SAFE.concat([M.ring, M.hour, M.pillars, M.windows, M.split, M.dots]);
+  const ab = Math.abs, mx = Math.max, d = (r, c) => mx(ab(r - 4), ab(c - 4));
+  const PAT = [() => true, (r, c) => d(r, c) >= 3, (r, c) => (r + c) % 2 === 0, (r) => r % 2 === 0, (r, c) => c % 2 === 0, (r, c) => ab(r - 4) + ab(c - 4) <= 3, (r, c) => ab(r - 4) >= 2 && ab(c - 4) >= 2, (r, c) => ab(r - 4) <= 1 || ab(c - 4) <= 1,
+    (r, c) => ab(r - c) <= 1 || ab(r + c - 8) <= 1, (r) => r >= 4, (r, c) => d(r, c) === 2 || d(r, c) === 3, (r, c) => d(r, c) <= 2, (r) => r <= 2 || r >= 6, (r, c) => c <= 2 || c >= 6];
+  const SPARSE = [(r, c) => ab(r - 4) >= 3 && ab(c - 4) >= 3, (r, c) => (r === 4 && ab(c - 4) <= 2) || (c === 4 && ab(r - 4) <= 2), (r, c) => d(r, c) === 2, (r, c) => r % 2 === 1 && c % 2 === 1 && (r + c) % 4 === 2, (r) => r === 4, (r, c) => (c === 2 || c === 6) && ab(r - 4) <= 2,
+    (r, c) => d(r, c) <= 1, (r, c) => r === 6 && c >= 1 && c <= 7, (r, c) => ab(r - c) === 0 && ab(r - 4) <= 3, (r, c) => (r === 3 || r === 5) && c % 2 === 0, (r, c) => d(r, c) === 3 && (r + c) % 2 === 0, (r, c) => (r === 2 || r === 6) && ab(c - 4) <= 3];
+  const CHOC = [[[0, 0], [8, 8]], [[0, 8], [8, 0]], [[4, 4]], [[0, 0], [0, 8], [8, 0], [8, 8]], [[4, 0], [4, 8]], [[8, 3], [8, 5]]];
+  const GOALS = ["jelly", "blockers", "ingredients", "score", "jelly", "blockers", "score", "ingredients", "blockers", "jelly"];
+  for (let i = 30; i < 100; i++) {
+    let seed = 1000 + i * 9973; const R = () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }, pick = (a) => a[Math.floor(R() * a.length)];
+    const n = i - 30, tier = Math.floor(n / 10), boss = n % 10 === 9, goal = GOALS[n % 10], ing = goal === "ingredients";
+    const mask = boss ? null : pick(ing ? SAFE : ANY), hole = (r, c) => !!(mask && mask[r][c] === "#"), L = { goal, colors: tier === 0 || (tier === 1 && n % 2 === 0) ? 5 : 6 };
+    if (mask) L.mask = mask;
+    const rows = (f) => Array.from({ length: 9 }, (_, r) => Array.from({ length: 9 }, (_, c) => hole(r, c) ? "." : f(r, c)).join(""));
+    if (goal === "jelly") {
+      const p1 = boss ? PAT[0] : pick(PAT), p2 = pick(PAT), all = tier >= 4 && R() < .5;
+      L.jelly = rows((r, c) => !p1(r, c) ? "." : boss || all || (tier >= 1 && p2(r, c)) ? "J" : "j");
+      if (L.jelly.join("").replace(/\./g, "").length < 14) L.jelly = rows((r, c) => tier >= 2 ? "J" : "j");
+    }
+    const lay = Array.from({ length: 9 }, () => Array(9).fill(".")), top = ing ? 3 : 0, free = (r, c) => r >= top && !hole(r, c) && lay[r][c] === ".";
+    if (goal === "blockers" || boss || R() < .22 + .09 * tier) {
+      const f1 = pick(SPARSE), f2 = pick(PAT);
+      for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) if (free(r, c) && f1(r, c)) lay[r][c] = tier === 0 ? "f" : tier <= 2 ? (f2(r, c) ? "F" : "f") : tier <= 4 ? (f2(r, c) ? "G" : "F") : (f2(r, c) ? "G" : R() < .5 ? "G" : "F");
+      if (goal === "blockers" && lay.flat().filter(k => k !== ".").length < 7) for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) if (free(r, c) && d(r, c) === 2) lay[r][c] = tier < 2 ? "f" : "F";
+    }
+    if (R() < .3 + .08 * tier) { const lp = pick(SPARSE); let k = 0; for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) if (free(r, c) && lp(r, c) && k < 10) { lay[r][c] = "l"; k++; } }
+    if (tier >= 1 && !ing && R() < .2 + .07 * tier) for (const [r, c] of pick(CHOC)) if (free(r, c)) lay[r][c] = "c";
+    if (lay.flat().some(k => k !== ".")) L.layout = lay.map(r => r.join(""));
+    if (ing) L.need = Math.min(6, 3 + Math.floor(tier * .55));
+    const fz = boss || [3, 6].includes(n % 10) || (tier >= 2 && n % 10 === 1) || (tier >= 4 && n % 10 === 4) || (tier >= 5 && n % 10 === 8);
+    if (fz) L.fuse = { n: 13 - Math.floor(tier / 2), start: tier < 3 ? 1 : 2, every: 6, max: Math.min(3, 2 + Math.floor(tier / 3)) };
+    if (goal === "score") { L.moves = 22 + tier * 2; L.target = CAL[n] || 9e9; } else L.moves = CAL[n] || 999;
+    LEVELS.push(L);
+  }
+})();
 const BOOST0 = { hammer: 3, moves: 3, switch: 3, cross: 2, undo: 3 };
 let save = { stars: {}, best: {}, lives: 5, lifeAt: Date.now(), boost: {}, daily: { last: "", streak: 0 }, ach: {}, stats: {} };
 try { Object.assign(save, JSON.parse(localStorage.getItem(SAVE) || "{}")); } catch (e) {}
@@ -364,6 +416,9 @@ function tip(t, ms) {
 }
 
 // ---------------------------------------------------------------- map screen
+// charms drift down behind the map (they stand still while a level is on screen)
+setTimeout(() => { for (let i = 0; i < 16; i++) { const C = COLORS[i % NCOL], o = SHAPES[C.shape].o, sz = 26 + Math.random() * 34, dur = 16 + Math.random() * 16;
+    $("bg").insertAdjacentHTML("beforeend", `<svg viewBox="-1.5 -1.5 3 3" width="${sz}" height="${sz}" style="left:${(i * 6.4 + Math.random() * 4).toFixed(1)}%;animation-duration:${dur.toFixed(1)}s;animation-delay:-${(Math.random() * dur).toFixed(1)}s;--r0:${Math.round(Math.random() * 60 - 30)}deg;--r1:${Math.round(Math.random() * 240 - 120)}deg"><polygon points="${o.map(q => q[0].toFixed(2) + "," + q[1].toFixed(2)).join(" ")}" fill="${C.c}" stroke="${C.l}" stroke-width=".14" stroke-linejoin="round"/></svg>`); } }, 0);
 const bg = $("bg"); for (let i = 0; i < 70; i++) { const s = document.createElement("i"); s.style.left = Math.random() * 100 + "%"; s.style.top = Math.random() * 100 + "%"; s.style.animationDelay = Math.random() * 3 + "s"; bg.appendChild(s); }
 function highest() { let h = 0; while (save.stars[h]) h++; return Math.min(h, LEVELS.length - 1); }
 const totalStars = () => Object.values(save.stars).reduce((a, b) => a + b, 0);
@@ -866,13 +921,14 @@ function countUp(el, to, pre) {
 }
 function closePauseIfOpen() { if (G.paused) { G.paused = false; hide("mPause", true); } }
 async function win() {
-  G.over = true; G.undo = null; G.boost = null; closePauseIfOpen(); toast("Prism Pop!"); SFX.win(); confetti(); flash(.4, 500);
+  G.over = true; G.undo = null; G.boost = null; closePauseIfOpen(); toast(window.__nativeApp ? "Charmfall!" : "Prism Pop!"); SFX.win(); confetti(); flash(.4, 500);
   // sugar crush: remaining moves become striped gems and detonate
-  let n = Math.min(G.moves, 10); G.moves = 0; updateHud();
-  while (n-- > 0) {
+  let n = G.moves; const gap = Math.min(30, 600 / Math.max(1, n));
+  while (n-- > 0) { G.moves = n; updateHud();
     const gems = []; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const g = cell(r, c); if (g && g.kind === "gem" && !g.special) gems.push(g); }
-    if (!gems.length) break; const g = gems[rnd(gems.length)]; g.special = rnd(2) ? "h" : "v"; g.fuse = 0; g.sx = 1.6; g.pop = performance.now(); sparkle(g.c + .5, g.r + .5, COLORS[g.color].c); addScore(g.r, g.c, 1000); updateHud(); SFX.pop(3); await sleep(30);
+    if (!gems.length) break; const g = gems[rnd(gems.length)]; g.special = rnd(2) ? "h" : "v"; g.fuse = 0; g.sx = 1.6; g.pop = performance.now(); sparkle(g.c + .5, g.r + .5, COLORS[g.color].c); addScore(g.r, g.c, 1000); SFX.pop(3); await sleep(gap);
   }
+  G.moves = 0; updateHud();
   await sleep(80);
   // one detonation of everything special, one settle, no further chains: the result card is up about two seconds after the winning move
   { const set = new Set(); for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const g = cell(r, c); if (g && g.special) set.add(r * COLS + c); } if (set.size) { G.combo = 2; await blast(set); G.wrapAgain = []; await gravity(); } }
@@ -991,7 +1047,7 @@ function badge(n) {
 function layout() {
   if (!G) return; DPR = Math.min(devicePixelRatio || 1, 2) * (Arcade.gfx.quality < 0.6 ? 0.75 : 1);
   // the board is a whole number of CSS pixels per cell, so cell edges and resting gems land on exact pixels
-  const wrap = $("boardWrap"), w = wrap.clientWidth - 16, h = wrap.clientHeight - 16, size = Math.floor(Math.max(198, Math.min(w, h, 621)) / COLS) * COLS;
+  const wrap = $("boardWrap"), w = wrap.clientWidth - 28, h = wrap.clientHeight - 28, size = Math.floor(Math.max(198, Math.min(w, h, 621)) / COLS) * COLS;
   if (canvas.width !== size * DPR || canvas.height !== size * DPR) { canvas.width = size * DPR; canvas.height = size * DPR; canvas.style.width = canvas.style.height = size + "px"; }
   CELL = size / COLS; OX = 0; OY = 0;
   // pre-build sprites so the first cascade never stalls
@@ -1044,14 +1100,14 @@ const clamp01 = (t) => t < 0 ? 0 : t > 1 ? 1 : t;
 // "fan" (triangles from the centre) or "strip" (bands between two arcs).
 const SHAPES = (() => {
   const S = {}, P = Math.PI;
-  { const o = []; for (let i = 0; i < 18; i++) { const t = i * P / 9, x = 16 * Math.pow(Math.sin(t), 3), y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)); o.push([x * .074, (y - 2.5) * .08]); } S.heart = { o, mode: "table", k: .5, cx: 0, cy: -.16 }; }
-  { const o = []; for (let i = 0; i < 10; i++) { const r = i % 2 ? .62 : 1.28, a = -P / 2 + i * P / 5; o.push([Math.cos(a) * r, Math.sin(a) * r + .07]); } S.star = { o, mode: "fan", cx: 0, cy: .07 }; }
+  { const o = []; for (let i = 0; i < 18; i++) { const t = i * P / 9, x = 16 * Math.pow(Math.sin(t), 3), y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)); o.push([x * .074, (y - 2.5) * .08]); } S.heart = { o, mode: "table", k: .5, cx: 0, cy: -.16, soft: .5 }; }
+  { const o = []; for (let i = 0; i < 10; i++) { const r = i % 2 ? .62 : 1.28, a = -P / 2 + i * P / 5; o.push([Math.cos(a) * r, Math.sin(a) * r + .07]); } S.star = { o, mode: "fan", cx: 0, cy: .07, soft: .36 }; }
   { const o = [], n = 6, rot = -.72, cs = Math.cos(rot), sn = Math.sin(rot), put = (x, y) => o.push([x * cs - y * sn, x * sn + y * cs]); for (let i = 0; i <= n; i++) { const x = -1.3 + 2.6 * i / n; put(x, -.92 * (1 - (x / 1.3) ** 2)); } for (let i = n - 1; i > 0; i--) { const x = -1.3 + 2.6 * i / n; put(x, .92 * (1 - (x / 1.3) ** 2)); } S.leaf = { o, mode: "table", k: .46, cx: 0, cy: 0, vein: [[-1.3 * cs, -1.3 * sn], [1.3 * cs, 1.3 * sn]] }; }
   { const n = 9, R = 1.2, d2r = P / 180, outer = [], inner = [], dir = [Math.cos(345 * d2r), Math.sin(345 * d2r)], c2 = [dir[0] * .58, dir[1] * .58], ox = .14, oy = -.02;
     for (let i = 0; i < n; i++) { const a = (30 + i * 270 / (n - 1)) * d2r; outer.push([Math.cos(a) * R, Math.sin(a) * R]); }
     const p1 = outer[0], p2 = outer[n - 1], r2 = Math.hypot(p1[0] - c2[0], p1[1] - c2[1]); let a1 = Math.atan2(p1[1] - c2[1], p1[0] - c2[0]), a2 = Math.atan2(p2[1] - c2[1], p2[0] - c2[0]); if (a1 < 0) a1 += 2 * P; if (a2 < 0) a2 += 2 * P;
     for (let i = 0; i < n; i++) { const a = a1 + (a2 - a1) * i / (n - 1); inner.push([c2[0] + Math.cos(a) * r2, c2[1] + Math.sin(a) * r2]); }
-    const sh = (q) => [q[0] + ox, q[1] + oy], A = outer.map(sh), B = inner.map(sh); S.moon = { o: A.concat(B.slice(1, n - 1).reverse()), mode: "strip", a: A, b: B }; }
+    const sh = (q) => [q[0] + ox, q[1] + oy], A = outer.map(sh), B = inner.map(sh); S.moon = { o: A.concat(B.slice(1, n - 1).reverse()), mode: "strip", a: A, b: B, soft: .5 }; }
   S.jewel = { o: [[-.66, -.98], [0, -.98], [.66, -.98], [1.22, -.32], [.62, .44], [0, 1.2], [-.62, .44], [-1.22, -.32]], mode: "table", k: .5, cx: 0, cy: -.3 };
   S.shard = { o: [[0, -1.3], [.78, -.62], [.78, .62], [0, 1.3], [-.78, .62], [-.78, -.62]], mode: "table", k: .48, cx: 0, cy: 0 };
   return S;
@@ -1060,7 +1116,11 @@ const hx = (h) => { const n = parseInt(h.slice(1), 16); return [n >> 16, n >> 8 
 const mixc = (a, b, t) => { const A = hx(a), B = hx(b); return "rgb(" + A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(",") + ")"; };
 function gemPath(ctx, shape, s) {
   ctx.beginPath();
-  const Q = SHAPES[shape]; if (Q) { const o = Q.o; ctx.moveTo(o[0][0] * s, o[0][1] * s); for (let i = 1; i < o.length; i++) ctx.lineTo(o[i][0] * s, o[i][1] * s); ctx.closePath(); return; }
+  const Q = SHAPES[shape]; if (Q) {   // every corner is rounded: the outline runs edge-midpoint to edge-midpoint and curves through the corner
+    const o = Q.o, n = o.length, t = Q.soft || .42, at = (i, j, k) => [(o[i][0] + (o[j][0] - o[i][0]) * k) * s, (o[i][1] + (o[j][1] - o[i][1]) * k) * s];
+    let p = at(0, 1, t); ctx.moveTo(p[0], p[1]);
+    for (let i = 1; i <= n; i++) { const a = i % n, b = (i + 1) % n, q = at(a, (i - 1) % n, t), r = at(a, b, t); ctx.lineTo(q[0], q[1]); ctx.quadraticCurveTo(o[a][0] * s, o[a][1] * s, r[0], r[1]); }
+    ctx.closePath(); return; }
   if (shape === "round") ctx.arc(0, 0, s, 0, 6.2832);
   else if (shape === "square") { const r = s * .3; ctx.roundRect(-s, -s, 2 * s, 2 * s, r); }
   else if (shape === "diamond") { ctx.moveTo(0, -s * 1.15); ctx.lineTo(s, 0); ctx.lineTo(0, s * 1.15); ctx.lineTo(-s, 0); ctx.closePath(); }
@@ -1107,7 +1167,9 @@ function drawGemRaw(ctx, g, now) {
   const lit = (p, q, cx, cy) => { let nx = q[1] - p[1], ny = p[0] - q[0]; const L = Math.hypot(nx, ny) || 1, mx = (p[0] + q[0]) / 2 - cx, my = (p[1] + q[1]) / 2 - cy; nx /= L; ny /= L; if (nx * mx + ny * my < 0) { nx = -nx; ny = -ny; } return -(nx * .45 + ny * .89); };
   ctx.lineJoin = "round";
   // dark base with a soft contact shadow, then the facets on top
-  ctx.shadowColor = "rgba(0,0,0,.6)"; ctx.shadowBlur = 3; ctx.shadowOffsetY = 3; gemPath(ctx, C.shape, s); ctx.fillStyle = edge; ctx.fill(); ctx.lineWidth = Math.max(3, CELL * .075); ctx.strokeStyle = edge; ctx.stroke(); ctx.shadowColor = "transparent"; ctx.shadowOffsetY = 0;
+  ctx.shadowColor = "rgba(0,0,0,.55)"; ctx.shadowBlur = 3; ctx.shadowOffsetY = 3; gemPath(ctx, C.shape, s); ctx.fillStyle = edge; ctx.fill(); ctx.lineWidth = Math.max(2.5, CELL * .06); ctx.strokeStyle = edge; ctx.stroke(); ctx.shadowColor = "transparent"; ctx.shadowOffsetY = 0;
+  { const bg = ctx.createRadialGradient(-s * .45, -s * .6, s * .1, 0, 0, s * 1.7); bg.addColorStop(0, mixc(C.c, C.l, .9)); bg.addColorStop(.45, C.c); bg.addColorStop(1, mixc(C.c, C.d, .85)); gemPath(ctx, C.shape, s); ctx.fillStyle = bg; ctx.fill(); }
+  ctx.save(); gemPath(ctx, C.shape, s); ctx.clip(); ctx.globalAlpha = .38;
   if (Q.mode === "fan") {
     const n = o.length; for (let i = 0; i < n; i++) { const p = o[i], q = o[(i + 1) % n]; poly([[Q.cx, Q.cy], p, q], shade(lit(p, q, Q.cx, Q.cy) * .9 + (i % 2 ? -.18 : .2))); }
     ctx.strokeStyle = "rgba(255,255,255,.45)"; ctx.lineWidth = 1; ctx.beginPath(); for (let i = 0; i < n; i += 2) { ctx.moveTo(Q.cx * s, Q.cy * s); ctx.lineTo(o[i][0] * s, o[i][1] * s); } ctx.stroke();
@@ -1125,8 +1187,13 @@ function drawGemRaw(ctx, g, now) {
     ctx.strokeStyle = "rgba(255,255,255,.3)"; ctx.lineWidth = 1; ctx.beginPath(); for (let i = 0; i < n; i++) { ctx.moveTo(o[i][0] * s, o[i][1] * s); ctx.lineTo(T[i][0] * s, T[i][1] * s); } ctx.stroke();
     if (Q.vein) { ctx.strokeStyle = "rgba(255,255,255,.6)"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(Q.vein[0][0] * s * .8, Q.vein[0][1] * s * .8); ctx.lineTo(Q.vein[1][0] * s * .8, Q.vein[1][1] * s * .8); ctx.stroke(); }
   }
-  // crisp outline and one four-point glint
-  gemPath(ctx, C.shape, s); ctx.lineWidth = Math.max(2, CELL * .04); ctx.strokeStyle = edge; ctx.stroke();
+  ctx.globalAlpha = 1;
+  // soft gloss across the upper half, a lighter rim along the bottom
+  { const gl = ctx.createLinearGradient(0, -s * 1.25, 0, s * .15); gl.addColorStop(0, "rgba(255,255,255,.55)"); gl.addColorStop(1, "rgba(255,255,255,0)"); ctx.fillStyle = gl; ctx.beginPath(); ctx.ellipse(-s * .1, -s * .62, s * 1.05, s * .62, -.25, 0, 6.2832); ctx.fill();
+    const rm = ctx.createRadialGradient(s * .35, s * 1.05, 0, s * .35, s * 1.05, s * .9); rm.addColorStop(0, mixc(C.c, C.l, .7)); rm.addColorStop(1, "rgba(255,255,255,0)"); ctx.globalAlpha = .4; ctx.fillStyle = rm; ctx.fillRect(-s * 1.5, 0, s * 3, s * 1.5); ctx.globalAlpha = 1; }
+  ctx.restore();
+  // smooth outline and one four-point glint
+  gemPath(ctx, C.shape, s); ctx.lineWidth = Math.max(1.6, CELL * .032); ctx.strokeStyle = mixc(C.d, "#000000", .35); ctx.stroke();
   { const gx = C.shape === "moon" ? -s * .62 : -s * .42, gy = C.shape === "moon" ? s * .05 : -s * .5, a = s * .3, b = s * .07; ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.beginPath(); ctx.moveTo(gx, gy - a); ctx.lineTo(gx + b, gy - b); ctx.lineTo(gx + a, gy); ctx.lineTo(gx + b, gy + b); ctx.lineTo(gx, gy + a); ctx.lineTo(gx - b, gy + b); ctx.lineTo(gx - a, gy); ctx.lineTo(gx - b, gy - b); ctx.closePath(); ctx.fill(); }
   if (g.special === "h" || g.special === "v") { ctx.save(); gemPath(ctx, C.shape, s); ctx.clip(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 3.5; for (let i = -2; i <= 2; i++) { ctx.beginPath(); if (g.special === "h") { ctx.moveTo(-s * 1.4, i * s * .42); ctx.lineTo(s * 1.4, i * s * .42); } else { ctx.moveTo(i * s * .42, -s * 1.4); ctx.lineTo(i * s * .42, s * 1.4); } ctx.stroke(); } ctx.restore(); }
   if (g.special === "wrap") { ctx.strokeStyle = "#fff"; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(-s * 1.05, -s * 1.05, s * 2.1, s * 2.1, s * .25); ctx.stroke(); ctx.shadowColor = "transparent"; ctx.strokeStyle = C.d; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(-s * .78, -s * .78, s * 1.56, s * 1.56, s * .18); ctx.stroke(); }
