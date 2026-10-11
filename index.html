@@ -191,6 +191,7 @@
   <h2 id="eTitle">Level complete</h2>
   <div class="big" id="eStars"></div>
   <p id="eText"></p>
+  <div data-arcade-roast></div>
   <div id="eBtns"></div>
   <a class="btn" data-arcade-share style="background:#000;color:#fff;border:2px solid #fff;text-decoration:none;display:inline-block;cursor:pointer">𝕏 Share on X</a>
   <a class="btn ghost" href="../games/" style="display:inline-block;text-decoration:none">🎮 All games</a>
@@ -1265,6 +1266,7 @@ function bestMove() {
 }
 window.__g = { pause: () => pauseGame(), resume: () => resumeGame(), get G() { return G; }, best: bestMove, start: (i) => startLevel(i), swap: trySwap, move: findMove, set: (r, c, color, special) => { const g = G.grid[r][c] || (G.grid[r][c] = mkGem(color, r, c)); g.kind = 'gem'; g.color = color; g.special = special || null; g.lock = false; }, cell: (r, c) => { const g = G.grid[r][c]; return g ? { color: g.color, special: g.special, kind: g.kind, fuse: g.fuse || 0 } : null; }, state: () => G && ({ moves: G.moves, score: G.score, over: G.over, busy: G.busy || !!G.paused, paused: !!G.paused, left: goalLeft(), frenzy: G.frenzy, canUndo: !!G.undo, grid: G.grid.map(r => r.map(g => g ? (g.kind === "ing" ? "K" : g.color + (g.special || "")) : ".").join(" ")) }), levels: LEVELS.length, save,
   undo: doUndo, cross: (r, c) => useCross(r, c), hammer: (r, c) => useHammer(r, c), daily: { state: dailyState, open: openDaily, claim: claimDaily }, ach: { list: ACH.map(a => a.id), check: checkAch, open: openAch }, snapshot };
+window.__roastTier = () => { const s = document.querySelectorAll("#eStars b i").length; return s >= 3 ? 2 : s >= 1 ? 1 : 0; };
 window.__shareText = () => { const stars = document.querySelectorAll("#eStars b i").length, et = document.getElementById("eText"); return "Prism Pop 💎 " + ((document.getElementById("eTitle")||{}).textContent||"") + " · " + (et ? et.dataset.final || et.textContent || "" : "") + (stars ? " · " + "★".repeat(stars) : "") + ". Can you beat it?"; };
 window.__arcade = { score: () => G ? G.score : 0, status: () => G ? "L" + (G.level + 1) + " · " + G.moves + " moves" : "", done: () => !!(G && G.over), config: () => ({ level: G ? G.level : (typeof pendingLevel === "number" && isOpen("mStart") ? pendingLevel : highest()) }),
   start: (seed, cfg) => { for (const id of ["mStart", "mEnd", "mPause", "mLives", "mDaily", "mAch"]) hide(id, true); clearProgress(); const lv = Math.max(0, Math.min(LEVELS.length - 1, (cfg && cfg.level) | 0)); Arcade.seeded(seed, () => startLevel(lv)); } };
