@@ -68,10 +68,11 @@
   .pogo .jug g { animation: pgJx 1.2s linear infinite alternate; animation-delay: var(--jd); } .pogo .jug g > * { animation: pgJy .6s cubic-bezier(.2, .6, .5, 1) infinite alternate; animation-delay: var(--jd); }
   @keyframes pgJx { from { transform: translateX(22px); } to { transform: translateX(98px); } }
   @keyframes pgJy { from { transform: translateY(84px); } to { transform: translateY(-14px); } }
-  .pogoMap { position: absolute; width: 160px; margin: -128px 0 0 -80px; pointer-events: none; z-index: 1; animation: nodeIn .5s .2s cubic-bezier(.2, 1.4, .4, 1) both; }
+  .pogoMap { position: absolute; width: 160px; margin: -128px 0 0 -80px; cursor: pointer; z-index: 1; animation: nodeIn .5s .2s cubic-bezier(.2, 1.4, .4, 1) both; }
   .pogoMap .pogo { width: 160px; height: 176px; margin: 0; } .pogoMap.flip svg.pogo { transform: scaleX(-1); }
   canvas.pogo { width: 130px; height: 143px; margin: -10px auto 0; } .pogoMap canvas.pogo { width: 160px; height: 176px; }
   #gPogo { display: none; }
+  #petBox { touch-action: none; cursor: grab; margin: -8px 0 6px; } .pogo.big, canvas.pogo.big { width: 250px; height: 275px; margin: 0 auto; }
   body:has(#game:not([hidden])) .pogoMap *, body:has(#game:not([hidden])) .path .flow { animation-play-state: paused; }
   .path .flow { animation: flow 1.2s linear infinite; }
   @keyframes flow { to { stroke-dashoffset: -36; } }
@@ -238,7 +239,7 @@
   .tip { position: fixed; left: 50%; top: 70px; transform: translate(-50%, 0); z-index: 9; background: #4a2a12; border: 2px solid #ffd200; color: #fff; border-radius: 12px; padding: 8px 14px; font-size: 15px; font-weight: 900; line-height: 1.25; text-align: center; width: max-content; max-width: calc(100vw - 16px); pointer-events: none; opacity: 0; box-shadow: 0 4px 0 rgba(0, 0, 0, .45); }
   .days svg { width: 17px; height: 17px; vertical-align: middle; margin: 2px 0; }
   .logo { white-space: nowrap; }
-  @media (max-width: 420px) { .logo { font-size: 22px; } .top { padding-left: 12px; padding-right: 12px; } .top .pill { padding: 5px 9px; font-size: 14px; } .top > div { gap: 5px !important; } }
+  @media (max-width: 420px) { .logo { font-size: 20px; } html.app .logo { font-size: 22px; } .top { padding-left: 12px; padding-right: 12px; } .top .pill { padding: 5px 7px; font-size: 13px; gap: 3px; } .top > div { gap: 5px !important; } }
   @media (max-width: 560px) { .boosters { gap: 8px; } .boost { width: 54px; height: 54px; border-radius: 16px; } .boost svg { width: 36px; height: 36px; } }
 </style>
 </head>
@@ -248,7 +249,7 @@
 <section class="screen" id="map">
   <div class="top">
     <div class="logo">Prism <span>Pop</span></div>
-    <div style="display:flex;gap:8px"><span class="pill">❤️ <span id="lives">5</span></span><span class="pill">⭐ <span id="starsTotal">0</span></span><span class="pill snd" style="border-color:#22e65a;cursor:pointer">🔊</span><a class="pill" href="../games/" style="color:#fff;text-decoration:none;border-color:#ffd23f;box-shadow:0 3px 0 #2a1608">🎮</a></div>
+    <div style="display:flex;gap:8px"><span class="pill">❤️ <span id="lives">5</span></span><span class="pill">⭐ <span id="starsTotal">0</span></span><span class="pill" id="carPill" style="border-color:#ff8a3c">🥕 <span id="carrots">0</span></span><span class="pill snd" style="border-color:#22e65a;cursor:pointer">🔊</span><a class="pill" href="../games/" style="color:#fff;text-decoration:none;border-color:#ffd23f;box-shadow:0 3px 0 #2a1608">🎮</a></div>
   </div>
   <div class="path" id="path"><svg id="pathSvg" viewBox="0 0 420 1400" preserveAspectRatio="none"></svg></div>
   <div class="mapset"><button type="button" class="pill" id="setSound" title="Sound"><span>🔊</span></button></div>
@@ -318,6 +319,12 @@
   <h2>Awards</h2><p id="achHead" style="font-size:13px;margin-bottom:6px"></p>
   <div class="achl" id="achList"></div>
   <button class="btn ghost" id="achClose">Close</button>
+</div></div>
+<div class="modal" id="mPet" hidden><div class="card">
+  <h2>Pogo</h2><p id="petText" style="min-height:2.6em"></p>
+  <div id="petBox"></div>
+  <button class="btn" id="petFeed">🥕 Feed</button>
+  <button class="btn ghost" id="petClose">Close</button>
 </div></div>
 <div class="toast" id="toast"></div>
 <div class="tip" id="tip" role="status"></div>
@@ -412,6 +419,38 @@ const pogoSvg = (mood, face) => `<svg class="pogo ${mood || ""}${face ? " face" 
 </g></svg>`;
 // a short reaction beside the bars (app only): big chains, a full Frenzy meter, special combinations
 let pogoT = 0; function pogoReact() { const el = $("gPogo"); if (!el || !el.firstChild) return; const n = el.firstChild; n.classList.remove("happy"); void n.getBoundingClientRect(); n.classList.add("happy"); clearTimeout(pogoT); pogoT = setTimeout(() => n.classList.remove("happy"), 1100); }
+// carrots: one per rating spark on a win, one for every Frenzy. Tap Pogo on the map to bring him up close and feed him; fresh carrots make him jump for joy when you come back.
+let carrotNew = 0, feedT = 0;
+function flyText(t) { const el = document.createElement("div"); el.className = "fly"; el.textContent = t; el.style.cssText = "left:50%;top:150px;font-weight:900;font-size:22px;color:#fff;text-shadow:0 2px 0 #2a1608"; document.body.appendChild(el); if (!el.animate) { el.remove(); return; } el.animate([{ transform: "translate(-50%,10px) scale(.6)", opacity: 0 }, { transform: "translate(-50%,0) scale(1.1)", opacity: 1, offset: .2 }, { transform: "translate(-50%,-46px) scale(1)", opacity: 0 }], { duration: 1100, easing: "ease-out" }).onfinish = () => el.remove(); }
+const pogoEl = () => $("mPet").hidden ? document.querySelector(".pogoMap .pogo") : $("petBox").firstElementChild;
+const say = (t) => { if ($("mPet").hidden) tip(t); else $("petText").textContent = t; };
+function pogoMood(cls, ms, then) { const n = pogoEl(); if (!n) return; n.classList.remove("eat", "happy"); n.classList.add(cls); clearTimeout(feedT); feedT = setTimeout(() => { n.classList.remove(cls); if (then && n.isConnected) then(); }, ms); }
+function feedPogo() {
+  const n = pogoEl(); if (!n || n.classList.contains("eat")) return;
+  if (!(save.carrots > 0)) { say("No carrots yet. Win a level or fill the Frenzy meter to earn some."); return; }
+  wakePogo(true); save.carrots--; save.fed = (save.fed || 0) + 1; persist(); $("carrots").textContent = save.carrots; petLabel(); bump("carPill"); SFX.swap();
+  pogoMood("eat", 3200, () => { pogoMood("happy", 2400); say("Pogo loved it! Carrots eaten: " + save.fed); SFX.pop(3); });
+}
+// the pet screen: tap Pogo on the map and he comes up close. Stroke him and he shuts his eyes; keep going and he dozes off.
+const PET = { m: 0, down: 0, x: 0, y: 0, moved: 0, t: 0, heart: 0, z: 0 }, SLEEPY = 3200;
+const petLabel = () => { $("petFeed").textContent = "🥕 Feed (" + (save.carrots || 0) + ")"; };
+function floatAt(x, y, ch) { const el = document.createElement("div"); el.className = "fly"; el.textContent = ch; el.style.cssText = `left:${x}px;top:${y}px;z-index:13;font-size:24px;font-weight:900;color:#fff`; document.body.appendChild(el); if (!el.animate) { el.remove(); return; } const dx = (Math.random() - .5) * 50; el.animate([{ transform: "translate(-50%,-50%) scale(.4)", opacity: 0 }, { transform: "translate(-50%,-90%) scale(1.1)", opacity: 1, offset: .25 }, { transform: `translate(calc(-50% + ${dx}px),-260%) scale(.9)`, opacity: 0 }], { duration: 1300, easing: "ease-out" }).onfinish = () => el.remove(); }
+function openPet() { PET.m = 0; $("petBox").innerHTML = pogoSvg("big calm"); $("petText").textContent = "Stroke him with your finger. He loves it."; petLabel(); show("mPet"); }
+function closePet() { clearInterval(PET.z); clearTimeout(feedT); hide("mPet"); setTimeout(() => { if ($("mPet").hidden) $("petBox").innerHTML = ""; }, 300); }
+function wakePogo(quiet) { const n = $("petBox").firstElementChild; if (!n || !n.classList.contains("sleep")) return false; n.classList.remove("sleep"); clearInterval(PET.z); PET.m = 0; if (!quiet) { pogoMood("happy", 2400); say("Good morning, Pogo!"); SFX.pop(2); } return true; }
+function sleepPogo(n) { n.classList.remove("pet"); n.classList.add("sleep"); save.naps = (save.naps || 0) + 1; persist(); say("Shh… Pogo fell asleep. Tap him to wake him up."); clearInterval(PET.z); const z = () => { const r = n.getBoundingClientRect(); floatAt(r.left + r.width * .68, r.top + r.height * .3, "💤"); }; z(); PET.z = setInterval(z, 1700); }
+$("petBox").addEventListener("pointerdown", (e) => { PET.down = 1; PET.x = e.clientX; PET.y = e.clientY; PET.moved = 0; try { $("petBox").setPointerCapture(e.pointerId); } catch (err) {} });
+$("petBox").addEventListener("pointermove", (e) => {
+  if (!PET.down) return; const n = $("petBox").firstElementChild; if (!n) return; const d = Math.hypot(e.clientX - PET.x, e.clientY - PET.y); PET.x = e.clientX; PET.y = e.clientY; PET.moved += d;
+  if (n.classList.contains("sleep") || n.classList.contains("eat") || PET.moved < 8) return;
+  const r = n.getBoundingClientRect(); n.dataset.lean = Math.max(-1, Math.min(1, (e.clientX - r.left - r.width / 2) / (r.width / 2))).toFixed(2); n.classList.remove("happy"); n.classList.add("pet"); PET.m += d;
+  clearTimeout(PET.t); PET.t = setTimeout(() => n.classList.remove("pet"), 420);
+  const now = performance.now(); if (now - PET.heart > 300) { PET.heart = now; floatAt(e.clientX, e.clientY - 14, "❤️"); }
+  if (PET.m > SLEEPY) sleepPogo(n); else if (PET.m > SLEEPY * .55) $("petText").textContent = "He is getting sleepy…"; else $("petText").textContent = "He likes that. Keep going.";
+});
+const petUp = () => { if (!PET.down) return; PET.down = 0; if (PET.moved < 8) wakePogo(); };
+$("petBox").addEventListener("pointerup", petUp); $("petBox").addEventListener("pointercancel", () => { PET.down = 0; });
+$("petFeed").addEventListener("click", feedPogo); $("petClose").addEventListener("click", closePet);
 // on the map Pogo never stands still: a new act every few seconds, never the same one twice in a row
 const ACTS = ["a-hop", "a-wave", "a-juggle", "a-dance", "a-spin", "a-look"]; let actI = -1;
 setInterval(() => { const n = document.querySelector(".pogoMap svg.pogo"); if (!n || $("map").hidden || document.hidden) return; n.classList.remove(...ACTS); let k; do k = rnd(ACTS.length); while (k === actI); actI = k; void n.getBoundingClientRect(); n.classList.add(ACTS[k]); setTimeout(() => n.classList.remove(ACTS[k]), 2400); }, 3400);
@@ -421,7 +460,7 @@ setInterval(() => { const n = document.querySelector(".pogoMap svg.pogo"); if (!
 const P3 = (() => {
   if (!window.THREE) return null; const T = THREE; let R;
   try { R = new T.WebGLRenderer({ alpha: true, antialias: true }); } catch (e) { return null; }
-  const RW = 400, RH = 440; R.setPixelRatio(1); R.setSize(RW, RH, false); R.setClearColor(0, 0); R.outputEncoding = T.sRGBEncoding;
+  const RW = 600, RH = 660; R.setPixelRatio(1); R.setSize(RW, RH, false); R.setClearColor(0, 0); R.outputEncoding = T.sRGBEncoding;
   const scene = new T.Scene(), cam = new T.PerspectiveCamera(30, RW / RH, .1, 50);
   scene.add(new T.HemisphereLight(0xffffff, 0x7a5a48, .62)); const sun = new T.DirectionalLight(0xfff2d8, .62); sun.position.set(2.5, 4, 5); scene.add(sun);
   const rim = new T.DirectionalLight(0xbfe8ff, .25); rim.position.set(-3, 2, -4); scene.add(rim);
@@ -468,13 +507,17 @@ const P3 = (() => {
     const p = Z(), b = t * Math.PI * 4;
     if (face) { if (mood === "happy") { p.y = Math.abs(Math.sin(b)) * .12; p.hz = Math.sin(b / 2) * .22; p.mo = 1; } else p.hz = Math.sin(t * 1.3) * .05; return p; }
     if (mood === "happy") { const u = (t % 2.4) / 2.4; if (u < .42) spin(u / .42, p, 1, 2.7); else { hop(((u - .42) / .58 * 2) % 1, p, .5); p.lz = -2.7; p.rz = 2.7; p.lx = p.rx = 0; } p.mo = 1; return p; }
+    if (mood === "sleep") { p.eye = .05; p.hx = .34; p.hz = .13; p.ear = .32; p.sq = .95 + Math.sin(t * 1.5) * .028; p.lz = -.18; p.rz = .18; return p; }   // asleep: head down, slow deep breaths
+    if (mood === "pet") { const l = st.lean || 0; p.eye = .05; p.hz = -l * .26; p.hx = .07; p.tz = -l * .07; p.x = l * .05; p.ear = .16; p.mo = .3; p.sq = .975 + Math.sin(t * 15) * .006; p.lz = -.2; p.rz = .2; return p; }   // being stroked: eyes shut, leaning into the hand
+    if (mood === "calm") { p.hz = Math.sin(t * .9) * .06; p.hy = Math.sin(t * .5) * .28; p.hx = Math.sin(t * .7) * .04; p.ear = Math.max(0, Math.sin(t * 1.7) - .93) * 2; return p; }
+    if (mood === "eat") { acts[3][1](b, Math.min(.97, t / 3.2), p); return p; }
     if (mood === "cheer") { p.hz = .2 + Math.sin(t * 1.6) * .06; p.hx = .12; p.ear = .5; p.tz = Math.sin(t * 1.6) * .04; p.lx = -.5; p.rx = -.5; p.lz = -.5; p.rz = .5; return p; }
     let u = t % TOTAL, i = 0; while (u >= acts[i][0]) u -= acts[i++][0]; acts[i][1](b, u / acts[i][0], p); return p;
   }
   function draw(cv, st, now, dt) {
-    const mood = cv.classList.contains("happy") ? "happy" : cv.classList.contains("cheer") ? "cheer" : "", face = cv.classList.contains("face"), t = (now - st.t0) / 1000;
+    const cl = cv.classList, mood = cl.contains("eat") ? "eat" : cl.contains("sleep") ? "sleep" : cl.contains("pet") ? "pet" : cl.contains("happy") ? "happy" : cl.contains("cheer") ? "cheer" : cl.contains("calm") ? "calm" : "", face = cv.classList.contains("face"), t = (now - st.t0) / 1000;
     if (st.mood !== mood) { st.mood = mood; st.t0 = now; }
-    const p = target(st, (now - st.t0) / 1000, mood, face), c = st.c, k = 1 - Math.exp(-dt * 13);
+    st.lean = +cv.dataset.lean || 0; const p = target(st, (now - st.t0) / 1000, mood, face), c = st.c, k = 1 - Math.exp(-dt * 13);
     for (const q in c) c[q] = (p.spin && (q === "ry" || q === "y")) || (p.hop && q === "y") || q === "car" ? p[q] : c[q] + (p[q] - c[q]) * k; if (!p.spin && Math.abs(c.ry) > Math.PI) { c.ry -= Math.sign(c.ry) * Math.PI * 2; st.pr = c.ry; }
     fox.position.set(c.x, c.y, 0); fox.rotation.y = c.ry + (st.turn || 0); fox.scale.set(2 - c.sq, c.sq, 2 - c.sq);
     const br = 1 + Math.sin(t * 3) * .015; torso.scale.set(1, br, 1); torso.rotation.set(0, c.ty, c.tz); head.rotation.set(c.hx, c.hy, c.hz);
@@ -654,7 +697,7 @@ function scrollMap(target, from) {
 }
 ["pointerdown", "wheel", "touchstart"].forEach(ev => $("map").addEventListener(ev, () => cancelAnimationFrame(mapRaf), { passive: true }));
 function buildMap() {
-  tickLives(); $("lives").textContent = save.lives; $("starsTotal").textContent = totalStars();
+  tickLives(); $("lives").textContent = save.lives; $("starsTotal").textContent = totalStars(); $("carrots").textContent = save.carrots || 0;
   $("btnDaily").classList.toggle("ready", !dailyState().claimed); $("achN").textContent = Object.keys(save.ach).length + "/" + ACH.length;
   const path = $("path"), svg = $("pathSvg"); path.querySelectorAll(".node, .pogoMap").forEach(n => n.remove());
   const H = 150 + LEVELS.length * 86; path.style.height = H + "px"; svg.setAttribute("viewBox", `0 0 420 ${H}`);
@@ -666,12 +709,13 @@ function buildMap() {
   pts.forEach((p, i) => {
     const n = document.createElement("div"); n.className = "node" + (save.stars[i] ? " done" : i === cur ? " current" : i > cur ? " locked" : "") + (LEVELS[i].fuse ? " fz" : "");
     n.style.left = p[0] / 420 * 100 + "%"; n.style.top = p[1] + "px"; n.textContent = i + 1; n.style.setProperty("--d", Math.min(.45, Math.abs(i - cur) * .05) + "s");
-    if (i === cur) { const left = p[0] > 210; path.insertAdjacentHTML("beforeend", `<div class="pogoMap${left ? " flip" : ""}" style="left:${(p[0] + (left ? -104 : 104)) / 420 * 100}%;top:${p[1]}px">${pogoSvg()}</div>`); }
+    if (i === cur) { const left = p[0] > 210; path.insertAdjacentHTML("beforeend", `<div class="pogoMap${left ? " flip" : ""}" onclick="openPet()" style="left:${(p[0] + (left ? -104 : 104)) / 420 * 100}%;top:${p[1]}px">${pogoSvg()}</div>`); }
     if (save.stars[i]) { const s = document.createElement("div"); s.className = "stars"; s.textContent = "✦".repeat(save.stars[i]); n.appendChild(s); }
     if (i <= cur) n.addEventListener("click", () => openLevel(i)); path.appendChild(n);
   });
   const yOf = (i) => Math.max(0, pts[i][1] - innerHeight * .55), target = yOf(cur), from = lastCur < 0 ? target + 240 : lastCur !== cur ? yOf(lastCur) : null; lastCur = cur;
   requestAnimationFrame(() => scrollMap(target, from));
+  if (carrotNew) { carrotNew = 0; setTimeout(() => { pogoMood("happy", 2400); bump("carPill"); }, 700); }
 }
 const goalShow = (v) => G && G.L.goal === "score" ? String(Math.ceil(v / STAR)) : fmt(v);
 function goalText(L) { return L.goal === "score" ? `Earn ${L.target / STAR} star${L.target / STAR === 1 ? "" : "s"}` : L.goal === "jelly" ? "Clear all the jelly" : L.goal === "ingredients" ? `Bring down ${L.need} keys` : "Break all the blockers"; }
@@ -995,7 +1039,7 @@ function spreadChocolate() {
 }
 // ---- frenzy: every popped gem charges the meter; when it is full five gems turn special and go off together
 async function frenzy() {
-  G.frenzy = 0; G.inFrenzy = true; save.stats.frenzy++; pogoReact(); toast("Frenzy!"); SFX.frenzy(); flash(.3, 420, "#ffd200"); G.shake = performance.now(); updateHud();
+  G.frenzy = 0; G.inFrenzy = true; save.stats.frenzy++; save.carrots = (save.carrots || 0) + 1; carrotNew++; flyText("+1 🥕"); pogoReact(); toast("Frenzy!"); SFX.frenzy(); flash(.3, 420, "#ffd200"); G.shake = performance.now(); updateHud();
   const pool = []; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const g = cell(r, c); if (g && g.kind === "gem" && !g.special && !g.lock) pool.push(g); }
   const set = new Set();
   for (let i = 0; i < 5 && pool.length; i++) {
@@ -1171,8 +1215,8 @@ async function win() {
   { const set = new Set(); for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const g = cell(r, c); if (g && g.special) set.add(r * COLS + c); } if (set.size) { G.combo = 2; await blast(set); G.wrapAgain = []; await gravity(); } }
   const st = starTargets(G.L), stars = G.score >= st[2] ? 3 : G.score >= st[1] ? 2 : 1;
   save.stars[G.level] = Math.max(save.stars[G.level] || 0, stars); save.best[G.level] = Math.max(save.best[G.level] || 0, G.score); delete save.inProgress;
-  save.stats.wins++; save.stats.bestScore = Math.max(save.stats.bestScore, G.score); persist(); checkAch();
-  $("ePogo").innerHTML = pogoSvg("happy"); $("eTitle").textContent = "Level " + (G.level + 1) + " complete"; $("eStars").innerHTML = "<b>" + Array.from({ length: stars }, (_, i) => `<i style="--d:${.25 + i * .22}s">✦</i>`).join("") + "</b><s>" + "✦".repeat(3 - stars) + "</s>"; $("eSub").textContent = "Goal complete · ❤️ " + save.lives + " lives";
+  save.carrots = (save.carrots || 0) + stars; carrotNew += stars; save.stats.wins++; save.stats.bestScore = Math.max(save.stats.bestScore, G.score); persist(); checkAch();
+  $("ePogo").innerHTML = pogoSvg("happy"); $("eTitle").textContent = "Level " + (G.level + 1) + " complete"; $("eStars").innerHTML = "<b>" + Array.from({ length: stars }, (_, i) => `<i style="--d:${.25 + i * .22}s">✦</i>`).join("") + "</b><s>" + "✦".repeat(3 - stars) + "</s>"; $("eSub").textContent = "+" + stars + " 🥕 for Pogo · ❤️ " + save.lives + " lives";
   $("eBtns").innerHTML = ""; const next = G.level + 1 < LEVELS.length;
   const lv = G.level; mkBtn("eBtns", next ? "Next level" : "Back to map", () => { hide("mEnd"); showMap(); if (next) openLevel(lv + 1); });
   mkBtn("eBtns", window.__nativeApp ? "↻ Replay" : "↻ Replay level", () => { hide("mEnd"); clearProgress(); startLevel(lv); }, true);
