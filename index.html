@@ -25,7 +25,7 @@
   .bg i { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: #fff6b8; box-shadow: 0 0 8px 2px rgba(255, 220, 90, .8); animation: tw 2.4s infinite alternate; }
   @keyframes tw { from { opacity: .1; transform: translate(0, 0) scale(.6); } to { opacity: .95; transform: translate(6px, -9px) scale(1.2); } }
 
-  /* ---------- Pogo, the fox who runs the Charm Carnival ---------- */
+  /* ---------- Pogo, the rabbit who lives along the forest trail ---------- */
   .pogo { display: block; width: 112px; height: 121px; margin: -6px auto 2px; overflow: visible; }
   .pogo .all { transform-origin: 60px 124px; animation: pgBreath 1.5s ease-in-out infinite alternate; }
   .pogo .tail { transform-origin: 80px 102px; animation: pgTail .7s ease-in-out infinite alternate; }
@@ -386,19 +386,19 @@ const LEVELS = [
   { goal: "jelly", moves: 86, colors: 6, fuse: { n: 10, start: 2, every: 5, max: 4 }, jelly: ["JJJJJJJJJ", "JJJJJJJJJ", "JJJJJJJJJ", "JJJJJJJJJ", "JJJJJJJJJ", "JJJJJJJJJ", "JJJJJJJJJ", "JJJJJJJJJ", "JJJJJJJJJ"], layout: ["c...l...c", ".........", "..F...F..", ".........", "l...G...l", ".........", "..F...F..", ".........", "c...l...c"] }
 ];
 
-// Pogo the fox: one drawing with two moods (happy, cheer) and a set of map acts; "face" crops it to the head for the game screen in the app
-const pogoSvg = (mood, face) => `<svg class="pogo ${mood || ""}${face ? " face" : ""}" viewBox="${face ? "17 -3 86 86" : "0 0 120 130"}" aria-hidden="true">
+// Pogo the rabbit: the flat fallback drawing (used when WebGL is missing) with two moods (happy, cheer) and a set of map acts; "face" crops it to the head for the game screen in the app
+const pogoSvg = (mood, face) => `<svg class="pogo ${mood || ""}${face ? " face" : ""}" viewBox="${face ? "17 -18 86 86" : "0 -18 120 148"}" aria-hidden="true">
 <ellipse cx="60" cy="125" rx="30" ry="4.5" fill="#1b2150" opacity=".18"/>
 <g class="all" stroke="#1b2150" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
-<g class="tail"><path d="M78 106 C102 112 120 94 110 62 C104 76 94 84 80 88 Z" fill="#ff7a1a"/><path d="M110 62 C116 76 114 88 106 96 C104 86 100 80 96 78 C102 74 107 69 110 62 Z" fill="#fff8ea"/></g>
-<ellipse cx="48" cy="120" rx="10" ry="5.5" fill="#7a3414"/><ellipse cx="72" cy="120" rx="10" ry="5.5" fill="#7a3414"/>
-<ellipse cx="60" cy="98" rx="24" ry="23" fill="#ff7a1a"/><ellipse cx="60" cy="103" rx="13.5" ry="15" fill="#fff8ea" stroke="none"/>
+<g class="tail"><circle cx="86" cy="106" r="8" fill="#ffffff"/></g>
+<ellipse cx="48" cy="120" rx="10" ry="5.5" fill="#ffc9cf"/><ellipse cx="72" cy="120" rx="10" ry="5.5" fill="#ffc9cf"/>
+<ellipse cx="60" cy="98" rx="24" ry="23" fill="#f3ece6"/><ellipse cx="60" cy="103" rx="13.5" ry="15" fill="#ffffff" stroke="none"/>
 <path d="M44 80 Q60 92 76 80" fill="none" stroke="#ff4b3e" stroke-width="6"/><circle cx="60" cy="88" r="4.6" fill="#ffd23f" stroke-width="2.4"/>
-<g class="armL"><ellipse cx="38" cy="98" rx="6.5" ry="12" fill="#ff7a1a" transform="rotate(18 38 98)"/></g><g class="armR"><ellipse cx="82" cy="98" rx="6.5" ry="12" fill="#ff7a1a" transform="rotate(-18 82 98)"/></g>
+<g class="armL"><ellipse cx="38" cy="98" rx="6.5" ry="12" fill="#f3ece6" transform="rotate(18 38 98)"/></g><g class="armR"><ellipse cx="82" cy="98" rx="6.5" ry="12" fill="#f3ece6" transform="rotate(-18 82 98)"/></g>
 <g class="head">
-<g class="earL"><path d="M27 36 L24 3 L54 20 Z" fill="#ff7a1a"/><path d="M31.500 29 L30 12 L45 21 Z" fill="#7a3414" stroke="none"/></g><g class="earR"><path d="M93 36 L96 3 L66 20 Z" fill="#ff7a1a"/><path d="M88.500 29 L90 12 L75 21 Z" fill="#7a3414" stroke="none"/></g>
-<ellipse cx="60" cy="47" rx="38" ry="31" fill="#ff7a1a"/>
-<path d="M23.500 52 C30 62 46 60 60 49 C74 60 90 62 96.500 52 C93 71 78 77.500 60 77.500 C42 77.500 27 71 23.500 52 Z" fill="#fff8ea" stroke="none"/>
+<g class="earL"><ellipse cx="42" cy="8" rx="9" ry="24" fill="#f3ece6"/><ellipse cx="42" cy="9" rx="4" ry="16" fill="#ff8fa8" stroke="none"/></g><g class="earR"><ellipse cx="78" cy="8" rx="9" ry="24" fill="#f3ece6"/><ellipse cx="78" cy="9" rx="4" ry="16" fill="#ff8fa8" stroke="none"/></g>
+<ellipse cx="60" cy="47" rx="38" ry="31" fill="#f3ece6"/>
+<path d="M23.500 52 C30 62 46 60 60 49 C74 60 90 62 96.500 52 C93 71 78 77.500 60 77.500 C42 77.500 27 71 23.500 52 Z" fill="#ffffff" stroke="none"/>
 <ellipse cx="60" cy="47" rx="38" ry="31" fill="none"/>
 <circle cx="33" cy="60" r="5" fill="#ff9aa2" stroke="none" opacity=".75"/><circle cx="87" cy="60" r="5" fill="#ff9aa2" stroke="none" opacity=".75"/>
 <g class="eyes"><g class="e-o" stroke="none"><ellipse cx="45" cy="45" rx="6.800" ry="7.800" fill="#1b2150"/><ellipse cx="75" cy="45" rx="6.800" ry="7.800" fill="#1b2150"/><circle cx="47.300" cy="42" r="2.700" fill="#fff"/><circle cx="77.300" cy="42" r="2.700" fill="#fff"/><circle cx="43" cy="48.500" r="1.200" fill="#fff"/><circle cx="73" cy="48.500" r="1.200" fill="#fff"/></g>
@@ -426,40 +426,48 @@ const P3 = (() => {
   scene.add(new T.HemisphereLight(0xffffff, 0x7a5a48, .62)); const sun = new T.DirectionalLight(0xfff2d8, .62); sun.position.set(2.5, 4, 5); scene.add(sun);
   const rim = new T.DirectionalLight(0xbfe8ff, .25); rim.position.set(-3, 2, -4); scene.add(rim);
   const mat = (c, o) => new T.MeshStandardMaterial(Object.assign({ color: c, roughness: .55, metalness: 0 }, o)), SPH = new T.SphereGeometry(1, 32, 24);
-  const M = { fur: mat(0xf2560a), cream: mat(0xfff0d8), dark: mat(0x3a1c0c), ink: mat(0x120a1c, { roughness: .2 }), white: mat(0xffffff, { roughness: .2 }), red: mat(0xe8332a), gold: mat(0xffc81a, { roughness: .3, metalness: .3 }), blush: mat(0xff8f9a), mouth: mat(0x9c1f2e) };
+  const M = { fur: mat(0xf3ece6), cream: mat(0xffffff), dark: mat(0xffc9cf), pink: mat(0xff8fa8), carrot: mat(0xff7a14), leaf: mat(0x3fbf4a), ink: mat(0x120a1c, { roughness: .2 }), white: mat(0xffffff, { roughness: .2 }), red: mat(0xe8332a), gold: mat(0xffc81a, { roughness: .3, metalness: .3 }), blush: mat(0xff8f9a), mouth: mat(0x9c1f2e) };
   const ball = (m, x, y, z, sx, sy, sz, par) => { const o = new T.Mesh(SPH, m); o.position.set(x, y, z); o.scale.set(sx, sy === undefined ? sx : sy, sz === undefined ? sx : sz); par.add(o); return o; };
   const grp = (x, y, z, par) => { const g = new T.Group(); g.position.set(x, y, z); par.add(g); return g; };
   const shadow = new T.Mesh(new T.CircleGeometry(.75, 32), new T.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: .22 })); shadow.rotation.x = -Math.PI / 2; shadow.position.y = .01; scene.add(shadow);
   const fox = grp(0, 0, 0, scene), torso = grp(0, .78, 0, fox);
   ball(M.fur, 0, 0, 0, .56, .6, .5, torso); ball(M.cream, 0, -.04, .2, .4, .46, .36, torso);
-  const footL = ball(M.dark, -.27, .12, .1, .2, .13, .3, fox), footR = ball(M.dark, .27, .12, .1, .2, .13, .3, fox);
+  const footL = ball(M.fur, -.27, .12, .16, .2, .13, .36, fox), footR = ball(M.fur, .27, .12, .16, .2, .13, .36, fox);
   const armL = grp(-.47, .3, .05, torso), armR = grp(.47, .3, .05, torso);
-  ball(M.fur, 0, -.27, 0, .14, .3, .14, armL); ball(M.dark, 0, -.52, 0, .13, .12, .13, armL); ball(M.fur, 0, -.27, 0, .14, .3, .14, armR); ball(M.dark, 0, -.52, 0, .13, .12, .13, armR);
+  ball(M.fur, 0, -.27, 0, .14, .3, .14, armL); ball(M.dark, 0, -.52, 0, .12, .11, .12, armL); ball(M.fur, 0, -.27, 0, .14, .3, .14, armR); ball(M.dark, 0, -.52, 0, .12, .11, .12, armR);
   const scarf = new T.Mesh(new T.TorusGeometry(.36, .085, 12, 32), M.red); scarf.rotation.x = Math.PI / 2; scarf.position.y = .47; torso.add(scarf); ball(M.gold, 0, .4, .38, .1, .1, .1, torso);
-  const tail = grp(0, -.15, -.38, torso), tailIn = grp(0, 0, 0, tail); tailIn.rotation.x = -.95;
-  ball(M.fur, 0, 0, -.55, .3, .3, .62, tailIn); ball(M.cream, 0, 0, -1.0, .24, .24, .3, tailIn);
+  const tail = grp(0, -.2, -.4, torso); ball(M.cream, 0, 0, -.14, .2, .2, .2, tail);
   const head = grp(0, 1.02, .04, torso);
   ball(M.fur, 0, 0, 0, .8, .68, .7, head); ball(M.cream, -.27, -.3, .3, .34, .21, .34, head); ball(M.cream, .27, -.3, .3, .34, .21, .34, head); ball(M.cream, 0, -.24, .5, .24, .18, .24, head);
-  ball(M.ink, 0, -.15, .74, .085, .06, .06, head); const mouth = ball(M.mouth, 0, -.36, .62, .11, .1, .08, head);
+  ball(M.pink, 0, -.15, .74, .075, .055, .06, head); ball(M.white, -.045, -.36, .7, .04, .07, .03, head); ball(M.white, .045, -.36, .7, .04, .07, .03, head); const mouth = ball(M.mouth, 0, -.36, .62, .11, .1, .08, head);
   const eyes = [-1, 1].map(k => { const g = grp(k * .31, .1, .61, head); g.rotation.y = k * .3; ball(M.ink, 0, 0, 0, .15, .18, .08, g); ball(M.white, .05, .07, .07, .05, .05, .03, g); ball(M.white, -.05, -.07, .07, .024, .024, .015, g); return g; });
   ball(M.blush, -.56, -.12, .4, .11, .07, .06, head); ball(M.blush, .56, -.12, .4, .11, .07, .06, head);
-  const ears = [-1, 1].map(k => { const g = grp(k * .46, .5, 0, head); g.rotation.z = -k * .28; const c = new T.Mesh(new T.ConeGeometry(.28, .62, 24), M.fur); c.position.y = .22; g.add(c); const c2 = new T.Mesh(new T.ConeGeometry(.17, .44, 24), M.dark); c2.position.set(0, .2, .09); g.add(c2); return g; });
+  const ears = [-1, 1].map(k => { const g = grp(k * .3, .5, -.02, head); ball(M.fur, 0, .5, 0, .17, .56, .1, g); ball(M.pink, 0, .5, .06, .09, .42, .06, g); return g; });
+  // the carrot sits at his mouth and only shows while he eats
+  const carrot = grp(.02, -.36, .7, head); carrot.rotation.set(-1.0, 0, -.5); { const c = new T.Mesh(new T.ConeGeometry(.13, .8, 20), M.carrot); c.position.y = -.4; carrot.add(c); for (let i = -1; i <= 1; i++) { const l = ball(M.leaf, i * .08, -.9, 0, .05, .17, .05, carrot); l.rotation.z = i * .5; } }
   // pose values; every frame the current pose eases toward the target one, so acts blend into each other
-  const Z = () => ({ x: 0, y: 0, ry: 0, tz: 0, ty: 0, hz: 0, hx: 0, hy: 0, lz: -.3, lx: 0, rz: .3, rx: 0, fl: 0, fr: 0, ear: 0, sq: 1, eye: 1, mo: 0 });
+  const Z = () => ({ x: 0, y: 0, ry: 0, tz: 0, ty: 0, hz: 0, hx: 0, hy: 0, lz: -.3, lx: 0, rz: .3, rx: 0, fl: 0, fr: 0, ear: 0, ex: 0, car: 0, sq: 1, eye: 1, mo: 0 });
+  // a hop the way a body really does it: crouch, push off, a ballistic arc with the feet tucked, then a landing that soaks up the fall
+  const hop = (f, p, h) => { if (f < .2) { const k = f / .2; p.sq = 1 - .15 * Math.sin(k * Math.PI / 2); p.lx = p.rx = .45 * k; p.hx = .1 * k; } else if (f < .8) { const a = (f - .2) / .6, s = Math.sin(a * Math.PI); p.y = h * 4 * a * (1 - a); p.sq = 1 + .1 * Math.abs(Math.cos(a * Math.PI)); p.fl = p.fr = .16 * s; p.lx = p.rx = -1.1 * s; p.hx = -.12 * Math.cos(a * Math.PI); } else { const k = (f - .8) / .2; p.sq = 1 - .17 * (1 - k) * (1 - k); p.hx = .14 * (1 - k); p.lx = p.rx = .2 * (1 - k); } p.hop = 1; };
+  // one full turn with a wind-up the other way first and a soft landing after
+  const spin = (u, p, dir, arm) => { const E = (a) => a < .5 ? 4 * a * a * a : 1 - Math.pow(-2 * a + 2, 3) / 2; p.spin = 1; p.lz = -arm; p.rz = arm; p.mo = 1;
+    if (u < .16) { const k = u / .16; p.sq = 1 - .13 * k; p.ry = -dir * .35 * Math.sin(k * Math.PI / 2); } else if (u < .86) { const a = (u - .16) / .7; p.ry = dir * (-.35 + (Math.PI * 2 + .35) * E(a)); p.y = .5 * 4 * a * (1 - a); p.sq = 1 + .07 * Math.sin(a * Math.PI); p.fl = p.fr = .12 * Math.sin(a * Math.PI); } else { const k = (u - .86) / .14; p.ry = dir * Math.PI * 2; p.sq = 1 - .13 * (1 - k) * (1 - k); } };
   const acts = [   // [seconds, pose builder]; b = beat phase (two beats a second), u = progress through the act
     [3.6, (b, u, p) => { const s = Math.sin(b / 2); p.x = s * .2; p.tz = s * .16; p.hz = -s * .22; p.y = Math.abs(s) * .1; p.lz = -(1.9 + Math.sin(b) * .7); p.rz = 1.9 - Math.sin(b) * .7; p.fl = Math.max(0, s) * .18; p.fr = Math.max(0, -s) * .18; p.mo = 1; }],                                  // side sway, arms in the air
-    [1.3, (b, u, p) => { const e = u < .5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2; p.ry = e * Math.PI * 2; p.y = Math.sin(u * Math.PI) * .42; p.lz = -1.5; p.rz = 1.5; p.sq = 1 + Math.sin(u * Math.PI) * .06; p.mo = 1; p.spin = 1; }],   // one full turn
+    [1.5, (b, u, p) => spin(u, p, 1, 1.5)],
+    [3.2, (b, u, p) => { hop((u * 4) % 1, p, .6); p.x = Math.sin(u * Math.PI * 2) * .32; p.mo = p.y > .2 ? 1 : 0; }],   // four real hops, ears trailing behind
+    [4.4, (b, u, p) => { const ch = Math.sin(b * 1.6), on = u > .1 && u < .94; p.car = on ? 1 - .5 * (u - .1) / .84 : 0; const k = Math.min(1, u / .1, (1 - u) / .06); p.lx = p.rx = -1.75 * k + ch * .04; p.lz = -.3 + .75 * k; p.rz = .3 - .75 * k; p.hx = .1 * k + ch * .045 * k; p.hz = Math.sin(b / 4) * .05; p.mo = on ? .45 + ch * .45 : 0; p.sq = 1 + ch * .01; }],   // a carrot break: both paws up, nibbling, the carrot getting shorter
     [3.6, (b, u, p) => { const s = Math.sin(b / 2); p.ry = s * .65; p.ty = -s * .35; p.y = Math.abs(Math.sin(b)) * .09; p.lz = -.7; p.rz = .7; p.lx = -1.1 + Math.sin(b) * .7; p.rx = -1.1 - Math.sin(b) * .7; p.hy = s * .25; p.fl = Math.max(0, Math.sin(b)) * .1; p.fr = Math.max(0, -Math.sin(b)) * .1; }],   // the twist, elbows pumping
-    [1.3, (b, u, p) => { const e = u < .5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2; p.ry = -e * Math.PI * 2; p.y = Math.sin(u * Math.PI) * .42; p.lz = -2.6; p.rz = 2.6; p.mo = 1; p.spin = 1; }],
+    [1.5, (b, u, p) => spin(u, p, -1, 2.6)],
     [3.6, (b, u, p) => { const k = Math.sin(b / 2) > 0 ? 1 : -1; p.x = k * .14; p.tz = -k * .2; p.hz = k * .16; p.hx = Math.sin(b) * .12; p.y = Math.abs(Math.sin(b)) * .08; p.lz = k > 0 ? -.5 : -2.7; p.rz = k > 0 ? 2.7 : .5; p.fl = k < 0 ? .16 : 0; p.fr = k > 0 ? .16 : 0; p.mo = 1; }],   // disco point, left and right
-    [1.3, (b, u, p) => { const e = u < .5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2; p.ry = e * Math.PI * 2; p.y = Math.sin(u * Math.PI) * .5; p.lz = -2.9; p.rz = 2.9; p.mo = 1; p.spin = 1; }],
+    [1.5, (b, u, p) => spin(u, p, 1, 2.9)],
     [2.4, (b, u, p) => { p.rz = 2.5 + Math.sin(b * 2) * .35; p.hz = .14; p.tz = -.06; p.mo = 1; p.y = Math.abs(Math.sin(b / 2)) * .04; }]   // a wave to the player
   ];
   const TOTAL = acts.reduce((a, c) => a + c[0], 0), slots = new Map();
   function target(st, t, mood, face) {
     const p = Z(), b = t * Math.PI * 4;
     if (face) { if (mood === "happy") { p.y = Math.abs(Math.sin(b)) * .12; p.hz = Math.sin(b / 2) * .22; p.mo = 1; } else p.hz = Math.sin(t * 1.3) * .05; return p; }
-    if (mood === "happy") { const u = (t % 1.6) / 1.6; p.y = Math.abs(Math.sin(b / 2)) * .45; p.lz = -2.7 + Math.sin(b) * .2; p.rz = 2.7 - Math.sin(b) * .2; p.mo = 1; if (u < .5) { const v = u * 2, e = v < .5 ? 2 * v * v : 1 - Math.pow(-2 * v + 2, 2) / 2; p.ry = e * Math.PI * 2; p.spin = 1; } return p; }
+    if (mood === "happy") { const u = (t % 2.4) / 2.4; if (u < .42) spin(u / .42, p, 1, 2.7); else { hop(((u - .42) / .58 * 2) % 1, p, .5); p.lz = -2.7; p.rz = 2.7; p.lx = p.rx = 0; } p.mo = 1; return p; }
     if (mood === "cheer") { p.hz = .2 + Math.sin(t * 1.6) * .06; p.hx = .12; p.ear = .5; p.tz = Math.sin(t * 1.6) * .04; p.lx = -.5; p.rx = -.5; p.lz = -.5; p.rz = .5; return p; }
     let u = t % TOTAL, i = 0; while (u >= acts[i][0]) u -= acts[i++][0]; acts[i][1](b, u / acts[i][0], p); return p;
   }
@@ -467,14 +475,19 @@ const P3 = (() => {
     const mood = cv.classList.contains("happy") ? "happy" : cv.classList.contains("cheer") ? "cheer" : "", face = cv.classList.contains("face"), t = (now - st.t0) / 1000;
     if (st.mood !== mood) { st.mood = mood; st.t0 = now; }
     const p = target(st, (now - st.t0) / 1000, mood, face), c = st.c, k = 1 - Math.exp(-dt * 13);
-    for (const q in c) c[q] = p.spin && (q === "ry" || q === "y") ? p[q] : c[q] + (p[q] - c[q]) * k; if (!p.spin && Math.abs(c.ry) > Math.PI) c.ry -= Math.sign(c.ry) * Math.PI * 2;
+    for (const q in c) c[q] = (p.spin && (q === "ry" || q === "y")) || (p.hop && q === "y") || q === "car" ? p[q] : c[q] + (p[q] - c[q]) * k; if (!p.spin && Math.abs(c.ry) > Math.PI) { c.ry -= Math.sign(c.ry) * Math.PI * 2; st.pr = c.ry; }
     fox.position.set(c.x, c.y, 0); fox.rotation.y = c.ry + (st.turn || 0); fox.scale.set(2 - c.sq, c.sq, 2 - c.sq);
     const br = 1 + Math.sin(t * 3) * .015; torso.scale.set(1, br, 1); torso.rotation.set(0, c.ty, c.tz); head.rotation.set(c.hx, c.hy, c.hz);
     armL.rotation.set(c.lx, 0, c.lz); armR.rotation.set(c.rx, 0, c.rz); footL.position.y = .12 + c.fl; footR.position.y = .12 + c.fr;
-    tail.rotation.y = Math.sin(t * 6) * .45; tail.rotation.x = Math.sin(t * 3) * .1; ears[0].rotation.z = .28 + c.ear; ears[1].rotation.z = -.28 - c.ear;
+    // ears and tail are not posed: they hang on springs and trail whatever the head does
+    const E = st.es, vy = (c.y - st.py) / Math.max(dt, .004), vx = (c.x - st.px) / Math.max(dt, .004), vr = (c.ry - st.pr) / Math.max(dt, .004); st.py = c.y; st.px = c.x; st.pr = c.ry;
+    const ta = Math.max(-1, Math.min(.8, -vy * .2 - c.hx * .6)), tb = Math.max(-.6, Math.min(.6, -vx * .35 + c.hz * .5 + (Math.abs(vr) < 30 ? vr * .05 : 0)));
+    E.v += ((ta - E.a) * 120 - E.v * 8) * dt; E.a += E.v * dt; E.w += ((tb - E.b) * 120 - E.w * 8) * dt; E.b += E.w * dt;
+    ears[0].rotation.set(E.a, 0, .14 + c.ear * 1.3 + E.b + Math.sin(t * 2.3) * .025); ears[1].rotation.set(E.a * .86, 0, -.14 - c.ear * 1.3 + E.b * .9 - Math.sin(t * 2.3 + 1) * .025);
+    tail.rotation.y = Math.sin(t * 9) * .25 + E.b; tail.position.y = -.2 + E.a * .05; carrot.visible = c.car > .05; carrot.scale.setScalar(Math.max(.05, c.car) * 1.45);
     const bl = (t + st.ph) % 3.4 > 3.28 ? .1 : 1, ey = Math.min(bl, c.eye); eyes[0].scale.y = eyes[1].scale.y = ey; mouth.scale.set(.11 * c.mo + .001, .1 * c.mo + .001, .08);
     const sh = 1 - Math.min(.5, c.y * .8); shadow.scale.set(sh, sh, sh); shadow.position.x = c.x; shadow.visible = !face;
-    if (face) { cam.position.set(0, 1.9, 5.0); cam.lookAt(0, 1.88, 0); } else { cam.position.set(0, 1.9, 7.2); cam.lookAt(0, 1.52, 0); }
+    if (face) { cam.position.set(0, 2.3, 6.6); cam.lookAt(0, 2.28, 0); } else { cam.position.set(0, 2.1, 8.6); cam.lookAt(0, 1.82, 0); }
     R.render(scene, cam); const x = st.x; x.clearRect(0, 0, cv.width, cv.height);
     if (face) x.drawImage(R.domElement, 0, (RH - RW) / 2, RW, RW, 0, 0, cv.width, cv.height); else x.drawImage(R.domElement, 0, 0, cv.width, cv.height);
   }
@@ -485,7 +498,7 @@ const P3 = (() => {
     const inGame = !$("game").hidden;
     document.querySelectorAll("canvas.pogo").forEach(cv => {
       if (!cv.offsetParent) return; let st = slots.get(cv);
-      if (!st) { const d = Math.min(devicePixelRatio || 1, 2); cv.width = Math.round(cv.clientWidth * d); cv.height = Math.round(cv.clientHeight * d); st = { x: cv.getContext("2d"), c: Z(), t0: now, ph: Math.random() * 3, mood: "", turn: cv.closest(".pogoMap.flip") ? .3 : cv.closest(".pogoMap") ? -.3 : 0, drawn: 0 }; slots.set(cv, st); }
+      if (!st) { const d = Math.min(devicePixelRatio || 1, 2); cv.width = Math.round(cv.clientWidth * d); cv.height = Math.round(cv.clientHeight * d); st = { x: cv.getContext("2d"), c: Z(), es: { a: 0, v: 0, b: 0, w: 0 }, py: 0, px: 0, pr: 0, t0: now, ph: Math.random() * 3, mood: "", turn: cv.closest(".pogoMap.flip") ? .3 : cv.closest(".pogoMap") ? -.3 : 0, drawn: 0 }; slots.set(cv, st); }
       // while a level is on screen Pogo only moves when he reacts, and the map copy behind it rests
       if (inGame && cv.closest("#map")) return; if (inGame && cv.classList.contains("face") && st.drawn && !cv.classList.contains("happy") && st.idle) return;
       draw(cv, st, now, dt); st.drawn = 1; st.idle = !cv.classList.contains("happy");
