@@ -68,11 +68,11 @@
   .pogo .jug g { animation: pgJx 1.2s linear infinite alternate; animation-delay: var(--jd); } .pogo .jug g > * { animation: pgJy .6s cubic-bezier(.2, .6, .5, 1) infinite alternate; animation-delay: var(--jd); }
   @keyframes pgJx { from { transform: translateX(22px); } to { transform: translateX(98px); } }
   @keyframes pgJy { from { transform: translateY(84px); } to { transform: translateY(-14px); } }
-  .pogoMap { position: absolute; width: 160px; margin: -128px 0 0 -80px; cursor: pointer; z-index: 1; animation: nodeIn .5s .2s cubic-bezier(.2, 1.4, .4, 1) both; }
-  .pogoMap .pogo { width: 160px; height: 176px; margin: 0; } .pogoMap.flip svg.pogo { transform: scaleX(-1); }
-  canvas.pogo { width: 130px; height: 143px; margin: -10px auto 0; } .pogoMap canvas.pogo { width: 160px; height: 176px; }
+  .pogoMap { position: absolute; width: 186px; margin: -152px 0 0 -93px; cursor: pointer; z-index: 1; animation: nodeIn .5s .2s cubic-bezier(.2, 1.4, .4, 1) both; }
+  .pogoMap .pogo { width: 186px; height: 205px; margin: 0; } .pogoMap.flip svg.pogo { transform: scaleX(-1); }
+  canvas.pogo { width: 130px; height: 143px; margin: -10px auto 0; } .pogoMap canvas.pogo { width: 186px; height: 205px; }
   #gPogo { display: none; }
-  #petBox { touch-action: none; cursor: grab; margin: -8px 0 6px; } .pogo.big, canvas.pogo.big { width: 250px; height: 275px; margin: 0 auto; }
+  #petBox { touch-action: none; cursor: grab; margin: -8px 0 6px; } .pogo.big, canvas.pogo.big { width: 270px; height: 297px; margin: 0 auto; }
   body:has(#game:not([hidden])) .pogoMap *, body:has(#game:not([hidden])) .path .flow { animation-play-state: paused; }
   .path .flow { animation: flow 1.2s linear infinite; }
   @keyframes flow { to { stroke-dashoffset: -36; } }
@@ -174,7 +174,7 @@
   /* game screen in the app: pause alone top-left with the two progress bars beside it, then three equal metric boxes, then the board */
   html.app #game { display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: auto auto auto 1fr auto; column-gap: 10px; padding: max(12px, env(safe-area-inset-top)) 14px 0; }
   html.app .hud { display: contents; }
-  html.app #btnBack, html.app #btnSound, html.app .top .snd, html.app .top a[href="../games/"], html.app #mPause .snd, html.app #mPause [data-arcade-vol] { display: none !important; }
+  html.app #btnBack, html.app #btnSound, html.app .top .snd, html.app .top a[href="../games/"], html.app #mPause [data-arcade-vol] { display: none !important; }
   html.app #btnPause { grid-column: 1; grid-row: 1 / span 2; justify-self: start; align-self: center; width: 46px; height: 46px; padding: 0; font-size: 18px; }
   html.app .bar { grid-column: 2 / 6; grid-row: 1; margin: 0; align-self: end; }
   html.app #gPogo { display: block; grid-column: 6; grid-row: 1 / span 2; justify-self: end; align-self: center; }
@@ -306,6 +306,8 @@
 </div></div>
 <div class="modal" id="mLives" hidden><div class="card">
   <h2>Out of lives</h2><p id="lifeText">A new life arrives in a while.</p>
+  <button class="btn" type="button" data-arcade-room>👥 Play with friends</button>
+  <p class="sub" style="margin:10px 0 0">Friends rooms do not use lives.</p>
   <button class="btn ghost" id="lifeClose">OK</button>
   <a class="btn ghost" href="../games/" style="display:inline-block;text-decoration:none">🎮 All games</a>
 </div></div>
@@ -419,6 +421,8 @@ const pogoSvg = (mood, face) => `<svg class="pogo ${mood || ""}${face ? " face" 
 </g></svg>`;
 // a short reaction beside the bars (app only): big chains, a full Frenzy meter, special combinations
 let pogoT = 0; function pogoReact() { const el = $("gPogo"); if (!el || !el.firstChild) return; const n = el.firstChild; n.classList.remove("happy"); void n.getBoundingClientRect(); n.classList.add("happy"); clearTimeout(pogoT); pogoT = setTimeout(() => n.classList.remove("happy"), 1100); }
+// every carrot Pogo eats puts a little weight on him, up to a comfortably round rabbit at forty
+const plump = () => Math.min(1, ((typeof save === "object" && save && save.fed) || 0) / 40), pogoKg = () => (1.5 + plump() * 2).toFixed(1);
 // carrots: one per rating spark on a win, one for every Frenzy. Tap Pogo on the map to bring him up close and feed him; fresh carrots make him jump for joy when you come back.
 let carrotNew = 0, feedT = 0;
 function flyText(t) { const el = document.createElement("div"); el.className = "fly"; el.textContent = t; el.style.cssText = "left:50%;top:150px;font-weight:900;font-size:22px;color:#fff;text-shadow:0 2px 0 #2a1608"; document.body.appendChild(el); if (!el.animate) { el.remove(); return; } el.animate([{ transform: "translate(-50%,10px) scale(.6)", opacity: 0 }, { transform: "translate(-50%,0) scale(1.1)", opacity: 1, offset: .2 }, { transform: "translate(-50%,-46px) scale(1)", opacity: 0 }], { duration: 1100, easing: "ease-out" }).onfinish = () => el.remove(); }
@@ -429,13 +433,13 @@ function feedPogo() {
   const n = pogoEl(); if (!n || n.classList.contains("eat")) return;
   if (!(save.carrots > 0)) { say("No carrots yet. Win a level or fill the Frenzy meter to earn some."); return; }
   wakePogo(true); save.carrots--; save.fed = (save.fed || 0) + 1; persist(); $("carrots").textContent = save.carrots; petLabel(); bump("carPill"); SFX.swap();
-  pogoMood("eat", 3200, () => { pogoMood("happy", 2400); say("Pogo loved it! Carrots eaten: " + save.fed); SFX.pop(3); });
+  pogoMood("eat", 3200, () => { pogoMood("happy", 2400); say("Pogo loved it! Carrots eaten: " + save.fed + " · he weighs " + pogoKg() + " kg"); SFX.pop(3); });
 }
 // the pet screen: tap Pogo on the map and he comes up close. Stroke him and he shuts his eyes; keep going and he dozes off.
 const PET = { m: 0, down: 0, x: 0, y: 0, moved: 0, t: 0, heart: 0, z: 0 }, SLEEPY = 3200;
 const petLabel = () => { $("petFeed").textContent = "🥕 Feed (" + (save.carrots || 0) + ")"; };
 function floatAt(x, y, ch) { const el = document.createElement("div"); el.className = "fly"; el.textContent = ch; el.style.cssText = `left:${x}px;top:${y}px;z-index:13;font-size:24px;font-weight:900;color:#fff`; document.body.appendChild(el); if (!el.animate) { el.remove(); return; } const dx = (Math.random() - .5) * 50; el.animate([{ transform: "translate(-50%,-50%) scale(.4)", opacity: 0 }, { transform: "translate(-50%,-90%) scale(1.1)", opacity: 1, offset: .25 }, { transform: `translate(calc(-50% + ${dx}px),-260%) scale(.9)`, opacity: 0 }], { duration: 1300, easing: "ease-out" }).onfinish = () => el.remove(); }
-function openPet() { PET.m = 0; $("petBox").innerHTML = pogoSvg("big calm"); $("petText").textContent = "Stroke him with your finger. He loves it."; petLabel(); show("mPet"); }
+function openPet() { PET.m = 0; $("petBox").innerHTML = pogoSvg("big calm"); $("petText").textContent = "Stroke him with your finger. He loves it. Weight: " + pogoKg() + " kg"; petLabel(); show("mPet"); }
 function closePet() { clearInterval(PET.z); clearTimeout(feedT); hide("mPet"); setTimeout(() => { if ($("mPet").hidden) $("petBox").innerHTML = ""; }, 300); }
 function wakePogo(quiet) { const n = $("petBox").firstElementChild; if (!n || !n.classList.contains("sleep")) return false; n.classList.remove("sleep"); clearInterval(PET.z); PET.m = 0; if (!quiet) { pogoMood("happy", 2400); say("Good morning, Pogo!"); SFX.pop(2); } return true; }
 function sleepPogo(n) { n.classList.remove("pet"); n.classList.add("sleep"); save.naps = (save.naps || 0) + 1; persist(); say("Shh… Pogo fell asleep. Tap him to wake him up."); clearInterval(PET.z); const z = () => { const r = n.getBoundingClientRect(); floatAt(r.left + r.width * .68, r.top + r.height * .3, "💤"); }; z(); PET.z = setInterval(z, 1700); }
@@ -520,7 +524,7 @@ const P3 = (() => {
     st.lean = +cv.dataset.lean || 0; const p = target(st, (now - st.t0) / 1000, mood, face), c = st.c, k = 1 - Math.exp(-dt * 13);
     for (const q in c) c[q] = (p.spin && (q === "ry" || q === "y")) || (p.hop && q === "y") || q === "car" ? p[q] : c[q] + (p[q] - c[q]) * k; if (!p.spin && Math.abs(c.ry) > Math.PI) { c.ry -= Math.sign(c.ry) * Math.PI * 2; st.pr = c.ry; }
     fox.position.set(c.x, c.y, 0); fox.rotation.y = c.ry + (st.turn || 0); fox.scale.set(2 - c.sq, c.sq, 2 - c.sq);
-    const br = 1 + Math.sin(t * 3) * .015; torso.scale.set(1, br, 1); torso.rotation.set(0, c.ty, c.tz); head.rotation.set(c.hx, c.hy, c.hz);
+    const br = 1 + Math.sin(t * 3) * .015, fat = plump(); torso.scale.set(1 + fat * .36, br * (1 + fat * .06), 1 + fat * .32); head.scale.set((1 + fat * .1) / (1 + fat * .36), 1 / (br * (1 + fat * .06)), (1 + fat * .08) / (1 + fat * .32)); footL.position.x = -.27 - fat * .08; footR.position.x = .27 + fat * .08; torso.rotation.set(0, c.ty, c.tz); head.rotation.set(c.hx, c.hy, c.hz);
     armL.rotation.set(c.lx, 0, c.lz); armR.rotation.set(c.rx, 0, c.rz); footL.position.y = .12 + c.fl; footR.position.y = .12 + c.fr;
     // ears and tail are not posed: they hang on springs and trail whatever the head does
     const E = st.es, vy = (c.y - st.py) / Math.max(dt, .004), vx = (c.x - st.px) / Math.max(dt, .004), vr = (c.ry - st.pr) / Math.max(dt, .004); st.py = c.y; st.px = c.x; st.pr = c.ry;
@@ -603,8 +607,9 @@ const CAL = [29, 12, 25, 21600, 19, 12, 16100, 17, 12, 31, 20, 14, 20, 7400, 50,
   }
 })();
 // ---- difficulty. HARDER lists levels whose goal is thickened (double jelly, one more frost layer, two more keys) so they last long enough to tune;
-// TUNE is the measured number for every level: moves, or the score target on score levels. Both come from solver runs (see docs in the repo history).
-const HARDER = new Set([2, 5, 6, 10, 21, 22, 31, 34, 35, 38, 41, 42, 45, 48, 71]), TUNE = [67000,47000,12,31000,10,11,9,19,18000,4,7,27,39000,17,17,33,20000,49,21,31,84000,11,6,10,32000,27,15,20,31,38,17,10,11,49000,13,11,32000,15,6,15,13,13,15,18000,26,11,43000,11,9,30,23,20,17,23000,22,16,31000,17,21,24,24,12,18,30000,27,15,41000,10,33,47,30,11,24,35000,28,23,25000,18,9,29,23,15,20,45000,10,18,23000,16,14,29,26,24,15,36000,16,13,36000,12,15,22];
+// TUNE is the measured number for every level: moves, or the score target on score levels, from 200 solver games per level.
+// Solver win rate it aims for: 90% on level 1 easing to 61% on level 20, then a straight slide to 5% on level 100.
+const HARDER = new Set([2, 5, 6, 10, 21, 22, 31, 34, 35, 38, 41, 42, 45, 48, 71]), TUNE = [39000,32000,18,21000,17,17,12,27,13000,17,10,34,29000,24,21,39,18000,107,26,36,71000,13,8,13,23000,43,23,24,34,44,19,11,13,45000,14,13,28000,17,8,17,16,16,17,15000,29,13,37000,15,11,37,26,30,18,20000,25,20,30000,19,26,28,27,12,20,27000,28,15,44000,11,36,45,30,11,28,32000,33,24,25000,17,10,30,22,14,17,47000,9,17,24000,16,13,29,25,21,13,39000,14,16,35000,15,15,27];
 LEVELS.forEach((L, i) => {
   if (HARDER.has(i)) { if (L.jelly) L.jelly = L.jelly.map(r => r.replace(/j/g, "J")); if (L.layout) L.layout = L.layout.map(r => r.replace(/F/g, "G").replace(/f/g, "F")); if (L.need) L.need = Math.min(7, L.need + 2); }
   if (TUNE[i]) { if (L.goal === "score") L.target = TUNE[i]; else L.moves = TUNE[i]; }
@@ -709,7 +714,7 @@ function buildMap() {
   pts.forEach((p, i) => {
     const n = document.createElement("div"); n.className = "node" + (save.stars[i] ? " done" : i === cur ? " current" : i > cur ? " locked" : "") + (LEVELS[i].fuse ? " fz" : "");
     n.style.left = p[0] / 420 * 100 + "%"; n.style.top = p[1] + "px"; n.textContent = i + 1; n.style.setProperty("--d", Math.min(.45, Math.abs(i - cur) * .05) + "s");
-    if (i === cur) { const left = p[0] > 210; path.insertAdjacentHTML("beforeend", `<div class="pogoMap${left ? " flip" : ""}" onclick="openPet()" style="left:${(p[0] + (left ? -104 : 104)) / 420 * 100}%;top:${p[1]}px">${pogoSvg()}</div>`); }
+    if (i === cur) { const left = p[0] > 210; path.insertAdjacentHTML("beforeend", `<div class="pogoMap${left ? " flip" : ""}" onclick="openPet()" style="left:${(p[0] + (left ? -112 : 112)) / 420 * 100}%;top:${p[1]}px">${pogoSvg()}</div>`); }
     if (save.stars[i]) { const s = document.createElement("div"); s.className = "stars"; s.textContent = "✦".repeat(save.stars[i]); n.appendChild(s); }
     if (i <= cur) n.addEventListener("click", () => openLevel(i)); path.appendChild(n);
   });
@@ -1232,6 +1237,7 @@ async function lose(dead) {
   $("eBtns").innerHTML = "";
   if (!dead && save.boost.moves) mkBtn("eBtns", "+5 moves (" + save.boost.moves + ")", () => { save.boost.moves--; persist(); G.moves += 5; G.over = false; G.busy = false; hide("mEnd"); updateHud(); G.hintAt = performance.now() + 4000; SFX.reward(); snapshot(); });
   mkBtn("eBtns", "Retry", () => { hide("mEnd"); const lv = G.level; showMap(); openLevel(lv); }, true);
+  if (save.lives <= 0) $("eBtns").insertAdjacentHTML("beforeend", `<button class="btn ghost" type="button" data-arcade-room>👥 Play with friends</button>`);
   mkBtn("eBtns", "Map", () => { hide("mEnd"); showMap(); }, true);
   await sleep(dead ? 800 : 500); show("mEnd");
 }
