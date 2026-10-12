@@ -110,24 +110,28 @@
   @keyframes nodeIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   .node .plat { position: absolute; left: -32px; right: -32px; bottom: -30px; height: 46px; border-radius: 14px; z-index: -1; background: linear-gradient(#e6d6b8, #b89468 55%, #8a6a48); box-shadow: 0 7px 0 #3a2416, inset 0 2px 0 rgba(255, 255, 255, .5); }
   .node .plat::after { content: ""; position: absolute; left: 4px; right: 4px; bottom: 3px; height: 5px; border-radius: 3px; background: repeating-linear-gradient(90deg, #ffd23f 0 9px, #2a1a0a 9px 18px); opacity: .9; }
-  .node.locked .plat { background: linear-gradient(#9a8ab8, #6a58a0 55%, #4a3a80); box-shadow: 0 7px 0 #22104a, 0 12px 16px rgba(0, 0, 0, .4); } .node.locked .plat::after { opacity: .35; }
+  .node.locked .plat { background: linear-gradient(#3a3050, #241c40 55%, #140e28); box-shadow: 0 7px 0 #0a0618, 0 12px 16px rgba(0, 0, 0, .5); } .node.locked .plat::after { opacity: .2; }
   .node.done .plat { background: linear-gradient(#ffe8a8, #e0b060 55%, #a87a30); }
   .node { border: 3px solid #fff3c4; background-image: radial-gradient(circle at 32% 26%, rgba(255, 255, 255, .95) 0, rgba(255, 255, 255, .35) 16%, rgba(255, 255, 255, 0) 38%), radial-gradient(circle at 50% 110%, rgba(0, 0, 0, .35), rgba(0, 0, 0, 0) 55%), radial-gradient(circle at 35% 30%, #ffc48a, #ff7a1a 55%, #d95a00); }
-  .node.locked { background-image: radial-gradient(circle at 32% 26%, rgba(255, 255, 255, .4) 0, rgba(255, 255, 255, .12) 16%, rgba(255, 255, 255, 0) 38%), radial-gradient(circle at 50% 110%, rgba(0, 0, 0, .5), rgba(0, 0, 0, 0) 55%), radial-gradient(circle at 35% 30%, #8a7ab0, #4e3e82 58%, #2e2458); }
+  .node.locked { background-image: radial-gradient(circle at 32% 26%, rgba(255, 255, 255, .4) 0, rgba(255, 255, 255, .12) 16%, rgba(255, 255, 255, 0) 38%), radial-gradient(circle at 50% 110%, rgba(0, 0, 0, .5), rgba(0, 0, 0, 0) 55%), radial-gradient(circle at 35% 30%, #4a3f6a, #241c40 58%, #120d26); }
   .node.done { background-image: radial-gradient(circle at 32% 26%, rgba(255, 255, 255, .95) 0, rgba(255, 255, 255, .4) 16%, rgba(255, 255, 255, 0) 38%), radial-gradient(circle at 50% 110%, rgba(120, 70, 0, .4), rgba(0, 0, 0, 0) 55%), radial-gradient(circle at 35% 30%, #fff3a8, #ffd23f 55%, #f0a400); }
   .chap { z-index: 2; box-shadow: 0 6px 0 #27096b, 0 12px 20px rgba(0, 0, 0, .45); }
   .chap, .station { transform: translateX(-50%); }
   .node .plate { position: absolute; left: 50%; bottom: calc(100% + 16px); transform: translateX(-50%); width: max-content; max-width: 250px; padding: 8px 18px; border-radius: 14px; font-size: 20px; font-weight: 900; line-height: 1.15; letter-spacing: .03em; text-transform: uppercase; color: #fff3c4; background: linear-gradient(#ff7ad9, #d12fd0); border: 2px solid #ffe7a3; box-shadow: 0 4px 0 #27096b, 0 8px 12px rgba(0, 0, 0, .4); text-shadow: none; white-space: normal; text-align: center; z-index: 3; pointer-events: none; }
   .node .plate.st { background: linear-gradient(#3fd06a, #1d7a3c); border-color: #c8ffd8; color: #fff; text-transform: none; font-size: 21px; } .node .plate.st small { display: block; font-size: 14px; letter-spacing: .12em; text-transform: uppercase; color: #d8ffe4; }
-  .node.locked .plate { opacity: .55; filter: grayscale(.5); }
+  .node.locked .plate { opacity: .4; filter: grayscale(.8) brightness(.6); }
   .chap { white-space: normal !important; max-width: 128px !important; line-height: 1.15 !important; font-size: 12px !important; padding: 5px 12px !important; }
   .station { position: absolute; z-index: 2; white-space: nowrap; padding: 6px 14px 7px; border-radius: 12px; font-size: 14px; font-weight: 900; color: #fff; background: linear-gradient(#3fd06a, #1d7a3c); border: 2px solid #c8ffd8; box-shadow: 0 6px 0 #0d4a22, 0 12px 20px rgba(0, 0, 0, .45); text-align: center; }
   .station small { display: block; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: #d8ffe4; } .station.dark { opacity: .5; filter: grayscale(.6); }
   canvas.pogo { filter: none !important; }
   html.petting .prop img, html.petting .prop b, html.petting u.confetti, html.petting .node, html.petting .bg i, html.petting .bg::after, html.petting .path .flow, html.petting .logo, html.petting .mapbar button { animation-play-state: paused !important; }
   html.petting #mPet canvas.pogo { will-change: contents; }
-  .zone { position: absolute; width: 1860px; height: 1350px; pointer-events: none; opacity: .22; z-index: 0; filter: saturate(.3) brightness(.55); } .zone.past { opacity: 1; filter: saturate(1.5) brightness(1.15); }
-  .zone.past::after { content: ""; position: absolute; inset: 15%; border-radius: 50%; background: radial-gradient(circle, rgba(255, 240, 160, .35), rgba(255, 240, 160, 0) 70%); }
+  .path { isolation: isolate; }
+  .gloom { position: absolute; inset: -400px; pointer-events: none; z-index: -2; background: rgba(6, 3, 16, .78); }
+  .zone { position: absolute; width: 1440px; height: 1200px; pointer-events: none; z-index: -1; }
+  .zone.past { background: var(--zb); filter: saturate(1.5) brightness(1.15); }
+  .zone.past::after { content: ""; position: absolute; inset: 22%; border-radius: 50%; background: radial-gradient(circle, rgba(255, 240, 160, .4), rgba(255, 240, 160, 0) 70%); }
+  .zone.now { width: 1080px; height: 900px; background: radial-gradient(ellipse at 50% 50%, rgba(190, 170, 230, .5), rgba(190, 170, 230, 0) 62%); }
   .prop.house img { width: 3.2em; height: 3.2em; animation: none; }
   .prop.life img { width: 2.6em; height: 2.6em; }
   .prop.birdfly { width: 78px; height: 78px; animation: birdFly var(--fd, 16s) linear var(--dl, 0s) infinite; } .prop.birdfly img { width: 52px; height: 52px; animation: birdFlap .5s ease-in-out infinite alternate; }
@@ -142,7 +146,7 @@
   .bg { top: -130px; bottom: -10px; transform: translateY(var(--py, 0px)); will-change: transform; }
   .node:active { translate: 0 4px; }
   .node.fz:not(.locked)::before { content: "⏱"; position: absolute; top: -8px; left: -8px; width: 22px; height: 22px; border-radius: 50%; background: #5a1fd0; border: 2px solid #fff; font-size: 12px; line-height: 21px; text-align: center; text-shadow: none; }
-  .node.locked { background: radial-gradient(circle at 35% 30%, #8a7ab0, #4e3e82 58%, #2e2458); color: #cfc6e8; box-shadow: 0 7px 0 #33108a, 0 10px 18px rgba(0, 0, 0, .3); border: 3px solid rgba(255, 255, 255, .4); cursor: default; }
+  .node.locked { background: radial-gradient(circle at 35% 30%, #4a3f6a, #241c40 58%, #120d26); color: #8a80a8; box-shadow: 0 7px 0 #33108a, 0 10px 18px rgba(0, 0, 0, .3); border: 3px solid rgba(255, 255, 255, .4); cursor: default; }
   .node.locked::before { content: "🔒"; position: absolute; top: -10px; right: -8px; font-size: 18px; filter: drop-shadow(0 2px 2px rgba(27, 33, 80, .35)); }
   .node.done { background: radial-gradient(circle at 35% 30%, #fff3a8, #ffd23f 55%, #f0a400); color: #5a1fd0; text-shadow: 0 1px 0 rgba(255, 255, 255, .6); box-shadow: 0 7px 0 #8a5a00, 0 14px 22px rgba(0, 0, 0, .4); }
   .node.current { animation: nodeIn .5s cubic-bezier(.2, 1.4, .4, 1) both, pulse 1.2s .5s infinite; }
@@ -310,6 +314,9 @@
   .prop { position: absolute; transform: translate(-50%, -50%); line-height: 1; pointer-events: none; }
   .prop b { display: block; font-weight: 400; transform-origin: 50% 100%; animation: sway var(--t, 3.4s) ease-in-out var(--dl, 0s) infinite alternate; }
   .prop.dark { opacity: .3; filter: saturate(.15) brightness(.6); } .prop.dark b { animation: none; }
+  .prop.dead { opacity: .9; filter: brightness(.7); } .prop.dead img { width: 2.6em; height: 2.6em; animation: sway 6s ease-in-out infinite alternate; }
+  u.fog { position: absolute; width: 260px; height: 90px; margin: -45px 0 0 -130px; border-radius: 50%; background: radial-gradient(ellipse, rgba(120, 110, 150, .32), rgba(120, 110, 150, 0) 70%); pointer-events: none; animation: fogDrift 9s ease-in-out var(--dl, 0s) infinite alternate; }
+  @keyframes fogDrift { from { translate: -40px 0; opacity: .6; } to { translate: 40px -10px; opacity: 1; } }
   .prop.lit::after { content: ""; position: absolute; left: 50%; top: 55%; width: 190%; height: 190%; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, rgba(255, 226, 150, .26), rgba(255, 226, 150, 0) 68%); z-index: -1; animation: glow 2.6s ease-in-out var(--dl, 0s) infinite alternate; }
   @keyframes sway { from { transform: rotate(-5deg) translateY(0); } to { transform: rotate(5deg) translateY(-3px); } }
   @keyframes glow { from { opacity: .45; } to { opacity: 1; } }
@@ -1017,7 +1024,7 @@ function buildMap() {
   // scaled up until the stops are about 125 px apart: a wide plane that scrolls both ways, with only one stretch of rail in view at a time.
   // The curve is a closed Catmull-Rom spline through the traced points, sampled every 6 px; the 200 stops sit at equal distances along it.
   const { pts, road: roadPts, H, MW, roadLen } = (() => {
-    const S = 40, P = [[683, 345], [672, 372], [650, 385], [618, 372], [582, 345], [567, 305], [527, 290], [507, 245], [470, 205], [430, 190], [395, 220], [367, 250], [330, 258], [300, 250], [298, 200], [305, 140], [312, 100], [305, 78], [280, 82], [240, 105], [190, 130], [150, 110], [112, 45], [70, 40], [40, 78], [60, 100], [150, 125], [230, 158], [300, 185], [325, 195], [360, 175], [415, 130], [440, 135], [460, 122], [483, 120], [520, 150], [600, 250]]
+    const S = 48, P = [[683, 345], [672, 372], [650, 385], [618, 372], [582, 345], [567, 305], [527, 290], [507, 245], [470, 205], [430, 190], [395, 220], [367, 250], [330, 258], [300, 250], [298, 200], [305, 140], [312, 100], [305, 78], [280, 82], [240, 105], [190, 130], [150, 110], [112, 45], [70, 40], [40, 78], [60, 100], [150, 125], [230, 158], [300, 185], [325, 195], [360, 175], [415, 130], [440, 135], [460, 122], [483, 120], [520, 150], [600, 250]]
       .map(([x, y]) => [x * S + 80, y * S + 80]);
     const n = P.length, pt = (i) => P[(i % n + n) % n], road = [];
     for (let i = 0; i < n; i++) { const a = pt(i - 1), b = pt(i), c = pt(i + 1), d = pt(i + 2), seg = Math.hypot(c[0] - b[0], c[1] - b[1]), steps = Math.max(4, Math.round(seg / 6));
@@ -1041,14 +1048,19 @@ function buildMap() {
   const doneLen = highest() * roadLen / LEVELS.length;
   svg.innerHTML = `<path d="${d}" fill="none" stroke="#120838" stroke-width="72" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 12)"/><path d="${d}" fill="none" stroke="#6a5a88" stroke-width="72" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="#1a1008" stroke-width="54" stroke-dasharray="12 16" stroke-linecap="butt" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="#c8c0d8" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="#6a5a88" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="#fff3c4" stroke-width="72" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${doneLen.toFixed(1)} ${(roadLen - doneLen + 10).toFixed(1)}"/><path d="${d}" fill="none" stroke="#7a4a10" stroke-width="54" stroke-dasharray="12 16" stroke-linecap="butt" stroke-linejoin="round" stroke-dashoffset="0" style="stroke-dasharray:12 16" /><path d="${d}" fill="none" stroke="#ffd23f" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${doneLen.toFixed(1)} ${(roadLen - doneLen + 10).toFixed(1)}"/><path d="${d}" fill="none" stroke="#ff9a1a" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${doneLen.toFixed(1)} ${(roadLen - doneLen + 10).toFixed(1)}"/>`;
   const cur = highest(), villX = {}; path.querySelectorAll(".chap, .station, .prop").forEach(n => n.remove());
-  { let h = ""; pts.forEach((p, i) => { const C = CHAPTERS[chapOf(i)], dark = i > cur, side = p[0] > MW / 2 ? -1 : 1, px = Math.max(26, Math.min(MW - 26, p[0] + side * (330 + (i * 37) % 90))), e = isMordo(i) && !save.stars[i] ? MORDO : C.props[(i * 7 + chapOf(i)) % 4];
+  path.querySelectorAll(".gloom, .zone").forEach(n => n.remove()); path.insertAdjacentHTML("afterbegin", `<div class="gloom"></div>`);
+  { let h = ""; pts.forEach((p, i) => { const C = CHAPTERS[chapOf(i)], dark = i > cur;
+      if (i < cur) h += `<div class="zone past" style="top:${p[1] - 600}px;left:${p[0] - 720}px;--zb:radial-gradient(ellipse at 50% 50%, #${(CHAP_GROUND[chapOf(i)] || 0x3f8a4d).toString(16).padStart(6, "0")} 0%, rgba(0,0,0,0) 62%)"></div>`;
+      else if (i === cur) h += `<div class="zone now" style="top:${p[1] - 450}px;left:${p[0] - 540}px"></div>`;
+      const side = p[0] > MW / 2 ? -1 : 1, px = Math.max(26, Math.min(MW - 26, p[0] + side * (330 + (i * 37) % 90))), e = isMordo(i) && !save.stars[i] ? MORDO : C.props[(i * 7 + chapOf(i)) % 4];
       if (i % 10 === 0) {
-        h += `<div class="zone${cur > i ? " past" : ""}" style="top:${p[1] - 780}px;left:${p[0] - 930}px;background:radial-gradient(ellipse at 50% 50%, #${(CHAP_GROUND[chapOf(i)] || 0x3f8a4d).toString(16).padStart(6, "0")} 0%, rgba(0,0,0,0) 62%)"></div>`;
+
         const past = cur > i;
-        // the village goes on the roomy side of its stop, toward the middle of the map
-        if (D3) { const [cx, vy, vs] = placeBox(p[0] + side * 300, p[1] + 280, 520, 390, side, true, 90), vw = Math.round(520 * vs); if (vs > 0) { villX[i] = cx; h += `<div class="prop village${dark ? " dark" : past ? " party" : ""}" style="left:${cx }px;top:${vy}px;width:${vw}px"><img src="${D3.village(chapOf(i), past, 480)}" alt=""></div>`; } }   // no room at all: no village rather than one on the rails
+        // the village goes on the roomy side of its stop, toward the middle of the map; ahead of the player there is no village yet, only its dead ground
+        if (D3 && past) { const [cx, vy, vs] = placeBox(p[0] + side * 300, p[1] + 280, 520, 390, side, true, 90), vw = Math.round(520 * vs); if (vs > 0) { villX[i] = cx; h += `<div class="prop village${dark ? " dark" : past ? " party" : ""}" style="left:${cx }px;top:${vy}px;width:${vw}px"><img src="${D3.village(chapOf(i), past, 480)}" alt=""></div>`; } }   // no room at all: no village rather than one on the rails
         if (past) for (let k = 0; k < 22; k++) { const y = p[1] + 40 + (k * 55) % 230, x = clearX(p[0] + side * -(60 + (k * 79) % 300), y, side); h += `<u class="confetti" style="left:${x }px;top:${y}px;background:${["#ff5c8a", "#ffd23f", "#4fc3f7", "#7be36f"][k % 4]};--dl:-${(k * .23).toFixed(2)}s"></u>`; }
         return; }
+      if (dark) { if (D3 && i % 3 === 0) { const [dx, dy, ds] = placeBox(p[0] + side * (380 + (i * 37) % 160), p[1] - 40 + (i * 13) % 80, 150, 150, side, false, 80); if (ds >= .7) h += `<div class="prop dead" style="left:${dx}px;top:${dy}px;font-size:${Math.round(60 * ds)}px"><img src="${D3.sprite("deadtree", 128)}" alt=""></div>`; } for (let f = 0; f < 3; f++) { const fy = p[1] - 160 + (f * 97) % 320, fx = clearX(p[0] + (f % 2 ? side : -side) * (300 + (f * 83 + i * 17) % 300), fy, f % 2 ? side : -side, 60); h += `<u class="fog" style="left:${fx}px;top:${fy}px;--dl:-${((i + f) % 9) * .7}s"></u>`; } return; }
       const fs = isMordo(i) ? 64 : 50 + (i * 11) % 28, inner = D3 ? `<img src="${D3.sprite(isMordo(i) && !save.stars[i] ? "magpie" : (D3.EMO[e] || "bush"), 112)}" alt="">` : `<b>${e}</b>`, [pxc, py, ps] = placeBox(px, p[1] - 50 + (i * 13) % 46, fs * 2.3, fs * 2.3, side, false, 62);
       if (ps < .7) { /* no room beside the rails here */ } else
       if (D3 && save.stars[i] && i % 10 !== 0) { const LIFE = [["forest", 1.9, 0], ["deer", 1.2, 1], ["butterfly", .8, 1], ["hedgehog", .9, 1], ["duck", .9, 1], ["fox", 1.1, 1], ["rabbit", .9, 1], ["forest", 1.6, 0], ["tulip", .8, 0], ["flower", .8, 0]];
@@ -1290,6 +1302,7 @@ const D3 = (() => {
     fox: (g) => { const F = matS(0xe06a2a); put("sphS", F, 0, .34, 0, .17, .15, .3, g); put("sphS", matS(0xfff2dc), 0, .28, .05, .13, .1, .2, g); put("sphS", F, 0, .5, .26, .11, .1, .12, g); put("cone", F, 0, .46, .4, .05, .14, .05, g, Math.PI / 2); put("sphS", matS(0x111111), 0, .44, .47, .02, g); for (const k of [-1, 1]) { put("cone", F, k * .06, .64, .22, .035, .1, .035, g); put("sphS", matS(0x111111), k * .045, .53, .34, .015, g); put("cyl", matS(0x3a2a1a), k * .08, .12, .14, .025, .24, .025, g); put("cyl", matS(0x3a2a1a), k * .08, .12, -.14, .025, .24, .025, g); } put("sphS", F, 0, .3, -.36, .07, .07, .2, g, .4); put("sphS", matS(0xffffff), 0, .3, -.52, .05, g); },
     rabbit: (g) => { const F = matS(0xd9c5aa); put("sphS", F, 0, .24, 0, .15, .14, .2, g); put("sphS", F, 0, .44, .14, .11, g); for (const k of [-1, 1]) { put("sphS", F, k * .05, .66, .1, .035, .13, .03, g, 0, 0, -k * .15); put("sphS", matS(0x111111), k * .045, .46, .23, .015, g); } put("sphS", matS(0xffffff), 0, .24, -.2, .05, g); put("sphS", matS(0xff8f9a), 0, .42, .25, .015, g); },
     forest: (g) => { [[-.5, .2, "pine", 1], [.3, -.2, "tree", 1.1], [-.1, .5, "round", .8], [.6, .4, "pine", .7], [-.8, -.3, "bush", .7]].forEach(([x, z, k, s]) => { const h = grp(g); h.position.set(x, 0, z); h.scale.setScalar(s); BUILD[k](h); }); },
+    deadtree: (g) => { const B = mat(0x2a1f2e); put("cyl", B, 0, .55, 0, .08, 1.1, .11, g); [[.5, .9, .9], [-.45, .75, -1], [.3, 1.2, .5], [-.2, 1.3, -.4]].forEach(([x, y, rz]) => put("cyl", B, x * .5, y, 0, .035, .5, .035, g, 0, 0, rz)); put("sph", mat(0x1a1420), 0, .05, 0, .3, .06, .3, g); },
     fence: (g) => { for (let i = -2; i <= 2; i++) put("box", mat(0xd9b48a), i * .34, .22, 0, .06, .44, .06, g); put("box", mat(0xd9b48a), 0, .3, 0, 1.5, .05, .04, g); put("box", mat(0xd9b48a), 0, .14, 0, 1.5, .05, .04, g); },
     well: (g) => { put("cyl", mat(STONE), 0, .18, 0, .3, .36, .3, g); put("cyl", mat(0x4a4a6a), 0, .37, 0, .22, .02, .22, g); put("box", mat(0x7a4a22), -.26, .5, 0, .05, .6, .05, g); put("box", mat(0x7a4a22), .26, .5, 0, .05, .6, .05, g); put("pyr", mat(0xe8432a), 0, .9, 0, .5, .3, .5, g, 0, Math.PI / 4); },
     // the whole village as one diorama: a lawn, a cobbled lane, fences, a well, three cottages, trees and lamps, and a party on top once the trail has passed
