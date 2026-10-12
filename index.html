@@ -272,7 +272,7 @@
   .goalrow { display: flex; justify-content: center; gap: 12px; margin: 10px 0 18px; font-weight: 900; font-size: 18px; }
   .goalrow div { background: rgba(0, 0, 0, .4); border: 2px solid rgba(255, 255, 255, .2); border-radius: 14px; padding: 10px 14px; }
   .goalrow div small { display: block; font-size: 11px; color: #ffe7a3; text-transform: uppercase; letter-spacing: .06em; }
-  .toast { position: fixed; left: 50%; top: 42%; transform: translate(-50%, -50%) scale(.4); font-size: clamp(48px, 11vw, 80px); background: linear-gradient(#fff, #ffd23f 60%, #ff8a00); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 4px 0 #27096b) drop-shadow(0 8px 14px rgba(0, 0, 0, .45)); font-weight: 900; letter-spacing: -.03em; color: #fff; -webkit-text-stroke: 2px #27096b; paint-order: stroke fill; text-shadow: 0 6px 0 #27096b, 0 14px 30px rgba(0, 0, 0, .5); pointer-events: none; opacity: 0; z-index: 9; white-space: nowrap; }
+  .toast { position: fixed; left: 50%; top: var(--toastY, 42%); transform: translate(-50%, -50%) scale(.4); font-size: clamp(26px, 6.5vw, 40px); padding: 6px 22px; border-radius: 999px; background: rgba(20, 8, 60, .92); border: 2px solid #ffd23f; color: #ffe27a; box-shadow: 0 6px 0 #27096b, 0 12px 20px rgba(0, 0, 0, .45); white-space: nowrap; font-weight: 900; letter-spacing: -.03em; color: #fff; -webkit-text-stroke: 2px #27096b; paint-order: stroke fill; text-shadow: 0 6px 0 #27096b, 0 14px 30px rgba(0, 0, 0, .5); pointer-events: none; opacity: 0; z-index: 9; white-space: nowrap; }
   @keyframes toastIn { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.3) rotate(-8deg); } 18% { opacity: 1; transform: translate(-50%, -50%) scale(1.15) rotate(2deg); } 30% { transform: translate(-50%, -50%) scale(1) rotate(0); } 75% { opacity: 1; transform: translate(-50%, -52%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -70%) scale(1.1); } }
   .fly { position: fixed; z-index: 8; font-size: 30px; pointer-events: none; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .5)); }
   /* ---------- motion + new features ---------- */
@@ -937,7 +937,10 @@ const TOAST_KF = [
   { opacity: 1, transform: "translate(-50%,-52%) scale(1) rotate(0deg)", offset: .75, easing: "cubic-bezier(.5,0,.9,.6)" },
   { opacity: 0, transform: "translate(-50%,-70%) scale(1.1) rotate(0deg)" }];
 let toastA = null;
-function toast(t) { if (!t) return; const el = $("toast"); el.textContent = t; el.style.fontSize = t.length > 13 ? "clamp(20px, 5.6vw, 36px)" : ""; if (toastA) toastA.cancel(); if (el.animate) toastA = el.animate(TOAST_KF, { duration: 1100 }); }
+function toast(t) { if (!t) return; const el = $("toast"); el.textContent = t; el.style.fontSize = t.length > 13 ? "clamp(18px, 4.6vw, 28px)" : "";
+  // in a level the word sits right above the board, never over the gems
+  if (G && !$("game").hidden) { const r = canvas.getBoundingClientRect(); el.style.setProperty("--toastY", Math.max(40, r.top - 30) + "px"); } else el.style.removeProperty("--toastY");
+  if (toastA) toastA.cancel(); if (el.animate) toastA = el.animate(TOAST_KF, { duration: 1100 }); }
 
 // instruction messages (boosters etc.): a crisp pill just above the board, readable for 3 s, never over the cells
 let tipA = null;
