@@ -149,6 +149,7 @@
 
   /* ---------- game ---------- */
   #game { display: flex; flex-direction: column; }
+  html:not(.app) #game { justify-content: center; } html:not(.app) #boardWrap { flex: 0 0 auto; } html:not(.app) .hud { padding-top: 8px; }
   .hud { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: max(12px, env(safe-area-inset-top)) 14px 8px; }
   .hud .box { flex: 0 1 auto; background: rgba(8, 10, 34, .7); border: 2px solid rgba(255, 255, 255, .28); border-radius: 16px; padding: 6px 12px; text-align: center; min-width: 78px; box-shadow: 0 4px 0 rgba(0, 0, 0, .35); }
   .hud .box { border-color: #ffd23f; background: linear-gradient(#9a5cff, #5a1fd0); box-shadow: 0 5px 0 #27096b, 0 10px 16px rgba(0, 0, 0, .35), inset 0 2px 0 rgba(255, 255, 255, .28), inset 0 -6px 10px rgba(39, 9, 107, .4); }
@@ -990,7 +991,8 @@ function buildMap() {
       if (i % 10 === 0) { h += `<div class="chap${dark ? " dark" : ""}" style="top:${p[1] - 78}px;${side < 0 ? "left:4%" : "right:4%"}">${i / 10 + 1} · ${C.name}</div>`;
         h += `<div class="zone${cur > i ? " past" : ""}" style="top:${p[1] - 520}px;background:radial-gradient(ellipse at 50% 50%, #${(CHAP_GROUND[chapOf(i)] || 0x3f8a4d).toString(16).padStart(6, "0")} 0%, rgba(0,0,0,0) 62%)"></div>`;
         const past = cur > i;
-        if (D3) { const y = p[1] + 150, [cx, vs] = placeBox(p[0] + side * -150, y, 270, 190, side), vw = Math.round(270 * vs); villX[i] = cx; h += `<div class="prop village${dark ? " dark" : past ? " party" : ""}" style="left:${cx / 420 * 100}%;top:${y}px;width:${vw}px"><img src="${D3.village(chapOf(i), past, 480)}" alt=""></div>`; }
+        // the village goes on the roomy side of its stop, toward the middle of the map
+        if (D3) { const y = p[1] + 150, [cx, vs] = placeBox(p[0] + side * 150, y, 270, 190, side), vw = Math.round(270 * vs); villX[i] = cx; h += `<div class="prop village${dark ? " dark" : past ? " party" : ""}" style="left:${cx / 420 * 100}%;top:${y}px;width:${vw}px"><img src="${D3.village(chapOf(i), past, 480)}" alt=""></div>`; }
         if (past) for (let k = 0; k < 22; k++) { const y = p[1] + 30 + (k * 37) % 150, x = clearX(p[0] + side * -(40 + (k * 53) % 200), y, side); h += `<u class="confetti" style="left:${x / 420 * 100}%;top:${y}px;background:${["#ff5c8a", "#ffd23f", "#4fc3f7", "#7be36f"][k % 4]};--dl:-${(k * .23).toFixed(2)}s"></u>`; }
         return; }
       const inner = D3 ? `<img src="${D3.sprite(isMordo(i) && !save.stars[i] ? "magpie" : (D3.EMO[e] || "bush"), 112)}" alt="">` : `<b>${e}</b>`, py = p[1] - 34 + (i * 13) % 30, pxc = clearX(px, py, side);
