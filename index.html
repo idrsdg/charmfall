@@ -104,7 +104,7 @@
   .pill + .pill { border-color: #ffd23f; }
   .path { position: relative; width: 420px; margin: 10px 0 0; }
   /* on a phone the whole map is drawn at two thirds: the rails stay as far apart, more of the circuit fits on the screen, the stops stay big enough to tap */
-  .path { zoom: .62; } @media (max-width: 600px) { .path { zoom: .3; } }
+  .pathWrap { position: relative; overflow: hidden; margin: 10px 0 0; } .path { transform-origin: 0 0; transform: scale(var(--mz, .62)); will-change: transform; margin: 0; } :root { --mz: .62; } @media (max-width: 600px) { :root { --mz: .3; } }
   .path svg { position: absolute; inset: 0; width: 100%; height: 100%; }
   .node { position: absolute; width: 150px; height: 150px; margin: -75px 0 0 -75px; border-radius: 46px; display: grid; place-items: center; font-size: 54px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); background: radial-gradient(circle at 35% 30%, #ffc48a, #ff7a1a 55%, #d95a00); box-shadow: 0 7px 0 #7a3200, 0 14px 22px rgba(0, 0, 0, .4), inset 0 -4px 0 rgba(0, 0, 0, .12); cursor: pointer; transition: translate .14s cubic-bezier(.3, 1.5, .5, 1); animation: nodeIn .5s cubic-bezier(.2, 1.4, .4, 1) both; animation-delay: var(--d, 0s); }
   @keyframes nodeIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -129,7 +129,7 @@
   .path { isolation: isolate; }
   .gloom { position: absolute; inset: -400px; pointer-events: none; z-index: -2; background: rgba(6, 3, 16, .78); }
   .zone { position: absolute; width: 1440px; height: 1200px; pointer-events: none; z-index: -1; }
-  .zone.past { background: var(--zb); filter: saturate(1.5) brightness(1.15); }
+  .zone.past { background: var(--zb); }
   .zone.past::after { content: ""; position: absolute; inset: 22%; border-radius: 50%; background: radial-gradient(circle, rgba(255, 240, 160, .4), rgba(255, 240, 160, 0) 70%); }
   .zone.now { width: 1080px; height: 900px; background: radial-gradient(ellipse at 50% 50%, rgba(190, 170, 230, .5), rgba(190, 170, 230, 0) 62%); }
   .prop.house img { width: 3.2em; height: 3.2em; animation: none; }
@@ -137,12 +137,12 @@
   .prop.birdfly { width: 78px; height: 78px; animation: birdFly var(--fd, 16s) linear var(--dl, 0s) infinite; } .prop.birdfly img { width: 52px; height: 52px; animation: birdFlap .5s ease-in-out infinite alternate; }
   @keyframes birdFly { from { translate: 0 0; } 50% { translate: 480px -40px; } to { translate: 960px 8px; } } @keyframes birdFlap { from { scale: var(--sc, 1) 1; } to { scale: var(--sc, 1) .86; } }
   .prop.village { z-index: 1; } .prop.village img { width: 100%; height: auto; animation: none; }
-  .prop.party { opacity: 1; } .prop.hop img { animation: villagerHop 1.1s ease-in-out var(--dl, 0s) infinite alternate; }
+  .prop.party { opacity: 1; } .prop.village img { animation: none; } .prop.hop img { animation: villagerHop 1.1s ease-in-out var(--dl, 0s) infinite alternate; }
   @keyframes villagerHop { from { translate: 0 0; rotate: -4deg; } to { translate: 0 -7px; rotate: 4deg; } }
   u.confetti { position: absolute; width: 5px; height: 5px; border-radius: 1px; pointer-events: none; z-index: 1; animation: confettiDrift 2.6s ease-in-out var(--dl, 0s) infinite alternate; }
   u.firefly { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: #fff3a0; box-shadow: 0 0 14px 6px rgba(255, 226, 120, .8); pointer-events: none; animation: tw 2.4s var(--dl, 0s) infinite alternate; }
   @keyframes confettiDrift { from { translate: 0 0; rotate: 0deg; opacity: .95; } to { translate: 6px -14px; rotate: 160deg; opacity: .5; } }
-  .prop img { display: block; width: 2.3em; height: 2.3em; transform-origin: 50% 100%; animation: sway var(--t, 3.4s) ease-in-out var(--dl, 0s) infinite alternate; } .prop.dark img { animation: none; } .prop::after { content: ""; position: absolute; left: 50%; bottom: -6px; width: 70%; height: 10px; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(rgba(0, 0, 0, .45), rgba(0, 0, 0, 0) 70%); }
+  .prop img { display: block; width: 2.3em; height: 2.3em; transform-origin: 50% 100%; } .prop.dark img { animation: none; } .prop::after { content: ""; position: absolute; left: 50%; bottom: -6px; width: 70%; height: 10px; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(rgba(0, 0, 0, .45), rgba(0, 0, 0, 0) 70%); }
   .bg { top: -130px; bottom: -10px; transform: translateY(var(--py, 0px)); will-change: transform; }
   .node:active { translate: 0 4px; }
   .node.fz:not(.locked)::before { content: "⏱"; position: absolute; top: -8px; left: -8px; width: 22px; height: 22px; border-radius: 50%; background: #5a1fd0; border: 2px solid #fff; font-size: 12px; line-height: 21px; text-align: center; text-shadow: none; }
@@ -313,8 +313,8 @@
   .chap.dark { color: #e6dcff; background: linear-gradient(#8a63e6, #5a36bd); border-color: rgba(255, 255, 255, .3); }
   .prop { position: absolute; transform: translate(-50%, -50%); line-height: 1; pointer-events: none; }
   .prop b { display: block; font-weight: 400; transform-origin: 50% 100%; animation: sway var(--t, 3.4s) ease-in-out var(--dl, 0s) infinite alternate; }
-  .prop.dark { opacity: .3; filter: saturate(.15) brightness(.6); } .prop.dark b { animation: none; }
-  .prop.dead { opacity: .9; filter: brightness(.7); } .prop.dead img { width: 2.6em; height: 2.6em; animation: sway 6s ease-in-out infinite alternate; }
+  .prop.dark { opacity: .3; } .prop.dark b { animation: none; }
+  .prop.dead { opacity: .7; } .prop.dead img { width: 2.6em; height: 2.6em; }
   u.fog { position: absolute; width: 260px; height: 90px; margin: -45px 0 0 -130px; border-radius: 50%; background: radial-gradient(ellipse, rgba(120, 110, 150, .32), rgba(120, 110, 150, 0) 70%); pointer-events: none; animation: fogDrift 9s ease-in-out var(--dl, 0s) infinite alternate; }
   @keyframes fogDrift { from { translate: -40px 0; opacity: .6; } to { translate: 40px -10px; opacity: 1; } }
   .prop.lit::after { content: ""; position: absolute; left: 50%; top: 55%; width: 190%; height: 190%; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, rgba(255, 226, 150, .26), rgba(255, 226, 150, 0) 68%); z-index: -1; animation: glow 2.6s ease-in-out var(--dl, 0s) infinite alternate; }
@@ -380,7 +380,7 @@
     <div class="logo">Prism <span>Pop</span></div>
     <div style="display:flex;gap:8px"><span class="pill"><i class="ico" data-ico="heart"></i> <span id="lives">5</span></span><span class="pill"><i class="ico" data-ico="star"></i> <span id="starsTotal">0</span></span><span class="pill" id="carPill" style="border-color:#ff8a3c"><i class="ico" data-ico="carrot"></i> <span id="carrots">0</span></span><span class="pill" id="topSet" style="border-color:#22e65a;cursor:pointer" title="Settings"><i class="ico" data-ico="gear"></i></span><a class="pill" href="../games/" style="color:#fff;text-decoration:none;border-color:#ffd23f;box-shadow:0 3px 0 #27096b"><i class="ico" data-ico="games"></i></a></div>
   </div>
-  <div class="path" id="path"><svg id="pathSvg" viewBox="0 0 420 1400" preserveAspectRatio="none"></svg></div>
+  <div class="pathWrap" id="pathWrap"><div class="path" id="path"><svg id="pathSvg" viewBox="0 0 420 1400" preserveAspectRatio="none"></svg></div></div>
   <div class="mapset"><button type="button" class="pill" id="setSound" title="Sound"><span><i class="ico" data-ico="sound"></i></span></button><button type="button" class="pill" id="setGear" title="Settings"><span><i class="ico" data-ico="gear"></i></span></button></div>
   <div class="mapbar"><button type="button" id="btnDaily" title="Daily gift"><i class="ico" data-ico="gift"></i></button><button type="button" id="btnAch" title="Awards"><i class="ico" data-ico="trophy"></i><span id="achN"></span></button><button type="button" id="btnGarden" title="Garden"><i class="ico" data-ico="garden"></i><span id="gdN"></span></button><button type="button" id="btnRace" title="Race"><i class="ico" data-ico="race"></i></button><button type="button" id="btnAlbum" title="Album"><i class="ico" data-ico="album"></i><span id="albN"></span></button><button type="button" id="btnSeason" title="Season"><i class="ico" data-ico="season"></i><span id="ssN"></span></button></div>
 </section>
@@ -1035,7 +1035,7 @@ function buildMap() {
     for (let o = 0; o < 12; o++) { const cand = []; for (let i = 0; i < LEVELS.length; i++) cand.push(at((i * gap + o * gap / 12) % L)); let md = 1e9; for (let i = 0; i < cand.length; i++) for (let j = i + 2; j < cand.length; j++) md = Math.min(md, Math.hypot(cand[i][0] - cand[j][0], cand[i][1] - cand[j][1])); if (md > bestD) { bestD = md; best = cand; } }
     return { pts: best, road, H: Math.max(...road.map(q => q[1])) + 260, MW: Math.max(...road.map(q => q[0])) + 240, roadLen: L }; })();
   path.style.width = MW + "px";
-  path.style.height = H + "px"; svg.setAttribute("viewBox", `0 0 ${MW} ${H}`);
+  path.style.height = H + "px"; svg.setAttribute("viewBox", `0 0 ${MW} ${H}`); const MZ = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--mz")) || 1; $("pathWrap").style.width = Math.round(MW * MZ) + "px"; $("pathWrap").style.height = Math.round(H * MZ) + "px";
   // nothing may sit on the rails: a prop that lands too close to the road is pushed sideways until it is clear
   const nearRoad = (x, y) => { let best = 1e9; for (const q of roadPts) { if (Math.abs(q[1] - y) > 140) continue; best = Math.min(best, Math.hypot(q[0] - x, q[1] - y)); } return best; };
   const clearX = (x, y, dir, half = 0) => { let n = 0; while (nearRoad(x, y) < 58 + half && n++ < 18) x += dir * 14; if (nearRoad(x, y) < 58 + half) { x = x - dir * 14 * 36; n = 0; while (nearRoad(x, y) < 58 + half && n++ < 18) x += dir * 14; } return Math.max(24 + half * .4, Math.min(MW - 24 - half * .4, x)); };
@@ -1060,13 +1060,13 @@ function buildMap() {
         if (D3 && past) { const [cx, vy, vs] = placeBox(p[0] + side * 300, p[1] + 280, 520, 390, side, true, 90), vw = Math.round(520 * vs); if (vs > 0) { villX[i] = cx; h += `<div class="prop village${dark ? " dark" : past ? " party" : ""}" style="left:${cx }px;top:${vy}px;width:${vw}px"><img src="${D3.village(chapOf(i), past, 480)}" alt=""></div>`; } }   // no room at all: no village rather than one on the rails
         if (past) for (let k = 0; k < 22; k++) { const y = p[1] + 40 + (k * 55) % 230, x = clearX(p[0] + side * -(60 + (k * 79) % 300), y, side); h += `<u class="confetti" style="left:${x }px;top:${y}px;background:${["#ff5c8a", "#ffd23f", "#4fc3f7", "#7be36f"][k % 4]};--dl:-${(k * .23).toFixed(2)}s"></u>`; }
         return; }
-      if (dark) { if (D3 && i % 3 === 0) { const [dx, dy, ds] = placeBox(p[0] + side * (380 + (i * 37) % 160), p[1] - 40 + (i * 13) % 80, 150, 150, side, false, 80); if (ds >= .7) h += `<div class="prop dead" style="left:${dx}px;top:${dy}px;font-size:${Math.round(60 * ds)}px"><img src="${D3.sprite("deadtree", 128)}" alt=""></div>`; } for (let f = 0; f < 3; f++) { const fy = p[1] - 160 + (f * 97) % 320, fx = clearX(p[0] + (f % 2 ? side : -side) * (300 + (f * 83 + i * 17) % 300), fy, f % 2 ? side : -side, 60); h += `<u class="fog" style="left:${fx}px;top:${fy}px;--dl:-${((i + f) % 9) * .7}s"></u>`; } return; }
+      if (dark) { if (D3 && i % 3 === 0) { const [dx, dy, ds] = placeBox(p[0] + side * (380 + (i * 37) % 160), p[1] - 40 + (i * 13) % 80, 150, 150, side, false, 80); if (ds >= .7) h += `<div class="prop dead" style="left:${dx}px;top:${dy}px;font-size:${Math.round(60 * ds)}px"><img src="${D3.sprite("deadtree", 128)}" alt=""></div>`; } if (i % 2 === 0) for (let f = 0; f < 2; f++) { const fy = p[1] - 160 + (f * 97) % 320, fx = clearX(p[0] + (f % 2 ? side : -side) * (300 + (f * 83 + i * 17) % 300), fy, f % 2 ? side : -side, 60); h += `<u class="fog" style="left:${fx}px;top:${fy}px;--dl:-${((i + f) % 9) * .7}s"></u>`; } return; }
       const fs = isMordo(i) ? 64 : 50 + (i * 11) % 28, inner = D3 ? `<img src="${D3.sprite(isMordo(i) && !save.stars[i] ? "magpie" : (D3.EMO[e] || "bush"), 112)}" alt="">` : `<b>${e}</b>`, [pxc, py, ps] = placeBox(px, p[1] - 50 + (i * 13) % 46, fs * 2.3, fs * 2.3, side, false, 62);
       if (ps < .7) { /* no room beside the rails here */ } else
       if (D3 && save.stars[i] && i % 10 !== 0) { const LIFE = [["forest", 1.9, 0], ["deer", 1.2, 1], ["butterfly", .8, 1], ["hedgehog", .9, 1], ["duck", .9, 1], ["fox", 1.1, 1], ["rabbit", .9, 1], ["forest", 1.6, 0], ["tulip", .8, 0], ["flower", .8, 0]];
         [[LIFE[i % 10], -side, 420 + (i * 29) % 160, 120], [LIFE[(i * 7 + 3) % 10], side, 440 + (i * 17) % 140, -90], [LIFE[(i * 3 + 5) % 10], -side, 520 + (i * 23) % 120, -160], [LIFE[(i * 11 + 7) % 10], side, 560 + (i * 13) % 100, 170]].forEach(([life, dir, off, dy], q) => { const sz = 150 * life[1], [lx, ly, ls] = placeBox(p[0] + dir * off, p[1] + dy, sz, sz, dir, false, 160);
           if (ls >= .7) h += `<div class="prop life${life[2] ? " hop" : ""}" style="left:${lx}px;top:${ly}px;font-size:${Math.round(58 * life[1] * ls)}px;--dl:-${((i + q) % 5) * .4}s"><img src="${D3.sprite(life[0], 128)}" alt=""></div>`; });   // no room beside the rails: no creature there
-        for (let f = 0; f < 8; f++) { const fy = p[1] - 170 + (f * 71) % 340, fx = clearX(p[0] + (f % 2 ? side : -side) * (260 + (f * 79 + i * 13) % 320), fy, f % 2 ? side : -side, 6); h += `<u class="firefly" style="left:${fx}px;top:${fy}px;--dl:-${((i * 3 + f) % 7) * .5}s"></u>`; }
+        for (let f = 0; f < 4; f++) { const fy = p[1] - 170 + (f * 71) % 340, fx = clearX(p[0] + (f % 2 ? side : -side) * (260 + (f * 79 + i * 13) % 320), fy, f % 2 ? side : -side, 6); h += `<u class="firefly" style="left:${fx}px;top:${fy}px;--dl:-${((i * 3 + f) % 7) * .5}s"></u>`; }
         if (i % 10 === 5) for (let b = 0; b < 2; b++) h += `<div class="prop birdfly" style="left:${p[0] - 480}px;top:${p[1] - 90 + b * 130}px;--fd:${(14 + b * 5)}s;--dl:-${b * 7}s;--sc:${b ? -1 : 1}"><img src="${D3.sprite(b ? "bird2" : "bird", 96)}" alt=""></div>`; }
       h += `<div class="prop${dark ? " dark" : (i * 5) % 3 === 0 ? " lit" : ""}" style="left:${pxc }px;top:${py}px;font-size:${Math.round(fs * ps)}px;--t:${(2.6 + (i % 5) * .35).toFixed(2)}s;--dl:-${(i % 7) * .4}s">${inner}</div>`;
     });
@@ -1082,7 +1082,7 @@ function buildMap() {
     if (save.stars[i]) { const s = document.createElement("div"); s.className = "stars"; s.textContent = "✦".repeat(save.stars[i]); n.appendChild(s); }
     if (i <= cur) n.addEventListener("click", () => openLevel(i)); path.appendChild(n);
   });
-  const Z = parseFloat(getComputedStyle(path).zoom) || 1, at = (i) => [Math.max(0, pts[i][0] * Z - innerWidth / 2), Math.max(0, pts[i][1] * Z - innerHeight * .55)], target = at(cur), from = lastCur < 0 ? [target[0], target[1] + 240] : lastCur !== cur ? at(lastCur) : null; lastCur = cur;
+  const Z = MZ, at = (i) => [Math.max(0, pts[i][0] * Z - innerWidth / 2), Math.max(0, pts[i][1] * Z - innerHeight * .55)], target = at(cur), from = lastCur < 0 ? [target[0], target[1] + 240] : lastCur !== cur ? at(lastCur) : null; lastCur = cur;
   requestAnimationFrame(() => scrollMap(target, from));
   if (carrotNew) { carrotNew = 0; setTimeout(() => { pogoMood("happy", 2400); bump("carPill"); }, 700); }
 }
