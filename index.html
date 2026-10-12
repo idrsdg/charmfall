@@ -149,7 +149,8 @@
 
   /* ---------- game ---------- */
   #game { display: flex; flex-direction: column; }
-  html:not(.app) #game { justify-content: center; } html:not(.app) #boardWrap { flex: 0 0 auto; } html:not(.app) .hud { padding-top: 8px; }
+  html:not(.app) #game { justify-content: center; } html:not(.app) #boardWrap { flex: 0 0 min(100vw, 56vh); } html:not(.app) .hud { padding-top: 8px; }
+  #c { filter: none !important; }   /* no per-frame colour filter on the board: the palette is vivid on its own and the GPU keeps the frame */
   .hud { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: max(12px, env(safe-area-inset-top)) 14px 8px; }
   .hud .box { flex: 0 1 auto; background: rgba(8, 10, 34, .7); border: 2px solid rgba(255, 255, 255, .28); border-radius: 16px; padding: 6px 12px; text-align: center; min-width: 78px; box-shadow: 0 4px 0 rgba(0, 0, 0, .35); }
   .hud .box { border-color: #ffd23f; background: linear-gradient(#9a5cff, #5a1fd0); box-shadow: 0 5px 0 #27096b, 0 10px 16px rgba(0, 0, 0, .35), inset 0 2px 0 rgba(255, 255, 255, .28), inset 0 -6px 10px rgba(39, 9, 107, .4); }
