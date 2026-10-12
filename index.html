@@ -635,13 +635,16 @@ save.boost = Object.assign({}, BOOST0, save.boost); save.daily = Object.assign({
 save.stats = Object.assign({ gems: 0, defused: 0, frenzy: 0, maxCombo: 0, bombs: 0, wins: 0, bestScore: 0 }, save.stats);
 function persist() { try { localStorage.setItem(SAVE, JSON.stringify(save)); } catch (e) {} }
 const LIFE_MS = 30 * 60000;
+// window.__infLives (set by the iOS wrapper on a chosen phone) keeps lives full and never spends one
+const livesTxt = () => window.__infLives ? "∞" : save.lives;
 function tickLives() {
+  if (window.__infLives) { save.lives = 5; save.lifeAt = Date.now(); return; }
   if (save.lives >= 5) { save.lifeAt = Date.now(); return; }
   while (save.lives < 5 && Date.now() - save.lifeAt >= LIFE_MS) { save.lives++; save.lifeAt += LIFE_MS; }
   if (save.lives >= 5) save.lifeAt = Date.now();
   persist();
 }
-setInterval(() => { tickLives(); $("lives").textContent = save.lives; }, 5000);
+setInterval(() => { tickLives(); $("lives").textContent = livesTxt(); }, 5000);
 
 
 // ---------------------------------------------------------------- audio
@@ -715,7 +718,7 @@ function scrollMap(target, from) {
 }
 ["pointerdown", "wheel", "touchstart"].forEach(ev => $("map").addEventListener(ev, () => cancelAnimationFrame(mapRaf), { passive: true }));
 function buildMap() {
-  tickLives(); $("lives").textContent = save.lives; $("starsTotal").textContent = totalStars(); $("carrots").textContent = save.carrots || 0;
+  tickLives(); $("lives").textContent = livesTxt(); $("starsTotal").textContent = totalStars(); $("carrots").textContent = save.carrots || 0;
   $("btnDaily").classList.toggle("ready", !dailyState().claimed); $("achN").textContent = Object.keys(save.ach).length + "/" + ACH.length;
   const path = $("path"), svg = $("pathSvg"); path.querySelectorAll(".node, .pogoMap").forEach(n => n.remove());
   const H = 150 + LEVELS.length * 86; path.style.height = H + "px"; svg.setAttribute("viewBox", `0 0 420 ${H}`);
@@ -775,7 +778,7 @@ function claimDaily() {
   const s = dailyState(); if (s.claimed) return false; const rw = DAILY[s.idx];
   for (const k in rw) save.boost[k] += rw[k]; if (s.idx === 6) { save.lives = 5; save.lifeAt = Date.now(); }
   save.daily = { last: dayStr(), streak: s.streak }; persist(); SFX.reward(); checkAch();
-  if (isOpen("mDaily")) openDaily(); if (!$("map").hidden) { $("lives").textContent = save.lives; $("btnDaily").classList.remove("ready"); } if (G) updateHud();
+  if (isOpen("mDaily")) openDaily(); if (!$("map").hidden) { $("lives").textContent = livesTxt(); $("btnDaily").classList.remove("ready"); } if (G) updateHud();
   return true;
 }
 $("btnDaily").addEventListener("click", openDaily); $("dClaim").addEventListener("click", claimDaily); $("dClose").addEventListener("click", () => hide("mDaily"));
@@ -925,10 +928,10 @@ function plantFuse(n, quiet) {
   return true;
 }
 function tickFuses() {
-  const F = G.L.fuse; if (!F) return null; let dead = null, low = false, n = 0; const now = performance.now();
-  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const g = cell(r, c); if (!g || !g.fuse) continue; g.fuse--; g.fuseT = now; n++; if (g.fuse <= 0) { g.fuse = 0; dead = dead || g; } else if (g.fuse <= 3) low = true; }
+  const F = G.L.fuse; if (!F) return null; let dead = null, low = false, warn = false, n = 0; const now = performance.now();
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const g = cell(r, c); if (!g || !g.fuse) continue; g.fuse--; g.fuseT = now; n++; if (g.fuse <= 0) { g.fuse = 0; dead = dead || g; } else if (g.fuse <= 3) { low = true; if (g.fuse === 3) warn = true; } }
   if (dead) return dead;
-  if (low) SFX.tick();
+  if (low) SFX.tick(); if (warn) tip("⏱ A countdown gem is at 3: match it before it hits 0", 2600);
   if (--G.fuseIn <= 0) { G.fuseIn = F.every; if (n < F.max && plantFuse(F.n)) SFX.tick(); }
   return null;
 }
@@ -1244,9 +1247,9 @@ async function win() {
 async function lose(dead) {
   G.over = true; G.undo = null; G.boost = null; closePauseIfOpen();
   if (dead) { toast("Boom!"); SFX.boom(); shock(dead.c + .5, dead.r + .5, "#ff2d55"); burst(dead.c + .5, dead.r + .5, "#ff2d55", 16, "tri"); flash(.35, 420, "#ff2d55"); G.shake = performance.now(); } else toast("Out of moves");
-  SFX.lose(); save.lives = Math.max(0, save.lives - 1); delete save.inProgress; persist(); updateHud();
-  $("ePogo").innerHTML = pogoSvg("cheer"); $("eTitle").textContent = dead ? "Countdown hit zero" : "Out of moves"; $("eStars").innerHTML = `<div class="hearts">${"❤️".repeat(save.lives)}<s>${"❤️".repeat(5 - save.lives)}</s></div>`; $("eSub").textContent = "−1 life · " + save.lives + " of 5 left" + (save.lives < 5 ? " · a new one every 30 min" : ""); delete $("eText").dataset.final;
-  $("eText").textContent = dead ? "Match countdown gems before they reach 0." : goalText(G.L) + " · " + goalShow(goalLeft()) + " to go";
+  SFX.lose(); if (!window.__infLives) save.lives = Math.max(0, save.lives - 1); delete save.inProgress; persist(); updateHud();
+  $("ePogo").innerHTML = pogoSvg("cheer"); $("eTitle").textContent = dead ? "Countdown hit zero" : "Out of moves"; $("eStars").innerHTML = `<div class="hearts">${"❤️".repeat(save.lives)}<s>${"❤️".repeat(5 - save.lives)}</s></div>`; $("eSub").textContent = window.__infLives ? "Unlimited lives" : "−1 life · " + save.lives + " of 5 left" + (save.lives < 5 ? " · a new one every 30 min" : ""); delete $("eText").dataset.final;
+  $("eText").textContent = dead ? "A gem with a number reached 0. It loses 1 every move: match it before it runs out, even with moves left." : goalText(G.L) + " · " + goalShow(goalLeft()) + " to go";
   $("eBtns").innerHTML = "";
   if (!dead && save.boost.moves) mkBtn("eBtns", "+5 moves (" + save.boost.moves + ")", () => { save.boost.moves--; persist(); G.moves += 5; G.over = false; G.busy = false; hide("mEnd"); updateHud(); G.hintAt = performance.now() + 4000; SFX.reward(); snapshot(); });
   mkBtn("eBtns", "Retry", () => { hide("mEnd"); const lv = G.level; showMap(); openLevel(lv); }, true);
