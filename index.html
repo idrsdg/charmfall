@@ -114,6 +114,8 @@
   .node.locked { background-image: radial-gradient(circle at 32% 26%, rgba(255, 255, 255, .6) 0, rgba(255, 255, 255, .2) 16%, rgba(255, 255, 255, 0) 38%), radial-gradient(circle at 50% 110%, rgba(0, 0, 0, .4), rgba(0, 0, 0, 0) 55%), radial-gradient(circle at 35% 30%, #c9b6ff, #9070ea 58%, #6a48cc); }
   .node.done { background-image: radial-gradient(circle at 32% 26%, rgba(255, 255, 255, .95) 0, rgba(255, 255, 255, .4) 16%, rgba(255, 255, 255, 0) 38%), radial-gradient(circle at 50% 110%, rgba(120, 70, 0, .4), rgba(0, 0, 0, 0) 55%), radial-gradient(circle at 35% 30%, #fff3a8, #ffd23f 55%, #f0a400); }
   .chap { z-index: 2; box-shadow: 0 6px 0 #27096b, 0 12px 20px rgba(0, 0, 0, .45); }
+  .station { position: absolute; z-index: 2; white-space: nowrap; padding: 6px 14px 7px; border-radius: 12px; font-size: 14px; font-weight: 900; color: #fff; background: linear-gradient(#3fd06a, #1d7a3c); border: 2px solid #c8ffd8; box-shadow: 0 6px 0 #0d4a22, 0 12px 20px rgba(0, 0, 0, .45); text-align: center; }
+  .station small { display: block; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: #d8ffe4; } .station.dark { opacity: .5; filter: grayscale(.6); }
   canvas.pogo { filter: none !important; }
   html.petting .prop img, html.petting .prop b, html.petting u.confetti, html.petting .node, html.petting .bg i, html.petting .bg::after, html.petting .path .flow, html.petting .logo, html.petting .mapbar button { animation-play-state: paused !important; }
   html.petting #mPet canvas.pogo { will-change: contents; }
@@ -443,6 +445,17 @@
   <p id="stText"></p>
   <p class="sub" id="stChest" hidden></p>
   <button class="btn" id="stGo">Continue</button>
+</div></div>
+<div class="modal" id="mStation" hidden><div class="card">
+  <p class="chip" id="snChip" style="background:#1d7a3c;border-color:#8fe0a8"></p>
+  <h2 id="snTitle"></h2>
+  <div class="garden" id="snScene"></div>
+  <p class="sub" style="margin:0 0 4px">Charmwood is <b id="snPct" style="color:#8fe0a8"></b> green</p>
+  <div class="bar ss" style="margin:0 0 10px"><i id="snBar" style="background:linear-gradient(90deg,#7be36f,#1fa84a)"></i></div>
+  <p id="snText"></p>
+  <p class="sub" id="snNext" style="color:#ffe7a3"></p>
+  <p class="sub" id="snPay"></p>
+  <button class="btn" id="snGo">Onward</button>
 </div></div>
 <div class="modal" id="mGarden" hidden><div class="card">
   <h2>Pogo's garden</h2><p id="gdText" class="sub"></p>
@@ -800,9 +813,9 @@ const CAL = [29, 12, 25, 21600, 19, 12, 16100, 17, 12, 31, 20, 14, 20, 7400, 50,
 })();
 // ---- difficulty. HARDER lists levels whose goal is thickened (double jelly, one more frost layer, two more keys) so they last long enough to tune;
 // TUNE is the measured number for every one of the 200 levels: moves, or the score target on score levels, from 70 to 400 solver games per level (tune/pick4.cjs).
-// The curve is a straight line from 99% solver wins on level 1 to 5% on level 200, and every level is strictly harder than the one before it (tune/pick5.cjs, a DP over
-// the measured games). Hard labels follow the line: under 40% from level 126, under 20% from level 169.
-const HARDER = new Set([2, 5, 6, 10, 21, 22, 31, 34, 35, 38, 41, 42, 45, 48, 71]), TUNE = [1000,1000,23,1000,30,23,19,35,9000,19,15,33,23000,26,22,41,15000,44,28,35,56000,14,10,13,28000,17,29,23,35,26,23,15,15,33000,17,16,24000,18,9,17,17,47,36,2000,35,19,22000,20,15,41,30,37,31,15000,26,24,26000,20,32,27,53,21,33,8000,31,22,29000,17,41,30,37,20,27,19000,42,35,15000,24,15,36,32,14,26,38000,12,37,4000,23,15,32,42,21,19,23000,19,29,8000,26,18,27,31,12,22,35000,26,17,3000,42,8,41,23,12,21,53000,10,14,38000,21,8,36,27,13,24,41000,33,19,20000,20,14,26,20,12,11,20000,15,14,37000,20,12,33,16,8,20,45000,20,11,2000,20,8,34,37,15,22,25000,19,15,39000,16,11,24,15,9,10,63000,16,8,33000,19,13,30,19,9,13,25000,11,8,1000,24,10,33,11,8,17,45000,9,10,27000,18,8,30,10,8,8,2000,25,13,30000,14,8,17];
+// The curve is a straight line from 99% solver wins on level 1 to 5% on level 200 with every level strictly harder than the one before it (tune/pick5.cjs, a DP over
+// the measured games), and then every target keeps only half of its losses ("50% easier", 2026-10-13): level 200 sits near 52%. Hard labels: the last quarter is hard, the last eighth super hard.
+const HARDER = new Set([2, 5, 6, 10, 21, 22, 31, 34, 35, 38, 41, 42, 45, 48, 71]), TUNE = [1000,1000,23,1000,30,23,19,35,9000,21,16,35,21000,27,24,43,14000,45,28,35,56000,14,10,13,28000,17,29,23,34,26,23,15,16,32000,17,16,24000,18,9,17,19,43,36,2000,37,20,18000,22,16,52,31,45,34,3000,32,28,22000,24,46,33,43,20,31,6000,35,24,25000,19,45,42,39,23,29,8000,42,34,5000,26,16,62,46,17,31,31000,15,27,7000,21,14,31,41,28,24,8000,22,33,3000,28,21,36,37,14,29,4000,40,24,2000,42,8,51,26,14,23,36000,13,17,29000,21,8,39,30,14,26,11000,47,27,2000,32,24,38,29,21,22,3000,21,18,11000,26,16,42,22,12,25,5000,29,21,3000,20,8,35,38,16,34,2000,28,22,5000,26,23,35,25,14,22,4000,29,8,23000,26,20,39,32,8,17,9000,17,15,1000,25,11,35,13,9,20,38000,12,12,10000,24,13,39,15,18,24,10000,26,23,22000,22,12,29];
 for (const i of [17, 25, 29, 69]) LEVELS[i].colors = 5;
 // the far shore levels the solver could not win even with 120 moves are thinned: one frost layer less, stone gone, two keys fewer
 for (const i of [101, 104, 108, 111, 118, 124, 128, 138, 141, 148, 151]) { const L = LEVELS[i]; if (L.layout) L.layout = L.layout.map(r => r.replace(/G/g, "F").replace(/s/g, ".").replace(/F/g, (m, k) => k % 2 ? "f" : "F")); if (L.jelly) L.jelly = L.jelly.map(r => r.replace(/J/g, "j")); if (L.need) L.need = Math.max(3, L.need - 2); if (L.fuse) L.fuse = Object.assign({}, L.fuse, { start: 1, max: 2 }); }
@@ -828,7 +841,7 @@ for (const i of [26, 40, 52, 62, 75, 80, 90, 105, 106, 115, 116, 117, 118, 135, 
 // One star is always 1,000 points: the HUD, goals and results talk in stars, never in raw points.
 // From level 51 on the solver wins under 40% of the time, from 86 on under 15%: those levels are labelled, and pay extra carrots.
 // The curve is a saw inside every chapter, not a straight slide: positions 5 and 8 are hard, 10 is Mordo's (super hard from chapter 6 on) and the level after a hard one is a breather.
-const chapN = (i) => Math.floor(i / 10), hardOf = (i) => i >= 168 ? 2 : i >= 125 ? 1 : 0, HARD_TXT = ["", "Hard level", "Super hard level"];
+const chapN = (i) => Math.floor(i / 10), hardOf = (i) => i >= 175 ? 2 : i >= 150 ? 1 : 0, HARD_TXT = ["", "Hard level", "Super hard level"];
 const STAR = 1000, starsOf = (pts) => Math.floor(pts / STAR);
 LEVELS.forEach((L) => { if (L.target) L.target = Math.max(STAR, Math.round(L.target / STAR) * STAR); });
 const BOOST0 = { hammer: 3, moves: 3, switch: 3, cross: 2, undo: 3 };
@@ -991,8 +1004,9 @@ function buildMap() {
   // the path is a dusky slate trail through the stones with a line of lights drifting along it
   let d = "M" + roadPts[0][0].toFixed(1) + " " + roadPts[0][1].toFixed(1); for (let i = 1; i < roadPts.length; i++) d += ` L${roadPts[i][0].toFixed(1)} ${roadPts[i][1].toFixed(1)}`;
   svg.innerHTML = `<path d="${d}" fill="none" stroke="#3a2466" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 7)"/><path d="${d}" fill="none" stroke="#a89ab8" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="#3a2010" stroke-width="34" stroke-dasharray="8 14" stroke-linecap="butt" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="#f4f1ea" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="#a89ab8" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>`;
-  const cur = highest(), villX = {}; path.querySelectorAll(".chap, .prop").forEach(n => n.remove());
+  const cur = highest(), villX = {}; path.querySelectorAll(".chap, .station, .prop").forEach(n => n.remove());
   { let h = ""; pts.forEach((p, i) => { const C = CHAPTERS[chapOf(i)], dark = i > cur, side = p[0] > 210 ? -1 : 1, px = Math.max(26, Math.min(394, p[0] + side * (150 + (i * 37) % 40))), e = isMordo(i) && !save.stars[i] ? MORDO : C.props[(i * 7 + chapOf(i)) % 4];
+      if ((i + 1) % STATION_EVERY === 0) { const k = (i + 1) / STATION_EVERY; h += `<div class="station${i >= cur ? " dark" : ""}" style="top:${p[1] + 58}px;${side < 0 ? "left:4%" : "right:4%"}"><small>Station ${k}</small>${STATIONS[k - 1].name}</div>`; }
       if (i % 10 === 0) { h += `<div class="chap${dark ? " dark" : ""}" style="top:${p[1] - 78}px;${side < 0 ? "left:4%" : "right:4%"}">${i / 10 + 1} · ${C.name}</div>`;
         h += `<div class="zone${cur > i ? " past" : ""}" style="top:${p[1] - 520}px;background:radial-gradient(ellipse at 50% 50%, #${(CHAP_GROUND[chapOf(i)] || 0x3f8a4d).toString(16).padStart(6, "0")} 0%, rgba(0,0,0,0) 62%)"></div>`;
         const past = cur > i;
@@ -1104,6 +1118,28 @@ const MORDO = "🐦‍⬛", CHAPTERS = [
   { name: "Gritt's Roost", props: ["🪶", "🌙", "💎", "🪺"], title: "The roost", text: "Gritt's roost on the highest rock. Ten levels to the last of the far shore's charms." }
 ], STORY_END = { title: "The garden shines again", text: "Gritt hands back the last charm, Mordo pretends he never took the first one, and both get a carrot. Pogo's garden has never been brighter." };
 const chapOf = (i) => Math.min(CHAPTERS.length - 1, Math.floor(i / 10)), isMordo = (i) => i % 10 === 9, allDone = () => !!save.stars[LEVELS.length - 1];
+// ---- the Green Line: the whole trail is one job, bringing Charmwood back to green. The charms were the forest's light; when Mordo took them the trees went grey.
+// Every 25 levels is a station. A station card says how far the forest has come, tells a few lines of its story, names the next station and its task, and pays a little.
+const STATION_EVERY = 25, STATIONS = [
+  { name: "Ash Gate", task: "Clear the ash", story: "The forest edge was grey with ash from the old fire. Every charm you won back drew a little green up through it. The first saplings are standing.", next: "Wake the spring that went quiet when the charms left." },
+  { name: "Dry Spring", task: "Wake the spring", story: "The spring stopped the night Mordo flew off. Today it dripped, then it ran. The moss along the stones is green again and the frogs are back.", next: "Find the seeds the squirrels hid before the fire." },
+  { name: "Seed Hollow", task: "Sow the hollow", story: "The squirrels buried acorns in the hollow and forgot them. You did not. Rows of shoots now run down the slope where the ash was deepest.", next: "Wake the Old Oak at the heart of the wood." },
+  { name: "Old Oak", task: "Wake the Old Oak", story: "Half way. The Old Oak has slept since the lights went out. This morning one branch leafed, then the whole crown. The forest has its heart back.", next: "Call the birds home to the ridge." },
+  { name: "Bird Ridge", task: "Call the birds home", story: "Birds will not nest in a grey wood. The ridge is green now and the first songs came back at dawn, three at once, then too many to count.", next: "Bring the bees to the meadow so the orchard can bloom." },
+  { name: "Bee Meadow", task: "Bring the bees", story: "The meadow filled with clover and the bees followed. The orchard on the far shore blossomed a week early. Pogo says it has never smelled better.", next: "Mend the river bridge so the deer can cross again." },
+  { name: "River Bridge", task: "Mend the bridge", story: "The bridge had lost half its planks. With the river running clear and the woods green on both banks, the deer crossed tonight for the first time in years.", next: "Climb to the Crown and light the last of the forest." },
+  { name: "The Crown", task: "Light the Crown", story: "The highest ridge of Charmwood is green from end to end. Every charm is home. Mordo and Gritt watch from the pines, a little ashamed and very well fed on carrots.", next: "Keep the forest bright. New stretches of the Green Line open with every update." }
+];
+const stationN = () => Math.min(STATIONS.length, Math.floor(highest() / STATION_EVERY)), forestPct = () => Math.min(100, Math.round(highest() / LEVELS.length * 100));
+function stationCheck() {
+  if (window.__fast || roomStart) return false; const k = stationN(); if ((save.stationSeen || 0) >= k || k < 1) return false;
+  save.stationSeen = k; const S = STATIONS[k - 1]; save.carrots = (save.carrots || 0) + 8; carrotNew += 8; save.boost.hammer++; persist();
+  $("snChip").textContent = "Station " + k + " of " + STATIONS.length + " · " + S.name; $("snTitle").textContent = S.task; $("snPct").textContent = forestPct() + "%"; $("snBar").style.width = forestPct() + "%";
+  $("snText").textContent = S.story; $("snNext").textContent = k < STATIONS.length ? "Next station: " + STATIONS[k].name + " · " + S.next : S.next; $("snPay").textContent = "🎁 Station gift: +8 🥕 · +1 Hammer";
+  if (D3) D3.show($("snScene"), { props: [{ kind: "forest", x: -2.2, z: .2, s: 1.3 }, { kind: "forest", x: 2.2, z: -.3, s: 1.2, ry: 1 }, { kind: "pogo", x: -.3, z: 1.3, s: 1 }, { kind: ["sprout", "pond", "tulip", "round", "bird", "bee", "bridge", "star"][k - 1], x: 1.2, z: 1.1, s: 1, bob: true }, { kind: "deer", x: .6, z: -1.2, s: .9, ry: -.8 }], ground: 0x3fc85f, hill: 0x2d8b3c });
+  show("mStation"); SFX.reward(); return true;
+}
+$("snGo").addEventListener("click", () => { hide("mStation"); buildMap(); });
 function storyScene(ch, end) {
   const C = CHAPTERS[Math.min(CHAPTERS.length - 1, ch)], out = [], put = (e, x, y, sz, live) => out.push(`<span class="${live ? "live" : ""}" style="left:${x}%;top:${y}%;font-size:${sz}px;--t:${(2.4 + (x % 7) * .3).toFixed(1)}s;--dl:-${(y % 5) * .4}s">${e}</span>`);
   put(C.props[0], 14, 52, 50, true); put(C.props[1], 84, 60, 40, true); put(C.props[2], 66, 84, 26, true); put(C.props[3], 32, 86, 24, true); put(C.props[0], 92, 30, 30, true);
@@ -1125,7 +1161,7 @@ function storyCheck() {
   $("stChest").hidden = !paid; $("stChest").textContent = paid ? "🎁 Chapter chest: +5 🥕 · +1 of every booster · ∞ lives for 15 min" : "";
   show("mStory"); if (paid) SFX.reward(); return true;
 }
-$("stGo").addEventListener("click", () => { hide("mStory"); buildMap(); });
+$("stGo").addEventListener("click", () => { hide("mStory"); buildMap(); setTimeout(stationCheck, 350); });
 
 // ---------------------------------------------------------------- the garden and the story cards in 3D
 // One small renderer draws every scene: a round lawn, a hill behind it and a handful of props built from spheres, cones and boxes.
@@ -1457,7 +1493,7 @@ let pendingLevel = 0;
 $("sPlay").addEventListener("click", () => { hide("mStart"); clearProgress(); startLevel(pendingLevel); });
 $("mStart").addEventListener("click", e => { if (e.target === $("mStart")) hide("mStart"); });
 $("btnBack").addEventListener("click", () => { if (G && !G.over) { snapshot(); logEv("quit"); } showMap(); });
-function showMap() { tip(""); G = null; $("game").hidden = true; $("map").hidden = false; buildMap(); storyCheck(); }
+function showMap() { tip(""); G = null; $("game").hidden = true; $("map").hidden = false; buildMap(); if (!storyCheck()) stationCheck(); }
 function starTargets(L) { if (L.target) return [L.target, L.target * 3, L.target * 6]; const base = { jelly: 20000, ingredients: 18000, blockers: 18000 }[L.goal] * (1 + L.moves / 40); return [base, base * 1.6, base * 2.3].map(Math.round); }
 
 // ---------------------------------------------------------------- daily reward (login streak)
@@ -2454,7 +2490,7 @@ requestAnimationFrame(render);
 
 // ---------------------------------------------------------------- boot + debug
 buildMap();
-if (!storyCheck() && save.inProgress && LEVELS[save.inProgress.level]) openLevel(save.inProgress.level);
+if (!storyCheck() && !stationCheck() && save.inProgress && LEVELS[save.inProgress.level]) openLevel(save.inProgress.level);
 checkAch();
 function bestMove() {
   let best = null, bestS = -1;
@@ -2524,7 +2560,25 @@ const TR = {
   "Garden charms": "Bahçe tılsımları", "Pond lights": "Gölet ışıkları", "Moon road": "Ay yolu", "Far shore": "Uzak kıyı",
   "Season": "Sezon", "Season {1}": "{1}. sezon", "{1} pts": "{1} puan", "tier {1} of {2}": "{2} kademeden {1}", "{1} day left": "{1} gün kaldı", "{1} days left": "{1} gün kaldı", "a win is 10 pts, hard levels and 3 stars pay more": "galibiyet 10 puan, zor seviye ve 3 yıldız daha fazla verir",
   "{1} / {2} to tier {3}": "{3}. kademeye {1} / {2}", "All tiers done": "Bütün kademeler tamam", "Tier {1}": "{1}. kademe", "∞ lives {1} min": "{1} dakika ∞ can", "🃏 album card": "🃏 albüm kartı",
-  "The end": "Son", "Chapter {1}": "{1}. bölüm", "🎁 Chapter chest: +5 🥕 · +1 of every booster · ∞ lives for 15 min": "🎁 Bölüm sandığı: +5 🥕 · her güçlendiriciden +1 · 15 dakika ∞ can", "🎁 Chapter chest: +5 🥕": "🎁 Bölüm sandığı: +5 🥕", "+1 of every booster": "her güçlendiriciden +1", "∞ lives for 15 min": "15 dakika ∞ can",
+  "The end": "Son", "Chapter {1}": "{1}. bölüm", "Station {1} of {2}": "{2} duraktan {1}.", "Station {1}": "{1}. durak", "Charmwood is {1} green": "Tılsım Ormanı %{1} yeşil", "Next station: {1}": "Sonraki durak: {1}", "🎁 Station gift: +8 🥕 · +1 Hammer": "🎁 Durak hediyesi: +8 🥕 · +1 Çekiç", "Onward": "Yola devam",
+  "Ash Gate": "Kül Kapısı", "Dry Spring": "Kuru Pınar", "Seed Hollow": "Tohum Çukuru", "Old Oak": "Yaşlı Meşe", "Bird Ridge": "Kuş Sırtı", "Bee Meadow": "Arı Çayırı", "River Bridge": "Nehir Köprüsü", "The Crown": "Taç Tepe",
+  "Clear the ash": "Külü temizle", "Wake the spring": "Pınarı uyandır", "Sow the hollow": "Çukuru ek", "Wake the Old Oak": "Yaşlı Meşe'yi uyandır", "Call the birds home": "Kuşları eve çağır", "Bring the bees": "Arıları getir", "Mend the bridge": "Köprüyü onar", "Light the Crown": "Taç Tepe'yi aydınlat",
+  "The forest edge was grey with ash from the old fire. Every charm you won back drew a little green up through it. The first saplings are standing.": "Ormanın kıyısı eski yangının külüyle griydi. Geri kazandığın her tılsım külün arasından biraz yeşil çekti. İlk fidanlar ayakta.",
+  "Wake the spring that went quiet when the charms left.": "Tılsımlar gidince susan pınarı uyandır.",
+  "The spring stopped the night Mordo flew off. Today it dripped, then it ran. The moss along the stones is green again and the frogs are back.": "Pınar Mordo'nun uçtuğu gece durmuştu. Bugün önce damladı, sonra aktı. Taşlardaki yosun yeniden yeşil, kurbağalar döndü.",
+  "Find the seeds the squirrels hid before the fire.": "Sincapların yangından önce sakladığı tohumları bul.",
+  "The squirrels buried acorns in the hollow and forgot them. You did not. Rows of shoots now run down the slope where the ash was deepest.": "Sincaplar palamutları çukura gömüp unutmuştu. Sen unutmadın. Külün en kalın olduğu yamaçta artık sıra sıra filiz var.",
+  "Wake the Old Oak at the heart of the wood.": "Ormanın kalbindeki Yaşlı Meşe'yi uyandır.",
+  "Half way. The Old Oak has slept since the lights went out. This morning one branch leafed, then the whole crown. The forest has its heart back.": "Yarı yol. Yaşlı Meşe ışıklar söndüğünden beri uyuyordu. Bu sabah bir dalı yapraklandı, sonra bütün tacı. Ormanın kalbi geri geldi.",
+  "Call the birds home to the ridge.": "Kuşları sırta, evlerine çağır.",
+  "Birds will not nest in a grey wood. The ridge is green now and the first songs came back at dawn, three at once, then too many to count.": "Kuşlar gri ormana yuva yapmaz. Sırt artık yeşil ve ilk şarkılar şafakta döndü, önce üçü birden, sonra sayılamayacak kadar.",
+  "Bring the bees to the meadow so the orchard can bloom.": "Bahçe çiçek açsın diye arıları çayıra getir.",
+  "The meadow filled with clover and the bees followed. The orchard on the far shore blossomed a week early. Pogo says it has never smelled better.": "Çayır yoncayla doldu, arılar peşinden geldi. Uzak kıyıdaki bahçe bir hafta erken çiçek açtı. Pogo hiç bu kadar güzel kokmamıştı diyor.",
+  "Mend the river bridge so the deer can cross again.": "Geyikler yeniden geçebilsin diye nehir köprüsünü onar.",
+  "The bridge had lost half its planks. With the river running clear and the woods green on both banks, the deer crossed tonight for the first time in years.": "Köprünün kalaslarının yarısı gitmişti. Nehir berrak akıp iki yaka da yeşerince geyikler bu gece yıllardır ilk kez karşıya geçti.",
+  "Climb to the Crown and light the last of the forest.": "Taç Tepe'ye çık ve ormanın son köşesini aydınlat.",
+  "The highest ridge of Charmwood is green from end to end. Every charm is home. Mordo and Gritt watch from the pines, a little ashamed and very well fed on carrots.": "Tılsım Ormanı'nın en yüksek sırtı baştan başa yeşil. Her tılsım evinde. Mordo ile Gritt çamlardan izliyor, biraz mahcup, havuçla iyice doymuş.",
+  "Keep the forest bright. New stretches of the Green Line open with every update.": "Ormanı aydınlık tut. Yeşil Hat'ın yeni bölümleri her güncellemeyle açılır.", "🎁 Chapter chest: +5 🥕 · +1 of every booster · ∞ lives for 15 min": "🎁 Bölüm sandığı: +5 🥕 · her güçlendiriciden +1 · 15 dakika ∞ can", "🎁 Chapter chest: +5 🥕": "🎁 Bölüm sandığı: +5 🥕", "+1 of every booster": "her güçlendiriciden +1", "∞ lives for 15 min": "15 dakika ∞ can",
   "The Burrow": "Yuva", "Clover Meadow": "Yonca Çayırı", "Firefly Pond": "Ateş Böceği Göleti", "Mushroom Hollow": "Mantar Çukuru", "The Old Oak": "Yaşlı Meşe", "Bramble Maze": "Böğürtlen Labirenti", "Windmill Hill": "Yel Değirmeni Tepesi", "Moon Bridge": "Ay Köprüsü", "Magpie's Wood": "Saksağan Ormanı", "The Nest": "Yuva Tepesi",
   "Harbour Steps": "Liman Merdivenleri", "Lighthouse Rock": "Fener Kayası", "Tide Pools": "Gelgit Gölcükleri", "Driftwood Beach": "Kütük Kumsalı", "Salt Marsh": "Tuzlu Bataklık", "Cliff Path": "Kayalık Yolu", "Hermit's Orchard": "Münzevinin Bahçesi", "Thunder Ridge": "Gök Gürültüsü Sırtı", "Glass Caves": "Cam Mağaraları", "Gritt's Roost": "Gritt'in Tüneği",
   "The night the lights went out": "Işıkların söndüğü gece", "A magpie called Mordo swooped over Pogo's garden and carried off every shining charm. Follow his trail, win the charms back and light the garden again.": "Mordo adlı bir saksağan Pogo'nun bahçesine dalıp bütün parlak tılsımları kaçırdı. İzini sür, tılsımları geri kazan ve bahçeyi yeniden aydınlat.",
