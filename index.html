@@ -111,6 +111,7 @@
   .chap { z-index: 2; }
   .zone { position: absolute; left: -30%; width: 160%; height: 1000px; pointer-events: none; opacity: .3; z-index: 0; } .zone.past { opacity: .7; filter: saturate(1.6) brightness(1.15); }
   .prop.house img { width: 3.2em; height: 3.2em; animation: none; }
+  .train { position: absolute; width: 150px; height: 150px; margin: 0; pointer-events: none; z-index: 2; filter: drop-shadow(0 6px 5px rgba(0, 0, 0, .55)); }
   .prop.party { filter: saturate(1.7) brightness(1.15) drop-shadow(0 4px 4px rgba(0, 0, 0, .5)); } .prop.hop img { animation: villagerHop 1.1s ease-in-out var(--dl, 0s) infinite alternate; }
   @keyframes villagerHop { from { translate: 0 0; rotate: -4deg; } to { translate: 0 -7px; rotate: 4deg; } }
   u.confetti { position: absolute; width: 5px; height: 5px; border-radius: 1px; pointer-events: none; z-index: 1; animation: confettiDrift 2.6s ease-in-out var(--dl, 0s) infinite alternate; }
@@ -760,9 +761,9 @@ const CAL = [29, 12, 25, 21600, 19, 12, 16100, 17, 12, 31, 20, 14, 20, 7400, 50,
 })();
 // ---- difficulty. HARDER lists levels whose goal is thickened (double jelly, one more frost layer, two more keys) so they last long enough to tune;
 // TUNE is the measured number for every one of the 200 levels: moves, or the score target on score levels, from 70 to 400 solver games per level (tune/pick4.cjs).
-// The curve it aims for is a saw: levels 1-20 ease in, then every chapter has a base that slides from 72% to 45% solver wins by chapter 20, with positions 5 and 8 at 55% of base,
-// Mordo's level 10 at half (a third from chapter 6, never under 13%) and a breather after each hard one. On top of that every target keeps only half its losses ("50% easier", 2026-10-12).
-const HARDER = new Set([2, 5, 6, 10, 21, 22, 31, 34, 35, 38, 41, 42, 45, 48, 71]), TUNE = [30000,26000,17,17000,15,16,14,23,12000,15,10,29,27000,22,19,38,17000,38,25,33,56000,14,10,14,32000,20,21,21,32,18,21,14,15,33000,15,18,23000,17,11,17,21,27,22,3000,30,19,22000,16,16,35,32,53,27,8000,26,28,23000,21,55,28,45,21,26,7000,29,25,25000,16,48,28,42,27,32,4000,42,34,7000,23,17,34,33,17,32,29000,14,29,3000,21,17,30,40,27,23,8000,21,37,3000,28,57,29,38,15,31,3000,43,28,3000,34,8,42,27,14,25,8000,13,17,8000,23,8,36,31,15,29,4000,65,23,2000,27,26,34,31,26,25,2000,28,11,18000,24,16,37,23,13,26,3000,29,22,3000,22,11,38,52,25,31,3000,25,22,5000,25,25,32,27,15,24,3000,32,8,13000,26,22,39,26,10,21,3000,25,18,2000,22,11,32,12,11,22,9000,13,14,3000,26,16,40,19,26,28,3000,36,20,10000,24,15,31];
+// The curve is a straight line from 99% solver wins on level 1 to 5% on level 200, and every level is strictly harder than the one before it (tune/pick5.cjs, a DP over
+// the measured games). Hard labels follow the line: under 40% from level 126, under 20% from level 169.
+const HARDER = new Set([2, 5, 6, 10, 21, 22, 31, 34, 35, 38, 41, 42, 45, 48, 71]), TUNE = [1000,1000,23,1000,30,23,19,35,9000,19,15,33,23000,26,22,41,15000,44,28,35,56000,14,10,13,28000,17,29,23,35,26,23,15,15,33000,17,16,24000,18,9,17,17,47,36,2000,35,19,22000,20,15,41,30,37,31,15000,26,24,26000,20,32,27,53,21,33,8000,31,22,29000,17,41,30,37,20,27,19000,42,35,15000,24,15,36,32,14,26,38000,12,37,4000,23,15,32,42,21,19,23000,19,29,8000,26,18,27,31,12,22,35000,26,17,3000,42,8,41,23,12,21,53000,10,14,38000,21,8,36,27,13,24,41000,33,19,20000,20,14,26,20,12,11,20000,15,14,37000,20,12,33,16,8,20,45000,20,11,2000,20,8,34,37,15,22,25000,19,15,39000,16,11,24,15,9,10,63000,16,8,33000,19,13,30,19,9,13,25000,11,8,1000,24,10,33,11,8,17,45000,9,10,27000,18,8,30,10,8,8,2000,25,13,30000,14,8,17];
 for (const i of [17, 25, 29, 69]) LEVELS[i].colors = 5;
 // the far shore levels the solver could not win even with 120 moves are thinned: one frost layer less, stone gone, two keys fewer
 for (const i of [101, 104, 108, 111, 118, 124, 128, 138, 141, 148, 151]) { const L = LEVELS[i]; if (L.layout) L.layout = L.layout.map(r => r.replace(/G/g, "F").replace(/s/g, ".").replace(/F/g, (m, k) => k % 2 ? "f" : "F")); if (L.jelly) L.jelly = L.jelly.map(r => r.replace(/J/g, "j")); if (L.need) L.need = Math.max(3, L.need - 2); if (L.fuse) L.fuse = Object.assign({}, L.fuse, { start: 1, max: 2 }); }
@@ -781,10 +782,14 @@ for (let i = 100; i < LEVELS.length; i++) { const L = LEVELS[i]; if (!L.mask || 
 // levels the solver still lost too often for the easier curve: the countdown starts later and higher, frost loses a layer, stone goes
 for (const i of [26, 28, 51, 58, 60, 68, 70, 71, 74, 81, 88, 89, 91, 94, 98, 99, 104, 105, 109, 119, 122, 124, 129, 138, 139, 144, 149, 150, 158, 159, 164, 168, 169, 179, 188, 189, 194, 199]) { const L = LEVELS[i];
   if (L.fuse) L.fuse = { n: L.fuse.n + 4, start: 1, every: L.fuse.every + 3, max: 1 }; if (L.layout) L.layout = L.layout.map(r => r.replace(/G/g, "F").replace(/s/g, ".")); if (L.need) L.need = Math.max(3, L.need - 1); }
+// levels the solver won even with eight moves get more to do, so the curve can keep falling through them: double jelly, thicker frost, two more keys, a countdown
+for (const i of [26, 40, 52, 62, 75, 80, 90, 105, 106, 115, 116, 117, 118, 135, 145, 165, 170, 175, 180, 192]) { const L = LEVELS[i];
+  if (L.jelly) L.jelly = L.jelly.map(r => r.replace(/j/g, "J")); if (L.layout) L.layout = L.layout.map(r => r.replace(/f/g, "F").replace(/F/g, (m, k) => k % 2 ? "G" : "F")); if (L.need) L.need = Math.min(8, L.need + 2);
+  if (L.goal === "score") L.target = Math.round(L.target * 1.4); else if (!L.fuse && i >= 20) L.fuse = { n: 12, start: 1, every: 7, max: 2 }; }
 // One star is always 1,000 points: the HUD, goals and results talk in stars, never in raw points.
 // From level 51 on the solver wins under 40% of the time, from 86 on under 15%: those levels are labelled, and pay extra carrots.
 // The curve is a saw inside every chapter, not a straight slide: positions 5 and 8 are hard, 10 is Mordo's (super hard from chapter 6 on) and the level after a hard one is a breather.
-const chapN = (i) => Math.floor(i / 10), hardOf = (i) => i < 20 ? 0 : i % 10 === 9 ? (chapN(i) >= 5 ? 2 : 1) : (i % 10 === 4 || i % 10 === 7) ? 1 : 0, HARD_TXT = ["", "Hard level", "Super hard level"];
+const chapN = (i) => Math.floor(i / 10), hardOf = (i) => i >= 168 ? 2 : i >= 125 ? 1 : 0, HARD_TXT = ["", "Hard level", "Super hard level"];
 const STAR = 1000, starsOf = (pts) => Math.floor(pts / STAR);
 LEVELS.forEach((L) => { if (L.target) L.target = Math.max(STAR, Math.round(L.target / STAR) * STAR); });
 const BOOST0 = { hammer: 3, moves: 3, switch: 3, cross: 2, undo: 3 };
@@ -906,7 +911,7 @@ setTimeout(() => { for (let i = 0; i < 16; i++) { const C = COLORS[i % NCOL], o 
 const bg = $("bg"); for (let i = 0; i < 70; i++) { const s = document.createElement("i"); s.style.left = Math.random() * 100 + "%"; s.style.top = Math.random() * 100 + "%"; s.style.animationDelay = Math.random() * 3 + "s"; bg.appendChild(s); }
 function highest() { let h = 0; while (save.stars[h]) h++; return Math.min(h, LEVELS.length - 1); }
 const totalStars = () => Object.values(save.best).reduce((a, b) => a + starsOf(b), 0);
-let mapRaf = 0, lastCur = -1;
+let mapRaf = 0, lastCur = -1, trainRaf = 0;
 function scrollMap(target, from) {
   const el = $("map"); cancelAnimationFrame(mapRaf);
   if (from === null || from === target || window.__fast) { el.scrollTop = target; return; }
@@ -921,8 +926,11 @@ function buildMap() {
   $("btnDaily").classList.toggle("ready", !dailyState().claimed); $("achN").textContent = Object.keys(save.ach).length; $("gdN").textContent = gardenN(); $("albN").textContent = albumN(); const ss = seasonOf(); $("ssN").textContent = tierOf(ss); $("btnSeason").classList.toggle("ready", tierOf(ss) > ss.got); const rc = save.race; $("btnRace").innerHTML = ico(rc && huntWeek(rc.w) ? "hunt" : "race"); $("btnRace").classList.toggle("ready", !!rc && huntWeek(rc.w) && HUNT.filter(c => rc.wins >= c[0]).length > (rc.got || 0));
   const path = $("path"), svg = $("pathSvg"); path.querySelectorAll(".node, .pogoMap").forEach(n => n.remove());
   const H = 150 + LEVELS.length * 86; path.style.height = H + "px"; svg.setAttribute("viewBox", `0 0 420 ${H}`);
-  const amp = (i) => (window.__nativeApp ? 78 : 92) + 58 * Math.sin(i * .37 + 1), ph = (i) => i * .92 + Math.sin(i * .23) * 2.4;
-  const pts = LEVELS.map((_, i) => [210 + Math.sin(ph(i)) * amp(i), H - 130 - i * 86]);
+  const W = window.__nativeApp ? .84 : 1, road = (i) => Math.max(-150, Math.min(150, (Math.sin(i * .31) * 72 + Math.sin(i * .77 + 1.3) * 52 + Math.sin(i * .13 + 2.1) * 48 + Math.sin(i * 1.9 + .4) * 14) * W));
+  const pts = LEVELS.map((_, i) => [210 + road(i), H - 130 - i * 86]);
+  // nothing but the train may sit on the rails: a prop that lands within 56 px of the road is pushed sideways until it is clear
+  const nearRoad = (x, y) => { let best = 1e9; for (let k = 0; k < pts.length; k++) { const dy = pts[k][1] - y; if (Math.abs(dy) > 120) continue; for (let f = 0; f <= 1; f += .25) { const q = k + 1 < pts.length ? [pts[k][0] + (pts[k + 1][0] - pts[k][0]) * f, pts[k][1] + (pts[k + 1][1] - pts[k][1]) * f] : pts[k]; best = Math.min(best, Math.hypot(q[0] - x, q[1] - y)); } } return best; };
+  const clearX = (x, y, dir, half = 0) => { let n = 0; while (nearRoad(x, y) < 54 + half && n++ < 16) x += dir * 16; return Math.max(24 + half * .4, Math.min(396 - half * .4, x)); };
   // the path is a dusky slate trail through the stones with a line of lights drifting along it
   let d = "M" + pts[0][0] + " " + pts[0][1]; for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i], my = (a[1] + b[1]) / 2; d += ` C${a[0]} ${my} ${b[0]} ${my} ${b[0]} ${b[1]}`; }
   svg.innerHTML = `<path d="${d}" fill="none" stroke="#000" stroke-opacity=".5" stroke-width="46" stroke-linecap="round" transform="translate(0 12)"/><path d="${d}" fill="none" stroke="#4a2a7a" stroke-width="40" stroke-linecap="round" transform="translate(0 6)"/><path d="${d}" fill="none" stroke="#8a6aa8" stroke-width="40" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#3a2416" stroke-width="30" stroke-dasharray="7 15" stroke-linecap="butt"/><path d="${d}" fill="none" stroke="#e8d8b8" stroke-width="20" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#8a6aa8" stroke-width="13" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#3a2416" stroke-width="13" stroke-dasharray="7 15" stroke-linecap="butt" stroke-opacity=".9"/><path class="flow" d="${d}" fill="none" stroke="#ffe9b0" stroke-width="4" stroke-linecap="round" stroke-dasharray=".1 35.9"/>`;
@@ -931,13 +939,15 @@ function buildMap() {
       if (i % 10 === 0) { h += `<div class="chap${dark ? " dark" : ""}" style="top:${p[1] - 16}px;${side < 0 ? "left:4%" : "right:4%"}">${i / 10 + 1} · ${C.name}</div>`;
         h += `<div class="zone${cur > i ? " past" : ""}" style="top:${p[1] - 560}px;background:radial-gradient(ellipse at 50% 50%, #${(CHAP_GROUND[chapOf(i)] || 0x3f8a4d).toString(16).padStart(6, "0")} 0%, rgba(0,0,0,0) 62%)"></div>`;
         const past = cur > i, village = past ? [[-150, 44, 1.5, "hobbit3"], [-70, 86, 1.2, "hobbit4"], [-196, 112, 1.05, "hobbit5"], [-130, 10, 1.8, "rainbow"], [-120, 40, 1.4, "bunting"], [-40, 60, 1, "balloon"], [-200, 70, .9, "balloon"], [-110, 124, .8, "villager"], [-60, 132, .8, "villager2"], [-170, 136, .75, "villager3"], [-20, 128, .8, "villager"], [-150, 150, .7, "villager2"], [-20, 146, .8, "tulip"], [-90, 150, .7, "flower"], [-210, 140, .7, "flower"], [-60, 20, .9, "star"]] : [[-150, 44, 1.5, "hobbit"], [-70, 86, 1.2, "hobbit2"], [-196, 112, 1.05, "hobbit2"], [-110, 128, .75, "lantern"], [-30, 140, .9, "tree"]];
-        if (D3) village.forEach(([dx, dy, s, k], j) => { const x = Math.max(28, Math.min(392, p[0] + side * -dx)); h += `<div class="prop house${dark ? " dark" : past ? " party" : ""}${/villager|balloon/.test(k) ? " hop" : ""}" style="left:${x / 420 * 100}%;top:${p[1] + dy + 34}px;font-size:${Math.round(26 * s)}px;z-index:${j === 2 ? 0 : 1};--dl:-${(j * .37).toFixed(2)}s"><img src="${D3.sprite(k, 128)}" alt=""></div>`; });
-        if (past) for (let k = 0; k < 22; k++) h += `<u class="confetti" style="left:${(p[0] + side * -(40 + (k * 53) % 170)) / 420 * 100}%;top:${p[1] + 30 + (k * 37) % 110}px;background:${["#ff5c8a", "#ffd23f", "#4fc3f7", "#7be36f"][k % 4]};--dl:-${(k * .23).toFixed(2)}s"></u>`;
+        if (D3) village.forEach(([dx, dy, s, k], j) => { const y = p[1] + dy * 1.3 + 30, x = clearX(Math.max(28, Math.min(392, p[0] + side * -dx * 1.25)), y, side, 40 * s * 1.5); h += `<div class="prop house${dark ? " dark" : past ? " party" : ""}${/villager|balloon/.test(k) ? " hop" : ""}" style="left:${x / 420 * 100}%;top:${y}px;font-size:${Math.round(40 * s)}px;z-index:${j === 2 ? 0 : 1};--dl:-${(j * .37).toFixed(2)}s"><img src="${D3.sprite(k, 160)}" alt=""></div>`; });
+        if (past) for (let k = 0; k < 22; k++) { const y = p[1] + 30 + (k * 37) % 150, x = clearX(p[0] + side * -(40 + (k * 53) % 200), y, side); h += `<u class="confetti" style="left:${x / 420 * 100}%;top:${y}px;background:${["#ff5c8a", "#ffd23f", "#4fc3f7", "#7be36f"][k % 4]};--dl:-${(k * .23).toFixed(2)}s"></u>`; }
         return; }
-      const inner = D3 ? `<img src="${D3.sprite(isMordo(i) && !save.stars[i] ? "magpie" : (D3.EMO[e] || "bush"), 112)}" alt="">` : `<b>${e}</b>`;
-      h += `<div class="prop${dark ? " dark" : (i * 5) % 3 === 0 ? " lit" : ""}" style="left:${px / 420 * 100}%;top:${p[1] - 34 + (i * 13) % 30}px;font-size:${isMordo(i) ? 34 : 26 + (i * 11) % 16}px;--t:${(2.6 + (i % 5) * .35).toFixed(2)}s;--dl:-${(i % 7) * .4}s">${inner}</div>`;
+      const inner = D3 ? `<img src="${D3.sprite(isMordo(i) && !save.stars[i] ? "magpie" : (D3.EMO[e] || "bush"), 112)}" alt="">` : `<b>${e}</b>`, py = p[1] - 34 + (i * 13) % 30, pxc = clearX(px, py, side);
+      h += `<div class="prop${dark ? " dark" : (i * 5) % 3 === 0 ? " lit" : ""}" style="left:${pxc / 420 * 100}%;top:${py}px;font-size:${isMordo(i) ? 34 : 26 + (i * 11) % 16}px;--t:${(2.6 + (i % 5) * .35).toFixed(2)}s;--dl:-${(i % 7) * .4}s">${inner}</div>`;
     });
     path.insertAdjacentHTML("beforeend", h); }
+  if (D3) { path.querySelectorAll(".train").forEach(n => n.remove()); const tr = document.createElement("img"); tr.className = "train"; tr.src = D3.sprite("train", 160, true); tr.alt = ""; path.appendChild(tr); const rail = svg.querySelector("path"); const L = rail.getTotalLength(), per = L / Math.max(1, pts.length - 1), from = Math.max(0, cur - 7) * per, to = Math.min(pts.length - 1, cur + 2) * per; let s = from; cancelAnimationFrame(trainRaf); let tPrev = performance.now();
+    const run = (now) => { trainRaf = requestAnimationFrame(run); if (!tr.isConnected) return; const dt = Math.min(.05, (now - tPrev) / 1000); tPrev = now; s += dt * 34; if (s > to) s = from; const a = rail.getPointAtLength(s), b = rail.getPointAtLength(Math.min(L, s + 6)); tr.style.left = a.x / 420 * 100 + "%"; tr.style.top = (a.y + 5) + "px"; tr.style.transform = "translate(-50%, -50%) rotate(" + (Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI + 90) + "deg)"; }; trainRaf = requestAnimationFrame(run); }
   pts.forEach((p, i) => {
     const n = document.createElement("div"); n.className = "node" + (save.stars[i] ? " done" : i === cur ? " current" : i > cur ? " locked" : "") + (LEVELS[i].fuse ? " fz" : "") + (hardOf(i) ? " hard" + hardOf(i) : "");
     n.style.left = p[0] / 420 * 100 + "%"; n.style.top = p[1] + "px"; n.textContent = i + 1; n.style.setProperty("--d", Math.min(.45, Math.abs(i - cur) * .05) + "s"); n.style.setProperty("--bd", -(i % 5) * .5 + "s");
@@ -1016,7 +1026,7 @@ const MORDO = "🐦‍⬛", CHAPTERS = [
   { name: "Firefly Pond", props: ["🪷", "🐸", "🌿", "🪻"], title: "Ticking in the reeds", text: "Mordo has hidden charms inside ticking gems. Each one counts down with every move: match it before it reaches zero." },
   { name: "Mushroom Hollow", props: ["🍄", "🌰", "🐌", "🍂"], title: "A glow under the caps", text: "The mushrooms still shine a little, and the trail is fresh. Win a few levels in a row and Pogo leaves gifts on the board." },
   { name: "The Old Oak", props: ["🌳", "🦉", "🍃", "🌰"], title: "What the owl saw", text: "The owl watched the thief pack charms into coloured crates and wall them in with stone. Crates open to their own colour. Stone only gives way to a special gem." },
-  { name: "Bramble Maze", props: ["🌿", "🫐", "🦔", "🌹"], title: "Half way", text: "The path twists and Mordo is getting nervous. Hard levels begin here. They pay extra carrots." },
+  { name: "Bramble Maze", props: ["🌿", "🫐", "🦔", "🌹"], title: "Half way", text: "The path twists and Mordo is getting nervous. Every level from here is a little harder than the last." },
   { name: "Windmill Hill", props: ["🌾", "🎐", "🌻", "🪁"], title: "Wind on the hill", text: "The wind carries feathers past the old mill. Spend your stars in the garden: every piece you build sends back a booster." },
   { name: "Moon Bridge", props: ["🏮", "🌙", "🪨", "⭐"], title: "Only the moon", text: "Nothing lights the bridge but the moon. Keep your win streak alive and you will not cross it alone." },
   { name: "Magpie's Wood", props: ["🌲", "🪶", "🕸️", "🍂"], title: "His wood", text: "Every tree here hides something stolen. The last stretch is the hardest Mordo has." },
@@ -1024,11 +1034,11 @@ const MORDO = "🐦‍⬛", CHAPTERS = [
   // part two: the far shore. Mordo gave the charms back, but his flock had already carried half of them over the water
   { name: "Harbour Steps", props: ["⚓", "🐚", "🪸", "⛵"], title: "The far shore", text: "Mordo kept his word, but his flock did not. Half the charms are across the water. Pogo takes the ferry. Crates and stone now turn up together." },
   { name: "Lighthouse Rock", props: ["🗼", "🌊", "🐚", "⭐"], title: "A light to steer by", text: "The lighthouse keeper saw magpies heading up the coast. The keys are hidden deeper here: bring them all the way down." },
-  { name: "Tide Pools", props: ["🐚", "🦀", "🪸", "💧"], title: "Caught in the pools", text: "Charms glint under the water at low tide. Double jelly covers the pools: clear each twice." },
+  { name: "Tide Pools", props: ["🐚", "🦀", "🪸", "💧"], title: "Caught in the pools", text: "Charms glint under the water at low tide. Double jelly covers the pools: clear each twice. Hard levels begin here, and they pay extra carrots." },
   { name: "Driftwood Beach", props: ["🪵", "🐚", "🌴", "🏖️"], title: "Along the sand", text: "The flock dropped charms as they flew. The beach is wide and the countdown gems come faster." },
   { name: "Salt Marsh", props: ["🌾", "🦆", "🐸", "🌫️"], title: "Fog in the reeds", text: "Half the board hides in fog. Mordo's cousin Gritt leads the flock now, and she guards the last level of every place." },
-  { name: "Cliff Path", props: ["🪨", "🦅", "🌬️", "🌿"], title: "Up the cliff", text: "The path narrows. Super hard levels start here and pay three carrots." },
-  { name: "Hermit's Orchard", props: ["🍎", "🍐", "🐝", "🪜"], title: "The orchard keeper", text: "An old hedgehog traded the magpies apples for charms. He will trade them back for a cleared board." },
+  { name: "Cliff Path", props: ["🪨", "🦅", "🌬️", "🌿"], title: "Up the cliff", text: "The path narrows and every board bites a little harder. Keep a special gem in reserve." },
+  { name: "Hermit's Orchard", props: ["🍎", "🍐", "🐝", "🪜"], title: "The orchard keeper", text: "An old hedgehog traded the magpies apples for charms. He will trade them back for a cleared board. Super hard levels start here and pay three carrots." },
   { name: "Thunder Ridge", props: ["⛈️", "🪨", "🌲", "⚡"], title: "Storm on the ridge", text: "Lightning on every level: stone and crates in the same board. Specials are the way through." },
   { name: "Glass Caves", props: ["💎", "🔮", "🕯️", "🦇"], title: "Where the light bends", text: "The caves are full of crystal. Six colours, long boards, and the flock's whole hoard at the end." },
   { name: "Gritt's Roost", props: ["🪶", "🌙", "💎", "🪺"], title: "The roost", text: "Gritt's roost on the highest rock. Ten levels to the last of the far shore's charms." }
@@ -1131,7 +1141,11 @@ const D3 = (() => {
     bunting: (g) => { put("cyl", mat(0x6b4a2b), -1.1, .5, 0, .03, 1, .03, g); put("cyl", mat(0x6b4a2b), 1.1, .5, 0, .03, 1, .03, g); put("cyl", mat(0xfff5e0), 0, .95, 0, .012, 2.2, .012, g, 0, 0, Math.PI / 2); for (let i = 0; i < 7; i++) put("cone", mat([0xff5c8a, 0xffd23f, 0x4fc3f7, 0x7be36f, 0xff8a3c][i % 5]), -.9 + i * .3, .82, 0, .1, .22, .02, g, Math.PI); },
     balloon: (g) => { [[-.3, 1.1, 0xff5c8a], [.05, 1.3, 0xffd23f], [.35, 1.05, 0x4fc3f7]].forEach(([x, y, c]) => { put("sph", mat(c, { roughness: .35 }), x, y, 0, .2, .24, .2, g); put("cyl", mat(0xfff5e0), x * .4, y / 2, 0, .008, y, .008, g, 0, 0, -x * .35); }); },
     villager: (g, c) => { put("sph", mat(c || 0xf1e9df), 0, .3, 0, .22, .26, .2, g); put("sph", mat(c || 0xf1e9df), 0, .66, .02, .2, .19, .19, g); [-1, 1].forEach(k => { put("sph", mat(c || 0xf1e9df), k * .1, .98, 0, .06, .2, .05, g, 0, 0, -k * .25); put("sph", mat(0x120a1c), k * .08, .7, .17, .035, .045, .025, g); put("sph", mat(c || 0xf1e9df), k * .27, .52, .02, .06, .06, .06, g); }); put("sph", mat(0xff8f9a), 0, .62, .2, .03, g); put("tor", mat([0xff5c8a, 0x4fc3f7, 0xffd23f][Math.floor(Math.random() * 3)]), 0, .46, 0, .14, .14, .2, g, Math.PI / 2); put("sph", mat(0x9c1f2e), 0, .57, .19, .05, .03, .02, g); },
-    villager2: (g) => BUILD.villager(g, 0xd9b48a), villager3: (g) => BUILD.villager(g, 0xb8c8d8)
+    villager2: (g) => BUILD.villager(g, 0xd9b48a), villager3: (g) => BUILD.villager(g, 0xb8c8d8),
+    // a little steam train seen from above, nose up the page: engine, tender and two coaches, as long as a stretch of rail between two stops
+    train: (g) => { const car = (z, len, c, roof) => { put("box", mat(c), 0, .22, z, .42, .3, len, g); put("box", mat(roof), 0, .4, z, .36, .08, len - .06, g); for (const k of [-1, 1]) for (let i = -1; i <= 1; i++) put("cyl", mat(0x222222), k * .22, .1, z + i * (len / 3), .09, .06, .09, g, 0, 0, Math.PI / 2); };
+      put("box", mat(0x2a2a2a), 0, .18, 1.25, .44, .26, 1.1, g); put("cyl", mat(0x333333), 0, .34, 1.35, .17, .9, .17, g, Math.PI / 2); put("cyl", mat(0xffd23f), 0, .34, 1.75, .12, .1, .12, g, Math.PI / 2); put("box", mat(0xc2452a), 0, .3, .9, .42, .4, .4, g); put("box", mat(0x3a1a1a), 0, .54, .9, .46, .06, .44, g); put("cyl", mat(0x222222), 0, .62, 1.6, .07, .3, .07, g); put("sph", mat(0xffffff, { transparent: true, opacity: .75 }), .06, .95, 1.5, .14, g); put("sph", mat(0xffffff, { transparent: true, opacity: .5 }), .2, 1.15, 1.3, .2, g);
+      put("box", mat(0x2a2a2a), 0, .2, .2, .42, .24, .6, g); put("box", mat(0x5a3a1a), 0, .34, .2, .36, .1, .5, g); car(-.65, .9, 0x3f8ae8, 0x2a2a2a); car(-1.65, .9, 0x3f8ae8, 0x2a2a2a); for (const z of [-.45, -.85, -1.45, -1.85]) put("box", glow(0xffe08a), 0, .32, z, .46, .1, .12, g); g.rotation.y = Math.PI; }   // turned so the engine points up the page
   };
   const EMO = { "🌱": "sprout", "🥕": "carrot", "🌼": "flower", "🪵": "log", "🍀": "clover", "🌾": "reed", "🦋": "flower", "🪷": "lily", "🐸": "frog", "🌿": "bush", "🪻": "tulip", "🍄": "mushroom", "🌰": "acorn", "🐌": "rock", "🍂": "leaf", "🌳": "round", "🦉": "owl", "🍃": "bush", "🫐": "bush", "🦔": "hedgehog", "🌹": "tulip", "🎐": "wind", "🌻": "flower", "🪁": "star", "🏮": "lantern", "🌙": "moon", "🪨": "rock", "⭐": "star", "🌲": "pine", "🪶": "feather", "🕸️": "bush", "💎": "crystal", "🪺": "nest", "🌷": "tulip", "🏡": "house", "⛲": "fountain", "🎡": "wheel", "🌈": "rainbow", "⚓": "anchor", "🐚": "shell", "🪸": "coral", "⛵": "boat", "🗼": "lighthouse", "🌊": "pond", "🦀": "crab", "💧": "pond", "🌴": "tree", "🏖️": "sand", "🦆": "duck", "🌫️": "cloud", "🦅": "eagle", "🌬️": "wind", "🍎": "apple", "🍐": "apple", "🐝": "bee", "🪜": "ladder", "⛈️": "cloud", "⚡": "bolt", "🔮": "crystal", "🕯️": "candle", "🦇": "bat" };
   const scenes = new Map();
@@ -1147,10 +1161,13 @@ const D3 = (() => {
     scenes.set(cv, Object.assign(build(spec), { x: cv.getContext("2d"), t0: performance.now() })); return cv;
   }
   const sprites = new Map();
-  function sprite(kind, px) {
-    const key = kind + ":" + px; if (sprites.has(key)) return sprites.get(key);
+  function sprite(kind, px, top) {
+    const key = kind + ":" + px + (top ? ":t" : ""); if (sprites.has(key)) return sprites.get(key);
     const scene = new T.Scene(); scene.add(new T.HemisphereLight(0xfff6e8, 0x4a3a6a, .95)); const sun = new T.DirectionalLight(0xfff0d0, .8); sun.position.set(2, 4, 3); scene.add(sun);
-    const g = grp(scene); (BUILD[kind] || BUILD.bush)(g); const cam = new T.PerspectiveCamera(30, 1, .1, 20); cam.position.set(.55, 1.05, 2.45); cam.lookAt(0, .6, 0);
+    const g = grp(scene); (BUILD[kind] || BUILD.bush)(g);
+    // every prop is scaled to fill the same frame, whatever its own size: wide houses and a long train fit as well as a mushroom
+    const box = new T.Box3().setFromObject(g), sz = box.getSize(new T.Vector3()), ctr = box.getCenter(new T.Vector3()), fit = (top ? 2.1 : 1.3) / (Math.max(sz.x, sz.y, sz.z) || 1); g.scale.setScalar(fit); g.position.set(-ctr.x * fit, top ? -ctr.y * fit : -box.min.y * fit, -ctr.z * fit);
+    const cam = new T.PerspectiveCamera(30, 1, .1, 20); if (top) { cam.position.set(0, 4.2, .9); cam.lookAt(0, 0, 0); } else { cam.position.set(.5, 1.0, 3.1); cam.lookAt(0, .62, 0); }
     R.setSize(px, px, false); R.render(scene, cam); const cv = document.createElement("canvas"); cv.width = cv.height = px; cv.getContext("2d").drawImage(R.domElement, 0, 0); R.setSize(RW, RH, false);
     const url = cv.toDataURL(); sprites.set(key, url); return url;
   }
@@ -2427,18 +2444,18 @@ const TR = {
   "Ticking in the reeds": "Sazlarda tik tak", "Mordo has hidden charms inside ticking gems. Each one counts down with every move: match it before it reaches zero.": "Mordo tılsımları tik tak eden taşların içine sakladı. Her biri her hamlede geri sayar: sıfıra inmeden eşleştir.",
   "A glow under the caps": "Şapkaların altında ışık", "The mushrooms still shine a little, and the trail is fresh. Win a few levels in a row and Pogo leaves gifts on the board.": "Mantarlar hâlâ biraz parlıyor ve iz taze. Art arda birkaç seviye kazan, Pogo tahtaya hediye bıraksın.",
   "What the owl saw": "Baykuşun gördüğü", "The owl watched the thief pack charms into coloured crates and wall them in with stone. Crates open to their own colour. Stone only gives way to a special gem.": "Baykuş hırsızın tılsımları renkli sandıklara koyup taşla ördüğünü gördü. Sandıklar kendi rengiyle açılır. Taşı yalnız özel bir taş kırar.",
-  "Half way": "Yarı yol", "The path twists and Mordo is getting nervous. Hard levels begin here. They pay extra carrots.": "Yol kıvrılıyor ve Mordo tedirginleşiyor. Zor seviyeler burada başlar. Fazladan havuç verirler.",
+  "Half way": "Yarı yol", "The path twists and Mordo is getting nervous. Every level from here is a little harder than the last.": "Yol kıvrılıyor ve Mordo tedirginleşiyor. Buradan sonra her seviye bir öncekinden biraz daha zor.",
   "Wind on the hill": "Tepede rüzgâr", "The wind carries feathers past the old mill. Spend your stars in the garden: every piece you build sends back a booster.": "Rüzgâr tüyleri eski değirmenin önünden geçiriyor. Yıldızlarını bahçede harca: yaptığın her parça bir güçlendirici verir.",
   "Only the moon": "Yalnız ay", "Nothing lights the bridge but the moon. Keep your win streak alive and you will not cross it alone.": "Köprüyü aydan başka bir şey aydınlatmıyor. Galibiyet serini sürdür, köprüyü yalnız geçmezsin.",
   "His wood": "Onun ormanı", "Every tree here hides something stolen. The last stretch is the hardest Mordo has.": "Buradaki her ağaç çalıntı bir şey saklıyor. Son bölüm Mordo'nun en zoru.",
   "The tallest pine": "En uzun çam", "The nest sits at the very top, full of light. Ten levels to the last charm.": "Yuva en tepede, ışıkla dolu. Son tılsıma on seviye.",
   "The far shore": "Uzak kıyı", "Mordo kept his word, but his flock did not. Half the charms are across the water. Pogo takes the ferry. Crates and stone now turn up together.": "Mordo sözünü tuttu ama sürüsü tutmadı. Tılsımların yarısı suyun ötesinde. Pogo feribota biniyor. Sandıklar ve taşlar artık birlikte çıkıyor.",
   "A light to steer by": "Yol gösteren ışık", "The lighthouse keeper saw magpies heading up the coast. The keys are hidden deeper here: bring them all the way down.": "Fener bekçisi saksağanların kıyı boyunca gittiğini gördü. Anahtarlar burada daha derinde: hepsini en aşağıya indir.",
-  "Caught in the pools": "Gölcüklere takılanlar", "Charms glint under the water at low tide. Double jelly covers the pools: clear each twice.": "Tılsımlar cezir vakti suyun altında parlıyor. Gölcükleri çift jöle kaplıyor: her birini iki kez temizle.",
+  "Caught in the pools": "Gölcüklere takılanlar", "Charms glint under the water at low tide. Double jelly covers the pools: clear each twice. Hard levels begin here, and they pay extra carrots.": "Tılsımlar cezir vakti suyun altında parlıyor. Gölcükleri çift jöle kaplıyor: her birini iki kez temizle. Zor seviyeler burada başlar, fazladan havuç verirler.",
   "Along the sand": "Kum boyunca", "The flock dropped charms as they flew. The beach is wide and the countdown gems come faster.": "Sürü uçarken tılsım düşürdü. Kumsal geniş, geri sayım taşları daha hızlı geliyor.",
   "Fog in the reeds": "Sazlarda sis", "Half the board hides in fog. Mordo's cousin Gritt leads the flock now, and she guards the last level of every place.": "Tahtanın yarısı siste. Sürüyü artık Mordo'nun kuzeni Gritt yönetiyor ve her yerin son seviyesini o koruyor.",
-  "Up the cliff": "Kayalığa doğru", "The path narrows. Super hard levels start here and pay three carrots.": "Yol daralıyor. Çok zor seviyeler burada başlar ve üç havuç verir.",
-  "The orchard keeper": "Bahçe bekçisi", "An old hedgehog traded the magpies apples for charms. He will trade them back for a cleared board.": "Yaşlı bir kirpi saksağanlara elma karşılığı tılsım verdi. Temiz bir tahta karşılığında geri verecek.",
+  "Up the cliff": "Kayalığa doğru", "The path narrows and every board bites a little harder. Keep a special gem in reserve.": "Yol daralıyor ve her tahta biraz daha sert. Yedekte bir özel taş tut.",
+  "The orchard keeper": "Bahçe bekçisi", "An old hedgehog traded the magpies apples for charms. He will trade them back for a cleared board. Super hard levels start here and pay three carrots.": "Yaşlı bir kirpi saksağanlara elma karşılığı tılsım verdi. Temiz bir tahta karşılığında geri verecek. Çok zor seviyeler burada başlar ve üç havuç verir.",
   "Storm on the ridge": "Sırtta fırtına", "Lightning on every level: stone and crates in the same board. Specials are the way through.": "Her seviyede şimşek: aynı tahtada taş ve sandık. Yol özel taşlardan geçer.",
   "Where the light bends": "Işığın kırıldığı yer", "The caves are full of crystal. Six colours, long boards, and the flock's whole hoard at the end.": "Mağaralar kristal dolu. Altı renk, uzun tahtalar ve sonunda sürünün bütün hazinesi.",
   "The roost": "Tünek", "Gritt's roost on the highest rock. Ten levels to the last of the far shore's charms.": "Gritt'in tüneği en yüksek kayada. Uzak kıyının son tılsımına on seviye.",
