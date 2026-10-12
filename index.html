@@ -14,7 +14,8 @@
   body * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; } input, textarea { -webkit-user-select: text !important; user-select: text !important; }
   [hidden] { display: none !important; }
   .screen { position: fixed; inset: 0; }
-  .bg { position: fixed; inset: 0; background: linear-gradient(180deg, #8a3dff 0%, #6422d8 32%, #4514a6 66%, #2a0b6e 100%); overflow: hidden; }
+  .bg { position: fixed; inset: 0; background: linear-gradient(180deg, #a04bff 0%, #7a2cf0 30%, #4c16b8 62%, #2a0b6e 100%); overflow: hidden; }
+  .bg::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 20% 15%, rgba(255, 120, 220, .45), transparent 45%), radial-gradient(ellipse at 85% 40%, rgba(80, 220, 255, .3), transparent 40%), radial-gradient(ellipse at 50% 90%, rgba(255, 200, 80, .28), transparent 50%); }
   .bg::before, .bg::after { content: ""; position: absolute; width: 220vmax; height: 220vmax; left: 50%; top: 0; margin: -110vmax 0 0 -110vmax; border-radius: 50%; will-change: transform; }
   .bg::before { background: radial-gradient(circle at 34% 40%, rgba(255, 92, 205, .42), rgba(255, 92, 205, 0) 21%), radial-gradient(circle at 66% 46%, rgba(64, 214, 255, .34), rgba(64, 214, 255, 0) 19%), radial-gradient(circle at 50% 64%, rgba(255, 196, 64, .2), rgba(255, 196, 64, 0) 16%); animation: drift 70s linear infinite; }
   .bg::after { top: 0; background: radial-gradient(circle, rgba(255, 190, 240, .5) 0%, rgba(255, 170, 235, .18) 12%, rgba(255, 170, 235, 0) 30%); }
@@ -107,6 +108,8 @@
   .node { border: 3px solid #fff3c4; background-image: radial-gradient(circle at 32% 26%, rgba(255, 255, 255, .95) 0, rgba(255, 255, 255, .35) 16%, rgba(255, 255, 255, 0) 38%), radial-gradient(circle at 50% 110%, rgba(0, 0, 0, .35), rgba(0, 0, 0, 0) 55%), radial-gradient(circle at 35% 30%, #ffc48a, #ff7a1a 55%, #d95a00); }
   .node.locked { background-image: radial-gradient(circle at 32% 26%, rgba(255, 255, 255, .6) 0, rgba(255, 255, 255, .2) 16%, rgba(255, 255, 255, 0) 38%), radial-gradient(circle at 50% 110%, rgba(0, 0, 0, .4), rgba(0, 0, 0, 0) 55%), radial-gradient(circle at 35% 30%, #c9b6ff, #9070ea 58%, #6a48cc); }
   .node.done { background-image: radial-gradient(circle at 32% 26%, rgba(255, 255, 255, .95) 0, rgba(255, 255, 255, .4) 16%, rgba(255, 255, 255, 0) 38%), radial-gradient(circle at 50% 110%, rgba(120, 70, 0, .4), rgba(0, 0, 0, 0) 55%), radial-gradient(circle at 35% 30%, #fff3a8, #ffd23f 55%, #f0a400); }
+  .zone { position: absolute; left: -30%; width: 160%; height: 1000px; pointer-events: none; opacity: .34; z-index: 0; }
+  .prop.house img { width: 3.2em; height: 3.2em; animation: none; }
   .prop img { display: block; width: 2.3em; height: 2.3em; transform-origin: 50% 100%; animation: sway var(--t, 3.4s) ease-in-out var(--dl, 0s) infinite alternate; } .prop.dark img { animation: none; } .prop::after { content: ""; position: absolute; left: 50%; bottom: -6px; width: 70%; height: 10px; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(rgba(0, 0, 0, .45), rgba(0, 0, 0, 0) 70%); }
   .bg { transform: translateY(var(--py, 0px)); will-change: transform; }
   .node:active { translate: 0 4px; }
@@ -131,7 +134,7 @@
   #game { display: flex; flex-direction: column; }
   .hud { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: max(12px, env(safe-area-inset-top)) 14px 8px; }
   .hud .box { flex: 0 1 auto; background: rgba(8, 10, 34, .7); border: 2px solid rgba(255, 255, 255, .28); border-radius: 16px; padding: 6px 12px; text-align: center; min-width: 78px; box-shadow: 0 4px 0 rgba(0, 0, 0, .35); }
-  .hud .box { border-color: #ffd23f; background: linear-gradient(#9a5cff, #5a1fd0); box-shadow: 0 4px 0 #27096b, inset 0 2px 0 rgba(255, 255, 255, .18); }
+  .hud .box { border-color: #ffd23f; background: linear-gradient(#9a5cff, #5a1fd0); box-shadow: 0 5px 0 #27096b, 0 10px 16px rgba(0, 0, 0, .35), inset 0 2px 0 rgba(255, 255, 255, .28), inset 0 -6px 10px rgba(39, 9, 107, .4); }
   .hud .box small { display: block; font-size: 11px; font-weight: 900; color: #ffe7a3; text-transform: uppercase; letter-spacing: .08em; }
   .hud .box b { display: inline-block; font-size: clamp(17px, 5vw, 23px); font-weight: 900; line-height: 1.1; text-shadow: 0 2px 0 rgba(0, 0, 0, .5); font-variant-numeric: tabular-nums; }
   .hud .box.score small { color: #ffd200; }
@@ -146,7 +149,7 @@
   .bar s { position: absolute; top: -3px; width: 3px; height: 16px; background: #fff; transition: background .25s, scale .35s cubic-bezier(.3, 1.8, .5, 1); }
   .bar s.hit { background: #ffd23f; scale: 1.6 1; }
   #boardWrap { flex: 1; display: grid; place-items: center; padding: 8px; min-height: 0; }
-  #c { display: block; touch-action: none; border-radius: 16px; background: #14151f; box-shadow: 0 0 0 3px #ffe7a3, 0 0 0 10px #9a5cff, 0 0 0 13px #27096b, 0 14px 0 13px #1a0650, 0 30px 44px rgba(0, 0, 0, .55), inset 0 0 0 1px rgba(255, 255, 255, .06); outline: 3px dotted #d9a866; outline-offset: 5px; }
+  #c { display: block; touch-action: none; border-radius: 16px; background: #1a0e3a; box-shadow: 0 0 0 3px #ffe7a3, 0 0 0 10px #9a5cff, 0 0 0 13px #27096b, 0 14px 0 13px #1a0650, 0 30px 44px rgba(0, 0, 0, .55), inset 0 0 0 1px rgba(255, 255, 255, .06); outline: 3px dotted #d9a866; outline-offset: 5px; }
   #boardWrap::before { content: ""; position: absolute; left: 50%; bottom: -2px; width: 86%; height: 26px; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(rgba(0, 0, 0, .5), rgba(0, 0, 0, 0) 70%); pointer-events: none; }
   #boardWrap { position: relative; }
   .boosters { display: flex; justify-content: center; gap: 10px; padding: 8px 0 max(14px, env(safe-area-inset-bottom)); }
@@ -467,18 +470,18 @@
 
 <script src="three.min.js"></script>
 <script src="../games/arcade.js"></script>
-<script>Arcade.gfx.matte(1.06, 1);</script>
+<script>Arcade.gfx.matte(1.18, 1.03);</script>
 <script>
 "use strict";
 // ================================================================ config
 const COLS = 9, ROWS = 9, NCOL = 6;
 const COLORS = [
-  { name: "ruby", c: "#ff2438", l: "#ffb3ba", d: "#96001a", shape: "bell" },
-  { name: "amber", c: "#ffcf00", l: "#fff7b8", d: "#c26a00", shape: "bolt" },
-  { name: "emerald", c: "#1fd13f", l: "#ccffc4", d: "#04781e", shape: "bloom" },
-  { name: "sapphire", c: "#2196ff", l: "#c4e4ff", d: "#0a3cb0", shape: "drop" },
-  { name: "amethyst", c: "#a433f5", l: "#ecc0ff", d: "#4e0596", shape: "fish" },
-  { name: "pearl", c: "#e9eefc", l: "#ffffff", d: "#7484b8", shape: "sparkle" }
+  { name: "coral", c: "#ff6b8b", l: "#ffc9d6", d: "#b8324f", shape: "puff" },
+  { name: "mango", c: "#ffb347", l: "#ffe6bd", d: "#c96a00", shape: "gumdrop" },
+  { name: "mint", c: "#3ddc97", l: "#cdffe9", d: "#108a55", shape: "clover" },
+  { name: "sky", c: "#4fc3f7", l: "#d0f1ff", d: "#0d6fa8", shape: "egg" },
+  { name: "grape", c: "#9d6bff", l: "#e4d6ff", d: "#5a2bc0", shape: "squircle" },
+  { name: "cream", c: "#fff1c9", l: "#ffffff", d: "#b89a5a", shape: "button" }
 ];
 const rnd = (n) => Math.floor(Math.random() * n);
 // a sleep only wakes up if the same game is still running, so leaving a level mid-cascade quietly drops the rest of that cascade
@@ -913,13 +916,17 @@ function buildMap() {
   $("btnDaily").classList.toggle("ready", !dailyState().claimed); $("achN").textContent = Object.keys(save.ach).length; $("gdN").textContent = gardenN(); $("albN").textContent = albumN(); const ss = seasonOf(); $("ssN").textContent = tierOf(ss); $("btnSeason").classList.toggle("ready", tierOf(ss) > ss.got); const rc = save.race; $("btnRace").innerHTML = ico(rc && huntWeek(rc.w) ? "hunt" : "race"); $("btnRace").classList.toggle("ready", !!rc && huntWeek(rc.w) && HUNT.filter(c => rc.wins >= c[0]).length > (rc.got || 0));
   const path = $("path"), svg = $("pathSvg"); path.querySelectorAll(".node, .pogoMap").forEach(n => n.remove());
   const H = 150 + LEVELS.length * 86; path.style.height = H + "px"; svg.setAttribute("viewBox", `0 0 420 ${H}`);
-  const pts = LEVELS.map((_, i) => [210 + Math.sin(i * 1.1) * (window.__nativeApp ? 112 : 130), H - 130 - i * 86]);
+  const amp = (i) => (window.__nativeApp ? 78 : 92) + 58 * Math.sin(i * .37 + 1), ph = (i) => i * .92 + Math.sin(i * .23) * 2.4;
+  const pts = LEVELS.map((_, i) => [210 + Math.sin(ph(i)) * amp(i), H - 130 - i * 86]);
   // the path is a dusky slate trail through the stones with a line of lights drifting along it
   let d = "M" + pts[0][0] + " " + pts[0][1]; for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i], my = (a[1] + b[1]) / 2; d += ` C${a[0]} ${my} ${b[0]} ${my} ${b[0]} ${b[1]}`; }
-  svg.innerHTML = `<path d="${d}" fill="none" stroke="#000" stroke-opacity=".5" stroke-width="40" stroke-linecap="round" transform="translate(0 12)"/><path d="${d}" fill="none" stroke="#5a2ab0" stroke-width="34" stroke-linecap="round" transform="translate(0 7)"/><path d="${d}" fill="none" stroke="#b48cff" stroke-width="28" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#f0e2ff" stroke-width="20" stroke-linecap="round" stroke-dasharray="3 23" stroke-opacity=".7"/><path class="flow" d="${d}" fill="none" stroke="#ffe9b0" stroke-width="5" stroke-linecap="round" stroke-dasharray=".1 35.9"/>`;
+  svg.innerHTML = `<path d="${d}" fill="none" stroke="#000" stroke-opacity=".5" stroke-width="46" stroke-linecap="round" transform="translate(0 12)"/><path d="${d}" fill="none" stroke="#4a2a7a" stroke-width="40" stroke-linecap="round" transform="translate(0 6)"/><path d="${d}" fill="none" stroke="#8a6aa8" stroke-width="40" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#3a2416" stroke-width="30" stroke-dasharray="7 15" stroke-linecap="butt"/><path d="${d}" fill="none" stroke="#e8d8b8" stroke-width="20" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#8a6aa8" stroke-width="13" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#3a2416" stroke-width="13" stroke-dasharray="7 15" stroke-linecap="butt" stroke-opacity=".9"/><path class="flow" d="${d}" fill="none" stroke="#ffe9b0" stroke-width="4" stroke-linecap="round" stroke-dasharray=".1 35.9"/>`;
   const cur = highest(); path.querySelectorAll(".chap, .prop").forEach(n => n.remove());
   { let h = ""; pts.forEach((p, i) => { const C = CHAPTERS[chapOf(i)], dark = i > cur, side = p[0] > 210 ? -1 : 1, px = Math.max(26, Math.min(394, p[0] + side * (150 + (i * 37) % 40))), e = isMordo(i) && !save.stars[i] ? MORDO : C.props[(i * 7 + chapOf(i)) % 4];
-      if (i % 10 === 0) { h += `<div class="chap${dark ? " dark" : ""}" style="top:${p[1] - 16}px;${side < 0 ? "left:4%" : "right:4%"}">${i / 10 + 1} · ${C.name}</div>`; return; }
+      if (i % 10 === 0) { h += `<div class="chap${dark ? " dark" : ""}" style="top:${p[1] - 16}px;${side < 0 ? "left:4%" : "right:4%"}">${i / 10 + 1} · ${C.name}</div>`;
+        h += `<div class="zone" style="top:${p[1] - 560}px;background:radial-gradient(ellipse at 50% 50%, #${(CHAP_GROUND[chapOf(i)] || 0x3f8a4d).toString(16).padStart(6, "0")} 0%, rgba(0,0,0,0) 62%)"></div>`;
+        if (D3) [[-150, 44, 1.5, "hobbit"], [-70, 86, 1.2, "hobbit2"], [-196, 112, 1.05, "hobbit2"], [-110, 128, .75, "lantern"], [-30, 140, .9, "tree"]].forEach(([dx, dy, s, k], j) => { const x = Math.max(28, Math.min(392, p[0] + side * -dx)); h += `<div class="prop house${dark ? " dark" : ""}" style="left:${x / 420 * 100}%;top:${p[1] + dy}px;font-size:${Math.round(26 * s)}px;z-index:${j === 2 ? 0 : 1}"><img src="${D3.sprite(k, 128)}" alt=""></div>`; });
+        return; }
       const inner = D3 ? `<img src="${D3.sprite(isMordo(i) && !save.stars[i] ? "magpie" : (D3.EMO[e] || "bush"), 112)}" alt="">` : `<b>${e}</b>`;
       h += `<div class="prop${dark ? " dark" : (i * 5) % 3 === 0 ? " lit" : ""}" style="left:${px / 420 * 100}%;top:${p[1] - 34 + (i * 13) % 30}px;font-size:${isMordo(i) ? 34 : 26 + (i * 11) % 16}px;--t:${(2.6 + (i % 5) * .35).toFixed(2)}s;--dl:-${(i % 7) * .4}s">${inner}</div>`;
     });
@@ -1110,7 +1117,9 @@ const D3 = (() => {
     acorn: (g) => { put("sph", mat(0xc9a06a), 0, .16, 0, .12, .14, .12, g); put("sph", mat(0x6b4a2b), 0, .26, 0, .13, .06, .13, g); },
     leaf: (g) => { put("sph", mat(0xd98a3a), 0, .12, 0, .2, .03, .12, g, 0, .4); put("sph", mat(0xe8b24a), .25, .1, .12, .16, .03, .1, g, 0, -.5); },
     sand: (g) => { put("disc", mat(0xf0d9a8), 0, .015, 0, .9, .5, 1, g, -Math.PI / 2); put("sph", mat(0xffd9c2), .2, .06, .1, .08, .05, .07, g); },
-    gem: (g) => BUILD.crystal(g, 0x7fd0ff)
+    gem: (g) => BUILD.crystal(g, 0x7fd0ff),
+    hobbit: (g, c) => { put("sph", mat(0x4fa84f), 0, .1, 0, 1.05, .78, .9, g); put("sph", mat(0x5fbf5a), -.5, .12, .3, .5, .36, .45, g); put("cyl", mat(c || 0xe8b23a), 0, .34, .82, .3, .1, .3, g, Math.PI / 2); put("cyl", mat(0x6b4a2b), 0, .34, .8, .36, .08, .36, g, Math.PI / 2); put("sph", mat(0x4a1a06), 0, .34, .9, .045, g); put("box", mat(0x8a6a5a), .45, .78, -.1, .16, .34, .16, g); put("box", glow(0xffe08a), -.55, .4, .62, .18, .16, .04, g, 0, .5); put("cyl", mat(0xd9c7a8), 0, .02, .95, .42, .03, .22, g); for (let i = 0; i < 4; i++) put("sph", mat([0xff7ad9, 0xffd23f, 0xff5c5c, 0x7fd0ff][i]), -.8 + i * .5, .08, 1.05, .07, g); },
+    hobbit2: (g) => BUILD.hobbit(g, 0x3f8ae8)
   };
   const EMO = { "🌱": "sprout", "🥕": "carrot", "🌼": "flower", "🪵": "log", "🍀": "clover", "🌾": "reed", "🦋": "flower", "🪷": "lily", "🐸": "frog", "🌿": "bush", "🪻": "tulip", "🍄": "mushroom", "🌰": "acorn", "🐌": "rock", "🍂": "leaf", "🌳": "round", "🦉": "owl", "🍃": "bush", "🫐": "bush", "🦔": "hedgehog", "🌹": "tulip", "🎐": "wind", "🌻": "flower", "🪁": "star", "🏮": "lantern", "🌙": "moon", "🪨": "rock", "⭐": "star", "🌲": "pine", "🪶": "feather", "🕸️": "bush", "💎": "crystal", "🪺": "nest", "🌷": "tulip", "🏡": "house", "⛲": "fountain", "🎡": "wheel", "🌈": "rainbow", "⚓": "anchor", "🐚": "shell", "🪸": "coral", "⛵": "boat", "🗼": "lighthouse", "🌊": "pond", "🦀": "crab", "💧": "pond", "🌴": "tree", "🏖️": "sand", "🦆": "duck", "🌫️": "cloud", "🦅": "eagle", "🌬️": "wind", "🍎": "apple", "🍐": "apple", "🐝": "bee", "🪜": "ladder", "⛈️": "cloud", "⚡": "bolt", "🔮": "crystal", "🕯️": "candle", "🦇": "bat" };
   const scenes = new Map();
@@ -2055,19 +2064,14 @@ const clamp01 = (t) => t < 0 ? 0 : t > 1 ? 1 : t;
 // Six cut-crystal charms. Each has an outline and a way to cut it into facets: "table" (a ring of facets around a flat top),
 // "fan" (triangles from the centre) or "strip" (bands between two arcs).
 const SHAPES = (() => {
-  const S = {}, P = Math.PI;
-  // a bell: flat crown, flared skirt, lip at the bottom
-  S.bell = { o: [[-.34, -1.28], [.34, -1.28], [.58, -.62], [.92, .42], [1.22, .72], [1.22, .98], [-1.22, .98], [-1.22, .72], [-.92, .42], [-.58, -.62]], mode: "table", k: .5, cx: 0, cy: .05, soft: .4 };
-  // a lightning bolt, kept sharp
-  S.bolt = { o: [[.22, -1.32], [-.82, .12], [-.14, .12], [-.42, 1.32], [.82, -.22], [.14, -.22]], mode: "table", k: .42, cx: 0, cy: 0, soft: .22 };
-  // a six-petal bloom
-  { const o = []; for (let i = 0; i < 12; i++) { const r = i % 2 ? .78 : 1.3, a = -P / 2 + i * P / 6; o.push([Math.cos(a) * r, Math.sin(a) * r]); } S.bloom = { o, mode: "fan", cx: 0, cy: 0, soft: .6 }; }
-  // a drop: a point on top, a round belly
-  { const o = [[0, -1.34]]; for (let i = 0; i <= 10; i++) { const a = (-35 + i * 25) * P / 180; o.push([Math.cos(a) * .92, .36 + Math.sin(a) * .92]); } S.drop = { o, mode: "table", k: .5, cx: 0, cy: .3, soft: .5 }; }
-  // a little fish swimming left
-  S.fish = { o: [[-1.34, 0], [-.92, -.52], [-.22, -.74], [.44, -.52], [.74, -.16], [1.32, -.74], [1.12, 0], [1.32, .74], [.74, .16], [.44, .52], [-.22, .74], [-.92, .52]], mode: "table", k: .48, cx: -.25, cy: 0, soft: .45 };
-  // a four-point sparkle
-  { const o = []; for (let i = 0; i < 8; i++) { const r = i % 2 ? .42 : 1.34, a = -P / 2 + i * P / 4; o.push([Math.cos(a) * r, Math.sin(a) * r]); } S.sparkle = { o, mode: "fan", cx: 0, cy: 0, soft: .3 }; }
+  // soft candy shapes: nothing has a sharp corner. Every outline is a rounded blob, built from many points and rounded again by gemPath.
+  const S = {}, P = Math.PI, ring = (n, f) => { const o = []; for (let i = 0; i < n; i++) { const a = -P / 2 + i * 2 * P / n; const r = f(a, i); o.push([Math.cos(a) * r, Math.sin(a) * r]); } return o; };
+  S.puff = { o: ring(32, (a) => 1.08 + .2 * Math.cos(4 * a + P)), mode: "table", k: .52, cx: 0, cy: 0, soft: .5 };                 // a four-lobed cloud
+  S.gumdrop = { o: ring(3, () => 1.34).map(q => [q[0], q[1] + .12]), mode: "table", k: .5, cx: 0, cy: .12, soft: .62 };             // a very rounded triangle
+  S.clover = { o: ring(32, (a) => .9 + .38 * Math.cos(4 * a)), mode: "table", k: .5, cx: 0, cy: 0, soft: .5 };                    // four round leaves
+  S.egg = { o: ring(24, (a) => 1.2 * (Math.sin(a) < 0 ? .92 : 1.06)).map(q => [q[0] * .92, q[1]]), mode: "table", k: .52, cx: 0, cy: .08, soft: .5 };   // an egg, narrower on top
+  S.squircle = { o: ring(28, (a) => 1.22 / Math.pow(Math.pow(Math.abs(Math.cos(a)), 4) + Math.pow(Math.abs(Math.sin(a)), 4), .25)), mode: "table", k: .54, cx: 0, cy: 0, soft: .5 };   // a rounded square
+  S.button = { o: ring(24, () => 1.2), mode: "fan", cx: 0, cy: 0, soft: .5 };                                                      // a plain round button
   return S;
 })();
 const hx = (h) => { const n = parseInt(h.slice(1), 16); return [n >> 16, n >> 8 & 255, n & 255]; };
