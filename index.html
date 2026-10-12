@@ -1245,17 +1245,19 @@ function countUp(el, to, pre) {
   requestAnimationFrame(step);
 }
 function closePauseIfOpen() { if (G.paused) { G.paused = false; hide("mPause", true); } }
+// the leftover moves play out in about four seconds in all: STRIPE_MS of gems turning striped, then the one big blast and its settle
+const STRIPE_MS = 2850;
 async function win() {
   G.over = true; G.undo = null; G.boost = null; closePauseIfOpen(); toast(window.__nativeApp ? "Charmfall!" : "Prism Pop!"); SFX.win(); confetti(); flash(.4, 500);
   // sugar crush: remaining moves become striped gems and detonate
-  let n = G.moves; const gap = Math.min(30, 600 / Math.max(1, n));
+  let n = G.moves; const gap = Math.min(240, STRIPE_MS / Math.max(1, n));
   while (n-- > 0) { G.moves = n; updateHud();
     const gems = []; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const g = cell(r, c); if (g && g.kind === "gem" && !g.special) gems.push(g); }
     if (!gems.length) break; const g = gems[rnd(gems.length)]; g.special = rnd(2) ? "h" : "v"; g.fuse = 0; g.sx = 1.6; g.pop = performance.now(); sparkle(g.c + .5, g.r + .5, COLORS[g.color].c); addScore(g.r, g.c, 1000); SFX.pop(3); await sleep(gap);
   }
   G.moves = 0; updateHud();
   await sleep(80);
-  // one detonation of everything special, one settle, no further chains: the result card is up about two seconds after the winning move
+  // one detonation of everything special, one settle, no further chains: the result card is up about four seconds after the winning move
   { const set = new Set(); for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const g = cell(r, c); if (g && g.special) set.add(r * COLS + c); } if (set.size) { G.combo = 2; await blast(set); G.wrapAgain = []; await gravity(); } }
   const st = starTargets(G.L), stars = G.score >= st[2] ? 3 : G.score >= st[1] ? 2 : 1;
   save.stars[G.level] = Math.max(save.stars[G.level] || 0, stars); save.best[G.level] = Math.max(save.best[G.level] || 0, G.score); delete save.inProgress;
