@@ -150,6 +150,10 @@
   /* ---------- game ---------- */
   #game { display: flex; flex-direction: column; }
   html:not(.app) #game { justify-content: center; } html:not(.app) #boardWrap { flex: 0 0 min(100vw, 56vh); } html:not(.app) .hud { padding-top: 8px; }
+  /* on the web the HUD, the bars and the boosters are no wider than the board, so on a desktop they sit as one block above and below it */
+  html:not(.app) .hud, html:not(.app) .bar, html:not(.app) .frz, html:not(.app) .boosters { width: min(100%, 56vh); box-sizing: border-box; margin-left: auto; margin-right: auto; }
+  html:not(.app) .hud { justify-content: center; gap: 10px; } html:not(.app) .bar { margin-left: auto; margin-right: auto; }
+  @media (max-width: 480px) { html:not(.app) .hud { gap: 6px; padding-left: 8px; padding-right: 8px; } html:not(.app) .hud .box { min-width: 66px; padding: 6px 8px; } html:not(.app) .bar, html:not(.app) .frz { width: auto; margin-left: 14px; margin-right: 14px; } }
   #c { filter: none !important; }   /* no per-frame colour filter on the board: the palette is vivid on its own and the GPU keeps the frame */
   .hud { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: max(12px, env(safe-area-inset-top)) 14px 8px; }
   .hud .box { flex: 0 1 auto; background: rgba(8, 10, 34, .7); border: 2px solid rgba(255, 255, 255, .28); border-radius: 16px; padding: 6px 12px; text-align: center; min-width: 78px; box-shadow: 0 4px 0 rgba(0, 0, 0, .35); }
