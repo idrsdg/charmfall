@@ -247,6 +247,38 @@
   .days b { display: block; font-size: 13px; line-height: 1.5; white-space: nowrap; }
   .days .got { background: #0a7a42; border-color: #a8ffd6; }
   .days .now { background: #7a4a00; border-color: #ffd200; animation: pulse 1s infinite; }
+  /* the trail: ten chapters, a signpost at the start of each and living props beside the path. What lies ahead is dark; it lights up as levels are won */
+  .chap { position: absolute; white-space: nowrap; padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; color: #fff3c4; background: linear-gradient(#5a4a8a, #2f2752); border: 2px solid #ffe7a3; box-shadow: 0 4px 0 #0c0a13, 0 10px 18px rgba(0, 0, 0, .4); z-index: 1; }
+  .chap.dark { color: #b9b4cc; background: linear-gradient(#3b374d, #23202f); border-color: rgba(255, 255, 255, .3); }
+  .prop { position: absolute; transform: translate(-50%, -50%); line-height: 1; pointer-events: none; filter: drop-shadow(0 4px 4px rgba(0, 0, 0, .5)); }
+  .prop b { display: block; font-weight: 400; transform-origin: 50% 100%; animation: sway var(--t, 3.4s) ease-in-out var(--dl, 0s) infinite alternate; }
+  .prop.dark { filter: grayscale(1) brightness(.42) drop-shadow(0 4px 4px rgba(0, 0, 0, .5)); } .prop.dark b { animation: none; }
+  .prop.lit::after { content: ""; position: absolute; left: 50%; top: 55%; width: 190%; height: 190%; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, rgba(255, 226, 150, .26), rgba(255, 226, 150, 0) 68%); z-index: -1; animation: glow 2.6s ease-in-out var(--dl, 0s) infinite alternate; }
+  @keyframes sway { from { transform: rotate(-5deg) translateY(0); } to { transform: rotate(5deg) translateY(-3px); } }
+  @keyframes glow { from { opacity: .45; } to { opacity: 1; } }
+  body:has(#game:not([hidden])) .prop b, body:has(#game:not([hidden])) .prop::after { animation-play-state: paused; }
+  .garden span.live { animation: bob var(--t, 3s) ease-in-out var(--dl, 0s) infinite alternate; }
+  @keyframes bob { from { translate: 0 0; rotate: -3deg; } to { translate: 0 -3px; rotate: 3deg; } }
+  .garden u { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #fff3a0; box-shadow: 0 0 6px 2px rgba(255, 226, 120, .7); animation: tw 2.2s var(--dl, 0s) infinite alternate; }
+  /* Pogo gets nervous when five moves or fewer are left */
+  html.app #gPogo.worry .pogo { animation: worry .5s ease-in-out infinite; border-color: #ff8a9a !important; }
+  @keyframes worry { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+  /* Pogo's garden: a small dusk scene that fills up as stars are spent */
+  .garden { position: relative; height: 190px; margin: 4px 0 14px; border-radius: 16px; overflow: hidden; border: 2px solid rgba(255, 255, 255, .22); background: linear-gradient(#4a3f6e 0%, #7a5a86 46%, #c98a7a 62%, #2f5a3c 62.5%, #1e4029 100%); }
+  html.night .garden { background: linear-gradient(#14132c 0%, #24224a 46%, #3a3560 62%, #1d3a2a 62.5%, #12281b 100%); }
+  .garden::before { content: ""; position: absolute; left: -10%; right: -10%; top: 50%; height: 60%; border-radius: 50% 50% 0 0; background: radial-gradient(ellipse at 50% 0%, #3f7a4d, #23492f 70%); }
+  .garden span { position: absolute; transform: translate(-50%, -50%); line-height: 1; filter: drop-shadow(0 3px 3px rgba(0, 0, 0, .45)); }
+  .garden span.new { animation: gardenIn .7s cubic-bezier(.2, 1.6, .4, 1) both; }
+  @keyframes gardenIn { from { scale: 0; rotate: -90deg; opacity: 0; } to { scale: 1; rotate: 0deg; opacity: 1; } }
+  .garden span.todo { filter: grayscale(1) brightness(.5); opacity: .28; }
+  .racel { display: grid; gap: 6px; margin: 6px 0 12px; text-align: left; }
+  .racel div { position: relative; display: flex; align-items: center; gap: 8px; background: rgba(0, 0, 0, .4); border: 2px solid rgba(255, 255, 255, .16); border-radius: 12px; padding: 6px 10px; font-weight: 900; font-size: 14px; overflow: hidden; }
+  .racel div.me { border-color: #ffd200; }
+  .racel div i { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(255, 210, 0, .2); }
+  .racel div span, .racel div b, .racel div em { position: relative; } .racel div em { flex: 1; font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card input { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; font-weight: 800; color: #fff; background: rgba(0, 0, 0, .4); border: 2px solid rgba(255, 255, 255, .25); border-radius: 12px; padding: 11px 12px; margin: 0 0 8px; outline: none; -webkit-user-select: text; user-select: text; }
+  .card input:focus { border-color: #ffd200; }
+  .card .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } .card .two .btn { margin: 0 !important; }
   .achl { max-height: 46vh; overflow-y: auto; text-align: left; margin: 8px 0 14px; display: grid; gap: 6px; padding-right: 2px; }
   .achl div { display: flex; gap: 10px; align-items: center; background: rgba(0, 0, 0, .4); border: 2px solid rgba(255, 255, 255, .16); border-radius: 12px; padding: 7px 10px; opacity: .62; }
   .achl div.ok { opacity: 1; border-color: #ffd200; background: rgba(60, 36, 0, .7); }
@@ -271,7 +303,7 @@
   </div>
   <div class="path" id="path"><svg id="pathSvg" viewBox="0 0 420 1400" preserveAspectRatio="none"></svg></div>
   <div class="mapset"><button type="button" class="pill" id="setSound" title="Sound"><span>🔊</span></button></div>
-  <div class="mapbar"><button type="button" id="btnDaily">🎁 Daily gift</button><button type="button" id="btnAch">🏆 Awards <span id="achN"></span></button></div>
+  <div class="mapbar"><button type="button" id="btnDaily">🎁 Gift</button><button type="button" id="btnAch">🏆 <span id="achN"></span></button><button type="button" id="btnGarden">🏡 <span id="gdN"></span></button><button type="button" id="btnRace">🏁 Race</button></div>
 </section>
 
 <section class="screen" id="game" hidden>
@@ -343,6 +375,28 @@
   <div class="achl" id="achList"></div>
   <button class="btn ghost" id="achClose">Close</button>
 </div></div>
+<div class="modal" id="mStory" hidden><div class="card">
+  <p class="chip" id="stChip" style="background:#3a2f6e;border-color:#b9a6ff"></p>
+  <h2 id="stTitle"></h2>
+  <div class="garden" id="stScene"></div>
+  <p id="stText"></p>
+  <p class="sub" id="stChest" hidden></p>
+  <button class="btn" id="stGo">Continue</button>
+</div></div>
+<div class="modal" id="mGarden" hidden><div class="card">
+  <h2>Pogo's garden</h2><p id="gdText" class="sub"></p>
+  <div class="garden" id="gdScene"></div>
+  <button class="btn" id="gdBuild"></button>
+  <button class="btn ghost" id="gdClose">Close</button>
+</div></div>
+<div class="modal" id="mRace" hidden><div class="card">
+  <h2>Weekly race</h2><p id="raceText" class="sub"></p>
+  <div class="racel" id="raceList"></div>
+  <button class="btn" id="raceClaim" hidden>Collect</button>
+  <h2 style="font-size:21px;margin-top:16px">Team</h2>
+  <div id="teamBox"></div>
+  <button class="btn ghost" id="raceClose">Close</button>
+</div></div>
 <div class="modal" id="mPet" hidden><div class="card">
   <h2>Pogo</h2><p id="petText" style="min-height:2.6em"></p>
   <div id="petBox"></div>
@@ -373,7 +427,7 @@ const sleep = (ms) => { const g0 = G; return new Promise(r => setTimeout(() => {
 const $ = (id) => document.getElementById(id);
 
 // ---------------------------------------------------------------- levels
-// mask rows: '#' hole, '.' plain, 'j' jelly, 'J' double jelly, 'f' frost1, 'F' frost2, 'G' frost3, 'l' lock, 'c' chocolate, 'x' ingredient exit (bottom)
+// mask rows: '#' hole, '.' plain, 'j' jelly, 'J' double jelly, 'f' frost1, 'F' frost2, 'G' frost3, 'l' lock, 'c' chocolate, 's' stone (only a special gem breaks it), 'b' colour crate (only a match of its own colour, or a special, opens it)
 const M = {
   full: null,
   cross: ["##.....##", "##.....##", ".........", ".........", ".........", ".........", ".........", "##.....##", "##.....##"],
@@ -623,14 +677,20 @@ const CAL = [29, 12, 25, 21600, 19, 12, 16100, 17, 12, 31, 20, 14, 20, 7400, 50,
     if (ing) L.need = Math.min(6, 3 + Math.floor(tier * .55));
     const fz = boss || [3, 6].includes(n % 10) || (tier >= 2 && n % 10 === 1) || (tier >= 4 && n % 10 === 4) || (tier >= 5 && n % 10 === 8);
     if (fz) L.fuse = { n: 13 - Math.floor(tier / 2), start: tier < 3 ? 1 : 2, every: 6, max: Math.min(3, 2 + Math.floor(tier / 3)) };
+    // newer obstacle families are drawn last, so every level keeps the layout it had before they existed
+    if (tier >= 1) { const q = R(), pat = pick(SPARSE), put = (ch, max, ok) => { let k = 0; for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) if (k < max && free(r, c) && pat(r, c) && ok(r, c)) { lay[r][c] = ch; k++; } };
+      if (q < .3) put("b", 6, () => true);
+      else if (q < .55 && goal !== "blockers" && !ing) put("s", 5, (r, c) => !L.jelly || L.jelly[r][c] === ".");
+      if (lay.flat().some(k => k !== ".")) L.layout = lay.map(r => r.join("")); }
     if (goal === "score") { L.moves = 22 + tier * 2; L.target = CAL[n] || 9e9; } else L.moves = CAL[n] || 999;
     LEVELS.push(L);
   }
 })();
 // ---- difficulty. HARDER lists levels whose goal is thickened (double jelly, one more frost layer, two more keys) so they last long enough to tune;
-// TUNE is the measured number for every level: moves, or the score target on score levels, from 200 solver games per level.
+// TUNE is the measured number for every level: moves, or the score target on score levels, from 110 to 400 solver games per level, measured again after fireflies, stones and colour crates were added (no level is longer than 37 moves).
 // Solver win rate it aims for: 90% on level 1 easing to 61% on level 20, then a straight slide to 5% on level 100.
-const HARDER = new Set([2, 5, 6, 10, 21, 22, 31, 34, 35, 38, 41, 42, 45, 48, 71]), TUNE = [39000,32000,18,21000,17,17,12,27,13000,17,10,34,29000,24,21,39,18000,107,26,36,71000,13,8,13,23000,43,23,24,34,44,19,11,13,45000,14,13,28000,17,8,17,16,16,17,15000,29,13,37000,15,11,37,26,30,18,20000,25,20,30000,19,26,28,27,12,20,27000,28,15,44000,11,36,45,30,11,28,32000,33,24,25000,17,10,30,22,14,17,47000,9,17,24000,16,13,29,25,21,13,39000,14,16,35000,15,15,27];
+const HARDER = new Set([2, 5, 6, 10, 21, 22, 31, 34, 35, 38, 41, 42, 45, 48, 71]), TUNE = [40000,31000,14,22000,12,13,11,20,14000,13,9,25,32000,18,16,33,19000,31,20,28,73000,11,8,10,35000,13,15,19,25,16,16,10,11,47000,13,12,30000,14,8,15,15,19,14,11000,25,12,37000,11,10,29,23,20,17,24000,21,16,32000,16,22,23,30,12,17,26000,24,15,43000,10,37,22,28,16,20,34000,32,20,26000,16,9,25,19,12,17,50000,8,16,30000,13,12,23,23,21,11,45000,14,19,42000,14,12,20];
+for (const i of [17, 25, 29, 69]) LEVELS[i].colors = 5;   // these needed 43 to 107 moves with six colours: five colours chain more and keep them short
 LEVELS.forEach((L, i) => {
   if (HARDER.has(i)) { if (L.jelly) L.jelly = L.jelly.map(r => r.replace(/j/g, "J")); if (L.layout) L.layout = L.layout.map(r => r.replace(/F/g, "G").replace(/f/g, "F")); if (L.need) L.need = Math.min(7, L.need + 2); }
   if (TUNE[i]) { if (L.goal === "score") L.target = TUNE[i]; else L.moves = TUNE[i]; }
@@ -733,15 +793,20 @@ function scrollMap(target, from) {
 }
 ["pointerdown", "wheel", "touchstart"].forEach(ev => $("map").addEventListener(ev, () => cancelAnimationFrame(mapRaf), { passive: true }));
 function buildMap() {
-  tickLives(); $("lives").textContent = livesTxt(); $("starsTotal").textContent = totalStars(); $("carrots").textContent = save.carrots || 0;
-  $("btnDaily").classList.toggle("ready", !dailyState().claimed); $("achN").textContent = Object.keys(save.ach).length + "/" + ACH.length;
+  tickLives(); $("lives").textContent = livesTxt(); $("starsTotal").textContent = Math.max(0, starsFree()); $("carrots").textContent = save.carrots || 0;
+  $("btnDaily").classList.toggle("ready", !dailyState().claimed); $("achN").textContent = Object.keys(save.ach).length + "/" + ACH.length; $("gdN").textContent = gardenN() + "/" + GARDEN.length;
   const path = $("path"), svg = $("pathSvg"); path.querySelectorAll(".node, .pogoMap").forEach(n => n.remove());
   const H = 150 + LEVELS.length * 86; path.style.height = H + "px"; svg.setAttribute("viewBox", `0 0 420 ${H}`);
   const pts = LEVELS.map((_, i) => [210 + Math.sin(i * 1.1) * (window.__nativeApp ? 112 : 130), H - 130 - i * 86]);
   // the path is a dusky slate trail through the stones with a line of lights drifting along it
   let d = "M" + pts[0][0] + " " + pts[0][1]; for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i], my = (a[1] + b[1]) / 2; d += ` C${a[0]} ${my} ${b[0]} ${my} ${b[0]} ${b[1]}`; }
   svg.innerHTML = `<path d="${d}" fill="none" stroke="#000" stroke-opacity=".45" stroke-width="36" stroke-linecap="round" transform="translate(0 5)"/><path d="${d}" fill="none" stroke="#4d4865" stroke-width="28" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#8a85a8" stroke-width="20" stroke-linecap="round" stroke-dasharray="3 23" stroke-opacity=".7"/><path class="flow" d="${d}" fill="none" stroke="#ffe9b0" stroke-width="5" stroke-linecap="round" stroke-dasharray=".1 35.9"/>`;
-  const cur = highest();
+  const cur = highest(); path.querySelectorAll(".chap, .prop").forEach(n => n.remove());
+  { let h = ""; pts.forEach((p, i) => { const C = CHAPTERS[chapOf(i)], dark = i > cur, side = p[0] > 210 ? -1 : 1, px = Math.max(26, Math.min(394, p[0] + side * (150 + (i * 37) % 40))), e = isMordo(i) && !save.stars[i] ? MORDO : C.props[(i * 7 + chapOf(i)) % 4];
+      if (i % 10 === 0) { h += `<div class="chap${dark ? " dark" : ""}" style="top:${p[1] - 16}px;${side < 0 ? "left:4%" : "right:4%"}">${i / 10 + 1} · ${C.name}</div>`; return; }
+      h += `<div class="prop${dark ? " dark" : (i * 5) % 3 === 0 ? " lit" : ""}" style="left:${px / 420 * 100}%;top:${p[1] - 34 + (i * 13) % 30}px;font-size:${isMordo(i) ? 34 : 26 + (i * 11) % 16}px;--t:${(2.6 + (i % 5) * .35).toFixed(2)}s;--dl:-${(i % 7) * .4}s"><b>${e}</b></div>`;
+    });
+    path.insertAdjacentHTML("beforeend", h); }
   pts.forEach((p, i) => {
     const n = document.createElement("div"); n.className = "node" + (save.stars[i] ? " done" : i === cur ? " current" : i > cur ? " locked" : "") + (LEVELS[i].fuse ? " fz" : "") + (hardOf(i) ? " hard" + hardOf(i) : "");
     n.style.left = p[0] / 420 * 100 + "%"; n.style.top = p[1] + "px"; n.textContent = i + 1; n.style.setProperty("--d", Math.min(.45, Math.abs(i - cur) * .05) + "s");
@@ -762,7 +827,8 @@ function openLevel(i) {
   $("sPogo").innerHTML = pogoSvg();
   $("sTitle").textContent = "Level " + (i + 1); $("sGoal").textContent = { score: "⭐ ", jelly: "🟪 ", ingredients: "🔑 ", blockers: "🧊 " }[L.goal] + goalText(L);
   { const h = hardOf(i), st = Math.min(3, save.streak || 0), c = $("mStart").firstElementChild; c.classList.toggle("hard1", h === 1); c.classList.toggle("hard2", h === 2);
-    $("sHard").hidden = !h; $("sHard").textContent = h ? (h === 2 ? "☠️ " : "🔥 ") + HARD_TXT[h] + " · +" + h + " 🥕" : "";
+    const md = isMordo(i), extra = h + (md ? 2 : 0);
+    $("sHard").hidden = !h && !md; $("sHard").textContent = (md ? MORDO + " Mordo's level" + (h ? " · " : "") : "") + (h ? (h === 2 ? "☠️ " : "🔥 ") + HARD_TXT[h] : "") + (extra ? " · +" + extra + " 🥕" : "");
     $("sGift").hidden = !st; $("sGift").textContent = st ? "🎁 Win streak ×" + save.streak + ": start with " + st + " special gem" + (st > 1 ? "s" : "") : ""; }
   $("sFuse").hidden = !L.fuse; if (L.fuse) $("sFuse").textContent = `⏱ Countdown gems lose 1 every move. Match them before they hit 0.`;
   $("sRow").innerHTML = `<div><small>Moves</small>${L.moves}</div><div><small>Goal</small>${L.goal === "score" ? "★ " + L.target / STAR : L.goal === "ingredients" ? "🔑 " + L.need : L.goal === "jelly" ? "🟪 all" : "🧊 all"}</div><div><small>Best</small>★ ${starsOf(save.best[i] || 0)}</div>`;
@@ -775,28 +841,150 @@ function showLives() {
   const left = Math.max(0, LIFE_MS - (Date.now() - save.lifeAt)), wait = INVITE_MS - (Date.now() - (save.invAt || 0));
   $("lifeTitle").textContent = save.lives <= 0 ? "Out of lives" : "Lives";
   $("lifeText").textContent = window.__infLives ? "You have unlimited lives." : infLives() ? `Unlimited lives for ${infMin()} more min.` : save.lives >= 5 ? "Your lives are full." : `A new life arrives in ${Math.ceil(left / 60000)} min. Lives refill one every 30 minutes.`;
-  $("invText").textContent = wait > 0 ? `Next invite reward in ${Math.ceil(wait / 3600000)} h. You can still send the game.` : "Send the game to a friend and play 1 hour with unlimited lives. Once a day.";
+  $("invText").textContent = srvOn ? "When your friend opens your link and finishes a level, you get 1 hour of unlimited lives." : wait > 0 ? `Next invite reward in ${Math.ceil(wait / 3600000)} h. You can still send the game.` : "Send the game to a friend and play 1 hour with unlimited lives. Once a day.";
+  inviteSync();
   show("mLives");
 }
-// invite a friend: the share sheet (app), the browser share sheet, or a copied link; a sent invite pays out one hour of unlimited lives
+// ---- the small server behind invites and teams (/api/prism/). A player is a random id made on this device. Every call returns null when the server cannot be reached.
+const did = () => save.did || (save.did = (crypto.randomUUID ? crypto.randomUUID() : Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, "0")).join("")), persist(), save.did);
+let srvOn = false;
+async function api(path, body) {
+  if (window.__fast) return null;
+  try { const r = await fetch("/api/prism/" + path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(Object.assign({ id: did() }, body)) }); const j = await r.json(); if (j && typeof j.ok === "boolean") { srvOn = true; return j; } } catch (e) {}
+  return null;
+}
+// invite a friend. With the server: a one-time link, and the hour of unlimited lives arrives once the friend has finished a level (three paid invites a day at most).
+// Without it: the share sheet alone pays out, once a day.
 const INVITE_MS = 24 * 3600000, INVITE = { text: "Come play this gem game with me!", url: "https://launch.mountlayer.com/prism/" };
+let inviteLive = false;
 window.__shared = (ok) => {
-  if (!ok) return; if (Date.now() - (save.invAt || 0) < INVITE_MS) { tip("Invite sent"); return; }
+  if (!ok) return; if (inviteLive) { tip("Invite sent. Your hour starts when your friend finishes a level.", 4200); return; }
+  if (Date.now() - (save.invAt || 0) < INVITE_MS) { tip("Invite sent"); return; }
   save.invAt = Date.now(); save.infUntil = Date.now() + 3600000; save.lives = 5; persist(); hide("mLives"); if (!$("map").hidden) buildMap(); tip("∞ Unlimited lives for 1 hour", 3200); SFX.reward();
 };
-$("lifeInvite").addEventListener("click", () => {
+$("lifeInvite").addEventListener("click", async () => {
+  const j = await api("invite/new"), inv = { text: INVITE.text, url: INVITE.url + (j && j.code ? "?ref=" + j.code : "") }; inviteLive = !!(j && j.code);
   const h = window.webkit && webkit.messageHandlers && webkit.messageHandlers.share;
-  if (h) h.postMessage(INVITE);
-  else if (navigator.share) navigator.share({ text: INVITE.text, url: INVITE.url }).then(() => __shared(true), () => {});
-  else if (navigator.clipboard) navigator.clipboard.writeText(INVITE.text + " " + INVITE.url).then(() => { tip("Invite link copied"); __shared(true); }, () => {});
+  if (h) h.postMessage(inv);
+  else if (navigator.share) navigator.share(inv).then(() => __shared(true), () => {});
+  else if (navigator.clipboard) navigator.clipboard.writeText(inv.text + " " + inv.url).then(() => { tip("Invite link copied"); __shared(true); }, () => {});
 });
+// the inviter's side: collect hours earned by friends. The friend's side: remember the code from the link, report the first finished level.
+async function inviteSync() {
+  const j = await api("invite/claim"); if (j && j.rewards > 0) { save.infUntil = Math.max(Date.now(), save.infUntil || 0) + j.rewards * 3600000; save.lives = 5; persist(); if (!$("map").hidden) buildMap(); tip("∞ Your friend played! Unlimited lives for " + j.rewards + " hour" + (j.rewards > 1 ? "s" : ""), 4200); SFX.reward(); }
+}
+{ const ref = new URLSearchParams(location.search).get("ref"); if (ref && !save.refBy) api("invite/open", { code: ref }).then(j => { if (j && j.ok) { save.refBy = ref; persist(); } }); }
+setTimeout(inviteSync, 1500); document.addEventListener("visibilitychange", () => { if (!document.hidden) inviteSync(); });
+function afterWinOnline() { if (save.refBy && !save.refDone) api("invite/done").then(j => { if (j && j.ok) { save.refDone = 1; persist(); } }); if (save.team) api("team/win").then(j => { if (j && j.team) save.teamTotal = j.team.total; }); }
+
+// ---- the story. Mordo the magpie has carried off every shining charm from Pogo's garden; the trail runs through ten places, ten levels each,
+// and the last level of every place is one Mordo guards himself. A story card opens each chapter; finishing one pays a chapter chest.
+const MORDO = "🐦‍⬛", CHAPTERS = [
+  { name: "The Burrow", props: ["🌱", "🥕", "🌼", "🪵"], title: "The night the lights went out", text: "A magpie called Mordo swooped over Pogo's garden and carried off every shining charm. Follow his trail, win the charms back and light the garden again." },
+  { name: "Clover Meadow", props: ["🍀", "🌼", "🌾", "🦋"], title: "Feathers in the clover", text: "The burrow glows again. Black feathers lead across the meadow. Line up four charms in a square and a firefly will come to help." },
+  { name: "Firefly Pond", props: ["🪷", "🐸", "🌿", "🪻"], title: "Ticking in the reeds", text: "Mordo has hidden charms inside ticking gems. Each one counts down with every move: match it before it reaches zero." },
+  { name: "Mushroom Hollow", props: ["🍄", "🌰", "🐌", "🍂"], title: "A glow under the caps", text: "The mushrooms still shine a little, and the trail is fresh. Win a few levels in a row and Pogo leaves gifts on the board." },
+  { name: "The Old Oak", props: ["🌳", "🦉", "🍃", "🌰"], title: "What the owl saw", text: "The owl watched the thief pack charms into coloured crates and wall them in with stone. Crates open to their own colour. Stone only gives way to a special gem." },
+  { name: "Bramble Maze", props: ["🌿", "🫐", "🦔", "🌹"], title: "Half way", text: "The path twists and Mordo is getting nervous. Hard levels begin here. They pay extra carrots." },
+  { name: "Windmill Hill", props: ["🌾", "🎐", "🌻", "🪁"], title: "Wind on the hill", text: "The wind carries feathers past the old mill. Spend your stars in the garden: every piece you build sends back a booster." },
+  { name: "Moon Bridge", props: ["🏮", "🌙", "🪨", "⭐"], title: "Only the moon", text: "Nothing lights the bridge but the moon. Keep your win streak alive and you will not cross it alone." },
+  { name: "Magpie's Wood", props: ["🌲", "🪶", "🕸️", "🍂"], title: "His wood", text: "Every tree here hides something stolen. The last stretch is the hardest Mordo has." },
+  { name: "The Nest", props: ["🌲", "🪶", "💎", "🪺"], title: "The tallest pine", text: "The nest sits at the very top, full of light. Ten levels to the last charm." }
+], STORY_END = { title: "The garden shines again", text: "Mordo hands back the last charm, a little ashamed, and gets a carrot for his trouble. Pogo's garden has never been brighter." };
+const chapOf = (i) => Math.min(9, Math.floor(i / 10)), isMordo = (i) => i % 10 === 9, allDone = () => !!save.stars[LEVELS.length - 1];
+function storyScene(ch, end) {
+  const C = CHAPTERS[Math.min(9, ch)], out = [], put = (e, x, y, sz, live) => out.push(`<span class="${live ? "live" : ""}" style="left:${x}%;top:${y}%;font-size:${sz}px;--t:${(2.4 + (x % 7) * .3).toFixed(1)}s;--dl:-${(y % 5) * .4}s">${e}</span>`);
+  put(C.props[0], 14, 52, 50, true); put(C.props[1], 84, 60, 40, true); put(C.props[2], 66, 84, 26, true); put(C.props[3], 32, 86, 24, true); put(C.props[0], 92, 30, 30, true);
+  put("🐇", 44, 66, 44, true); put(MORDO, end ? 60 : 72, end ? 66 : 20, end ? 38 : 34, true); if (end) { put("🥕", 53, 72, 20); put("✨", 30, 30, 26, true); put("✨", 70, 26, 22, true); } else put("✨", 80, 14, 16, true);
+  for (let i = 0; i < 9; i++) out.push(`<u style="left:${8 + i * 10.5}%;top:${12 + (i * 37) % 44}%;--dl:-${i * .3}s"></u>`);
+  return out.join("");
+}
+// opens the card for the chapter the player has just reached (once); returns true when a card is up
+function storyCheck() {
+  if (window.__fast || roomStart) return false; const end = allDone(), ch = end ? 10 : chapOf(highest()); if ((save.chapSeen === undefined ? -1 : save.chapSeen) >= ch) return false;
+  const first = save.chapSeen === undefined, paid = !first && ch > 0; save.chapSeen = ch;
+  if (paid) { save.carrots = (save.carrots || 0) + 5; carrotNew += 5; for (const k in BOOST0) save.boost[k]++; save.infUntil = Math.max(Date.now(), save.infUntil || 0) + 15 * 60000; save.lives = 5; }
+  persist(); const C = end ? STORY_END : CHAPTERS[ch];
+  $("stChip").textContent = end ? "The end" : "Chapter " + (ch + 1) + " · " + C.name; $("stTitle").textContent = C.title; $("stText").textContent = C.text; $("stScene").innerHTML = storyScene(ch, end);
+  $("stChest").hidden = !paid; $("stChest").textContent = paid ? "🎁 Chapter chest: +5 🥕 · +1 of every booster · ∞ lives for 15 min" : "";
+  show("mStory"); if (paid) SFX.reward(); return true;
+}
+$("stGo").addEventListener("click", () => { hide("mStory"); buildMap(); });
+
+// ---- Pogo's garden: stars earned on levels are spent, one piece at a time, on a small scene; every piece also pays one booster
+const GARDEN = [["🥕", "Carrot patch", 40, 17, 78, 24], ["🌷", "Tulips", 90, 71, 82, 24], ["🪵", "Log bench", 160, 44, 86, 28], ["🏮", "Lantern", 250, 31, 60, 26], ["🍄", "Mushrooms", 360, 86, 68, 22],
+  ["🌳", "Oak tree", 500, 12, 40, 58], ["🏡", "Burrow house", 700, 53, 46, 60], ["⛲", "Fountain", 950, 78, 44, 38], ["🎡", "Ferris wheel", 1250, 90, 20, 44], ["🌈", "Rainbow", 1600, 42, 14, 64]];
+const starsFree = () => totalStars() - (save.spent || 0), gardenN = () => Math.min(GARDEN.length, save.garden || 0);
+function openGarden(fresh) {
+  const n = gardenN(), nx = GARDEN[n];
+  $("gdScene").innerHTML = GARDEN.map((g, i) => `<span class="${i >= n ? "todo" : i === n - 1 && fresh ? "new" : "live"}" style="left:${g[3]}%;top:${g[4]}%;font-size:${g[5]}px;--t:${(2.6 + i * .27).toFixed(2)}s;--dl:-${i * .5}s">${g[0]}</span>`).join("") + Array.from({ length: Math.min(12, n * 2) }, (_, i) => `<u style="left:${6 + (i * 29) % 88}%;top:${10 + (i * 17) % 60}%;--dl:-${i * .37}s"></u>`).join("");
+  $("gdText").textContent = nx ? `Light the garden again: ${n} of ${GARDEN.length} built · you have ★ ${starsFree()}` : "The garden is complete, and brighter than before Mordo came.";
+  const b = $("gdBuild"); b.hidden = !nx; if (nx) { b.textContent = `Build ${nx[0]} ${nx[1]} · ★ ${nx[2]}`; b.classList.toggle("ghost", starsFree() < nx[2]); }
+  $("gdN").textContent = n + "/" + GARDEN.length; show("mGarden");
+}
+$("btnGarden").addEventListener("click", () => openGarden()); $("gdClose").addEventListener("click", () => hide("mGarden"));
+$("gdBuild").addEventListener("click", () => {
+  const n = gardenN(), nx = GARDEN[n]; if (!nx) return; if (starsFree() < nx[2]) { $("gdText").textContent = `You need ★ ${nx[2] - starsFree()} more. Win levels to earn stars.`; SFX.bad(); return; }
+  const gift = ["hammer", "switch", "cross", "moves", "undo"][n % 5]; save.spent = (save.spent || 0) + nx[2]; save.garden = n + 1; save.boost[gift]++; persist(); SFX.reward(); openGarden(true);
+  $("gdText").textContent = `${nx[1]} built! +1 ${BNAME[gift] || gift}`; buildMap();
+});
+
+// ---- weekly race: first to 15 wins. The four rivals are Pogo's friends, played by the game: each keeps a steady pace that is fixed for the week.
+const RACE_N = 15, RIVALS = [["🦊", "Miso"], ["🦉", "Bibi"], ["🦔", "Tako"], ["🐿️", "Nutmeg"]], RACE_PRIZE = [[10, 2], [6, 1], [3, 0], [1, 0], [1, 0]];
+const weekNo = (t = Date.now()) => Math.floor((t / 86400000 + 3) / 7), weekStart = (w) => (w * 7 - 3) * 86400000;
+function rivalPace(w, i) { let x = (w * 2654435761 + (i + 1) * 40503) >>> 0; const r = () => { x = (Math.imul(x ^ x >>> 15, 2246822519) + 0x9e3779b9) >>> 0; return (x >>> 8) / 16777216; }; return { rate: 1.4 + r() * 2.1, delay: r() * .6 }; }
+const rivalWins = (w, i, t) => { const p = rivalPace(w, i); return Math.max(0, Math.min(RACE_N, Math.floor(((t - weekStart(w)) / 86400000 - p.delay) * p.rate))); };
+const rivalFin = (w, i) => { const p = rivalPace(w, i); return weekStart(w) + (p.delay + RACE_N / p.rate) * 86400000; };
+// place among the five at time t: finishers first (earlier finish wins), then by wins
+function raceRows(rc, t) {
+  const rows = RIVALS.map((v, i) => ({ icon: v[0], name: v[1], wins: rivalWins(rc.w, i, t), fin: rivalFin(rc.w, i) })).concat([{ icon: "🐇", name: "You", wins: Math.min(RACE_N, rc.wins), fin: rc.fin || Infinity, me: true }]);
+  for (const r of rows) if (r.wins < RACE_N) r.fin = Infinity;
+  return rows.sort((a, b) => a.fin - b.fin || b.wins - a.wins || (a.me ? -1 : 1));
+}
+function racePay(place) { const [c, b] = RACE_PRIZE[place]; save.carrots = (save.carrots || 0) + c; carrotNew += c; if (b) for (const k in BOOST0) save.boost[k] += b; return "🏁 " + ["1st", "2nd", "3rd", "4th", "5th"][place] + " place: +" + c + " 🥕" + (b ? " and +" + b + " of every booster" : ""); }
+function raceNow() {
+  const w = weekNo(); let msg = "";
+  if (!save.race || save.race.w !== w) {   // a new week: last week's race is settled where it stood when the week ended
+    const old = save.race; if (old && !old.paid && old.wins > 0) msg = racePay(raceRows(old, weekStart(old.w + 1)).findIndex(r => r.me));
+    save.race = { w, wins: 0, fin: 0, paid: false }; persist();
+  }
+  return msg;
+}
+function openRace() {
+  const msg = raceNow(), rc = save.race, rows = raceRows(rc, Date.now()), place = rows.findIndex(r => r.me), left = weekStart(rc.w + 1) - Date.now(), d = Math.floor(left / 86400000), h = Math.floor(left / 3600000) % 24;
+  $("raceList").innerHTML = rows.map((r, i) => `<div class="${r.me ? "me" : ""}"><i style="width:${r.wins / RACE_N * 100}%"></i><span>${i + 1}</span><span>${r.icon}</span><em>${r.name}</em><b>${r.wins}/${RACE_N}</b></div>`).join("");
+  $("raceText").textContent = msg || (rc.paid ? "You finished this week's race. A new one starts Monday." : `First to ${RACE_N} wins. You are ${["1st", "2nd", "3rd", "4th", "5th"][place]}. ${d ? d + " d " : ""}${h} h left.`);
+  $("raceClaim").hidden = !(rc.wins >= RACE_N && !rc.paid); renderTeam(); show("mRace"); if (msg) { SFX.reward(); buildMap(); }
+}
+$("btnRace").addEventListener("click", openRace); $("raceClose").addEventListener("click", () => hide("mRace"));
+$("raceClaim").addEventListener("click", () => { const rc = save.race; if (!rc || rc.paid || rc.wins < RACE_N) return; const txt = racePay(raceRows(rc, rc.fin).findIndex(r => r.me)); rc.paid = true; persist(); SFX.reward(); openRace(); $("raceText").textContent = txt; buildMap(); });
+function raceWin() { raceNow(); const rc = save.race; if (rc.wins < RACE_N) { rc.wins++; if (rc.wins >= RACE_N) rc.fin = Date.now(); } }
+
+// ---- team (needs the server): up to ten players behind a code; the week's wins add up and pay carrots at 20, 50 and 100
+const TEAM_GOALS = [[20, 5], [50, 10], [100, 20]], esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+let teamNow = null;
+async function renderTeam(j) {
+  const box = $("teamBox"); if (!j) { box.innerHTML = `<p class="sub">Loading…</p>`; j = await api("team/state"); }
+  if (!j) { box.innerHTML = `<p class="sub" style="margin:0 0 12px">Teams need a connection to the game server. Try again later.</p>`; return; }
+  if (j.error && !j.team) { const e = box.querySelector("#tErr"); if (e) { e.textContent = j.error; return; } }
+  teamNow = j.team || null; save.team = teamNow ? teamNow.code : ""; persist();
+  if (!teamNow) { box.innerHTML = `<p class="sub" id="tErr" style="margin:0 0 8px">Play with up to 9 friends. Every win counts for the team.</p><input id="tName" placeholder="Your name" maxlength="16" value="${esc(save.pname || "")}"><input id="tArg" placeholder="Team name, or a team code to join" maxlength="16"><div class="two"><button class="btn" id="tCreate" type="button">Create</button><button class="btn ghost" id="tJoin" type="button">Join</button></div>`;
+    const go = (path) => () => { const name = $("tName").value.trim(), arg = $("tArg").value.trim(); save.pname = name; persist(); api(path, path === "team/create" ? { name, team: arg } : { name, code: arg }).then(r => renderTeam(r || { ok: false, error: "Could not reach the server." })); };
+    $("tCreate").addEventListener("click", go("team/create")); $("tJoin").addEventListener("click", go("team/join")); return; }
+  const t = teamNow, got = save.teamGot && save.teamGot.w === t.week ? save.teamGot.n : 0, due = TEAM_GOALS.filter(g => t.total >= g[0]).length;
+  box.innerHTML = `<p style="margin:0 0 6px"><b>${esc(t.name)}</b> · code <b id="tCode" style="color:#ffd200;cursor:pointer">${t.code}</b></p><p class="sub" style="margin:0 0 8px">This week: ${t.total} wins · goals ${TEAM_GOALS.map((g, i) => (i < got ? "✅" : "") + g[0]).join(" / ")}</p><div class="racel">${t.members.map(m => `<div><span>🐇</span><em>${esc(m.name)}</em><b>${m.wins}</b></div>`).join("")}</div>` +
+    (due > got ? `<button class="btn" id="tClaim" type="button">Collect team reward</button>` : "") + `<button class="btn ghost" id="tLeave" type="button">Leave team</button>`;
+  $("tCode").addEventListener("click", () => { if (navigator.clipboard) navigator.clipboard.writeText(t.code).then(() => tip("Team code copied"), () => {}); });
+  $("tLeave").addEventListener("click", () => api("team/leave").then(r => renderTeam(r || { ok: false })));
+  if (due > got) $("tClaim").addEventListener("click", () => { let c = 0; for (let i = got; i < due; i++) c += TEAM_GOALS[i][1]; save.teamGot = { w: t.week, n: due }; save.carrots = (save.carrots || 0) + c; carrotNew += c; persist(); SFX.reward(); buildMap(); renderTeam({ ok: true, team: t }); tip("Team reward: +" + c + " 🥕"); });
+}
 $("lives").parentNode.style.cursor = "pointer"; $("lives").parentNode.addEventListener("click", showLives);
 $("lifeClose").addEventListener("click", () => hide("mLives"));
 let pendingLevel = 0;
 $("sPlay").addEventListener("click", () => { hide("mStart"); clearProgress(); startLevel(pendingLevel); });
 $("mStart").addEventListener("click", e => { if (e.target === $("mStart")) hide("mStart"); });
 $("btnBack").addEventListener("click", () => { if (G && !G.over) snapshot(); showMap(); });
-function showMap() { tip(""); G = null; $("game").hidden = true; $("map").hidden = false; buildMap(); }
+function showMap() { tip(""); G = null; $("game").hidden = true; $("map").hidden = false; buildMap(); storyCheck(); }
 function starTargets(L) { if (L.target) return [L.target, L.target * 3, L.target * 6]; const base = { jelly: 20000, ingredients: 18000, blockers: 18000 }[L.goal] * (1 + L.moves / 40); return [base, base * 1.6, base * 2.3].map(Math.round); }
 
 // ---------------------------------------------------------------- daily reward (login streak)
@@ -848,7 +1036,7 @@ function achPop(a) {
 function checkAch() {
   let any = false;
   for (const a of ACH) if (!save.ach[a.id] && a.ok(save.stats)) { save.ach[a.id] = 1; save.boost.hammer++; achPop(a); any = true; }
-  if (any) { persist(); if (G) updateHud(); else $("achN").textContent = Object.keys(save.ach).length + "/" + ACH.length; }
+  if (any) { persist(); if (G) updateHud(); else $("achN").textContent = Object.keys(save.ach).length + "/" + ACH.length; $("gdN").textContent = gardenN() + "/" + GARDEN.length; }
 }
 function openAch() {
   $("achHead").textContent = `${Object.keys(save.ach).length} of ${ACH.length} unlocked · each one gives +1 Hammer`;
@@ -867,12 +1055,12 @@ const particles = [], floaters = [], dying = [], fx = [];
 function pack() {
   return { level: G.level, moves: G.moves, score: G.score, collected: G.collected || 0, spawned: G.spawned || 0, chocEaten: !!G.chocEaten, frenzy: G.frenzy || 0, fuseIn: G.fuseIn || 0,
     grid: G.grid.map(row => row.map(g => g ? { k: g.kind, c: g.color, s: g.special, l: !!g.lock, b: g.bombColor, f: g.fuse || 0 } : null)),
-    jelly: G.jelly.map(r => r.slice()), block: G.block.map(r => r.map(b => b ? { kind: b.kind, hp: b.hp } : null)) };
+    jelly: G.jelly.map(r => r.slice()), block: G.block.map(r => r.map(b => b ? { kind: b.kind, hp: b.hp, color: b.color } : null)) };
 }
 function unpack(s) {
   G.moves = s.moves; G.score = s.score; G.collected = s.collected || 0; G.spawned = s.spawned || 0; G.chocEaten = !!s.chocEaten; G.frenzy = s.frenzy || 0; G.fuseIn = s.fuseIn || (G.L.fuse ? G.L.fuse.every : 0);
   for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
-    G.jelly[r][c] = s.jelly[r][c]; G.jellyHit[r][c] = 0; const b = s.block[r][c]; G.block[r][c] = b ? { kind: b.kind, hp: b.hp } : null;
+    G.jelly[r][c] = s.jelly[r][c]; G.jellyHit[r][c] = 0; const b = s.block[r][c]; G.block[r][c] = b ? { kind: b.kind, hp: b.hp, color: b.color } : null;
     const q = s.grid[r][c]; G.grid[r][c] = !q || G.hole[r][c] ? null : q.k === "ing" ? mkIng(r, c) : Object.assign(mkGem(q.c, r, c, q.s), { lock: !!q.l, bombColor: q.b, fuse: q.f || 0 });
   }
 }
@@ -897,6 +1085,8 @@ function startLevel(i, snap) {
       const k = L.layout ? L.layout[r][c] : ".";
       if (k === "f" || k === "F" || k === "G") G.block[r][c] = { kind: "frost", hp: k === "f" ? 1 : k === "F" ? 2 : 3 };
       if (k === "c") G.block[r][c] = { kind: "choc" };
+      if (k === "s") G.block[r][c] = { kind: "stone" };
+      if (k === "b") G.block[r][c] = { kind: "cbox", color: rnd(L.colors) };
     }
     // fill without initial matches
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (!G.hole[r][c] && !G.block[r][c]) {
@@ -992,7 +1182,7 @@ function hudInit() {
 }
 function updateHud() {
   if (G.moves !== HUD.mT) { HUD.mT = G.moves; HUD.moves.textContent = G.moves; bump(HUD.moves); }
-  HUD.moves.style.color = G.moves <= 5 ? "#ff7a95" : "";
+  HUD.moves.style.color = G.moves <= 5 ? "#ff7a95" : ""; $("gPogo").classList.toggle("worry", G.moves <= 5 && !G.over);
   if (G.score !== HUD.sG) { if (G.score > HUD.sG) bump(HUD.score); HUD.sG = G.score; }
   const left = goalLeft(); if (left < HUD.left && G.L.goal !== "score") bump(HUD.goalN); HUD.left = left;
   const st = HUD.st; HUD.bar.style.transform = `translateX(${(Math.min(1, G.score / st[2]) - 1) * 100}%)`;
@@ -1198,7 +1388,7 @@ async function blast(clear, spawn = [], opts = {}) {
     if (g.lock) { g.lock = false; addScore(r, c, 100); ring(c + .5, r + .5, "#d0d4ff", 1); if (!keep.has(k)) continue; }
     if (g.fuse) defuse(g, r, c);
     if (G.jelly[r][c]) { G.jelly[r][c]--; G.jellyHit[r][c] = now; addScore(r, c, 250); if (G.L.goal === "jelly") flyGoal(r, c, "🟪"); burst(c + .5, r + .8, "#ff7a4d", 4, "round"); }
-    for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) if (G.block[r + dr] && G.block[r + dr][c + dc] && !clear.has((r + dr) * COLS + c + dc)) hitBlock(r + dr, c + dc, false);
+    for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) if (G.block[r + dr] && G.block[r + dr][c + dc] && !clear.has((r + dr) * COLS + c + dc)) hitBlock(r + dr, c + dc, false, g.color);
     if (keep.has(k)) continue;
     // a short ripple runs along the match instead of everything popping on the same frame
     const C = COLORS[g.color], dl = Math.min(popped, 6) * step + (flyDl && flyDl.get(k) || 0); dying.push({ g, t: now + dl }); burst(c + .5, r + .5, C ? C.c : "#fff", g.special ? 10 : 5, C ? C.shape : "tri", dl); if (g.special) ring(c + .5, r + .5, C ? C.l : "#fff", 1.3); G.grid[r][c] = null; popped++;
@@ -1227,8 +1417,12 @@ function flyGoal(r, c, txt, big) {
   } catch (e) {}
 }
 const flyKey = (r, c) => flyGoal(r, c, "🔑", true);
-function hitBlock(r, c, direct) {
+function hitBlock(r, c, direct, color) {
   const b = G.block[r][c]; if (!b) return;
+  if (b.kind === "stone" || b.kind === "cbox") {   // stone: only a direct hit (special gem, firefly, booster). colour crate: that, or a match of its colour beside it
+    if (direct || (b.kind === "cbox" && color === b.color)) { G.block[r][c] = null; addScore(r, c, 180); const col = b.kind === "stone" ? "#aab0c4" : COLORS[b.color].c; burst(c + .5, r + .5, col, 14, "tri"); ring(c + .5, r + .5, "#fff", 1.1); if (G.L.goal === "blockers") flyGoal(r, c, "🧊"); }
+    else { b.hit = performance.now(); if (!b.told && !window.__fast && !save["seen_" + b.kind]) { save["seen_" + b.kind] = 1; tip(b.kind === "stone" ? "Stone: only a special gem can break it" : "Colour crate: match its colour next to it", 3600); } }
+    return; }
   if (b.kind === "frost") { b.hp--; if (b.hp <= 0) { G.block[r][c] = null; addScore(r, c, 120); if (G.L.goal === "blockers") flyGoal(r, c, "🧊"); burst(c + .5, r + .5, "#bfe6ff", 12, "tri"); ring(c + .5, r + .5, "#fff", 1.1); } else { b.hit = performance.now(); burst(c + .5, r + .5, "#e6f7ff", 3, "tri"); } }
   else if (b.kind === "choc") { G.block[r][c] = null; G.chocEaten = true; addScore(r, c, 150); burst(c + .5, r + .5, "#8a4a22", 12, "square"); ring(c + .5, r + .5, "#ffb000", 1); }
 }
@@ -1316,11 +1510,11 @@ async function win() {
   { const set = new Set(); for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const g = cell(r, c); if (g && g.special) set.add(r * COLS + c); } if (set.size) { G.combo = 2; await blast(set); G.wrapAgain = []; await gravity(); } }
   const st = starTargets(G.L), stars = G.score >= st[2] ? 3 : G.score >= st[1] ? 2 : 1;
   save.stars[G.level] = Math.max(save.stars[G.level] || 0, stars); save.best[G.level] = Math.max(save.best[G.level] || 0, G.score); delete save.inProgress;
-  const bonus = hardOf(G.level); save.streak = (save.streak || 0) + 1;
+  const mordo = isMordo(G.level) ? 2 : 0, bonus = hardOf(G.level) + mordo; save.streak = (save.streak || 0) + 1; if (!window.__fast) { raceWin(); afterWinOnline(); }
   save.carrots = (save.carrots || 0) + stars + bonus; carrotNew += stars + bonus; save.stats.wins++; save.stats.bestScore = Math.max(save.stats.bestScore, G.score); persist(); checkAch();
-  $("ePogo").innerHTML = pogoSvg("happy"); $("eTitle").textContent = "Level " + (G.level + 1) + " complete"; $("eStars").innerHTML = "<b>" + Array.from({ length: stars }, (_, i) => `<i style="--d:${.25 + i * .22}s">✦</i>`).join("") + "</b><s>" + "✦".repeat(3 - stars) + "</s>"; $("eSub").textContent = "+" + (stars + bonus) + " 🥕 for Pogo" + (bonus ? " (" + HARD_TXT[bonus].toLowerCase() + " +" + bonus + ")" : "") + " · 🔥 streak ×" + save.streak;
+  $("ePogo").innerHTML = pogoSvg("happy"); $("eTitle").textContent = "Level " + (G.level + 1) + " complete"; $("eStars").innerHTML = "<b>" + Array.from({ length: stars }, (_, i) => `<i style="--d:${.25 + i * .22}s">✦</i>`).join("") + "</b><s>" + "✦".repeat(3 - stars) + "</s>"; $("eSub").textContent = "+" + (stars + bonus) + " 🥕 for Pogo" + (mordo ? " (" + MORDO + " Mordo drops his loot)" : bonus ? " (" + HARD_TXT[bonus - mordo].toLowerCase() + " +" + bonus + ")" : "") + " · 🔥 streak ×" + save.streak;
   $("eBtns").innerHTML = ""; const next = G.level + 1 < LEVELS.length;
-  const lv = G.level; mkBtn("eBtns", next ? "Next level" : "Back to map", () => { hide("mEnd"); showMap(); if (next) openLevel(lv + 1); });
+  const lv = G.level; mkBtn("eBtns", next ? "Next level" : "Back to map", () => { hide("mEnd"); showMap(); if (next && !isOpen("mStory")) openLevel(lv + 1); });
   mkBtn("eBtns", window.__nativeApp ? "↻ Replay" : "↻ Replay level", () => { hide("mEnd"); clearProgress(); startLevel(lv); }, true);
   if (next) mkBtn("eBtns", "Map", () => { hide("mEnd"); showMap(); }, true);
   await sleep(100); countUp($("eText"), starsOf(G.score), "Stars earned ★ "); show("mEnd");
@@ -1427,6 +1621,16 @@ function buildStatic() {
     k.fillStyle = "#8a4a22"; k.beginPath(); k.roundRect(-CELL / 2 + 7, -CELL / 2 + 6, CELL - 14, CELL - 18, 8); k.fill();
     k.strokeStyle = "rgba(0,0,0,.35)"; k.lineWidth = 2; k.beginPath(); k.moveTo(0, -CELL / 2 + 8); k.lineTo(0, CELL / 2 - 10); k.moveTo(-CELL / 2 + 8, -2); k.lineTo(CELL / 2 - 8, -2); k.stroke();
     k.fillStyle = "rgba(255,230,200,.5)"; k.beginPath(); k.ellipse(-CELL * .14, -CELL * .2, CELL * .16, CELL * .07, -.4, 0, 6.28); k.fill(); ST.choc = c2; }
+  { const [c2, k] = mkCan(CELL, CELL); k.translate(CELL / 2, CELL / 2); const a = CELL / 2 - 3;
+    const g = k.createLinearGradient(-a, -a, a, a); g.addColorStop(0, "#c9cede"); g.addColorStop(.5, "#8b91a8"); g.addColorStop(1, "#555b72"); k.fillStyle = g;
+    k.beginPath(); k.moveTo(-a * .55, -a); k.lineTo(a * .6, -a); k.lineTo(a, -a * .45); k.lineTo(a, a * .6); k.lineTo(a * .5, a); k.lineTo(-a * .65, a); k.lineTo(-a, a * .5); k.lineTo(-a, -a * .5); k.closePath(); k.fill(); k.strokeStyle = "#2b2f40"; k.lineWidth = 2.5; k.stroke();
+    k.strokeStyle = "rgba(30,34,52,.7)"; k.lineWidth = 2; k.beginPath(); k.moveTo(-a * .5, -a * .2); k.lineTo(-a * .05, a * .1); k.lineTo(a * .1, a * .6); k.moveTo(-a * .05, a * .1); k.lineTo(a * .55, -a * .15); k.stroke();
+    k.fillStyle = "rgba(255,255,255,.55)"; k.beginPath(); k.ellipse(-a * .3, -a * .62, a * .32, a * .12, -.2, 0, 6.28); k.fill(); ST.stone = c2; }
+  ST.cbox = COLORS.map((C) => { const [c2, k] = mkCan(CELL, CELL); k.translate(CELL / 2, CELL / 2); const a = CELL / 2 - 3;
+    k.fillStyle = mixc(C.c, C.d, .55); k.beginPath(); k.roundRect(-a, -a, a * 2, a * 2, 7); k.fill(); k.strokeStyle = mixc(C.d, "#000000", .45); k.lineWidth = 2.5; k.stroke();
+    k.strokeStyle = mixc(C.c, C.l, .5); k.lineWidth = 3; k.beginPath(); k.roundRect(-a + 5, -a + 5, a * 2 - 10, a * 2 - 10, 4); k.stroke();
+    k.strokeStyle = mixc(C.d, "#000000", .3); k.lineWidth = 2; k.beginPath(); k.moveTo(-a + 5, -a + 5); k.lineTo(a - 5, a - 5); k.moveTo(a - 5, -a + 5); k.lineTo(-a + 5, a - 5); k.stroke();
+    k.save(); k.scale(.62, .62); gemPath(k, C.shape, CELL * .355); k.fillStyle = C.c; k.fill(); k.strokeStyle = "#fff"; k.lineWidth = 3; k.stroke(); k.restore(); return c2; });
   ST.badge.clear(); for (let n = 1; n <= 12; n++) badge(n);
   ST.fonts = [.36, .42, .5].map(k => `900 ${Math.round(CELL * k)}px ui-rounded, system-ui, sans-serif`);
 }
@@ -1690,6 +1894,7 @@ function render(ts) { ts = Arcade.gfx.time(ts);
   for (let r = 0; r < ROWS; r++) { const br = G.block[r]; for (let c = 0; c < COLS; c++) {
     const b = br[c]; if (!b) continue; let k = 1, sp;
     if (b.kind === "frost") { sp = ST.frost[b.hp - 1] || ST.frost[0]; if (b.hit) { const t = (now - b.hit) / 280; if (t >= 1) b.hit = 0; else if (t > 0) k = 1 + .13 * Math.sin(t * Math.PI); } }
+    else if (b.kind === "stone" || b.kind === "cbox") { sp = b.kind === "stone" ? ST.stone : ST.cbox[b.color] || ST.cbox[0]; if (b.hit) { const t = (now - b.hit) / 280; if (t >= 1) b.hit = 0; else if (t > 0) k = 1 - .08 * Math.sin(t * Math.PI); } }
     else { sp = ST.choc; if (b.born) { const t = (now - b.born) / 420; if (t >= 1) b.born = 0; else k = t > 0 ? easeBack(t) : 0; } }
     if (k === 1) ctx.drawImage(sp, c * CELL, r * CELL, CELL, CELL); else if (k > 0) { const w = CELL * k; ctx.drawImage(sp, c * CELL + (CELL - w) / 2, r * CELL + (CELL - w) / 2, w, w); }
   } }
@@ -1768,7 +1973,7 @@ requestAnimationFrame(render);
 
 // ---------------------------------------------------------------- boot + debug
 buildMap();
-if (save.inProgress && LEVELS[save.inProgress.level]) openLevel(save.inProgress.level);
+if (!storyCheck() && save.inProgress && LEVELS[save.inProgress.level]) openLevel(save.inProgress.level);
 checkAch();
 function bestMove() {
   let best = null, bestS = -1;
@@ -1779,7 +1984,7 @@ function bestMove() {
     if (!groups.length) return -1;
     let sc = 0;
     for (const grp of groups) { sc += grp.cells.length * 10 + (grp.cells.length >= 4 ? 60 : 0) + (grp.runs.length > 1 ? 80 : 0);
-      for (const [r, c] of grp.cells) { sc += r * 2 + G.jelly[r][c] * 40; for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) if (G.block[r + dr] && G.block[r + dr][c + dc]) sc += 35;
+      for (const [r, c] of grp.cells) { sc += r * 2 + G.jelly[r][c] * 40; for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) { const bk = G.block[r + dr] && G.block[r + dr][c + dc]; if (bk && bk.kind !== "stone" && (bk.kind !== "cbox" || bk.color === grp.color)) sc += bk.kind === "cbox" ? 70 : 35; }
         const g = r === r1 && c === c1 ? b : r === r2 && c === c2 ? a : G.grid[r][c]; if (g && g.fuse) sc += 150 + Math.max(0, 8 - g.fuse) * 90;
         for (let rr = r - 1; rr >= 0; rr--) { const g = G.grid[rr][c]; if (g && g.kind === "ing") { sc += 60; break; } } } }
     return sc;
@@ -1792,7 +1997,7 @@ window.__g = { pause: () => pauseGame(), resume: () => resumeGame(), get G() { r
 window.__roastTier = () => { const s = document.querySelectorAll("#eStars b i").length; return s >= 3 ? 2 : s >= 1 ? 1 : 0; };
 window.__shareText = () => { const stars = document.querySelectorAll("#eStars b i").length, et = document.getElementById("eText"); return "Prism Pop 💎 " + ((document.getElementById("eTitle")||{}).textContent||"") + " · " + (et ? et.dataset.final || et.textContent || "" : "") + (stars ? " · " + "✦".repeat(stars) : "") + ". Can you beat it?"; };
 window.__arcade = { score: () => G ? G.score : 0, status: () => G ? "L" + (G.level + 1) + " · " + G.moves + " moves" : "", done: () => !!(G && G.over), config: () => ({ level: G ? G.level : (typeof pendingLevel === "number" && isOpen("mStart") ? pendingLevel : highest()) }),
-  start: (seed, cfg) => { for (const id of ["mStart", "mEnd", "mPause", "mLives", "mDaily", "mAch"]) hide(id, true); clearProgress(); const lv = Math.max(0, Math.min(LEVELS.length - 1, (cfg && cfg.level) | 0)); roomStart = true; try { Arcade.seeded(seed, () => startLevel(lv)); } finally { roomStart = false; } } };
+  start: (seed, cfg) => { for (const id of ["mStart", "mEnd", "mPause", "mLives", "mDaily", "mAch", "mStory", "mGarden", "mRace"]) hide(id, true); clearProgress(); const lv = Math.max(0, Math.min(LEVELS.length - 1, (cfg && cfg.level) | 0)); roomStart = true; try { Arcade.seeded(seed, () => startLevel(lv)); } finally { roomStart = false; } } };
 </script>
 </body>
 </html>
