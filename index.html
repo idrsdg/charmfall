@@ -193,6 +193,8 @@
   .card { width: min(360px, 100%); background: linear-gradient(160deg, #8a47ff, #5a1fd0 70%); border: 4px solid #ffe7a3; border-radius: 26px; padding: 26px 24px; text-align: center; box-shadow: 0 0 0 4px #27096b, 0 30px 70px rgba(0, 0, 0, .55); animation: cardIn .45s cubic-bezier(.2, 1.4, .4, 1) both; }
   @keyframes cardIn { from { transform: scale(.6) translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
   .card h2 { margin: 0 0 6px; font-size: 28px; font-weight: 900; letter-spacing: -.02em; text-shadow: 0 3px 0 #27096b; }
+  .card h2.perfect { background: linear-gradient(#fff6c2, #ffd23f 55%, #ff9a1a); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; text-shadow: none; filter: drop-shadow(0 3px 0 #27096b); animation: perfectPulse 1s ease-in-out infinite alternate; }
+  @keyframes perfectPulse { from { transform: scale(1); } to { transform: scale(1.06); } }
   .card p { margin: 0 0 14px; font-size: 16px; font-weight: 700; }
   .card .big { font-size: 50px; margin: 6px 0 10px; letter-spacing: -2px; }
   .card .big b { color: #ffd200; text-shadow: 0 3px 0 #9a5b00; }
@@ -251,7 +253,7 @@
   .goalrow { display: flex; justify-content: center; gap: 12px; margin: 10px 0 18px; font-weight: 900; font-size: 18px; }
   .goalrow div { background: rgba(0, 0, 0, .4); border: 2px solid rgba(255, 255, 255, .2); border-radius: 14px; padding: 10px 14px; }
   .goalrow div small { display: block; font-size: 11px; color: #ffe7a3; text-transform: uppercase; letter-spacing: .06em; }
-  .toast { position: fixed; left: 50%; top: 42%; transform: translate(-50%, -50%) scale(.4); font-size: clamp(40px, 9vw, 68px); font-weight: 900; letter-spacing: -.03em; color: #fff; -webkit-text-stroke: 2px #27096b; paint-order: stroke fill; text-shadow: 0 6px 0 #27096b, 0 14px 30px rgba(0, 0, 0, .5); pointer-events: none; opacity: 0; z-index: 9; white-space: nowrap; }
+  .toast { position: fixed; left: 50%; top: 42%; transform: translate(-50%, -50%) scale(.4); font-size: clamp(48px, 11vw, 80px); background: linear-gradient(#fff, #ffd23f 60%, #ff8a00); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 4px 0 #27096b) drop-shadow(0 8px 14px rgba(0, 0, 0, .45)); font-weight: 900; letter-spacing: -.03em; color: #fff; -webkit-text-stroke: 2px #27096b; paint-order: stroke fill; text-shadow: 0 6px 0 #27096b, 0 14px 30px rgba(0, 0, 0, .5); pointer-events: none; opacity: 0; z-index: 9; white-space: nowrap; }
   @keyframes toastIn { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.3) rotate(-8deg); } 18% { opacity: 1; transform: translate(-50%, -50%) scale(1.15) rotate(2deg); } 30% { transform: translate(-50%, -50%) scale(1) rotate(0); } 75% { opacity: 1; transform: translate(-50%, -52%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -70%) scale(1.1); } }
   .fly { position: fixed; z-index: 8; font-size: 30px; pointer-events: none; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .5)); }
   /* ---------- motion + new features ---------- */
@@ -314,7 +316,7 @@
   .setl { display: grid; gap: 8px; margin: 6px 0 4px; }
   .setl button { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 10px; background: rgba(0, 0, 0, .4); border: 2px solid rgba(255, 255, 255, .2); border-radius: 12px; padding: 10px 12px; font: inherit; font-weight: 900; font-size: 15px; cursor: pointer; text-align: left; }
   .setl button span { font-size: 20px; width: 26px; text-align: center; } .setl button em { flex: 1; font-style: normal; } .setl button b { color: #ffd200; } .setl button.off b { color: rgba(255, 255, 255, .45); } .setl button.off { opacity: .75; }
-  .aset { background: rgba(0, 0, 0, .4); border: 2px solid rgba(255, 255, 255, .16); border-radius: 12px; padding: 8px 10px; } .aset.shut { opacity: .5; } .aset b { display: block; font-size: 14px; margin-bottom: 6px; } .aset small { display: block; font-size: 11px; opacity: .75; margin-top: 6px; }
+  .achl .aset { display: block; background: rgba(0, 0, 0, .4); border: 2px solid rgba(255, 255, 255, .16); border-radius: 12px; padding: 8px 10px; opacity: 1; } .aset.shut { opacity: .5; } .aset b { display: block; font-size: 14px; margin-bottom: 6px; } .aset small { display: block; font-size: 11px; opacity: .75; margin-top: 6px; }
   .cards { display: flex; gap: 6px; } .cards span { position: relative; flex: 1; aspect-ratio: 3 / 4; display: grid; place-items: center; font-size: 22px; border-radius: 8px; background: #2a1a5e; border: 2px solid rgba(255, 255, 255, .18); color: rgba(255, 255, 255, .35); }
   .cards span.got { background: linear-gradient(#7a3cff, #4a16b8); border-color: #ffd200; color: #fff; } .cards span i { position: absolute; right: 2px; bottom: 1px; font-size: 10px; font-style: normal; color: #ffd200; }
   .achl div.due { opacity: 1; border-color: #ffd200; animation: pulse 1.1s infinite; }
@@ -495,7 +497,7 @@ const COLORS = [
   { name: "mint", c: "#3ddc97", l: "#cdffe9", d: "#108a55", shape: "clover" },
   { name: "sky", c: "#4fc3f7", l: "#d0f1ff", d: "#0d6fa8", shape: "egg" },
   { name: "grape", c: "#9d6bff", l: "#e4d6ff", d: "#5a2bc0", shape: "squircle" },
-  { name: "cream", c: "#fff1c9", l: "#ffffff", d: "#b89a5a", shape: "button" }
+  { name: "cream", c: "#ffe9a0", l: "#ffffff", d: "#b88a2a", shape: "button" }
 ];
 const rnd = (n) => Math.floor(Math.random() * n);
 // a sleep only wakes up if the same game is still running, so leaving a level mid-cascade quietly drops the rest of that cascade
@@ -863,7 +865,9 @@ const SFX = {
   undo: () => tone(760, .2, "triangle", .08, -420), tick: () => tone(1150, .04, "square", .04),
   boom: () => { tone(70, .6, "sawtooth", .14, -30); tone(150, .3, "square", .07, -100); },
   ach: () => { tone(880, .12, "triangle", .09); setTimeout(() => tone(1320, .25, "triangle", .09), 110); },
-  coo: () => { tone(540 + Math.random() * 80, .14, "sine", .06, 160); setTimeout(() => tone(700, .16, "sine", .05, -120), 120); }   // a small happy chirp while Pogo is stroked
+  coo: () => { tone(540 + Math.random() * 80, .14, "sine", .06, 160); setTimeout(() => tone(700, .16, "sine", .05, -120), 120); },   // a small happy chirp while Pogo is stroked
+  go: () => [0, 4, 7].forEach((s, i) => setTimeout(() => tone(659 * Math.pow(2, s / 12), .12, "triangle", .07), i * 70)),   // a bright three-note "go" at the start of a level
+  perfect: () => [0, 4, 7, 12, 16].forEach((s, i) => setTimeout(() => tone(523 * Math.pow(2, s / 12), .28, "triangle", .1), i * 90))
 };
 
 // ---------------------------------------------------------------- small helpers
@@ -956,12 +960,12 @@ function buildMap() {
   // the path is a dusky slate trail through the stones with a line of lights drifting along it
   let d = "M" + pts[0][0] + " " + pts[0][1]; for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i], my = (a[1] + b[1]) / 2; d += ` C${a[0]} ${my} ${b[0]} ${my} ${b[0]} ${b[1]}`; }
   svg.innerHTML = `<path d="${d}" fill="none" stroke="#000" stroke-opacity=".5" stroke-width="46" stroke-linecap="round" transform="translate(0 12)"/><path d="${d}" fill="none" stroke="#3a2466" stroke-width="46" stroke-linecap="round" transform="translate(0 7)"/><path d="${d}" fill="none" stroke="#9a8aa8" stroke-width="46" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#b8a8b8" stroke-width="40" stroke-linecap="round" stroke-opacity=".6"/><path d="${d}" fill="none" stroke="#3a2010" stroke-width="34" stroke-dasharray="8 14" stroke-linecap="butt"/><path d="${d}" fill="none" stroke="#5a3a20" stroke-width="34" stroke-dasharray="3 19" stroke-dashoffset="-1" stroke-linecap="butt" stroke-opacity=".7"/><path d="${d}" fill="none" stroke="#2a2a3a" stroke-width="26" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#f4f1ea" stroke-width="22" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#9a8aa8" stroke-width="14" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#3a2010" stroke-width="14" stroke-dasharray="8 14" stroke-linecap="butt" stroke-opacity=".95"/><path class="flow" d="${d}" fill="none" stroke="#ffe9b0" stroke-width="4" stroke-linecap="round" stroke-dasharray=".1 35.9"/>`;
-  const cur = highest(); path.querySelectorAll(".chap, .prop").forEach(n => n.remove());
+  const cur = highest(), villX = {}; path.querySelectorAll(".chap, .prop").forEach(n => n.remove());
   { let h = ""; pts.forEach((p, i) => { const C = CHAPTERS[chapOf(i)], dark = i > cur, side = p[0] > 210 ? -1 : 1, px = Math.max(26, Math.min(394, p[0] + side * (150 + (i * 37) % 40))), e = isMordo(i) && !save.stars[i] ? MORDO : C.props[(i * 7 + chapOf(i)) % 4];
-      if (i % 10 === 0) { h += `<div class="chap${dark ? " dark" : ""}" style="top:${p[1] - 16}px;${side < 0 ? "left:4%" : "right:4%"}">${i / 10 + 1} · ${C.name}</div>`;
+      if (i % 10 === 0) { h += `<div class="chap${dark ? " dark" : ""}" style="top:${p[1] - 78}px;${side < 0 ? "left:4%" : "right:4%"}">${i / 10 + 1} · ${C.name}</div>`;
         h += `<div class="zone${cur > i ? " past" : ""}" style="top:${p[1] - 520}px;background:radial-gradient(ellipse at 50% 50%, #${(CHAP_GROUND[chapOf(i)] || 0x3f8a4d).toString(16).padStart(6, "0")} 0%, rgba(0,0,0,0) 62%)"></div>`;
         const past = cur > i;
-        if (D3) { const vw = 270, y = p[1] + 150, cx = clearX(Math.max(140, Math.min(280, p[0] + side * -140)), y, side, vw / 2); h += `<div class="prop village${dark ? " dark" : past ? " party" : ""}" style="left:${cx / 420 * 100}%;top:${y}px;width:${vw}px"><img src="${D3.village(chapOf(i), past, 480)}" alt=""></div>`; }
+        if (D3) { const vw = 270, y = p[1] + 150, cx = clearX(Math.max(140, Math.min(280, p[0] + side * -140)), y, side, vw / 2); villX[i] = cx; h += `<div class="prop village${dark ? " dark" : past ? " party" : ""}" style="left:${cx / 420 * 100}%;top:${y}px;width:${vw}px"><img src="${D3.village(chapOf(i), past, 480)}" alt=""></div>`; }
         if (past) for (let k = 0; k < 22; k++) { const y = p[1] + 30 + (k * 37) % 150, x = clearX(p[0] + side * -(40 + (k * 53) % 200), y, side); h += `<u class="confetti" style="left:${x / 420 * 100}%;top:${y}px;background:${["#ff5c8a", "#ffd23f", "#4fc3f7", "#7be36f"][k % 4]};--dl:-${(k * .23).toFixed(2)}s"></u>`; }
         return; }
       const inner = D3 ? `<img src="${D3.sprite(isMordo(i) && !save.stars[i] ? "magpie" : (D3.EMO[e] || "bush"), 112)}" alt="">` : `<b>${e}</b>`, py = p[1] - 34 + (i * 13) % 30, pxc = clearX(px, py, side);
@@ -971,7 +975,8 @@ function buildMap() {
   pts.forEach((p, i) => {
     const n = document.createElement("div"); n.className = "node" + (save.stars[i] ? " done" : i === cur ? " current" : i > cur ? " locked" : "") + (LEVELS[i].fuse ? " fz" : "") + (hardOf(i) ? " hard" + hardOf(i) : "");
     n.style.left = p[0] / 420 * 100 + "%"; n.style.top = p[1] + "px"; n.textContent = i + 1; n.insertAdjacentHTML("afterbegin", `<i class="plat"></i>`); n.style.setProperty("--d", Math.min(.45, Math.abs(i - cur) * .05) + "s"); n.style.setProperty("--bd", -(i % 5) * .5 + "s");
-    if (i === cur) { const left = p[0] > 210; path.insertAdjacentHTML("beforeend", `<div class="pogoMap${left ? " flip" : ""}" onclick="openPet()" style="left:${(p[0] + (left ? -112 : 112)) / 420 * 100}%;top:${p[1]}px">${pogoSvg()}</div>`); }
+    if (i === cur) { let left = p[0] > 210; const vc = Math.floor(i / 10) * 10, vx = villX[vc]; if (vx !== undefined && i - vc <= 2) left = vx > p[0] ? true : false;   // the village takes one side of the rails, Pogo the other
+      path.insertAdjacentHTML("beforeend", `<div class="pogoMap${left ? " flip" : ""}" onclick="openPet()" style="left:${(p[0] + (left ? -112 : 112)) / 420 * 100}%;top:${p[1]}px">${pogoSvg()}</div>`); }
     if (save.stars[i]) { const s = document.createElement("div"); s.className = "stars"; s.textContent = "✦".repeat(save.stars[i]); n.appendChild(s); }
     if (i <= cur) n.addEventListener("click", () => openLevel(i)); path.appendChild(n);
   });
@@ -1077,7 +1082,7 @@ function storyCheck() {
   const first = save.chapSeen === undefined, paid = !first && ch > 0; save.chapSeen = ch;
   if (paid) { save.carrots = (save.carrots || 0) + 5; carrotNew += 5; for (const k in BOOST0) save.boost[k]++; save.infUntil = Math.max(Date.now(), save.infUntil || 0) + 15 * 60000; save.lives = 5; }
   persist(); const C = end ? STORY_END : CHAPTERS[ch];
-  $("stChip").textContent = end ? "The end" : "Chapter " + (ch + 1) + " · " + C.name; $("stTitle").textContent = C.title; $("stText").textContent = C.text; $("stScene").innerHTML = storyScene(ch, end);
+  $("stChip").textContent = end ? "The end" : "Chapter " + (ch + 1) + " · " + C.name; $("stTitle").textContent = C.title; $("stText").textContent = C.text; $("stScene").innerHTML = D3 ? Array.from({ length: 9 }, (_, i) => `<u style="left:${8 + i * 10.5}%;top:${12 + (i * 37) % 44}%;--dl:-${i * .3}s"></u>`).join("") : storyScene(ch, end);
   if (D3) { const ci = Math.min(CHAPTERS.length - 1, ch), P = CHAPTERS[ci].props, night = document.documentElement.classList.contains("night"), props = [];
     [[-2.6, -.6, 1.1], [2.4, -1, 1.2], [-1.4, .9, .8], [2.6, .8, .9], [-3.2, .8, .7], [.6, -1.4, 1], [3.4, -.2, .8]].forEach(([x, z, s], i) => props.push({ kind: D3.EMO[P[i % 4]] || "bush", x, z, s, bob: /flower|star|bee|bat|eagle|cloud|feather|wind/.test(D3.EMO[P[i % 4]] || ""), ry: i * 1.3 }));
     props.push({ kind: "pogo", x: -.5, z: 1.4, s: 1.1, ry: .3 }); props.push({ kind: "magpie", x: end ? 1 : 1.6, z: end ? 1.3 : -.2, s: 1, ry: end ? -.6 : .4, bob: !end }); if (end) props.push({ kind: "carrot", x: .3, z: 1.6, s: .7 });
@@ -1532,9 +1537,9 @@ function startLevel(i, snap) {
       if (f >= 5) { const pool = []; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const g = G.grid[r][c]; if (g && g.kind === "gem" && !g.special && !g.lock && !g.fuse) pool.push(g); } if (pool.length) pool[rnd(pool.length)].special = "bomb"; }
       save.att[i] = (save.att[i] || 0) + 1; }
   }
-  G.t0 = performance.now(); if (!resumed) logEv("start");
+  G.t0 = performance.now(); if (!resumed) logEv("start"); if (i < 2) G.hintAt = performance.now() + 900;
   particles.length = 0; fx.length = 0; floaters.length = 0; dying.length = 0;
-  tip(""); $("map").hidden = true; $("game").hidden = false; $("gPogo").innerHTML = pogoSvg("", true); layout(); hudInit(); SFX.swap();
+  tip(""); $("map").hidden = true; $("game").hidden = false; $("gPogo").innerHTML = pogoSvg("", true); layout(); hudInit(); SFX.go();
   if (!resumed) snapshot();
   introDrop();
   if (G.gift) { const g0 = G; setTimeout(() => { if (G !== g0) return; tip("🎁 Win streak ×" + save.streak + ": Pogo's gift is on the board", 3200); const now = performance.now(); for (const row of G.grid) for (const g of row) if (g && g.gift) { g.gift = false; g.sx = 1.5; g.pop = now; ring(g.c + .5, g.r + .5, "#ffd200", 1.3, 520, 8); } SFX.reward(); }, 1100); }
@@ -1945,12 +1950,12 @@ async function win() {
   const mordo = isMordo(G.level) ? 2 : 0, bonus = hardOf(G.level) + mordo; save.streak = (save.streak || 0) + 1; if (!window.__fast) { raceWin(); afterWinOnline(); }
   const drops = window.__fast || roomStart ? [] : afterWinMeta(stars, bonus);
   save.carrots = (save.carrots || 0) + stars + bonus; carrotNew += stars + bonus; save.stats.wins++; save.stats.bestScore = Math.max(save.stats.bestScore, G.score); persist(); checkAch();
-  $("ePogo").innerHTML = pogoSvg("happy"); $("eTitle").textContent = "Level " + (G.level + 1) + " complete"; $("eStars").innerHTML = "<b>" + Array.from({ length: stars }, (_, i) => `<i style="--d:${.25 + i * .22}s">✦</i>`).join("") + "</b><s>" + "✦".repeat(3 - stars) + "</s>"; $("eSub").textContent = "+" + (stars + bonus) + " 🥕 for Pogo" + (mordo ? " (" + MORDO + " Mordo drops his loot)" : bonus ? " (" + HARD_TXT[bonus - mordo].toLowerCase() + " +" + bonus + ")" : "") + " · 🔥 streak ×" + save.streak + (drops.length ? " · " + drops.join(" · ") : "");
+  $("ePogo").innerHTML = pogoSvg("happy"); $("eTitle").textContent = "Level " + (G.level + 1) + " complete"; $("eTitle").classList.toggle("perfect", stars === 3); if (stars === 3) { setTimeout(() => { SFX.perfect(); flash(.5, 500, "#ffd200"); confetti(); toast("Perfect!"); buzz([30, 40, 60]); }, 700); } $("eStars").innerHTML = "<b>" + Array.from({ length: stars }, (_, i) => `<i style="--d:${.25 + i * .22}s">✦</i>`).join("") + "</b><s>" + "✦".repeat(3 - stars) + "</s>"; $("eSub").textContent = "+" + (stars + bonus) + " 🥕 for Pogo" + (mordo ? " (" + MORDO + " Mordo drops his loot)" : bonus ? " (" + HARD_TXT[bonus - mordo].toLowerCase() + " +" + bonus + ")" : "") + " · 🔥 streak ×" + save.streak + (drops.length ? " · " + drops.join(" · ") : "");
   $("eBtns").innerHTML = ""; const next = G.level + 1 < LEVELS.length;
   const lv = G.level; mkBtn("eBtns", next ? "Next level" : "Back to map", () => { hide("mEnd"); showMap(); if (next && !isOpen("mStory")) openLevel(lv + 1); });
   mkBtn("eBtns", window.__nativeApp ? "↻ Replay" : "↻ Replay level", () => { hide("mEnd"); clearProgress(); startLevel(lv); }, true);
   if (next) mkBtn("eBtns", "Map", () => { hide("mEnd"); showMap(); }, true);
-  await sleep(100); countUp($("eText"), starsOf(G.score), "Stars earned ★ "); show("mEnd");
+  await sleep(100); countUp($("eText"), starsOf(G.score), "Stars earned ★ "); show("mEnd"); trRoast(stars);
 }
 async function lose(dead) {
   G.over = true; G.undo = null; G.boost = null; closePauseIfOpen(); logEv("lose"); if (!window.__fast && !roomStart) save.fails[G.level] = (save.fails[G.level] || 0) + 1;
@@ -1969,8 +1974,11 @@ async function lose(dead) {
   mkBtn("eBtns", "Retry", () => { hide("mEnd"); const lv = G.level; showMap(); openLevel(lv); }, true);
   if (save.lives <= 0) $("eBtns").insertAdjacentHTML("beforeend", `<button class="btn ghost" type="button" data-arcade-room>👥 Play with friends</button>`);
   mkBtn("eBtns", "Map", () => { hide("mEnd"); showMap(); }, true);
-  await sleep(dead ? 800 : 500); show("mEnd");
+  await sleep(dead ? 800 : 500); show("mEnd"); trRoast(0);
 }
+// the arcade's one-line verdict is English; in Turkish the card gets its own line
+const TR_CHEER = [["Bir dahakine Pogo ile beraber bakarız.", "Az kaldı, Pogo hâlâ inanıyor.", "Taşlar bugün inatçıydı."], ["Geçtin, Pogo rahat bir nefes aldı.", "Oldu da, bir daha olur mu?", "Kıl payı ama sayılır."], ["İki yıldız, Pogo gururlu.", "Güzel iş, havuçlar hak edildi.", "Sağlam oynadın."], ["Mükemmel! Pogo zıplıyor!", "Üç yıldız, tam puan!", "Efsane el, Mordo bunu görmesin."]];
+function trRoast(stars) { if (save.lang !== "tr") return; const list = TR_CHEER[Math.min(3, stars)], line = list[rnd(list.length)]; [120, 500, 1100].forEach(ms => setTimeout(() => { const el = document.querySelector("#mEnd [data-arcade-roast]"); if (el && !el.textContent.includes(line)) el.innerHTML = `<div class="aroast">${line}</div>`; }, ms)); }   // the arcade writes its line a moment after the card opens, so ours is written three times
 function mkBtn(parent, label, fn, ghost) { const b = document.createElement("button"); b.className = "btn" + (ghost ? " ghost" : ""); b.textContent = label; b.addEventListener("click", fn); $(parent).appendChild(b); }
 
 // ---------------------------------------------------------------- boosters
@@ -2430,7 +2438,7 @@ function bestMove() {
 // so nothing else in the game needs to know about languages. Solver runs stay in English (tests read the English titles).
 const TR = {
   "Play": "Oyna", "Start over": "Baştan başla", "▶ Continue": "▶ Devam et", "Continue": "Devam et", "▶ Resume": "▶ Devam", "Map": "Harita", " Map": " Harita", "Exit to map": "Haritaya dön", "Back to map": "Haritaya dön", "Paused": "Duraklatıldı",
-  "Your board is saved. Come back any time.": "Tahtan kaydedildi. İstediğin zaman dön.", "🔊 Sound": "🔊 Ses", "🔊 Sound on": "🔊 Ses açık", "🔇 Sound off": "🔇 Ses kapalı", "🎮 All games": "🎮 Tüm oyunlar", "👥 Play with friends": "👥 Arkadaşlarla oyna",
+  "Your board is saved. Come back any time.": "Tahtan kaydedildi. İstediğin zaman dön.", "🔊 Sound": "🔊 Ses", "🔊 Sound on": "🔊 Ses açık", "🔇 Sound off": "🔇 Ses kapalı", "🎮 All games": "🎮 Tüm oyunlar", "All games": "Tüm oyunlar", "Sound on": "Ses açık", "Sound off": "Ses kapalı", "Perfect!": "Mükemmel!", "👥 Play with friends": "👥 Arkadaşlarla oyna",
   "Moves": "Hamle", "Goal": "Hedef", "Best": "En iyi", "Stars": "Yıldız", "Frenzy": "Çılgınlık", "Frenzy meter: pop gems to fill it": "Çılgınlık ölçeri: taş patlattıkça dolar", "Pause": "Duraklat", "Sound": "Ses", "Settings": "Ayarlar",
   "Level {1}": "Seviye {1}", "Level {1} complete": "Seviye {1} tamamlandı", "Level complete": "Seviye tamamlandı", "★ 1 star = 1,000 points": "★ 1 yıldız = 1.000 puan", "Stars earned ★ {1}": "Kazanılan yıldız ★ {1}",
   "Earn {1} star": "{1} yıldız kazan", "Earn {1} stars": "{1} yıldız kazan", "Clear all the jelly": "Bütün jöleyi temizle", "Bring down {1} keys": "{1} anahtarı aşağı indir", "Break all the blockers": "Bütün engelleri kır",
