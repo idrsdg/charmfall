@@ -1523,7 +1523,7 @@ function pauseGame() { if (!G || G.over || G.paused) return; G.paused = true; G.
 function resumeGame() { if (!G || !G.paused) return; hide("mPause"); G.paused = false; G.hintAt = performance.now() + 4000; SFX.swap(); }
 $("btnPause").addEventListener("click", pauseGame);
 function renderSound() { document.querySelectorAll(".snd").forEach(el => { el.innerHTML = ico(save.sound === false ? "mute" : "sound") + (el.classList.contains("btn") ? (save.sound === false ? " Sound off" : " Sound on") : ""); }); }
-function toggleSound() { save.sound = save.sound === false; persist(); renderSound(); if (save.sound !== false) SFX.swap(); }
+function toggleSound() { save.sound = save.sound === false; persist(); renderSound(); if (window.__audioMode) window.__audioMode(); if (save.sound !== false) SFX.swap(); }   // the app switches the audio route with it
 function renderSettings() { const so = save.sound !== false; $("setSound").classList.toggle("off", !so); $("setSound").firstChild.innerHTML = ico(so ? "sound" : "mute"); if ($("setSnd")) $("setSnd").firstChild.innerHTML = ico(so ? "sound" : "mute"); }
 const buzz = (p) => { if (navigator.vibrate && save.haptic !== false) navigator.vibrate(p); };
 $("setSound").addEventListener("click", () => { toggleSound(); renderSettings(); });
