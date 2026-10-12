@@ -104,7 +104,7 @@
   .pill + .pill { border-color: #ffd23f; }
   .path { position: relative; width: min(420px, 100%); margin: 10px auto 0; }
   .path svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .node { position: absolute; width: 66px; height: 66px; margin: -33px 0 0 -33px; border-radius: 50%; display: grid; place-items: center; font-size: 24px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); background: radial-gradient(circle at 35% 30%, #ffc48a, #ff7a1a 55%, #d95a00); box-shadow: 0 7px 0 #7a3200, 0 14px 22px rgba(0, 0, 0, .4), inset 0 -4px 0 rgba(0, 0, 0, .12); cursor: pointer; transition: translate .14s cubic-bezier(.3, 1.5, .5, 1); animation: nodeIn .5s cubic-bezier(.2, 1.4, .4, 1) both; animation-delay: var(--d, 0s); }
+  .node { position: absolute; width: 66px; height: 66px; margin: -33px 0 0 -33px; border-radius: 22px; display: grid; place-items: center; font-size: 24px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); background: radial-gradient(circle at 35% 30%, #ffc48a, #ff7a1a 55%, #d95a00); box-shadow: 0 7px 0 #7a3200, 0 14px 22px rgba(0, 0, 0, .4), inset 0 -4px 0 rgba(0, 0, 0, .12); cursor: pointer; transition: translate .14s cubic-bezier(.3, 1.5, .5, 1); animation: nodeIn .5s cubic-bezier(.2, 1.4, .4, 1) both; animation-delay: var(--d, 0s); }
   @keyframes nodeIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   .node .plat { position: absolute; left: -14px; right: -14px; bottom: -13px; height: 22px; border-radius: 8px; z-index: -1; background: linear-gradient(#e6d6b8, #b89468 55%, #8a6a48); box-shadow: 0 7px 0 #3a2416, inset 0 2px 0 rgba(255, 255, 255, .5); }
   .node .plat::after { content: ""; position: absolute; left: 4px; right: 4px; bottom: 3px; height: 5px; border-radius: 3px; background: repeating-linear-gradient(90deg, #ffd23f 0 9px, #2a1a0a 9px 18px); opacity: .9; }
@@ -284,7 +284,7 @@
   /* the trail: ten chapters, a signpost at the start of each and living props beside the path. What lies ahead is dark; it lights up as levels are won */
   .chap { position: absolute; white-space: nowrap; padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; color: #fff3c4; background: linear-gradient(#ff7ad9, #d12fd0); border: 2px solid #ffe7a3; box-shadow: 0 4px 0 #27096b, 0 10px 18px rgba(0, 0, 0, .4); z-index: 1; }
   .chap.dark { color: #e6dcff; background: linear-gradient(#8a63e6, #5a36bd); border-color: rgba(255, 255, 255, .3); }
-  .prop { position: absolute; transform: translate(-50%, -50%); line-height: 1; pointer-events: none; content-visibility: auto; contain-intrinsic-size: 90px 90px; }
+  .prop { position: absolute; transform: translate(-50%, -50%); line-height: 1; pointer-events: none; }
   .prop b { display: block; font-weight: 400; transform-origin: 50% 100%; animation: sway var(--t, 3.4s) ease-in-out var(--dl, 0s) infinite alternate; }
   .prop.dark { opacity: .38; } .prop.dark b { animation: none; }
   .prop.lit::after { content: ""; position: absolute; left: 50%; top: 55%; width: 190%; height: 190%; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, rgba(255, 226, 150, .26), rgba(255, 226, 150, 0) 68%); z-index: -1; animation: glow 2.6s ease-in-out var(--dl, 0s) infinite alternate; }
@@ -1092,13 +1092,13 @@ $("stGo").addEventListener("click", () => { hide("mStory"); buildMap(); });
 const D3 = (() => {
   if (!window.THREE) return null; const T = THREE; let R; try { R = new T.WebGLRenderer({ alpha: true, antialias: true }); } catch (e) { return null; }
   const RW = 640, RH = 360; R.setPixelRatio(1); R.setSize(RW, RH, false); R.setClearColor(0, 0); R.outputEncoding = T.sRGBEncoding;
-  const mats = new Map(), mat = (c, o) => { const k = c + JSON.stringify(o || {}); if (!mats.has(k)) mats.set(k, new T.MeshStandardMaterial(Object.assign({ color: c, roughness: .72, metalness: 0 }, o))); return mats.get(k); };
+  const mats = new Map(), mat = (c, o) => { const k = c + JSON.stringify(o || {}); if (!mats.has(k)) mats.set(k, new T.MeshStandardMaterial(Object.assign({ color: c, roughness: .62, metalness: 0, flatShading: true }, o))); return mats.get(k); };
   const glow = (c) => mat(c, { emissive: c, emissiveIntensity: .9, roughness: .4 }), GHOST = new T.MeshStandardMaterial({ color: 0x9a8fc8, transparent: true, opacity: .22, roughness: 1 });
-  const GEO = { sph: new T.SphereGeometry(1, 16, 12), cone: new T.ConeGeometry(1, 1, 12), cyl: new T.CylinderGeometry(1, 1, 1, 12), box: new T.BoxGeometry(1, 1, 1), tor: new T.TorusGeometry(1, .16, 8, 28), half: new T.TorusGeometry(1, .14, 8, 28, Math.PI), disc: new T.CircleGeometry(1, 28), oct: new T.OctahedronGeometry(1, 0) };
+  const GEO = { sph: new T.IcosahedronGeometry(1, 1), cone: new T.ConeGeometry(1, 1, 6), cyl: new T.CylinderGeometry(1, 1, 1, 7), box: new T.BoxGeometry(1, 1, 1), tor: new T.TorusGeometry(1, .16, 6, 14), half: new T.TorusGeometry(1, .14, 6, 16, Math.PI), disc: new T.CircleGeometry(1, 12), oct: new T.OctahedronGeometry(1, 0), rock: new T.DodecahedronGeometry(1, 0), pyr: new T.ConeGeometry(1, 1, 4) };
   // put(g, m, x, y, z, s, parent, rx, ry, rz) is the short form of put(g, m, x, y, z, sx, sy, sz, parent, rx, ry, rz)
   const put = (g, m, x, y, z, sx, sy, sz, par, rx, ry, rz) => { if (sy && sy.isObject3D) { const q = sy; rz = rx; ry = par; rx = sz; par = q; sy = sz = sx; } const o = new T.Mesh(GEO[g], m); o.position.set(x, y, z); o.scale.set(sx, sy === undefined ? sx : sy, sz === undefined ? sx : sz); if (rx || ry || rz) o.rotation.set(rx || 0, ry || 0, rz || 0); par.add(o); return o; };
   const grp = (par) => { const g = new T.Group(); par.add(g); return g; };
-  const BARK = 0x6b4a2b, LEAF = 0x3fae4f, DARK = 0x2a7a3c, STONE = 0x8b8a99;
+  const BARK = 0x7a4a22, LEAF = 0x35d060, DARK = 0x1fa84a, STONE = 0x9a93b8;
   const trunk = (g, h, w) => put("cyl", mat(BARK), 0, h / 2, 0, w || .1, h, w || .1, g);
   // every prop is about one unit tall and stands on y = 0
   const BUILD = {
@@ -1114,7 +1114,7 @@ const D3 = (() => {
     sprout: (g) => { put("cyl", mat(0x3fae4f), 0, .18, 0, .025, .36, .025, g); put("sph", mat(0x7be36f), -.1, .36, 0, .12, .06, .07, g, 0, 0, .5); put("sph", mat(0x7be36f), .1, .4, 0, .12, .06, .07, g, 0, 0, -.5); },
     carrot: (g) => { put("cone", mat(0xff7a14), 0, .2, 0, .14, .5, .14, g, Math.PI); for (let i = -1; i <= 1; i++) put("sph", mat(0x3fbf4a), i * .07, .56, 0, .04, .16, .04, g, 0, 0, i * .4); },
     mushroom: (g, c) => { put("cyl", mat(0xfff2dc), 0, .22, 0, .1, .44, .1, g); put("sph", mat(c || 0xe8332a), 0, .46, 0, .3, .2, .3, g); [[-.12, .58, .1], [.14, .56, -.08], [0, .64, .14]].forEach(([x, y, z]) => put("sph", mat(0xffffff), x, y, z, .05, g)); },
-    rock: (g) => { put("sph", mat(STONE), 0, .18, 0, .38, .22, .3, g); put("sph", mat(STONE), .3, .12, .12, .2, .14, .18, g); },
+    rock: (g) => { put("rock", mat(STONE), 0, .2, 0, .34, .24, .3, g, .3, .5); put("rock", mat(0xb8b0d8), .3, .12, .12, .18, .14, .16, g, 0, .8); },
     log: (g) => { put("cyl", mat(BARK), 0, .16, 0, .15, .9, .15, g, 0, 0, Math.PI / 2); put("disc", mat(0xd9b48a), .46, .16, 0, .15, g, 0, Math.PI / 2, 0); put("disc", mat(0xd9b48a), -.46, .16, 0, .15, g, 0, -Math.PI / 2, 0); },
     lantern: (g) => { put("cyl", mat(0x3b2a4a), 0, .45, 0, .035, .9, .035, g); put("box", mat(0x3b2a4a), 0, .98, 0, .22, .3, .22, g); put("box", glow(0xffd36b), 0, .98, 0, .15, .22, .15, g); const l = new T.PointLight(0xffc96b, .9, 2.6); l.position.set(0, .98, 0); g.add(l); },
     candle: (g) => { put("cyl", mat(0xfff2dc), 0, .25, 0, .08, .5, .08, g); put("sph", glow(0xffb64a), 0, .58, 0, .06, .1, .06, g); const l = new T.PointLight(0xffb64a, .6, 2); l.position.set(0, .6, 0); g.add(l); },
@@ -1154,8 +1154,9 @@ const D3 = (() => {
     leaf: (g) => { put("sph", mat(0xd98a3a), 0, .12, 0, .2, .03, .12, g, 0, .4); put("sph", mat(0xe8b24a), .25, .1, .12, .16, .03, .1, g, 0, -.5); },
     sand: (g) => { put("disc", mat(0xf0d9a8), 0, .015, 0, .9, .5, 1, g, -Math.PI / 2); put("sph", mat(0xffd9c2), .2, .06, .1, .08, .05, .07, g); },
     gem: (g) => BUILD.crystal(g, 0x7fd0ff),
-    hobbit: (g, c, m) => { put("sph", mat(m || 0x4fa84f), 0, .1, 0, 1.05, .78, .9, g); put("sph", mat(m ? 0xffffff : 0x5fbf5a, m ? { transparent: true, opacity: .35 } : {}), -.5, .12, .3, .5, .36, .45, g); put("cyl", mat(c || 0xe8b23a), 0, .34, .82, .3, .1, .3, g, Math.PI / 2); put("cyl", mat(0x6b4a2b), 0, .34, .8, .36, .08, .36, g, Math.PI / 2); put("sph", mat(0x4a1a06), 0, .34, .9, .045, g); put("box", mat(0x8a6a5a), .45, .78, -.1, .16, .34, .16, g); put("box", glow(0xffe08a), -.55, .4, .62, .18, .16, .04, g, 0, .5); put("cyl", mat(0xd9c7a8), 0, .02, .95, .42, .03, .22, g); for (let i = 0; i < 4; i++) put("sph", mat([0xff7ad9, 0xffd23f, 0xff5c5c, 0x7fd0ff][i]), -.8 + i * .5, .08, 1.05, .07, g); },
-    hobbit2: (g) => BUILD.hobbit(g, 0x3f8ae8), hobbit3: (g) => BUILD.hobbit(g, 0xff5c8a, 0xc98aff), hobbit4: (g) => BUILD.hobbit(g, 0xffd23f, 0xff9ab8), hobbit5: (g) => BUILD.hobbit(g, 0x4fc3f7, 0xffd98a),
+    // a village cottage: bright walls, a steep four-sided roof, a door, two lit windows, a chimney and a flower box
+    hobbit: (g, c, m) => { put("box", mat(m || 0xfff1c9), 0, .42, 0, 1.0, .84, .9, g); put("pyr", mat(c || 0xe8432a), 0, 1.12, 0, .86, .62, .86, g, 0, Math.PI / 4); put("box", mat(0x4a2a12), 0, .9, 0, 1.08, .06, .98, g); put("box", mat(0x7a4a22), 0, .3, .46, .26, .5, .04, g); put("sph", mat(0xffd23f), .08, .3, .49, .03, g); put("box", glow(0xffe08a), -.32, .5, .46, .2, .2, .03, g); put("box", glow(0xffe08a), .32, .5, .46, .2, .2, .03, g); put("box", mat(0x4a2a12), -.32, .5, .47, .24, .03, .02, g); put("box", mat(0x4a2a12), .32, .5, .47, .24, .03, .02, g); put("box", mat(0x8a5a3a), .34, 1.3, -.2, .16, .4, .16, g); put("box", mat(0x3fae4f), -.32, .36, .5, .26, .08, .1, g); for (let i = 0; i < 3; i++) put("sph", mat([0xff5c8a, 0xffd23f, 0x4fc3f7][i]), -.4 + i * .08, .44, .52, .04, g); },
+    hobbit2: (g) => BUILD.hobbit(g, 0x2f7be8, 0xeaf3ff), hobbit3: (g) => BUILD.hobbit(g, 0xff3f8a, 0xffe0f0), hobbit4: (g) => BUILD.hobbit(g, 0x2fbf6a, 0xfff4b0), hobbit5: (g) => BUILD.hobbit(g, 0xffb000, 0xd8ecff),
     // once the trail has gone past a village it celebrates: bunting, balloons and villagers out in the street
     bunting: (g) => { put("cyl", mat(0x6b4a2b), -1.1, .5, 0, .03, 1, .03, g); put("cyl", mat(0x6b4a2b), 1.1, .5, 0, .03, 1, .03, g); put("cyl", mat(0xfff5e0), 0, .95, 0, .012, 2.2, .012, g, 0, 0, Math.PI / 2); for (let i = 0; i < 7; i++) put("cone", mat([0xff5c8a, 0xffd23f, 0x4fc3f7, 0x7be36f, 0xff8a3c][i % 5]), -.9 + i * .3, .82, 0, .1, .22, .02, g, Math.PI); },
     balloon: (g) => { [[-.3, 1.1, 0xff5c8a], [.05, 1.3, 0xffd23f], [.35, 1.05, 0x4fc3f7]].forEach(([x, y, c]) => { put("sph", mat(c, { roughness: .35 }), x, y, 0, .2, .24, .2, g); put("cyl", mat(0xfff5e0), x * .4, y / 2, 0, .008, y, .008, g, 0, 0, -x * .35); }); },
@@ -1200,7 +1201,7 @@ const D3 = (() => {
   return { show, sprite, EMO };
 })();
 // the lawn and the sky take the chapter's colours; the far shore is sand and sea
-const CHAP_GROUND = [0x3f8a4d, 0x5fae4f, 0x3a7f5a, 0x4a6a3a, 0x3f7a3f, 0x2f5f3a, 0x8fae4f, 0x3a4a7a, 0x2a4a3a, 0x2a3a4a, 0xd9c48a, 0x9fb8a0, 0x6aa8b8, 0xe8d6a0, 0x7f9a6a, 0x8a8a7a, 0x6faa4f, 0x5a5a6a, 0x4a3a7a, 0x3a3a5a];
+const CHAP_GROUND = [0x3fc85f, 0x7fe04f, 0x2fd0a0, 0x9ad04a, 0x3fc050, 0x30b070, 0xc8e040, 0x4a7af0, 0x30c080, 0x5a8ae0, 0xffd27a, 0x8fe0c8, 0x50c8f0, 0xffe08a, 0x9ad07a, 0xc0b8d0, 0x7fe04f, 0x9a8af0, 0xb060ff, 0x7070ff];
 // ---- Pogo's garden: stars earned on levels are spent, one piece at a time, on a small scene; every piece also pays one booster
 const GARDEN = [["🥕", "Carrot patch", 40, 17, 78, 24], ["🌷", "Tulips", 90, 71, 82, 24], ["🪵", "Log bench", 160, 44, 86, 28], ["🏮", "Lantern", 250, 31, 60, 26], ["🍄", "Mushrooms", 360, 86, 68, 22],
   ["🌳", "Oak tree", 500, 12, 40, 58], ["🏡", "Burrow house", 700, 53, 46, 60], ["⛲", "Fountain", 950, 78, 44, 38], ["🎡", "Ferris wheel", 1250, 90, 20, 44], ["🌈", "Rainbow", 1600, 42, 14, 64]];
