@@ -108,6 +108,13 @@
   .node.current::after { content: ""; position: absolute; inset: -8px; border-radius: 50%; border: 4px solid #ffe27a; animation: halo 1.2s infinite; }
   @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
   @keyframes halo { 0% { transform: scale(.9); opacity: 1; } 100% { transform: scale(1.35); opacity: 0; } }
+  .node.hard1:not(.done) { border-color: #ff6b81; box-shadow: 0 7px 0 #5a1020, 0 0 0 3px rgba(255, 77, 109, .45), 0 14px 22px rgba(0, 0, 0, .4); }
+  .node.hard2:not(.done) { border-color: #d08bff; box-shadow: 0 7px 0 #34105a, 0 0 0 3px rgba(192, 107, 255, .5), 0 14px 22px rgba(0, 0, 0, .4); }
+  .node.hard1.current { background: radial-gradient(circle at 35% 30%, #ffb0b8, #ff3b5c 55%, #b3122f); }
+  .node.hard2.current { background: radial-gradient(circle at 35% 30%, #e6c2ff, #a33dff 55%, #5f14a8); }
+  .card.hard1 { border-color: #ff8a9a; } .card.hard2 { border-color: #d6a0ff; }
+  .card .chip { display: inline-block; margin: 0 0 8px; padding: 4px 12px; border-radius: 999px; font-size: 13px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; background: #b3122f; border: 2px solid #ff8a9a; }
+  .card.hard2 .chip { background: #5f14a8; border-color: #d6a0ff; }
   .node .stars { position: absolute; bottom: -19px; font-size: 15px; letter-spacing: -2px; color: #ffe27a; text-shadow: 0 2px 0 #252131; }
 
   /* ---------- game ---------- */
@@ -290,8 +297,9 @@
 </section>
 
 <div class="modal" id="mStart" hidden><div class="card">
-  <div id="sPogo"></div><h2 id="sTitle">Level 1</h2><p id="sGoal"></p><p id="sFuse" hidden style="font-size:13px;color:#ffd200"></p>
+  <div id="sPogo"></div><p id="sHard" class="chip" hidden></p><h2 id="sTitle">Level 1</h2><p id="sGoal"></p><p id="sFuse" hidden style="font-size:13px;color:#ffd200"></p>
   <div class="goalrow" id="sRow"></div>
+  <p id="sGift" hidden style="font-size:14px;color:#ffe27a;margin-top:-8px"></p>
   <p class="rate">★ 1 star = 1,000 points</p>
   <button class="btn" id="sCont" hidden>▶ Continue</button>
   <button class="btn" id="sPlay">Play</button>
@@ -628,6 +636,8 @@ LEVELS.forEach((L, i) => {
   if (TUNE[i]) { if (L.goal === "score") L.target = TUNE[i]; else L.moves = TUNE[i]; }
 });
 // One star is always 1,000 points: the HUD, goals and results talk in stars, never in raw points.
+// From level 51 on the solver wins under 40% of the time, from 86 on under 15%: those levels are labelled, and pay extra carrots.
+const hardOf = (i) => i >= 85 ? 2 : i >= 50 ? 1 : 0, HARD_TXT = ["", "Hard level", "Super hard level"];
 const STAR = 1000, starsOf = (pts) => Math.floor(pts / STAR);
 LEVELS.forEach((L) => { if (L.target) L.target = Math.max(STAR, Math.round(L.target / STAR) * STAR); });
 const BOOST0 = { hammer: 3, moves: 3, switch: 3, cross: 2, undo: 3 };
@@ -665,7 +675,8 @@ function tone(f, d = .08, type = "sine", g = .12, slide = 0) {
 }
 const SFX = {
   swap: () => tone(520, .07, "triangle", .08), bad: () => tone(180, .14, "sawtooth", .06, -80),
-  pop: (n) => tone(620 + n * 70, .1, "sine", .1), special: () => { tone(300, .25, "square", .08, 500); },
+  pop: (n) => tone(523.25 * Math.pow(2, (n - 1) / 12), .1, "sine", .1),   // every step of a chain is one semitone higher
+  special: () => { tone(300, .25, "square", .08, 500); },
   bomb: () => { tone(90, .4, "sawtooth", .12, -60); }, fall: () => tone(240, .05, "triangle", .03),
   win: () => [0, 1, 2, 3].forEach(i => setTimeout(() => tone(523 * Math.pow(1.26, i), .3, "triangle", .1), i * 130)),
   lose: () => [0, 1, 2].forEach(i => setTimeout(() => tone(330 / Math.pow(1.2, i), .3, "sine", .1), i * 200)),
@@ -732,7 +743,7 @@ function buildMap() {
   svg.innerHTML = `<path d="${d}" fill="none" stroke="#000" stroke-opacity=".45" stroke-width="36" stroke-linecap="round" transform="translate(0 5)"/><path d="${d}" fill="none" stroke="#4d4865" stroke-width="28" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#8a85a8" stroke-width="20" stroke-linecap="round" stroke-dasharray="3 23" stroke-opacity=".7"/><path class="flow" d="${d}" fill="none" stroke="#ffe9b0" stroke-width="5" stroke-linecap="round" stroke-dasharray=".1 35.9"/>`;
   const cur = highest();
   pts.forEach((p, i) => {
-    const n = document.createElement("div"); n.className = "node" + (save.stars[i] ? " done" : i === cur ? " current" : i > cur ? " locked" : "") + (LEVELS[i].fuse ? " fz" : "");
+    const n = document.createElement("div"); n.className = "node" + (save.stars[i] ? " done" : i === cur ? " current" : i > cur ? " locked" : "") + (LEVELS[i].fuse ? " fz" : "") + (hardOf(i) ? " hard" + hardOf(i) : "");
     n.style.left = p[0] / 420 * 100 + "%"; n.style.top = p[1] + "px"; n.textContent = i + 1; n.style.setProperty("--d", Math.min(.45, Math.abs(i - cur) * .05) + "s");
     if (i === cur) { const left = p[0] > 210; path.insertAdjacentHTML("beforeend", `<div class="pogoMap${left ? " flip" : ""}" onclick="openPet()" style="left:${(p[0] + (left ? -112 : 112)) / 420 * 100}%;top:${p[1]}px">${pogoSvg()}</div>`); }
     if (save.stars[i]) { const s = document.createElement("div"); s.className = "stars"; s.textContent = "✦".repeat(save.stars[i]); n.appendChild(s); }
@@ -750,6 +761,9 @@ function openLevel(i) {
   const L = LEVELS[i]; pendingLevel = i;
   $("sPogo").innerHTML = pogoSvg();
   $("sTitle").textContent = "Level " + (i + 1); $("sGoal").textContent = { score: "⭐ ", jelly: "🟪 ", ingredients: "🔑 ", blockers: "🧊 " }[L.goal] + goalText(L);
+  { const h = hardOf(i), st = Math.min(3, save.streak || 0), c = $("mStart").firstElementChild; c.classList.toggle("hard1", h === 1); c.classList.toggle("hard2", h === 2);
+    $("sHard").hidden = !h; $("sHard").textContent = h ? (h === 2 ? "☠️ " : "🔥 ") + HARD_TXT[h] + " · +" + h + " 🥕" : "";
+    $("sGift").hidden = !st; $("sGift").textContent = st ? "🎁 Win streak ×" + save.streak + ": start with " + st + " special gem" + (st > 1 ? "s" : "") : ""; }
   $("sFuse").hidden = !L.fuse; if (L.fuse) $("sFuse").textContent = `⏱ Countdown gems lose 1 every move. Match them before they hit 0.`;
   $("sRow").innerHTML = `<div><small>Moves</small>${L.moves}</div><div><small>Goal</small>${L.goal === "score" ? "★ " + L.target / STAR : L.goal === "ingredients" ? "🔑 " + L.need : L.goal === "jelly" ? "🟪 all" : "🧊 all"}</div><div><small>Best</small>★ ${starsOf(save.best[i] || 0)}</div>`;
   const cont = save.inProgress && save.inProgress.level === i; $("sCont").hidden = !cont; $("sPlay").textContent = cont ? "Start over" : "Play"; $("sPlay").classList.toggle("ghost", !!cont);
@@ -846,7 +860,7 @@ $("mAch").addEventListener("click", e => { if (e.target === $("mAch")) hide("mAc
 
 // ---------------------------------------------------------------- game model
 const canvas = $("c"), ctx = canvas.getContext("2d");
-let G = null, CELL = 48, OX = 0, OY = 0, DPR = 1;
+let G = null, CELL = 48, OX = 0, OY = 0, DPR = 1, roomStart = false;
 const particles = [], floaters = [], dying = [], fx = [];
 
 // ---- resume + undo support: the whole board packs into a small plain object
@@ -892,11 +906,16 @@ function startLevel(i, snap) {
     if (L.goal === "ingredients") { spawnIngredient(true); spawnIngredient(true); }
     if (!findMove()) shuffle(true);
     if (L.fuse) for (let n = 0; n < L.fuse.start; n++) plantFuse(L.fuse.n, true);
+    // win streak: Pogo leaves one special gem per win in a row, three at most (not in solver runs or friends rooms, where boards must match)
+    if (!window.__fast && !roomStart) { const kinds = ["line", "wrap", "bomb"].slice(0, Math.min(3, save.streak || 0)), pool = [];
+      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const g = G.grid[r][c]; if (g && g.kind === "gem" && !g.special && !g.lock && !g.fuse) pool.push(g); }
+      for (const k of kinds) { if (!pool.length) break; const g = pool.splice(rnd(pool.length), 1)[0]; g.special = k === "line" ? (rnd(2) ? "h" : "v") : k; g.gift = true; G.gift = (G.gift || 0) + 1; } }
   }
   particles.length = 0; fx.length = 0; floaters.length = 0; dying.length = 0;
   tip(""); $("map").hidden = true; $("game").hidden = false; $("gPogo").innerHTML = pogoSvg("", true); layout(); hudInit(); SFX.swap();
   if (!resumed) snapshot();
   introDrop();
+  if (G.gift) { const g0 = G; setTimeout(() => { if (G !== g0) return; tip("🎁 Win streak ×" + save.streak + ": Pogo's gift is on the board", 3200); const now = performance.now(); for (const row of G.grid) for (const g of row) if (g && g.gift) { g.gift = false; g.sx = 1.5; g.pop = now; ring(g.c + .5, g.r + .5, "#ffd200", 1.3, 520, 8); } SFX.reward(); }, 1100); }
 }
 // ---- pause / resume (input is blocked by G.paused; a cascade in flight simply finishes underneath)
 function pauseGame() { if (!G || G.over || G.paused) return; G.paused = true; G.sel = null; down = null; snapshot(); show("mPause"); }
@@ -1052,7 +1071,7 @@ async function trySwap(r1, c1, r2, c2) {
   if (free) { tip(""); save.boost.switch--; G.boost = null; G.undo = null; persist(); updateHud(); }
   if (!ok && !free) {
     G.grid[r1][c1] = a; G.grid[r2][c2] = b; tween(a, r1, c1, SWAP_MS); tween(b, r2, c2, SWAP_MS); a.arc = 1; b.arc = -1; SFX.bad(); nope(r1, c1); nope(r2, c2);
-    await sleep(SWAP_MS + 10); a.wob = b.wob = performance.now(); a.lift = false; buzz([15, 30, 15]); await sleep(120); G.busy = false; G.hintAt = performance.now() + 4000; return false;
+    await sleep(SWAP_MS + 10); a.wob = b.wob = performance.now(); a.lift = false; buzz([15, 30, 15]); await sleep(120); G.busy = false; G.hintAt = performance.now() + 4000; runQueued(); return false;
   }
   a.lift = false;
   if (!ok) { G.busy = false; G.hintAt = performance.now() + 4000; snapshot(); return true; }   // Free Switch: the swap simply stays
@@ -1073,7 +1092,7 @@ async function endOfMove(isMove) {
   if (isMove) { const dead = tickFuses(); if (dead) { await lose(dead); return; } }
   if (G.moves <= 0) { await lose(); return; }
   let mv = findMove(); if (!mv) { await sleep(300); shuffle(false); mv = null; }
-  G.hint = mv; G.busy = false; G.hintAt = performance.now() + 4000; updateHud(); checkAch(); snapshot();
+  G.hint = mv; G.busy = false; G.hintAt = performance.now() + 4000; updateHud(); checkAch(); snapshot(); runQueued();
 }
 function spreadChocolate() {
   const chocs = []; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (G.block[r][c] && G.block[r][c].kind === "choc") chocs.push([r, c]);
@@ -1107,6 +1126,7 @@ async function resolve(opts) {
       let sp = null;
       const lines = grp.runs.filter(x => x.dir !== "sq"), long = lines.find(x => x.cells.length >= 5);
       if (long) sp = "bomb"; else if (lines.length >= 2) sp = "wrap"; else if (lines.some(x => x.cells.length >= 4)) sp = (opts && opts.swapDir === "h") ? "h" : (opts && opts.swapDir === "v") ? "v" : (rnd(2) ? "h" : "v");
+      else if (grp.runs.length > lines.length) sp = "fly";   // a 2x2 square on its own makes a firefly
       if (sp) { const at = swapCell || grp.cells[Math.floor(grp.cells.length / 2)]; spawn.push({ r: at[0], c: at[1], color: grp.color, sp }); }
       for (const [r, c] of grp.cells) clear.add(r * COLS + c);
       addScore(grp.cells[0][0], grp.cells[0][1], (60 + (n - 3) * 60) * G.combo);
@@ -1120,6 +1140,28 @@ async function resolve(opts) {
 }
 function addScore(r, c, pts) { G.score += pts; if (floaters.length > 26) floaters.shift(); floaters.push({ x: c + .5, y: r + .5, t: performance.now(), txt: "+" + pts, v: pts }); }
 
+// ---- fireflies: one clears the four gems around it and flies to a cell that matters for the goal (a countdown about to end comes first)
+function flyTarget(set, taken) {
+  const tiers = [[], [], [], []], goal = G.L.goal;
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const k = r * COLS + c; if (G.hole[r][c] || set.has(k) || taken.has(k)) continue; const g = G.grid[r][c], b = G.block[r][c];
+    if (g && g.fuse && g.fuse <= 4) tiers[0].push(k);
+    else if ((goal === "blockers" && b) || (goal === "jelly" && G.jelly[r][c] && g) || (goal === "ingredients" && g && g.kind === "gem" && r > 0 && G.grid[r - 1][c] && G.grid[r - 1][c].kind === "ing")) tiers[1].push(k);
+    else if (b || (g && (g.lock || g.fuse))) tiers[2].push(k);
+    else if (g && g.kind === "gem") tiers[3].push(k); }
+  const t = tiers.find(a => a.length); return t ? t[rnd(t.length)] : -1;
+}
+const FLY_MS = 260;
+// carry: a line or wrapped gem the firefly was swapped with goes off where it lands
+function launchFly(set, r, c, color, carry) {
+  const taken = G.flyTaken || (G.flyTaken = new Set()), k = flyTarget(set, taken); if (k < 0) return; taken.add(k);
+  const tr = Math.floor(k / COLS), tc = k % COLS, dl = G.flyDl || (G.flyDl = new Map()), now = performance.now();
+  const add = (rr, cc) => { if (rr >= 0 && cc >= 0 && rr < ROWS && cc < COLS && !G.hole[rr][cc]) { const q = rr * COLS + cc; if (!set.has(q)) dl.set(q, FLY_MS); set.add(q); } };
+  add(tr, tc);
+  if (carry === "h") for (let cc = 0; cc < COLS; cc++) add(tr, cc); else if (carry === "v") for (let rr = 0; rr < ROWS; rr++) add(rr, tc); else if (carry === "wrap") for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) add(tr + dr, tc + dc);
+  fx.push({ k: "dart", x: c + .5, y: r + .5, x2: tc + .5, y2: tr + .5, color, t: now, life: FLY_MS + 40 });
+  fx.push({ k: "ring", x: tc + .5, y: tr + .5, color, r1: carry ? 1.6 : 1.1, t: now + FLY_MS, life: 420, w: 7 });
+  if (carry === "h" || carry === "v") fx.push({ k: "beam", dir: carry, r: tr, c: tc, color, t: now + FLY_MS, life: 460 });
+}
 // collect cells hit by special gems, expanding recursively
 function expandSpecials(set, detonated) {
   let changed = true;
@@ -1133,6 +1175,7 @@ function expandSpecials(set, detonated) {
       if (g.special === "h") { for (let cc = 0; cc < COLS; cc++) add(r, cc); beam("h", r, c, col0); }
       else if (g.special === "v") { for (let rr = 0; rr < ROWS; rr++) add(rr, c); beam("v", r, c, col0); }
       else if (g.special === "wrap") { for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) add(r + dr, c + dc); G.wrapAgain = G.wrapAgain || []; G.wrapAgain.push({ r, c, color: col0 }); shock(c + .5, r + .5, col0); }
+      else if (g.special === "fly") { add(r, c + 1); add(r, c - 1); add(r + 1, c); add(r - 1, c); launchFly(set, r, c, col0); }
       else if (g.special === "bomb") { const col = g.bombColor !== undefined ? g.bombColor : mostCommonColor(); const bc = COLORS[col] ? COLORS[col].c : "#fff"; let nb = 0; for (let rr = 0; rr < ROWS; rr++) for (let cc = 0; cc < COLS; cc++) { const t = cell(rr, cc); if (t && t.kind === "gem" && t.color === col) { add(rr, cc); if (nb++ < 30) bolt(c + .5, r + .5, cc + .5, rr + .5, bc); } } flash(.55, 320); shock(c + .5, r + .5, "#fff"); SFX.bomb(); }
       SFX.special();
     }
@@ -1143,7 +1186,9 @@ function mostCommonColor() { const n = Array(NCOL).fill(0); for (let r = 0; r < 
 async function blast(clear, spawn = [], opts = {}) {
   const detonated = new Set(); expandSpecials(clear, detonated);
   const keep = new Set(spawn.map(s => s.r * COLS + s.c));
-  let popped = 0; const now = performance.now(), step = detonated.size ? 0 : 16;
+  let popped = 0; const now = performance.now(), step = detonated.size ? 0 : 16, flyDl = G.flyDl; G.flyDl = G.flyTaken = null; flyBudget = 5;
+  // a special going off holds the picture for a few frames just after the impact
+  if (detonated.size && !window.__fast) G.hold = now + 34;
   for (const k of clear) {
     const r = Math.floor(k / COLS), c = k % COLS, g = cell(r, c);
     // neighbours: frost / chocolate take damage from adjacent clears; direct hits too
@@ -1152,16 +1197,16 @@ async function blast(clear, spawn = [], opts = {}) {
     if (g.kind === "ing") continue;
     if (g.lock) { g.lock = false; addScore(r, c, 100); ring(c + .5, r + .5, "#d0d4ff", 1); if (!keep.has(k)) continue; }
     if (g.fuse) defuse(g, r, c);
-    if (G.jelly[r][c]) { G.jelly[r][c]--; G.jellyHit[r][c] = now; addScore(r, c, 250); burst(c + .5, r + .8, "#ff7a4d", 4, "round"); }
+    if (G.jelly[r][c]) { G.jelly[r][c]--; G.jellyHit[r][c] = now; addScore(r, c, 250); if (G.L.goal === "jelly") flyGoal(r, c, "🟪"); burst(c + .5, r + .8, "#ff7a4d", 4, "round"); }
     for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) if (G.block[r + dr] && G.block[r + dr][c + dc] && !clear.has((r + dr) * COLS + c + dc)) hitBlock(r + dr, c + dc, false);
     if (keep.has(k)) continue;
     // a short ripple runs along the match instead of everything popping on the same frame
-    const C = COLORS[g.color], dl = Math.min(popped, 6) * step; dying.push({ g, t: now + dl }); burst(c + .5, r + .5, C ? C.c : "#fff", g.special ? 10 : 5, C ? C.shape : "tri", dl); if (g.special) ring(c + .5, r + .5, C ? C.l : "#fff", 1.3); G.grid[r][c] = null; popped++;
+    const C = COLORS[g.color], dl = Math.min(popped, 6) * step + (flyDl && flyDl.get(k) || 0); dying.push({ g, t: now + dl }); burst(c + .5, r + .5, C ? C.c : "#fff", g.special ? 10 : 5, C ? C.shape : "tri", dl); if (g.special) ring(c + .5, r + .5, C ? C.l : "#fff", 1.3); G.grid[r][c] = null; popped++;
     if (detonated.has(k)) addScore(r, c, 200 * G.combo); else if (!opts.silent) G.score += 20 * Math.max(1, G.combo);
   }
-  for (const s of spawn) { let g = cell(s.r, s.c); if (g && g.kind === "gem") { g.special = s.sp; g.color = s.color; } else { g = G.grid[s.r][s.c] = mkGem(s.color, s.r, s.c, s.sp); } g.sx = 1.6; g.pop = performance.now(); if (s.sp === "bomb") save.stats.bombs++; sparkle(s.c + .5, s.r + .5, COLORS[s.color].c); ring(s.c + .5, s.r + .5, "#fff", 1.3, 500, 9); burst(s.c + .5, s.r + .5, "#fff", 6, "round"); }
+  for (const s of spawn) { let g = cell(s.r, s.c); if (g && g.kind === "gem") { g.special = s.sp; g.color = s.color; } else { g = G.grid[s.r][s.c] = mkGem(s.color, s.r, s.c, s.sp); } g.sx = 1.6; g.pop = performance.now(); if (s.sp === "bomb") save.stats.bombs++; if (s.sp === "fly" && !save.seenFly && !window.__fast) { save.seenFly = 1; tip("Firefly! A 2×2 square makes one. It flies to what you need.", 3800); } sparkle(s.c + .5, s.r + .5, COLORS[s.color].c); ring(s.c + .5, s.r + .5, "#fff", 1.3, 500, 9); burst(s.c + .5, s.r + .5, "#fff", 6, "round"); }
   if (popped) {
-    SFX.pop(Math.min(G.combo, 6)); buzz(detonated.size ? 40 : 12); save.stats.gems += popped;
+    SFX.pop(Math.min(G.combo, 13)); buzz(detonated.size ? 40 : 12); save.stats.gems += popped;
     if (!G.over && !G.inFrenzy) G.frenzy = Math.min(100, G.frenzy + popped * 2 + (G.combo > 1 ? 3 : 0));
   }
   if (G.combo > save.stats.maxCombo) save.stats.maxCombo = G.combo;
@@ -1169,18 +1214,22 @@ async function blast(clear, spawn = [], opts = {}) {
   updateHud();
   await sleep(detonated.size ? 300 : 230);
 }
-function flyKey(r, c) {
+// cleared goal pieces fly from the board to the goal counter (a few per blast at most)
+let flyBudget = 5;
+function flyGoal(r, c, txt, big) {
+  if (window.__fast || (!big && flyBudget-- <= 0)) return;
   try {
-    const rect = canvas.getBoundingClientRect(), tgt = $("goalBox").getBoundingClientRect(), el = document.createElement("div"); el.className = "fly"; el.textContent = "🔑";
-    const x0 = rect.left + (c + .5) * rect.width / COLS - 15, y0 = rect.top + (r + .5) * rect.height / ROWS - 15, x1 = tgt.left + tgt.width / 2 - 15, y1 = tgt.top + tgt.height / 2 - 15;
+    const rect = canvas.getBoundingClientRect(), tgt = $("goalBox").getBoundingClientRect(), el = document.createElement("div"), h = big ? 15 : 11; el.className = "fly"; el.textContent = txt; if (!big) el.style.fontSize = "22px";
+    const x0 = rect.left + (c + .5) * rect.width / COLS - h, y0 = rect.top + (r + .5) * rect.height / ROWS - h, x1 = tgt.left + tgt.width / 2 - h, y1 = tgt.top + tgt.height / 2 - h;
     el.style.left = x0 + "px"; el.style.top = y0 + "px"; document.body.appendChild(el);
-    const an = el.animate([{ transform: "translate(0,0) scale(1.3) rotate(0deg)", opacity: 1 }, { transform: `translate(${(x1 - x0) * .5}px,${(y1 - y0) * .5 - 80}px) scale(1.6) rotate(180deg)`, opacity: 1, offset: .5 }, { transform: `translate(${x1 - x0}px,${y1 - y0}px) scale(.6) rotate(360deg)`, opacity: .9 }], { duration: 700, easing: "cubic-bezier(.3,.7,.3,1)" });
+    const an = el.animate([{ transform: `translate(0,0) scale(${big ? 1.3 : 1}) rotate(0deg)`, opacity: 1 }, { transform: `translate(${(x1 - x0) * .5}px,${(y1 - y0) * .5 - (big ? 80 : 40)}px) scale(${big ? 1.6 : 1.2}) rotate(${big ? 180 : 0}deg)`, opacity: 1, offset: .5 }, { transform: `translate(${x1 - x0}px,${y1 - y0}px) scale(.6) rotate(${big ? 360 : 0}deg)`, opacity: .9 }], { duration: big ? 700 : 520, easing: "cubic-bezier(.3,.7,.3,1)" });
     an.onfinish = () => { el.remove(); bump("goalBox"); };
   } catch (e) {}
 }
+const flyKey = (r, c) => flyGoal(r, c, "🔑", true);
 function hitBlock(r, c, direct) {
   const b = G.block[r][c]; if (!b) return;
-  if (b.kind === "frost") { b.hp--; if (b.hp <= 0) { G.block[r][c] = null; addScore(r, c, 120); burst(c + .5, r + .5, "#bfe6ff", 12, "tri"); ring(c + .5, r + .5, "#fff", 1.1); } else { b.hit = performance.now(); burst(c + .5, r + .5, "#e6f7ff", 3, "tri"); } }
+  if (b.kind === "frost") { b.hp--; if (b.hp <= 0) { G.block[r][c] = null; addScore(r, c, 120); if (G.L.goal === "blockers") flyGoal(r, c, "🧊"); burst(c + .5, r + .5, "#bfe6ff", 12, "tri"); ring(c + .5, r + .5, "#fff", 1.1); } else { b.hit = performance.now(); burst(c + .5, r + .5, "#e6f7ff", 3, "tri"); } }
   else if (b.kind === "choc") { G.block[r][c] = null; G.chocEaten = true; addScore(r, c, 150); burst(c + .5, r + .5, "#8a4a22", 12, "square"); ring(c + .5, r + .5, "#ffb000", 1); }
 }
 
@@ -1227,8 +1276,14 @@ async function runCombo(a, b, r, c, r2, c2) {
   else if (A === "bomb" || B === "bomb") {
     const other = A === "bomb" ? b : a, bombG = A === "bomb" ? a : b, O = A === "bomb" ? B : A, oc = COLORS[other.color].c;
     if (!O) { bombG.special = "bomb"; bombG.bombColor = other.color; add(bombG.r, bombG.c); addScore(r, c, 500); }
-    else if (O === "h" || O === "v") { for (let rr = 0; rr < ROWS; rr++) for (let cc = 0; cc < COLS; cc++) { const g = cell(rr, cc); if (g && g.kind === "gem" && g.color === other.color) { g.special = rnd(2) ? "h" : "v"; g.sx = 1.4; g.pop = performance.now(); bolt(bombG.c + .5, bombG.r + .5, cc + .5, rr + .5, oc); add(rr, cc); } } add(bombG.r, bombG.c); add(other.r, other.c); flash(.5, 300); addScore(r, c, 1500); }
+    else if (O === "h" || O === "v" || O === "fly") { for (let rr = 0; rr < ROWS; rr++) for (let cc = 0; cc < COLS; cc++) { const g = cell(rr, cc); if (g && g.kind === "gem" && g.color === other.color) { g.special = O === "fly" ? "fly" : rnd(2) ? "h" : "v"; g.sx = 1.4; g.pop = performance.now(); bolt(bombG.c + .5, bombG.r + .5, cc + .5, rr + .5, oc); add(rr, cc); } } add(bombG.r, bombG.c); add(other.r, other.c); flash(.5, 300); addScore(r, c, 1500); }
     else if (O === "wrap") { const c2 = (other.color + 1 + rnd(G.L.colors - 1)) % G.L.colors; for (let rr = 0; rr < ROWS; rr++) for (let cc = 0; cc < COLS; cc++) { const g = cell(rr, cc); if (g && g.kind === "gem" && (g.color === other.color || g.color === c2)) { add(rr, cc); bolt(bombG.c + .5, bombG.r + .5, cc + .5, rr + .5, COLORS[g.color].c); } } add(bombG.r, bombG.c); add(other.r, other.c); flash(.7, 400); shock(c + .5, r + .5, oc); G.shake = performance.now(); addScore(r, c, 3000); SFX.bomb(); }
+  }
+  else if (A === "fly" || B === "fly") {   // two fireflies become three; a firefly carries a line or wrapped gem to its target
+    add(r, c); add(r2, c2);
+    if (kinds === "fly+fly") { for (let i = 0; i < 3; i++) launchFly(set, r, c, i % 2 ? colB : colA); addScore(r, c, 1200); }
+    else { launchFly(set, r, c, colA, A === "fly" ? B : A); addScore(r, c, 1500); G.shake = performance.now() + FLY_MS; }
+    SFX.special();
   }
   else if (kinds === "h+h" || kinds === "h+v" || kinds === "v+v") { for (let cc = 0; cc < COLS; cc++) add(r, cc); for (let rr = 0; rr < ROWS; rr++) add(rr, c); beam("h", r, c, colA); beam("v", r, c, colB); flash(.3, 250); addScore(r, c, 1200); SFX.special(); }
   else if (kinds === "h+wrap" || kinds === "v+wrap") { for (let d = -1; d <= 1; d++) { for (let cc = 0; cc < COLS; cc++) add(r + d, cc); for (let rr = 0; rr < ROWS; rr++) add(rr, c + d); beam("h", r + d, c, colA); beam("v", r, c + d, colB); } flash(.45, 300); G.shake = performance.now(); addScore(r, c, 2000); SFX.special(); }
@@ -1261,8 +1316,9 @@ async function win() {
   { const set = new Set(); for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const g = cell(r, c); if (g && g.special) set.add(r * COLS + c); } if (set.size) { G.combo = 2; await blast(set); G.wrapAgain = []; await gravity(); } }
   const st = starTargets(G.L), stars = G.score >= st[2] ? 3 : G.score >= st[1] ? 2 : 1;
   save.stars[G.level] = Math.max(save.stars[G.level] || 0, stars); save.best[G.level] = Math.max(save.best[G.level] || 0, G.score); delete save.inProgress;
-  save.carrots = (save.carrots || 0) + stars; carrotNew += stars; save.stats.wins++; save.stats.bestScore = Math.max(save.stats.bestScore, G.score); persist(); checkAch();
-  $("ePogo").innerHTML = pogoSvg("happy"); $("eTitle").textContent = "Level " + (G.level + 1) + " complete"; $("eStars").innerHTML = "<b>" + Array.from({ length: stars }, (_, i) => `<i style="--d:${.25 + i * .22}s">✦</i>`).join("") + "</b><s>" + "✦".repeat(3 - stars) + "</s>"; $("eSub").textContent = "+" + stars + " 🥕 for Pogo · ❤️ " + save.lives + " lives";
+  const bonus = hardOf(G.level); save.streak = (save.streak || 0) + 1;
+  save.carrots = (save.carrots || 0) + stars + bonus; carrotNew += stars + bonus; save.stats.wins++; save.stats.bestScore = Math.max(save.stats.bestScore, G.score); persist(); checkAch();
+  $("ePogo").innerHTML = pogoSvg("happy"); $("eTitle").textContent = "Level " + (G.level + 1) + " complete"; $("eStars").innerHTML = "<b>" + Array.from({ length: stars }, (_, i) => `<i style="--d:${.25 + i * .22}s">✦</i>`).join("") + "</b><s>" + "✦".repeat(3 - stars) + "</s>"; $("eSub").textContent = "+" + (stars + bonus) + " 🥕 for Pogo" + (bonus ? " (" + HARD_TXT[bonus].toLowerCase() + " +" + bonus + ")" : "") + " · 🔥 streak ×" + save.streak;
   $("eBtns").innerHTML = ""; const next = G.level + 1 < LEVELS.length;
   const lv = G.level; mkBtn("eBtns", next ? "Next level" : "Back to map", () => { hide("mEnd"); showMap(); if (next) openLevel(lv + 1); });
   mkBtn("eBtns", window.__nativeApp ? "↻ Replay" : "↻ Replay level", () => { hide("mEnd"); clearProgress(); startLevel(lv); }, true);
@@ -1272,11 +1328,17 @@ async function win() {
 async function lose(dead) {
   G.over = true; G.undo = null; G.boost = null; closePauseIfOpen();
   if (dead) { toast("Boom!"); SFX.boom(); shock(dead.c + .5, dead.r + .5, "#ff2d55"); burst(dead.c + .5, dead.r + .5, "#ff2d55", 16, "tri"); flash(.35, 420, "#ff2d55"); G.shake = performance.now(); } else toast("Out of moves");
+  const lives0 = save.lives, streak0 = save.streak || 0; save.streak = 0;
   SFX.lose(); if (!infLives()) save.lives = Math.max(0, save.lives - 1); delete save.inProgress; persist(); updateHud();
-  $("ePogo").innerHTML = pogoSvg("cheer"); $("eTitle").textContent = dead ? "Countdown hit zero" : "Out of moves"; $("eStars").innerHTML = `<div class="hearts">${"❤️".repeat(save.lives)}<s>${"❤️".repeat(5 - save.lives)}</s></div>`; $("eSub").textContent = window.__infLives ? "Unlimited lives" : infLives() ? "Unlimited lives for " + infMin() + " more min" : "−1 life · " + save.lives + " of 5 left" + (save.lives < 5 ? " · a new one every 30 min" : ""); delete $("eText").dataset.final;
+  $("ePogo").innerHTML = pogoSvg("cheer"); $("eTitle").textContent = dead ? "Countdown hit zero" : "Out of moves"; $("eStars").innerHTML = `<div class="hearts">${"❤️".repeat(save.lives)}<s>${"❤️".repeat(5 - save.lives)}</s></div>`; $("eSub").textContent = window.__infLives ? "Unlimited lives" : infLives() ? "Unlimited lives for " + infMin() + " more min" : "−1 life · " + save.lives + " of 5 left" + (save.lives < 5 ? " · a new one every 30 min" : "") + (streak0 ? " · win streak ×" + streak0 + " lost" : ""); delete $("eText").dataset.final;
   $("eText").textContent = dead ? "A gem with a number reached 0. It loses 1 every move: match it before it runs out, even with moves left." : goalText(G.L) + " · " + goalShow(goalLeft()) + " to go";
   $("eBtns").innerHTML = "";
-  if (!dead && save.boost.moves) mkBtn("eBtns", "+5 moves (" + save.boost.moves + ")", () => { save.boost.moves--; persist(); G.moves += 5; G.over = false; G.busy = false; hide("mEnd"); updateHud(); G.hintAt = performance.now() + 4000; SFX.reward(); snapshot(); });
+  // keep playing: five more moves (or the countdown wound back to 5) with a +5 booster or with carrots, dearer each time in one level; the life and the win streak come back
+  { const price = 3 * ((G.conts || 0) + 1), g0 = G, go = (pay) => () => { if (G !== g0) return; pay(); save.lives = Math.max(save.lives, lives0); save.streak = streak0; G.conts = (G.conts || 0) + 1;
+      if (dead) { dead.fuse = 5; for (const row of G.grid) for (const g of row) if (g && g.fuse && g.fuse < 5) g.fuse = 5; if (G.moves < 5) G.moves = 5; } else G.moves += 5;
+      G.over = false; G.busy = false; hide("mEnd"); updateHud(); $("carrots").textContent = save.carrots || 0; G.hint = null; G.hintAt = performance.now() + 4000; SFX.reward(); persist(); snapshot(); };
+    if (!dead && save.boost.moves) mkBtn("eBtns", "+5 moves (" + save.boost.moves + ")", go(() => { save.boost.moves--; }));
+    else if ((save.carrots || 0) >= price) mkBtn("eBtns", (dead ? "Defuse" : "+5 moves") + " · " + price + " 🥕", go(() => { save.carrots -= price; })); }
   mkBtn("eBtns", "Retry", () => { hide("mEnd"); const lv = G.level; showMap(); openLevel(lv); }, true);
   if (save.lives <= 0) $("eBtns").insertAdjacentHTML("beforeend", `<button class="btn ghost" type="button" data-arcade-room>👥 Play with friends</button>`);
   mkBtn("eBtns", "Map", () => { hide("mEnd"); showMap(); }, true);
@@ -1318,11 +1380,15 @@ function doUndo() {
 // ---------------------------------------------------------------- input
 let down = null;
 function cellAt(e) { const rect = canvas.getBoundingClientRect(); const x = (e.clientX - rect.left) / rect.width * canvas.width / DPR, y = (e.clientY - rect.top) / rect.height * canvas.height / DPR; return [Math.floor((y - OY) / CELL), Math.floor((x - OX) / CELL)]; }
-canvas.addEventListener("pointerdown", e => { if (!G || G.busy || G.over || G.paused) return; const [r, c] = cellAt(e); if (!cell(r, c) && !(G.block[r] && G.block[r][c])) return; down = { r, c, x: e.clientX, y: e.clientY }; canvas.setPointerCapture(e.pointerId); });
+// a swipe made while the board is still settling is kept and played the moment it stops, provided both gems are still where they were
+function runQueued() { const q = G && G.queued; if (!q) return; G.queued = null; if (!G.busy && !G.over && !G.paused && G.grid[q.r][q.c] === q.a && G.grid[q.r2][q.c2] === q.b) trySwap(q.r, q.c, q.r2, q.c2); }
+canvas.addEventListener("pointerdown", e => { if (!G || G.over || G.paused) return; const [r, c] = cellAt(e); if (!cell(r, c) && !(G.block[r] && G.block[r][c])) return; down = { r, c, x: e.clientX, y: e.clientY }; canvas.setPointerCapture(e.pointerId); });
 canvas.addEventListener("pointermove", e => {
-  if (!down || !G || G.busy) return; const dx = e.clientX - down.x, dy = e.clientY - down.y; if (Math.hypot(dx, dy) < 14) return;
+  if (!down || !G) return; const dx = e.clientX - down.x, dy = e.clientY - down.y; if (Math.hypot(dx, dy) < 14) return;
   const [r, c] = [down.r, down.c]; down = null; if (G.boost === "hammer" || G.boost === "cross") return;
-  const dr = Math.abs(dy) > Math.abs(dx) ? Math.sign(dy) : 0, dc = dr ? 0 : Math.sign(dx); trySwap(r, c, r + dr, c + dc);
+  const dr = Math.abs(dy) > Math.abs(dx) ? Math.sign(dy) : 0, dc = dr ? 0 : Math.sign(dx);
+  if (G.busy) { const a = cell(r, c), b = cell(r + dr, c + dc); G.queued = a && b && !a.dur && !b.dur ? { r, c, r2: r + dr, c2: c + dc, a, b } : null; return; }
+  trySwap(r, c, r + dr, c + dc);
 });
 canvas.addEventListener("pointerup", e => {
   if (!down || !G || G.busy || G.paused) { down = null; return; } const { r, c } = down; down = null;
@@ -1525,6 +1591,11 @@ function drawGemRaw(ctx, g, now) {
   { const gx = C.shape === "moon" ? -s * .62 : -s * .42, gy = C.shape === "moon" ? s * .05 : -s * .5, a = s * .3, b = s * .07; ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.beginPath(); ctx.moveTo(gx, gy - a); ctx.lineTo(gx + b, gy - b); ctx.lineTo(gx + a, gy); ctx.lineTo(gx + b, gy + b); ctx.lineTo(gx, gy + a); ctx.lineTo(gx - b, gy + b); ctx.lineTo(gx - a, gy); ctx.lineTo(gx - b, gy - b); ctx.closePath(); ctx.fill(); }
   if (g.special === "h" || g.special === "v") { ctx.save(); gemPath(ctx, C.shape, s); ctx.clip(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 3.5; for (let i = -2; i <= 2; i++) { ctx.beginPath(); if (g.special === "h") { ctx.moveTo(-s * 1.4, i * s * .42); ctx.lineTo(s * 1.4, i * s * .42); } else { ctx.moveTo(i * s * .42, -s * 1.4); ctx.lineTo(i * s * .42, s * 1.4); } ctx.stroke(); } ctx.restore(); }
   if (g.special === "wrap") { ctx.strokeStyle = "#fff"; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(-s * 1.05, -s * 1.05, s * 2.1, s * 2.1, s * .25); ctx.stroke(); ctx.shadowColor = "transparent"; ctx.strokeStyle = C.d; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(-s * .78, -s * .78, s * 1.56, s * 1.56, s * .18); ctx.stroke(); }
+  if (g.special === "fly") {   // a firefly: two wings and a glowing belly on the gem
+    ctx.shadowColor = "transparent";
+    for (const sx of [-1, 1]) { ctx.save(); ctx.translate(sx * s * .98, -s * .78); ctx.rotate(sx * .55); ctx.fillStyle = "rgba(255,255,255,.92)"; ctx.strokeStyle = mixc(C.d, "#000000", .3); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.ellipse(0, 0, s * .6, s * .28, 0, 0, 6.2832); ctx.fill(); ctx.stroke(); ctx.restore(); }
+    const fg = ctx.createRadialGradient(0, s * .12, 0, 0, s * .12, s * .5); fg.addColorStop(0, "#ffffff"); fg.addColorStop(.5, "#fff3a0"); fg.addColorStop(1, "rgba(255,230,120,0)"); ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(0, s * .12, s * .5, 0, 6.2832); ctx.fill();
+  }
   if (g.special === "bomb") {
     ctx.beginPath(); ctx.arc(0, 0, s * 1.08, 0, 6.28); const cg = ctx.createRadialGradient(-s * .35, -s * .35, s * .05, 0, 0, s * 1.15); cg.addColorStop(0, "#fff"); cg.addColorStop(.3, "#4a2a9a"); cg.addColorStop(1, "#0c0626"); ctx.fillStyle = cg; ctx.fill(); ctx.shadowColor = "transparent";
     ctx.strokeStyle = "#fff"; ctx.lineWidth = 2.5; ctx.stroke();
@@ -1540,6 +1611,7 @@ let lastTs = 0;
 function render(ts) { ts = Arcade.gfx.time(ts);
   requestAnimationFrame(render); if (!G) { lastTs = ts; return; }
   // the frame's own timestamp drives every animation, so motion advances by exactly one display interval per frame
+  if (G.hold) { const pn = performance.now(); if (pn > G.hold + 60) G.hold = 0; else if (pn > G.hold) return; }
   const now = ts, dt = Math.min(.05, Math.max(0, (ts - lastTs) / 1000)); lastTs = ts;
   hudTick(dt);
   const W = CELL * COLS;
@@ -1638,6 +1710,12 @@ function render(ts) { ts = Arcade.gfx.time(ts);
       ctx.strokeStyle = f.color; ctx.lineWidth = 9 * (1 - t) + 2; ctx.beginPath(); ctx.arc(x, y, (.3 + 2.1 * e) * CELL, 0, 6.28); ctx.stroke();
       ctx.strokeStyle = "#fff"; ctx.lineWidth = 5 * (1 - t) + 1; ctx.beginPath(); ctx.arc(x, y, (.2 + 1.6 * e) * CELL, 0, 6.28); ctx.stroke();
       
+    } else if (f.k === "dart") {
+      const e = ease(Math.min(1, t * 1.15)), x = OX + (f.x + (f.x2 - f.x) * e) * CELL, y = OY + (f.y + (f.y2 - f.y) * e) * CELL - Math.sin(e * Math.PI) * CELL * .7, R0 = CELL * .3;
+      ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = t > .85 ? (1 - t) / .15 : 1;
+      const gr = ctx.createRadialGradient(x, y, 0, x, y, R0 * 1.8); gr.addColorStop(0, "#fff"); gr.addColorStop(.35, f.color); gr.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, R0 * 1.8, 0, 6.2832); ctx.fill();
+      ctx.globalCompositeOperation = "source-over"; ctx.fillStyle = "rgba(255,255,255,.85)"; const fl = Math.sin(now / 22) * .5;
+      for (const sx of [-1, 1]) { ctx.beginPath(); ctx.ellipse(x + sx * R0 * .8, y - R0 * .5, R0 * .7, R0 * (.22 + .12 * Math.abs(fl)), sx * (.5 + fl * .4), 0, 6.2832); ctx.fill(); }
     } else if (f.k === "bolt") {
       ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = (1 - t) * (.7 + .3 * Math.sin(now / 12)); ctx.lineCap = "round"; ctx.lineJoin = "round";
       ctx.beginPath(); for (let j = 0; j < f.pts.length; j++) { const p = f.pts[j]; if (j) ctx.lineTo(OX + p[0] * CELL, OY + p[1] * CELL); else ctx.moveTo(OX + p[0] * CELL, OY + p[1] * CELL); }
@@ -1714,7 +1792,7 @@ window.__g = { pause: () => pauseGame(), resume: () => resumeGame(), get G() { r
 window.__roastTier = () => { const s = document.querySelectorAll("#eStars b i").length; return s >= 3 ? 2 : s >= 1 ? 1 : 0; };
 window.__shareText = () => { const stars = document.querySelectorAll("#eStars b i").length, et = document.getElementById("eText"); return "Prism Pop 💎 " + ((document.getElementById("eTitle")||{}).textContent||"") + " · " + (et ? et.dataset.final || et.textContent || "" : "") + (stars ? " · " + "✦".repeat(stars) : "") + ". Can you beat it?"; };
 window.__arcade = { score: () => G ? G.score : 0, status: () => G ? "L" + (G.level + 1) + " · " + G.moves + " moves" : "", done: () => !!(G && G.over), config: () => ({ level: G ? G.level : (typeof pendingLevel === "number" && isOpen("mStart") ? pendingLevel : highest()) }),
-  start: (seed, cfg) => { for (const id of ["mStart", "mEnd", "mPause", "mLives", "mDaily", "mAch"]) hide(id, true); clearProgress(); const lv = Math.max(0, Math.min(LEVELS.length - 1, (cfg && cfg.level) | 0)); Arcade.seeded(seed, () => startLevel(lv)); } };
+  start: (seed, cfg) => { for (const id of ["mStart", "mEnd", "mPause", "mLives", "mDaily", "mAch"]) hide(id, true); clearProgress(); const lv = Math.max(0, Math.min(LEVELS.length - 1, (cfg && cfg.level) | 0)); roomStart = true; try { Arcade.seeded(seed, () => startLevel(lv)); } finally { roomStart = false; } } };
 </script>
 </body>
 </html>
