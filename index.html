@@ -316,8 +316,10 @@
   <a class="btn ghost" href="../games/" style="display:inline-block;text-decoration:none">🎮 All games</a>
 </div></div>
 <div class="modal" id="mLives" hidden><div class="card">
-  <h2>Out of lives</h2><p id="lifeText">A new life arrives in a while.</p>
-  <button class="btn" type="button" data-arcade-room>👥 Play with friends</button>
+  <h2 id="lifeTitle">Out of lives</h2><p id="lifeText">A new life arrives in a while.</p>
+  <button class="btn" type="button" id="lifeInvite">💌 Invite a friend</button>
+  <p class="sub" id="invText" style="margin:10px 0 0">Send the game to a friend and play 1 hour with unlimited lives. Once a day.</p>
+  <button class="btn ghost" type="button" data-arcade-room>👥 Play with friends</button>
   <p class="sub" style="margin:10px 0 0">Friends rooms do not use lives.</p>
   <button class="btn ghost" id="lifeClose">OK</button>
   <a class="btn ghost" href="../games/" style="display:inline-block;text-decoration:none">🎮 All games</a>
@@ -636,9 +638,11 @@ save.stats = Object.assign({ gems: 0, defused: 0, frenzy: 0, maxCombo: 0, bombs:
 function persist() { try { localStorage.setItem(SAVE, JSON.stringify(save)); } catch (e) {} }
 const LIFE_MS = 30 * 60000;
 // window.__infLives (set by the iOS wrapper on a chosen phone) keeps lives full and never spends one
-const livesTxt = () => window.__infLives ? "∞" : save.lives;
+// inviting a friend gives one hour of the same thing (save.infUntil), at most once a day (save.invAt)
+const infLives = () => !!window.__infLives || Date.now() < (save.infUntil || 0), infMin = () => Math.max(1, Math.ceil(((save.infUntil || 0) - Date.now()) / 60000));
+const livesTxt = () => window.__infLives ? "∞" : infLives() ? "∞ " + infMin() + "m" : save.lives;
 function tickLives() {
-  if (window.__infLives) { save.lives = 5; save.lifeAt = Date.now(); return; }
+  if (infLives()) { save.lives = 5; save.lifeAt = Date.now(); return; }
   if (save.lives >= 5) { save.lifeAt = Date.now(); return; }
   while (save.lives < 5 && Date.now() - save.lifeAt >= LIFE_MS) { save.lives++; save.lifeAt += LIFE_MS; }
   if (save.lives >= 5) save.lifeAt = Date.now();
@@ -753,7 +757,26 @@ function openLevel(i) {
   show("mStart");
 }
 $("sCont").addEventListener("click", () => { hide("mStart"); startLevel(pendingLevel, save.inProgress); });
-function showLives() { const left = Math.max(0, LIFE_MS - (Date.now() - save.lifeAt)); $("lifeText").textContent = `A new life arrives in ${Math.ceil(left / 60000)} min. Lives refill one every 30 minutes.`; show("mLives"); }
+function showLives() {
+  const left = Math.max(0, LIFE_MS - (Date.now() - save.lifeAt)), wait = INVITE_MS - (Date.now() - (save.invAt || 0));
+  $("lifeTitle").textContent = save.lives <= 0 ? "Out of lives" : "Lives";
+  $("lifeText").textContent = window.__infLives ? "You have unlimited lives." : infLives() ? `Unlimited lives for ${infMin()} more min.` : save.lives >= 5 ? "Your lives are full." : `A new life arrives in ${Math.ceil(left / 60000)} min. Lives refill one every 30 minutes.`;
+  $("invText").textContent = wait > 0 ? `Next invite reward in ${Math.ceil(wait / 3600000)} h. You can still send the game.` : "Send the game to a friend and play 1 hour with unlimited lives. Once a day.";
+  show("mLives");
+}
+// invite a friend: the share sheet (app), the browser share sheet, or a copied link; a sent invite pays out one hour of unlimited lives
+const INVITE_MS = 24 * 3600000, INVITE = { text: "Come play this gem game with me!", url: "https://launch.mountlayer.com/prism/" };
+window.__shared = (ok) => {
+  if (!ok) return; if (Date.now() - (save.invAt || 0) < INVITE_MS) { tip("Invite sent"); return; }
+  save.invAt = Date.now(); save.infUntil = Date.now() + 3600000; save.lives = 5; persist(); hide("mLives"); if (!$("map").hidden) buildMap(); tip("∞ Unlimited lives for 1 hour", 3200); SFX.reward();
+};
+$("lifeInvite").addEventListener("click", () => {
+  const h = window.webkit && webkit.messageHandlers && webkit.messageHandlers.share;
+  if (h) h.postMessage(INVITE);
+  else if (navigator.share) navigator.share({ text: INVITE.text, url: INVITE.url }).then(() => __shared(true), () => {});
+  else if (navigator.clipboard) navigator.clipboard.writeText(INVITE.text + " " + INVITE.url).then(() => { tip("Invite link copied"); __shared(true); }, () => {});
+});
+$("lives").parentNode.style.cursor = "pointer"; $("lives").parentNode.addEventListener("click", showLives);
 $("lifeClose").addEventListener("click", () => hide("mLives"));
 let pendingLevel = 0;
 $("sPlay").addEventListener("click", () => { hide("mStart"); clearProgress(); startLevel(pendingLevel); });
@@ -1247,8 +1270,8 @@ async function win() {
 async function lose(dead) {
   G.over = true; G.undo = null; G.boost = null; closePauseIfOpen();
   if (dead) { toast("Boom!"); SFX.boom(); shock(dead.c + .5, dead.r + .5, "#ff2d55"); burst(dead.c + .5, dead.r + .5, "#ff2d55", 16, "tri"); flash(.35, 420, "#ff2d55"); G.shake = performance.now(); } else toast("Out of moves");
-  SFX.lose(); if (!window.__infLives) save.lives = Math.max(0, save.lives - 1); delete save.inProgress; persist(); updateHud();
-  $("ePogo").innerHTML = pogoSvg("cheer"); $("eTitle").textContent = dead ? "Countdown hit zero" : "Out of moves"; $("eStars").innerHTML = `<div class="hearts">${"❤️".repeat(save.lives)}<s>${"❤️".repeat(5 - save.lives)}</s></div>`; $("eSub").textContent = window.__infLives ? "Unlimited lives" : "−1 life · " + save.lives + " of 5 left" + (save.lives < 5 ? " · a new one every 30 min" : ""); delete $("eText").dataset.final;
+  SFX.lose(); if (!infLives()) save.lives = Math.max(0, save.lives - 1); delete save.inProgress; persist(); updateHud();
+  $("ePogo").innerHTML = pogoSvg("cheer"); $("eTitle").textContent = dead ? "Countdown hit zero" : "Out of moves"; $("eStars").innerHTML = `<div class="hearts">${"❤️".repeat(save.lives)}<s>${"❤️".repeat(5 - save.lives)}</s></div>`; $("eSub").textContent = window.__infLives ? "Unlimited lives" : infLives() ? "Unlimited lives for " + infMin() + " more min" : "−1 life · " + save.lives + " of 5 left" + (save.lives < 5 ? " · a new one every 30 min" : ""); delete $("eText").dataset.final;
   $("eText").textContent = dead ? "A gem with a number reached 0. It loses 1 every move: match it before it runs out, even with moves left." : goalText(G.L) + " · " + goalShow(goalLeft()) + " to go";
   $("eBtns").innerHTML = "";
   if (!dead && save.boost.moves) mkBtn("eBtns", "+5 moves (" + save.boost.moves + ")", () => { save.boost.moves--; persist(); G.moves += 5; G.over = false; G.busy = false; hide("mEnd"); updateHud(); G.hintAt = performance.now() + 4000; SFX.reward(); snapshot(); });
