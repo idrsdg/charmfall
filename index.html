@@ -104,7 +104,7 @@
   .pill + .pill { border-color: #ffd23f; }
   .path { position: relative; width: 420px; margin: 10px 0 0; }
   /* on a phone the whole map is drawn at two thirds: the rails stay as far apart, more of the circuit fits on the screen, the stops stay big enough to tap */
-  .pathWrap { position: relative; margin: 0; } .path { position: relative; width: min(520px, 100%); margin: 0 auto; }
+  .pathWrap { position: relative; margin: 0; } .path { position: relative; width: 100%; margin: 0; }
   .path svg { position: absolute; inset: 0; width: 100%; height: 100%; }
   .node { position: absolute; width: calc(150px * var(--ms)); height: calc(150px * var(--ms)); margin: calc(-75px * var(--ms)) 0 0 calc(-75px * var(--ms)); border-radius: calc(46px * var(--ms)); display: grid; place-items: center; font-size: calc(54px * var(--ms)); font-weight: 900; color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); background: radial-gradient(circle at 35% 30%, #ffc48a, #ff7a1a 55%, #d95a00); box-shadow: 0 7px 0 #7a3200, 0 14px 22px rgba(0, 0, 0, .4), inset 0 -4px 0 rgba(0, 0, 0, .12); cursor: pointer; transition: translate .14s cubic-bezier(.3, 1.5, .5, 1); animation: nodeIn .5s cubic-bezier(.2, 1.4, .4, 1) both; animation-delay: var(--d, 0s); }
   @keyframes nodeIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -383,8 +383,8 @@
   .path svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 1; }
   .mprop { position: absolute; transform: translate(-50%, -100%); pointer-events: none; z-index: 1; } .mprop img { display: block; width: 100%; height: auto; } .mprop.lock { filter: grayscale(.8) brightness(.78); opacity: .75; }
   .mprop.live img { animation: villagerHop 1.3s ease-in-out var(--dl, 0s) infinite alternate; }
-  .mvillage { position: absolute; width: 250px; transform: translate(-50%, -50%); pointer-events: none; z-index: 1; } .mvillage img { display: block; width: 100%; height: auto; filter: drop-shadow(0 10px 8px rgba(0, 0, 0, .3)); } .mvillage.lock { filter: grayscale(.8) brightness(.8); opacity: .8; }
-  @media (max-width: 600px) { .mvillage { width: 170px; } }
+  .mvillage { position: absolute; width: 360px; transform: translate(-50%, -50%); pointer-events: none; z-index: 1; } .mvillage img { display: block; width: 100%; height: auto; filter: drop-shadow(0 10px 8px rgba(0, 0, 0, .3)); } .mvillage.lock { filter: grayscale(.8) brightness(.8); opacity: .8; }
+  @media (max-width: 600px) { .mvillage { width: 170px; } } @media (min-width: 601px) { .lv { width: 92px; height: 92px; margin: -46px 0 0 -46px; font-size: 32px; } .pogoMap.pogoBig { width: 260px; margin: -218px 0 0 -130px; } }
   .lv { position: absolute; width: 78px; height: 78px; margin: -39px 0 0 -39px; border-radius: 50%; display: grid; place-items: center; font-size: 27px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); cursor: pointer; z-index: 2; border: 4px solid #fff3c4; box-shadow: 0 8px 0 #8a5a00, 0 16px 24px rgba(0, 0, 0, .35), inset 0 -8px 12px rgba(0, 0, 0, .2), inset 0 3px 0 rgba(255, 255, 255, .5);
     background: radial-gradient(circle at 35% 28%, #fff3a8, #ffd23f 55%, #f0a400); color: #5a1fd0; text-shadow: 0 1px 0 rgba(255, 255, 255, .6); transition: transform .12s; }
   .lv:active { transform: translateY(4px); box-shadow: 0 4px 0 #8a5a00, 0 8px 14px rgba(0, 0, 0, .3), inset 0 -8px 12px rgba(0, 0, 0, .2); }
@@ -668,13 +668,13 @@ const say = (t) => { if ($("mPet").hidden) tip(t); else $("petText").textContent
 function pogoMood(cls, ms, then) { const n = pogoEl(); if (!n) return; n.classList.remove("eat", "happy"); n.classList.add(cls); clearTimeout(feedT); feedT = setTimeout(() => { n.classList.remove(cls); if (then && n.isConnected) then(); }, ms); }
 function feedPogo() {
   const n = pogoEl(); if (!n || n.classList.contains("eat")) return;
-  if (!(save.carrots > 0)) { say("No carrots yet. Win a level or fill the Frenzy meter to earn some."); bump("petFeed"); SFX.bad(); return; }
+  if (!(save.carrots > 0)) { say("No carrots to feed him yet. Carrots are rare: win levels, fill the Frenzy meter, reach a station."); bump("petFeed"); SFX.bad(); pogoMood("cheer", 1600); return; }
   wakePogo(true); save.carrots--; save.fed = (save.fed || 0) + 1; persist(); $("carrots").textContent = save.carrots; petLabel(); bump("carPill"); SFX.swap();
   pogoMood("eat", 3200, () => { pogoMood("happy", 2400); say("Pogo loved it! Carrots eaten: " + save.fed + " · he weighs " + pogoKg() + " kg"); SFX.pop(3); });
 }
 // the pet screen: tap Pogo on the map and he comes up close. Stroke him and he shuts his eyes; keep going and he dozes off.
 const PET = { m: 0, down: 0, x: 0, y: 0, moved: 0, t: 0, heart: 0, z: 0 }, SLEEPY = 3200;
-const petLabel = () => { $("petFeed").textContent = "🥕 Feed (" + (save.carrots || 0) + ")"; $("petFeed").classList.toggle("ghost", !(save.carrots > 0)); };
+const petLabel = () => { const n = save.carrots || 0; $("petFeed").textContent = n > 0 ? "🥕 Feed (" + n + ")" : "🥕 No carrots yet"; $("petFeed").classList.toggle("ghost", !(n > 0)); };
 function floatAt(x, y, ch) { const el = document.createElement("div"); el.className = "fly"; el.textContent = ch; el.style.cssText = `left:${x}px;top:${y}px;z-index:13;font-size:24px;font-weight:900;color:#fff`; document.body.appendChild(el); if (!el.animate) { el.remove(); return; } const dx = (Math.random() - .5) * 50; el.animate([{ transform: "translate(-50%,-50%) scale(.4)", opacity: 0 }, { transform: "translate(-50%,-90%) scale(1.1)", opacity: 1, offset: .25 }, { transform: `translate(calc(-50% + ${dx}px),-260%) scale(.9)`, opacity: 0 }], { duration: 1300, easing: "ease-out" }).onfinish = () => el.remove(); }
 function openPet() { PET.m = 0; document.documentElement.classList.add("petting"); $("petBox").innerHTML = pogoSvg("big calm"); $("petText").textContent = "Stroke him with your finger. He loves it. Weight: " + pogoKg() + " kg"; petLabel(); show("mPet"); }
 function closePet() { clearInterval(PET.z); clearTimeout(feedT); hide("mPet"); document.documentElement.classList.remove("petting"); setTimeout(() => { if ($("mPet").hidden) $("petBox").innerHTML = ""; }, 300); }
@@ -908,7 +908,7 @@ const STAR = 1000, starsOf = (pts) => Math.floor(pts / STAR);
 LEVELS.forEach((L) => { if (L.target) L.target = Math.max(STAR, Math.round(L.target / STAR) * STAR); });
 const BOOST0 = { hammer: 3, moves: 3, switch: 3, cross: 2, undo: 3 };
 // carrots are earned at a quarter of the old rate: every award is scaled, the remainder waits in the jar (save.carrotFrac) until a whole carrot is due
-const CARROT_RATE = .25;
+const CARROT_RATE = .0625;
 function addCarrots(n) { save.carrotFrac = (save.carrotFrac || 0) + n * CARROT_RATE; const give = Math.floor(save.carrotFrac + 1e-9); save.carrotFrac -= give; save.carrots = (save.carrots || 0) + give; carrotNew += give; return give; }
 let save = { stars: {}, best: {}, lives: 5, lifeAt: Date.now(), boost: {}, daily: { last: "", streak: 0 }, ach: {}, stats: {} };
 try { Object.assign(save, JSON.parse(localStorage.getItem(SAVE) || "{}")); } catch (e) {}
@@ -1036,7 +1036,7 @@ const totalStars = () => Object.values(save.best).reduce((a, b) => a + starsOf(b
 let mapRaf = 0, lastCur = -1;
 // ---- the map. One winding path up the screen, scrolled natively; twenty chapter bands each with its own daylight colours; big glossy stops; a big Pogo at the
 // current one. Chapters ahead are the same world under a grey haze, never dark. Few, large pieces: the whole map is about 450 elements.
-const GAP = () => innerWidth <= 600 ? 142 : 164, MAPW = 420;
+const GAP = () => innerWidth <= 600 ? 142 : 196; let MAPW = 420;
 const CHAP_SKY = [["#8be0ff", "#d7f7a0"], ["#9fe8c8", "#eaf9b0"], ["#a9d9ff", "#d9f0ff"], ["#ffd9a8", "#ffefc2"], ["#b8f0b0", "#e0ffd0"], ["#ffc2d8", "#ffe4ee"], ["#ffe08a", "#fff5c8"], ["#c9c2ff", "#e8e4ff"], ["#b6ffd9", "#e4fff0"], ["#ffd2a0", "#ffe9c8"],
   ["#9fd8ff", "#dff3ff"], ["#ffe9a8", "#fff8d8"], ["#9fe8e0", "#e0fbf7"], ["#ffd6b0", "#fff0e0"], ["#c4f0a8", "#e8ffd4"], ["#d9c8ff", "#f0e8ff"], ["#ffcfcf", "#ffeaea"], ["#bfe6ff", "#e6f6ff"], ["#e0c8ff", "#f4ecff"], ["#ffe0a0", "#fff4d8"]];
 const CHAP_GROUNDC = ["#5fc96a", "#7fd45a", "#4fc4a4", "#a8c850", "#5cc460", "#60b878", "#c8d050", "#7a9ae8", "#5ac88a", "#8aa0e0", "#f0c870", "#9ad8c0", "#60c0e0", "#f0cc88", "#a0cc78", "#c0b8d8", "#8ad860", "#a89ae8", "#b070e8", "#9090e8"];
@@ -1058,12 +1058,13 @@ $("map").addEventListener("scroll", () => { $("bg").style.setProperty("--py", (-
 function buildMap() {
   const bm0 = performance.now(); tickLives(); $("lives").textContent = livesTxt(); $("starsTotal").textContent = Math.max(0, starsFree()); $("carrots").textContent = save.carrots || 0;
   $("btnDaily").classList.toggle("ready", !dailyState().claimed); $("achN").textContent = Object.keys(save.ach).length; $("gdN").textContent = gardenN(); $("albN").textContent = albumN(); const ss = seasonOf(); $("ssN").textContent = tierOf(ss); $("btnSeason").classList.toggle("ready", tierOf(ss) > ss.got); const rc = save.race; $("btnRace").innerHTML = ico(rc && huntWeek(rc.w) ? "hunt" : "race"); $("btnRace").classList.toggle("ready", !!rc && huntWeek(rc.w) && HUNT.filter(c => rc.wins >= c[0]).length > (rc.got || 0));
-  const path = $("path"), svg = $("pathSvg"), cur = highest(), G_ = GAP(), N = LEVELS.length, H = 300 + N * G_ + 240;
-  path.innerHTML = ""; path.appendChild(svg); path.style.height = H + "px"; svg.setAttribute("viewBox", `0 0 ${MAPW} ${H}`);
-  // stops: a gentle S up the page, x in map units (0-420), y in px from the top
-  const pts = LEVELS.map((_, i) => [210 + Math.sin(i * .52 + .8) * 118 + Math.sin(i * .19) * 26, H - 300 - i * G_]);
+  const path = $("path"), svg = $("pathSvg"), cur = highest(), G_ = GAP(), N = LEVELS.length, H = 300 + N * G_ + 240; MAPW = path.clientWidth || 420; const W = MAPW, big = W > 600;
+  path.innerHTML = ""; path.appendChild(svg); path.style.height = H + "px"; svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("preserveAspectRatio", "none");
+  // stops: a gentle S up the page, swinging over 56% of the width, y in px from the top
+  const pts = LEVELS.map((_, i) => [W / 2 + Math.sin(i * .52 + .8) * W * .28 + Math.sin(i * .19) * W * .06, H - 300 - i * G_]);
   let d = "M" + pts[0][0].toFixed(1) + " " + pts[0][1].toFixed(1); for (let i = 1; i < N; i++) { const a = pts[i - 1], b = pts[i], my = (a[1] + b[1]) / 2; d += ` C${a[0].toFixed(1)} ${my.toFixed(1)} ${b[0].toFixed(1)} ${my.toFixed(1)} ${b[0].toFixed(1)} ${b[1].toFixed(1)}`; }
-  svg.innerHTML = `<path d="${d}" fill="none" stroke="rgba(40,20,80,.22)" stroke-width="40" stroke-linecap="round" transform="translate(0 8)"/><path d="${d}" fill="none" stroke="#f7e7c4" stroke-width="34" stroke-linecap="round"/><path id="pathDone" d="${d}" fill="none" stroke="#ffd23f" stroke-width="34" stroke-linecap="round"/><path d="${d}" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="9" stroke-linecap="round" stroke-dasharray="0 24"/>`;
+  const sw = big ? 44 : 34;
+  svg.innerHTML = `<path d="${d}" fill="none" stroke="rgba(40,20,80,.22)" stroke-width="${sw + 6}" stroke-linecap="round" transform="translate(0 8)"/><path d="${d}" fill="none" stroke="#f7e7c4" stroke-width="${sw}" stroke-linecap="round"/><path id="pathDone" d="${d}" fill="none" stroke="#ffd23f" stroke-width="${sw}" stroke-linecap="round"/><path d="${d}" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="${big ? 11 : 9}" stroke-linecap="round" stroke-dasharray="0 ${big ? 30 : 24}"/>`;
   { const pd = svg.querySelector("#pathDone"), L = pd.getTotalLength(), done = cur * L / (N - 1); pd.setAttribute("stroke-dasharray", `${done.toFixed(1)} ${(L - done + 10).toFixed(1)}`); }
   let h = "";
   // chapter bands: sky to ground, in the chapter's own colours; ahead of the player the band is hazed and desaturated
@@ -1072,15 +1073,15 @@ function buildMap() {
   let seed = 5; const R = () => { seed = seed + 0x6D2B79F5 | 0; let q = Math.imul(seed ^ seed >>> 15, 1 | seed); q = q + Math.imul(q ^ q >>> 7, 61 | q) ^ q; return ((q ^ q >>> 14) >>> 0) / 4294967296; };
   const LIFE = ["deer", "fox", "rabbit", "hedgehog", "duck", "butterfly", "bird", "bird2"];
   for (let c = 0; c < CHAPTERS.length; c++) { const C = CHAPTERS[c], lock = c * 10 > cur, won = c * 10 + 9 < cur;
-    for (let k = 0; k < 12; k++) { const i = c * 10 + Math.floor(k * 9 / 12), p = pts[Math.min(N - 1, i)], side = k % 2 ? 1 : -1, kind = won && k % 4 === 1 ? LIFE[(c + k) % LIFE.length] : D3 ? (D3.EMO[C.props[k % 4]] || "bush") : "bush", sz = Math.round(66 + R() * 40), xo = 150 + R() * 60, x = Math.max(34, Math.min(386, p[0] + side * xo)), y = p[1] - 40 + R() * 90;
-      if (D3) h += `<div class="mprop${lock ? " lock" : ""}${won && k % 4 === 1 ? " live" : ""}" style="left:${(x / MAPW * 100).toFixed(2)}%;top:${Math.round(y)}px;width:${sz}px;--dl:-${(R() * 3).toFixed(1)}s"><img src="${D3.sprite(kind, 128)}" alt=""></div>`; }
-    if (D3) { const i = c * 10 + 6, p = pts[i], side = p[0] > 210 ? -1 : 1, x = Math.max(10, Math.min(410, p[0] + side * 215)); h += `<div class="mvillage${lock ? " lock" : ""}" style="left:${(x / MAPW * 100).toFixed(2)}%;top:${p[1] + 10}px"><img src="${D3.village(c, won, 480)}" alt=""></div>`; }
-    if (won) for (let f = 0; f < 3; f++) { const p = pts[c * 10 + 2 + f * 3]; h += `<u class="firefly" style="left:${((p[0] + (f % 2 ? 90 : -90)) / MAPW * 100).toFixed(1)}%;top:${p[1] - 50 + f * 30}px;--dl:-${f * .8}s"></u>`; } }
+    for (let k = 0; k < 12; k++) { const i = c * 10 + Math.floor(k * 9 / 12), p = pts[Math.min(N - 1, i)], side = k % 2 ? 1 : -1, kind = won && k % 4 === 1 ? LIFE[(c + k) % LIFE.length] : D3 ? (D3.EMO[C.props[k % 4]] || "bush") : "bush", sz = Math.round((66 + R() * 40) * (big ? 1.35 : 1)), xo = W * (.34 + R() * .16), x = Math.max(W * .07, Math.min(W * .93, p[0] + side * xo)), y = p[1] - 40 + R() * 90;
+      if (D3) h += `<div class="mprop${lock ? " lock" : ""}${won && k % 4 === 1 ? " live" : ""}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px;--dl:-${(R() * 3).toFixed(1)}s"><img src="${D3.sprite(kind, 128)}" alt=""></div>`; }
+    if (D3) { const i = c * 10 + 6, p = pts[i], side = p[0] > W / 2 ? -1 : 1, x = Math.max(W * .03, Math.min(W * .97, p[0] + side * W * .5)); h += `<div class="mvillage${lock ? " lock" : ""}" style="left:${Math.round(x)}px;top:${p[1] + 10}px"><img src="${D3.village(c, won, 480)}" alt=""></div>`; }
+    if (won) for (let f = 0; f < 3; f++) { const p = pts[c * 10 + 2 + f * 3]; h += `<u class="firefly" style="left:${Math.round(p[0] + (f % 2 ? 90 : -90))}px;top:${p[1] - 50 + f * 30}px;--dl:-${f * .8}s"></u>`; } }
   // stops
   pts.forEach((p, i) => { const st = save.stars[i] ? "done" : i === cur ? "now" : "lock", hd = hardOf(i), md = isMordo(i) && !save.stars[i];
-    h += `<div class="lv ${st}${hd ? " hard" + hd : ""}" data-i="${i}" style="left:${(p[0] / MAPW * 100).toFixed(2)}%;top:${p[1]}px"><b>${i + 1}</b>${save.stars[i] ? `<s>${"✦".repeat(save.stars[i])}</s>` : ""}${md ? `<em>${MORDO}</em>` : ""}${i % 10 === 0 ? `<i class="lvplate">${i / 10 + 1} · ${CHAPTERS[chapOf(i)].name}</i>` : ""}${(i + 1) % STATION_EVERY === 0 ? `<i class="lvplate st"><small>Station ${(i + 1) / STATION_EVERY}</small>${STATIONS[(i + 1) / STATION_EVERY - 1].name}</i>` : i === cur && i % 10 !== 0 ? `<i class="lvplate go">Play</i>` : ""}</div>`; });
+    h += `<div class="lv ${st}${hd ? " hard" + hd : ""}" data-i="${i}" style="left:${Math.round(p[0])}px;top:${p[1]}px"><b>${i + 1}</b>${save.stars[i] ? `<s>${"✦".repeat(save.stars[i])}</s>` : ""}${md ? `<em>${MORDO}</em>` : ""}${i % 10 === 0 ? `<i class="lvplate">${i / 10 + 1} · ${CHAPTERS[chapOf(i)].name}</i>` : ""}${(i + 1) % STATION_EVERY === 0 ? `<i class="lvplate st"><small>Station ${(i + 1) / STATION_EVERY}</small>${STATIONS[(i + 1) / STATION_EVERY - 1].name}</i>` : i === cur && i % 10 !== 0 ? `<i class="lvplate go">Play</i>` : ""}</div>`; });
   // Pogo beside the current stop, on the roomier side
-  { const p = pts[cur], left = p[0] > 210; h += `<div class="pogoMap pogoBig${left ? " flip" : ""}" onclick="openPet()" style="left:${((p[0] + (left ? -130 : 130)) / MAPW * 100).toFixed(2)}%;top:${p[1] + 6}px">${pogoSvg()}</div>`; }
+  { const p = pts[cur], left = p[0] > W / 2; h += `<div class="pogoMap pogoBig${left ? " flip" : ""}" onclick="openPet()" style="left:${Math.round(p[0] + (left ? -130 : 130))}px;top:${p[1] + 6}px">${pogoSvg()}</div>`; }
   path.insertAdjacentHTML("beforeend", h);
   path.querySelectorAll(".lv.done, .lv.now").forEach(n => n.addEventListener("click", () => openLevel(+n.dataset.i)));
   const yOf = (i) => Math.max(0, pts[i][1] - innerHeight * .56), target = yOf(cur), from = lastCur < 0 ? target + 260 : lastCur !== cur ? yOf(lastCur) : null; lastCur = cur;
@@ -1088,6 +1089,7 @@ function buildMap() {
   if (carrotNew) { carrotNew = 0; setTimeout(() => { pogoMood("happy", 2400); bump("carPill"); }, 700); }
   window.__buildMs = Math.round(performance.now() - bm0); window.__mapEls = path.querySelectorAll("*").length;
 }
+{ let rt = 0; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { if (!$("map").hidden) { lastCur = -1; buildMap(); } }, 250); }); }
 const goalShow = (v) => G && G.L.goal === "score" ? String(Math.ceil(v / STAR)) : fmt(v);
 function goalText(L) { return L.goal === "score" ? `Earn ${L.target / STAR} star${L.target / STAR === 1 ? "" : "s"}` : L.goal === "jelly" ? "Clear all the jelly" : L.goal === "ingredients" ? `Bring down ${L.need} keys` : "Break all the blockers"; }
 function openLevel(i) {
@@ -1188,9 +1190,9 @@ const STATION_EVERY = 25, STATIONS = [
 const stationN = () => Math.min(STATIONS.length, Math.floor(highest() / STATION_EVERY)), forestPct = () => Math.min(100, Math.round(highest() / LEVELS.length * 100));
 function stationCheck() {
   if (window.__fast || roomStart) return false; const k = stationN(); if ((save.stationSeen || 0) >= k || k < 1) return false;
-  save.stationSeen = k; const S = STATIONS[k - 1]; addCarrots(8); save.boost.hammer++; persist();
+  save.stationSeen = k; const S = STATIONS[k - 1]; save.carrots = (save.carrots || 0) + 1; carrotNew += 1; save.boost.hammer++; persist();
   $("snChip").textContent = "Station " + k + " of " + STATIONS.length + " · " + S.name; $("snTitle").textContent = S.task; $("snPct").textContent = forestPct() + "%"; $("snBar").style.width = forestPct() + "%";
-  $("snText").textContent = S.story; $("snNext").textContent = k < STATIONS.length ? "Next station: " + STATIONS[k].name + " · " + S.next : S.next; $("snPay").textContent = "🎁 Station gift: +2 🥕 · +1 Hammer";
+  $("snText").textContent = S.story; $("snNext").textContent = k < STATIONS.length ? "Next station: " + STATIONS[k].name + " · " + S.next : S.next; $("snPay").textContent = "🎁 Station gift: +1 🥕 · +1 Hammer";
   if (D3) D3.show($("snScene"), { props: [{ kind: "forest", x: -2.2, z: .2, s: 1.3 }, { kind: "forest", x: 2.2, z: -.3, s: 1.2, ry: 1 }, { kind: "pogo", x: -.3, z: 1.3, s: 1 }, { kind: ["sprout", "pond", "tulip", "round", "bird", "bee", "bridge", "star"][k - 1], x: 1.2, z: 1.1, s: 1, bob: true }, { kind: "deer", x: .6, z: -1.2, s: .9, ry: -.8 }], ground: 0x3fc85f, hill: 0x2d8b3c });
   show("mStation"); SFX.reward(); return true;
 }
@@ -1206,14 +1208,14 @@ function storyScene(ch, end) {
 function storyCheck() {
   if (window.__fast || roomStart) return false; const end = allDone(), ch = end ? CHAPTERS.length : chapOf(highest()); if ((save.chapSeen === undefined ? -1 : save.chapSeen) >= ch) return false;
   const first = save.chapSeen === undefined, paid = !first && ch > 0; save.chapSeen = ch;
-  if (paid) { addCarrots(4); for (const k in BOOST0) save.boost[k]++; save.infUntil = Math.max(Date.now(), save.infUntil || 0) + 15 * 60000; save.lives = 5; }
+  if (paid) { for (const k in BOOST0) save.boost[k]++; save.infUntil = Math.max(Date.now(), save.infUntil || 0) + 15 * 60000; save.lives = 5; }
   persist(); const C = end ? STORY_END : CHAPTERS[ch];
   $("stChip").textContent = end ? "The end" : "Chapter " + (ch + 1) + " · " + C.name; $("stTitle").textContent = C.title; $("stText").textContent = C.text; $("stScene").innerHTML = D3 ? Array.from({ length: 9 }, (_, i) => `<u style="left:${8 + i * 10.5}%;top:${12 + (i * 37) % 44}%;--dl:-${i * .3}s"></u>`).join("") : storyScene(ch, end);
   if (D3) { const ci = Math.min(CHAPTERS.length - 1, ch), P = CHAPTERS[ci].props, night = document.documentElement.classList.contains("night"), props = [];
     [[-2.6, -.6, 1.1], [2.4, -1, 1.2], [-1.4, .9, .8], [2.6, .8, .9], [-3.2, .8, .7], [.6, -1.4, 1], [3.4, -.2, .8]].forEach(([x, z, s], i) => props.push({ kind: D3.EMO[P[i % 4]] || "bush", x, z, s, bob: /flower|star|bee|bat|eagle|cloud|feather|wind/.test(D3.EMO[P[i % 4]] || ""), ry: i * 1.3 }));
     props.push({ kind: "pogo", x: -.5, z: 1.4, s: 1.1, ry: .3 }); props.push({ kind: "magpie", x: end ? 1 : 1.6, z: end ? 1.3 : -.2, s: 1, ry: end ? -.6 : .4, bob: !end }); if (end) props.push({ kind: "carrot", x: .3, z: 1.6, s: .7 });
     D3.show($("stScene"), { props, ground: CHAP_GROUND[ci], hill: night ? 0x1d2a3a : undefined, night }); }
-  $("stChest").hidden = !paid; $("stChest").textContent = paid ? "🎁 Chapter chest: +1 🥕 · +1 of every booster · ∞ lives for 15 min" : "";
+  $("stChest").hidden = !paid; $("stChest").textContent = paid ? "🎁 Chapter chest: +1 of every booster · ∞ lives for 15 min" : "";
   show("mStory"); if (paid) SFX.reward(); return true;
 }
 $("stGo").addEventListener("click", () => { hide("mStory"); buildMap(); setTimeout(stationCheck, 350); });
@@ -1387,7 +1389,7 @@ $("gdBuild").addEventListener("click", () => {
 });
 
 // ---- weekly race: first to 15 wins. The four rivals are Pogo's friends, played by the game: each keeps a steady pace that is fixed for the week.
-const RACE_N = 15, RIVALS = [["🦊", "Miso"], ["🦉", "Bibi"], ["🦔", "Tako"], ["🐿️", "Nutmeg"]], RACE_PRIZE = [[3, 2], [2, 1], [1, 0], [0, 0], [0, 0]];
+const RACE_N = 15, RIVALS = [["🦊", "Miso"], ["🦉", "Bibi"], ["🦔", "Tako"], ["🐿️", "Nutmeg"]], RACE_PRIZE = [[1, 2], [1, 1], [0, 0], [0, 0], [0, 0]];
 const weekNo = (t = Date.now()) => Math.floor((t / 86400000 + 3) / 7), weekStart = (w) => (w * 7 - 3) * 86400000;
 function rivalPace(w, i) { let x = (w * 2654435761 + (i + 1) * 40503) >>> 0; const r = () => { x = (Math.imul(x ^ x >>> 15, 2246822519) + 0x9e3779b9) >>> 0; return (x >>> 8) / 16777216; }; return { rate: 1.4 + r() * 2.1, delay: r() * .6 }; }
 const rivalWins = (w, i, t) => { const p = rivalPace(w, i); return Math.max(0, Math.min(RACE_N, Math.floor(((t - weekStart(w)) / 86400000 - p.delay) * p.rate))); };
@@ -1421,7 +1423,7 @@ $("raceClaim").addEventListener("click", () => { const rc = save.race; if (rc &&
 function raceWin() { raceNow(); const rc = save.race; if (huntWeek(rc.w)) { rc.wins = Math.min(99, rc.wins + 1); return; } if (rc.wins < RACE_N) { rc.wins++; if (rc.wins >= RACE_N) rc.fin = Date.now(); } }
 
 // ---- team (needs the server): up to ten players behind a code; the week's wins add up and pay carrots at 20, 50 and 100
-const TEAM_GOALS = [[20, 1], [50, 3], [100, 5]], esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const TEAM_GOALS = [[20, 0], [50, 1], [100, 2]], esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 let teamNow = null;
 async function renderTeam(j) {
   const box = $("teamBox"); if (!j) { box.innerHTML = `<p class="sub">Loading…</p>`; j = await api("team/state"); }
@@ -1493,10 +1495,10 @@ $("xferGo").addEventListener("click", async () => {
 // ---------------------------------------------------------------- album, season pass, chest hunt
 // ---- the album: four sets of five cards; wins drop cards from the sets that are open, doubles pay a carrot, a full set pays carrots and a booster
 const ALBUM = [
-  { name: "Garden charms", cards: ["🌱", "🥕", "🌼", "🪵", "🍀"], carrots: 2, boost: "hammer", from: 0 },
-  { name: "Pond lights", cards: ["🪷", "🐸", "🌿", "🪻", "🦋"], carrots: 2, boost: "cross", from: 20 },
-  { name: "Moon road", cards: ["🏮", "🌙", "🪨", "⭐", "🌲"], carrots: 3, boost: "switch", from: 50 },
-  { name: "Far shore", cards: ["⚓", "🐚", "🪸", "⛵", "💎"], carrots: 3, boost: "moves", from: 100 }
+  { name: "Garden charms", cards: ["🌱", "🥕", "🌼", "🪵", "🍀"], carrots: 1, boost: "hammer", from: 0 },
+  { name: "Pond lights", cards: ["🪷", "🐸", "🌿", "🪻", "🦋"], carrots: 1, boost: "cross", from: 20 },
+  { name: "Moon road", cards: ["🏮", "🌙", "🪨", "⭐", "🌲"], carrots: 1, boost: "switch", from: 50 },
+  { name: "Far shore", cards: ["⚓", "🐚", "🪸", "⛵", "💎"], carrots: 1, boost: "moves", from: 100 }
 ];
 const albumOf = () => (save.album = save.album || { c: {}, paid: {} }), cardN = (k) => albumOf().c[k] || 0, setDone = (s) => ALBUM[s].cards.every((_, i) => cardN(s + ":" + i) > 0), albumN = () => ALBUM.reduce((n, S, s) => n + S.cards.filter((_, i) => cardN(s + ":" + i) > 0).length, 0);
 function dropCard(hard) {
@@ -1505,19 +1507,19 @@ function dropCard(hard) {
   if (A.c[k]) { A.c[k]++; return addCarrots(1) ? "🃏 Double card: +1 🥕" : "🃏 Double card"; }
   A.c[k] = 1; let txt = "🃏 New card " + ALBUM[s].cards[i];
   if (setDone(s) && !A.paid[s]) { A.paid[s] = 1; save.carrots = (save.carrots || 0) + ALBUM[s].carrots; carrotNew += ALBUM[s].carrots; save.boost[ALBUM[s].boost]++; txt += " · set complete! +" + ALBUM[s].carrots + " 🥕"; }
-  if (albumN() === 20 && !A.paid.all) { A.paid.all = 1; save.carrots = (save.carrots || 0) + 10; carrotNew += 10; for (const k2 in BOOST0) save.boost[k2] += 3; txt += " · album complete! +10 🥕"; }
+  if (albumN() === 20 && !A.paid.all) { A.paid.all = 1; save.carrots = (save.carrots || 0) + 3; carrotNew += 3; for (const k2 in BOOST0) save.boost[k2] += 3; txt += " · album complete! +3 🥕"; }
   return txt;
 }
 function openAlbum() {
   const A = albumOf();
   $("albList").innerHTML = ALBUM.map((S, s) => { const open = highest() >= S.from; return `<div class="aset${open ? "" : " shut"}"><b>${S.name}${setDone(s) ? " ✅" : open ? "" : " · level " + (S.from + 1)}</b><div class="cards">${S.cards.map((c, i) => `<span class="${cardN(s + ":" + i) ? "got" : ""}">${cardN(s + ":" + i) ? c : "?"}${cardN(s + ":" + i) > 1 ? `<i>×${cardN(s + ":" + i)}</i>` : ""}</span>`).join("")}</div><small>Full set: +${S.carrots} 🥕 and +1 ${BNAME[S.boost]}</small></div>`; }).join("");
-  $("albHead").textContent = albumN() + " of 20 cards · every win can drop one · all 20: +10 🥕 and +3 of every booster"; show("mAlbum");
+  $("albHead").textContent = albumN() + " of 20 cards · every win can drop one · all 20: +3 🥕 and +3 of every booster"; show("mAlbum");
 }
 $("btnAlbum").addEventListener("click", openAlbum); $("albClose").addEventListener("click", () => hide("mAlbum")); $("mAlbum").addEventListener("click", e => { if (e.target === $("mAlbum")) hide("mAlbum"); });
 
 // ---- season pass: 28-day seasons, points from wins, twenty free tiers
 const SEASON_EPOCH = Date.UTC(2026, 9, 5), SEASON_MS = 28 * 86400000, TIER_PTS = 40;
-const SEASON_RW = [{ carrots: 1 }, { boost: "hammer" }, { carrots: 1 }, { boost: "moves" }, { inf: 30 }, { boost: "cross" }, { carrots: 2 }, { boost: "switch" }, { card: 1 }, { carrots: 2 }, { boost: "undo" }, { inf: 60 }, { carrots: 3 }, { boost: "hammer", n: 2 }, { card: 1 }, { carrots: 3 }, { boost: "cross", n: 2 }, { inf: 120 }, { carrots: 4 }, { all: 2 }];
+const SEASON_RW = [{ boost: "moves" }, { boost: "hammer" }, { carrots: 1 }, { boost: "moves" }, { inf: 30 }, { boost: "cross" }, { boost: "undo" }, { boost: "switch" }, { card: 1 }, { carrots: 1 }, { boost: "undo" }, { inf: 60 }, { boost: "hammer" }, { boost: "hammer", n: 2 }, { card: 1 }, { carrots: 1 }, { boost: "cross", n: 2 }, { inf: 120 }, { carrots: 1 }, { all: 2 }];
 const seasonNo = () => Math.floor((Date.now() - SEASON_EPOCH) / SEASON_MS);
 function seasonOf() { const n = seasonNo(); if (!save.season || save.season.n !== n) save.season = { n, pts: 0, got: 0 }; return save.season; }
 const tierOf = (s) => Math.min(SEASON_RW.length, Math.floor(s.pts / TIER_PTS)), rwTxt = (r) => r.carrots ? "+" + r.carrots + " 🥕" : r.boost ? "+" + (r.n || 1) + " " + BNAME[r.boost] : r.inf ? "∞ lives " + r.inf + " min" : r.card ? "🃏 album card" : "+2 of every booster";
@@ -1537,7 +1539,7 @@ $("ssClaim").addEventListener("click", () => {
 $("btnSeason").addEventListener("click", openSeason); $("ssClose").addEventListener("click", () => hide("mSeason")); $("mSeason").addEventListener("click", e => { if (e.target === $("mSeason")) hide("mSeason"); });
 
 // ---- chest hunt: on odd weeks the race makes way for three chests that open at 5, 12 and 20 wins
-const HUNT = [[5, "1 🥕 and +1 Hammer", () => { save.carrots += 1; carrotNew += 1; save.boost.hammer++; }], [12, "2 🥕 and +1 Cross Blast, +1 Free Switch", () => { save.carrots += 2; carrotNew += 2; save.boost.cross++; save.boost.switch++; }], [20, "3 🥕 and ∞ lives for 30 min", () => { save.carrots += 3; carrotNew += 3; save.infUntil = Math.max(Date.now(), save.infUntil || 0) + 1800000; save.lives = 5; }]];
+const HUNT = [[5, "+1 Hammer", () => { save.boost.hammer++; }], [12, "1 🥕 and +1 Cross Blast, +1 Free Switch", () => { save.carrots += 1; carrotNew += 1; save.boost.cross++; save.boost.switch++; }], [20, "1 🥕 and ∞ lives for 30 min", () => { save.carrots += 1; carrotNew += 1; save.infUntil = Math.max(Date.now(), save.infUntil || 0) + 1800000; save.lives = 5; }]];
 const huntWeek = (w) => w % 2 === 1;
 function openHunt(rc) {
   const left = weekStart(rc.w + 1) - Date.now(), d = Math.floor(left / 86400000), h = Math.floor(left / 3600000) % 24, got = rc.got || 0;
@@ -2605,7 +2607,7 @@ const TR = {
   "Out of moves": "Hamle bitti", "Countdown hit zero": "Geri sayım sıfırlandı", "Boom!": "Bum!", "Frenzy!": "Çılgınlık!", "Key!": "Anahtar!", "Sweet!": "Harika!", "Tasty!": "Süper!", "Divine!": "Muhteşem!", "No moves, shuffling": "Hamle yok, karıştırılıyor", "Prism Pop!": "Prism Pop!", "Charmfall!": "Charmfall!",
   "A gem with a number reached 0. It loses 1 every move: match it before it runs out, even with moves left.": "Sayılı bir taş sıfıra indi. Her hamlede 1 düşer: hamlen kalsa bile bitmeden eşleştir.", "{1} to go": "{1} kaldı",
   "+{1} 🥕 for Pogo": "Pogo'ya +{1} 🥕", "🥕 a piece of carrot for Pogo": "🥕 Pogo'ya bir parça havuç", "+{1} 🥕 for Pogo ({2} Mordo drops his loot)": "Pogo'ya +{1} 🥕 ({2} Mordo ganimeti bıraktı)", "+{1} 🥕 for Pogo (hard level +{2})": "Pogo'ya +{1} 🥕 (zor seviye +{2})", "+{1} 🥕 for Pogo (super hard level +{2})": "Pogo'ya +{1} 🥕 (çok zor seviye +{2})",
-  "🔥 streak ×{1}": "🔥 seri ×{1}", "🎫 +{1}": "🎫 +{1}", "🃏 New card {1}": "🃏 Yeni kart {1}", "🃏 Double card: +1 🥕": "🃏 Çift kart: +1 🥕", "set complete! +{1} 🥕": "seri tamamlandı! +{1} 🥕", "album complete! +10 🥕": "albüm tamamlandı! +10 🥕", "🃏 Double card": "🃏 Çift kart",
+  "🔥 streak ×{1}": "🔥 seri ×{1}", "🎫 +{1}": "🎫 +{1}", "🃏 New card {1}": "🃏 Yeni kart {1}", "🃏 Double card: +1 🥕": "🃏 Çift kart: +1 🥕", "set complete! +{1} 🥕": "seri tamamlandı! +{1} 🥕", "album complete! +3 🥕": "albüm tamamlandı! +3 🥕", "🃏 Double card": "🃏 Çift kart",
   "Next level": "Sonraki seviye", "↻ Replay": "↻ Tekrar", "↻ Replay level": "↻ Seviyeyi tekrarla", "Retry": "Yeniden dene", "+5 moves ({1})": "+5 hamle ({1})", "+5 moves": "+5 hamle", "Defuse": "Etkisiz kıl", "{1} 🥕": "{1} 🥕",
   "−1 life": "−1 can", "{1} of 5 left": "5 candan {1} kaldı", "a new one every 30 min": "her 30 dakikada bir yenisi", "win streak ×{1} lost": "galibiyet serisi ×{1} bitti", "Unlimited lives": "Sınırsız can", "Unlimited lives for {1} more min": "{1} dakika daha sınırsız can",
   "Out of lives": "Can kalmadı", "Lives": "Canlar", "You have unlimited lives.": "Sınırsız canın var.", "Unlimited lives for {1} more min.": "{1} dakika daha sınırsız can.", "Your lives are full.": "Canların dolu.", "A new life arrives in {1} min. Lives refill one every 30 minutes.": "Yeni can {1} dakikaya gelir. Her 30 dakikada bir can dolar.",
@@ -2627,19 +2629,19 @@ const TR = {
   "Build {1} {2}": "{1} {2} yap", "You need ★ {1} more. Win levels to earn stars.": "★ {1} daha gerek. Yıldız için seviye kazan.", "{1} built! +1 {2}": "{1} yapıldı! +1 {2}", "Carrot patch": "Havuç tarlası", "Tulips": "Laleler", "Log bench": "Kütük bank", "Lantern": "Fener", "Mushrooms": "Mantarlar", "Oak tree": "Meşe ağacı", "Burrow house": "Yuva evi", "Fountain": "Çeşme", "Ferris wheel": "Dönme dolap", "Rainbow": "Gökkuşağı",
   "Weekly race": "Haftalık yarış", "Race": "Yarış", "Chest hunt": "Sandık avı", "You": "Sen", "First to {1} wins. You are {2}. {3} left.": "İlk {1} galibiyete ulaşan kazanır. {2} sıradasın. {3} kaldı.", "You finished this week's race. A new one starts Monday.": "Bu haftanın yarışını bitirdin. Yenisi pazartesi başlar.",
   "1st": "1.", "2nd": "2.", "3rd": "3.", "4th": "4.", "5th": "5.", "🏁 {1} place: +{2} 🥕": "🏁 {1} sıra: +{2} 🥕", "🏁 {1} place: +{2} 🥕 and +{3} of every booster": "🏁 {1} sıra: +{2} 🥕 ve her güçlendiriciden +{3}",
-  "Chest hunt week: every win fills the chests. {1} left. The race is back next Monday.": "Sandık avı haftası: her galibiyet sandıkları doldurur. {1} kaldı. Yarış gelecek pazartesi döner.", "{1} wins: {2}": "{1} galibiyet: {2}", "1 🥕 and +1 Hammer": "1 🥕 ve +1 Çekiç", "2 🥕 and +1 Cross Blast, +1 Free Switch": "2 🥕 ve +1 Çapraz Patlama, +1 Serbest Takas", "3 🥕 and ∞ lives for 30 min": "3 🥕 ve 30 dakika ∞ can",
+  "Chest hunt week: every win fills the chests. {1} left. The race is back next Monday.": "Sandık avı haftası: her galibiyet sandıkları doldurur. {1} kaldı. Yarış gelecek pazartesi döner.", "{1} wins: {2}": "{1} galibiyet: {2}", "+1 Hammer": "+1 Çekiç", "1 🥕 and +1 Cross Blast, +1 Free Switch": "1 🥕 ve +1 Çapraz Patlama, +1 Serbest Takas", "1 🥕 and ∞ lives for 30 min": "1 🥕 ve 30 dakika ∞ can",
   "Team": "Takım", "Loading…": "Yükleniyor…", "Teams need a connection to the game server. Try again later.": "Takım için oyun sunucusuna bağlantı gerekir. Sonra tekrar dene.", "Play with up to 9 friends. Every win counts for the team.": "9 arkadaşınla oyna. Her galibiyet takıma yazılır.", "Your name": "Adın", "Team name, or a team code to join": "Takım adı ya da katılmak için takım kodu",
   "Create": "Kur", "Join": "Katıl", "code {1}": "kod {1}", "This week: {1} wins": "Bu hafta: {1} galibiyet", "goals {1}": "hedefler {1}", "Collect team reward": "Takım ödülünü al", "Leave team": "Takımdan ayrıl", "Team code copied": "Takım kodu kopyalandı", "Team reward: +{1} 🥕": "Takım ödülü: +{1} 🥕", "Could not reach the server.": "Sunucuya ulaşılamadı.",
   "Pogo": "Pogo", "🥕 Feed": "🥕 Besle", "🥕 Feed ({1})": "🥕 Besle ({1})", "Stroke him with your finger. He loves it. Weight: {1} kg": "Parmağınla okşa. Buna bayılıyor. Ağırlık: {1} kg", "He likes that. Keep going.": "Hoşuna gitti. Devam et.", "He is getting sleepy…": "Uykusu geliyor…", "Shh… Pogo fell asleep. Tap him to wake him up.": "Şşş… Pogo uyudu. Uyandırmak için dokun.",
-  "Good morning, Pogo!": "Günaydın Pogo!", "No carrots yet. Win a level or fill the Frenzy meter to earn some.": "Henüz havuç yok. Seviye kazan ya da Çılgınlık ölçerini doldur.", "Pogo loved it! Carrots eaten: {1}": "Pogo bayıldı! Yenen havuç: {1}", "he weighs {1} kg": "{1} kg",
+  "Good morning, Pogo!": "Günaydın Pogo!", "No carrots to feed him yet. Carrots are rare: win levels, fill the Frenzy meter, reach a station.": "Onu besleyecek havuç yok. Havuç nadir: seviye kazan, Çılgınlık ölçerini doldur, bir durağa ulaş.", "🥕 No carrots yet": "🥕 Henüz havuç yok", "Pogo loved it! Carrots eaten: {1}": "Pogo bayıldı! Yenen havuç: {1}", "he weighs {1} kg": "{1} kg",
   "Vibration": "Titreşim", "Colour-blind gems": "Renk körü dostu taşlar", "Language": "Dil", "On": "Açık", "Off": "Kapalı", "Done": "Tamam", "☁️ Cloud save: {1}": "☁️ Bulut kayıt: {1}", "Connecting…": "Bağlanıyor…", "On · last saved {1}": "Açık · son kayıt {1}", "Not connected right now. Progress stays on this phone.": "Şu an bağlı değil. İlerleme bu telefonda kalır.",
   "📲 Move progress to another phone": "📲 İlerlemeyi başka telefona taşı", "Getting a code…": "Kod alınıyor…", "Your code: {1}": "Kodun: {1}", "type it into Settings on the other phone within a day.": "bir gün içinde diğer telefonda Ayarlar'a yaz.", "Could not reach the server. Try again later.": "Sunucuya ulaşılamadı. Sonra tekrar dene.", "Code from the other phone": "Diğer telefondaki kod",
   "Load that save": "O kaydı yükle", "Loaded. This phone now shares that save.": "Yüklendi. Bu telefon artık o kaydı kullanıyor.", "That save could not be read.": "Kayıt okunamadı.", "That code is not valid.": "Bu kod geçerli değil.", "Nothing saved yet.": "Henüz kayıt yok.", "☁️ Cloud save loaded": "☁️ Bulut kaydı yüklendi",
-  "Album": "Albüm", "{1} of 20 cards": "20 karttan {1}", "every win can drop one": "her galibiyet bir kart düşürebilir", "all 20: +10 🥕 and +3 of every booster": "20'si: +10 🥕 ve her güçlendiriciden +3", "Full set: +{1} 🥕 and +1 {2}": "Tam seri: +{1} 🥕 ve +1 {2}", "level {1}": "seviye {1}",
+  "Album": "Albüm", "{1} of 20 cards": "20 karttan {1}", "every win can drop one": "her galibiyet bir kart düşürebilir", "all 20: +3 🥕 and +3 of every booster": "20'si: +3 🥕 ve her güçlendiriciden +3", "Full set: +{1} 🥕 and +1 {2}": "Tam seri: +{1} 🥕 ve +1 {2}", "level {1}": "seviye {1}",
   "Garden charms": "Bahçe tılsımları", "Pond lights": "Gölet ışıkları", "Moon road": "Ay yolu", "Far shore": "Uzak kıyı",
   "Season": "Sezon", "Season {1}": "{1}. sezon", "{1} pts": "{1} puan", "tier {1} of {2}": "{2} kademeden {1}", "{1} day left": "{1} gün kaldı", "{1} days left": "{1} gün kaldı", "a win is 10 pts, hard levels and 3 stars pay more": "galibiyet 10 puan, zor seviye ve 3 yıldız daha fazla verir",
   "{1} / {2} to tier {3}": "{3}. kademeye {1} / {2}", "All tiers done": "Bütün kademeler tamam", "Tier {1}": "{1}. kademe", "∞ lives {1} min": "{1} dakika ∞ can", "🃏 album card": "🃏 albüm kartı",
-  "The end": "Son", "Chapter {1}": "{1}. bölüm", "Station {1} of {2}": "{2} duraktan {1}.", "Station {1}": "{1}. durak", "Charmwood is {1} green": "Tılsım Ormanı %{1} yeşil", "Next station: {1}": "Sonraki durak: {1}", "🎁 Station gift: +2 🥕 · +1 Hammer": "🎁 Durak hediyesi: +2 🥕 · +1 Çekiç", "Onward": "Yola devam", "Clear this stop to light the way": "Yolu aydınlatmak için bu durağı geç", "✨ New charms: {1} and {2} join the board from here on": "✨ Yeni tılsımlar: {1} ve {2} bundan sonra tahtada", "Brass Key": "Pirinç Anahtar", "Wild Berry": "Yaban Mersini", "Half Moon": "Hilal", "Pearl Clam": "İnci Midyesi", "Thunderbolt": "Yıldırım", "Night Rose": "Gece Gülü", "Ice Crystal": "Buz Kristali", "Little Sun": "Küçük Güneş", "Ember Lantern": "Kor Feneri", "Tide Shell": "Gelgit Kabuğu", "Oak Acorn": "Meşe Palamudu", "Maple Leaf": "Akçaağaç Yaprağı", "Sky Feather": "Gök Tüyü", "Honeycomb": "Petek", "Snowflake": "Kar Tanesi", "Starfruit": "Yıldız Meyvesi",
+  "The end": "Son", "Chapter {1}": "{1}. bölüm", "Station {1} of {2}": "{2} duraktan {1}.", "Station {1}": "{1}. durak", "Charmwood is {1} green": "Tılsım Ormanı %{1} yeşil", "Next station: {1}": "Sonraki durak: {1}", "🎁 Station gift: +1 🥕 · +1 Hammer": "🎁 Durak hediyesi: +1 🥕 · +1 Çekiç", "Onward": "Yola devam", "Clear this stop to light the way": "Yolu aydınlatmak için bu durağı geç", "✨ New charms: {1} and {2} join the board from here on": "✨ Yeni tılsımlar: {1} ve {2} bundan sonra tahtada", "Brass Key": "Pirinç Anahtar", "Wild Berry": "Yaban Mersini", "Half Moon": "Hilal", "Pearl Clam": "İnci Midyesi", "Thunderbolt": "Yıldırım", "Night Rose": "Gece Gülü", "Ice Crystal": "Buz Kristali", "Little Sun": "Küçük Güneş", "Ember Lantern": "Kor Feneri", "Tide Shell": "Gelgit Kabuğu", "Oak Acorn": "Meşe Palamudu", "Maple Leaf": "Akçaağaç Yaprağı", "Sky Feather": "Gök Tüyü", "Honeycomb": "Petek", "Snowflake": "Kar Tanesi", "Starfruit": "Yıldız Meyvesi",
   "Ash Gate": "Kül Kapısı", "Dry Spring": "Kuru Pınar", "Seed Hollow": "Tohum Çukuru", "Old Oak": "Yaşlı Meşe", "Bird Ridge": "Kuş Sırtı", "Bee Meadow": "Arı Çayırı", "River Bridge": "Nehir Köprüsü", "The Crown": "Taç Tepe",
   "Clear the ash": "Külü temizle", "Wake the spring": "Pınarı uyandır", "Sow the hollow": "Çukuru ek", "Wake the Old Oak": "Yaşlı Meşe'yi uyandır", "Call the birds home": "Kuşları eve çağır", "Bring the bees": "Arıları getir", "Mend the bridge": "Köprüyü onar", "Light the Crown": "Taç Tepe'yi aydınlat",
   "The forest edge was grey with ash from the old fire. Every charm you won back drew a little green up through it. The first saplings are standing.": "Ormanın kıyısı eski yangının külüyle griydi. Geri kazandığın her tılsım külün arasından biraz yeşil çekti. İlk fidanlar ayakta.",
@@ -2657,7 +2659,7 @@ const TR = {
   "The bridge had lost half its planks. With the river running clear and the woods green on both banks, the deer crossed tonight for the first time in years.": "Köprünün kalaslarının yarısı gitmişti. Nehir berrak akıp iki yaka da yeşerince geyikler bu gece yıllardır ilk kez karşıya geçti.",
   "Climb to the Crown and light the last of the forest.": "Taç Tepe'ye çık ve ormanın son köşesini aydınlat.",
   "The highest ridge of Charmwood is green from end to end. Every charm is home. Mordo and Gritt watch from the pines, a little ashamed and very well fed on carrots.": "Tılsım Ormanı'nın en yüksek sırtı baştan başa yeşil. Her tılsım evinde. Mordo ile Gritt çamlardan izliyor, biraz mahcup, havuçla iyice doymuş.",
-  "Keep the forest bright. New stretches of the Green Line open with every update.": "Ormanı aydınlık tut. Yeşil Hat'ın yeni bölümleri her güncellemeyle açılır.", "🎁 Chapter chest: +1 🥕 · +1 of every booster · ∞ lives for 15 min": "🎁 Bölüm sandığı: +1 🥕 · her güçlendiriciden +1 · 15 dakika ∞ can", "🎁 Chapter chest: +1 🥕": "🎁 Bölüm sandığı: +1 🥕", "+1 of every booster": "her güçlendiriciden +1", "∞ lives for 15 min": "15 dakika ∞ can",
+  "Keep the forest bright. New stretches of the Green Line open with every update.": "Ormanı aydınlık tut. Yeşil Hat'ın yeni bölümleri her güncellemeyle açılır.", "🎁 Chapter chest: +1 of every booster · ∞ lives for 15 min": "🎁 Bölüm sandığı: her güçlendiriciden +1 · 15 dakika ∞ can", "+1 of every booster": "her güçlendiriciden +1", "∞ lives for 15 min": "15 dakika ∞ can",
   "The Burrow": "Yuva", "Clover Meadow": "Yonca Çayırı", "Firefly Pond": "Ateş Böceği Göleti", "Mushroom Hollow": "Mantar Çukuru", "The Old Oak": "Yaşlı Meşe", "Bramble Maze": "Böğürtlen Labirenti", "Windmill Hill": "Yel Değirmeni Tepesi", "Moon Bridge": "Ay Köprüsü", "Magpie's Wood": "Saksağan Ormanı", "The Nest": "Yuva Tepesi",
   "Harbour Steps": "Liman Merdivenleri", "Lighthouse Rock": "Fener Kayası", "Tide Pools": "Gelgit Gölcükleri", "Driftwood Beach": "Kütük Kumsalı", "Salt Marsh": "Tuzlu Bataklık", "Cliff Path": "Kayalık Yolu", "Hermit's Orchard": "Münzevinin Bahçesi", "Thunder Ridge": "Gök Gürültüsü Sırtı", "Glass Caves": "Cam Mağaraları", "Gritt's Roost": "Gritt'in Tüneği",
   "The night the lights went out": "Işıkların söndüğü gece", "A magpie called Mordo swooped over Pogo's garden and carried off every shining charm. Follow his trail, win the charms back and light the garden again.": "Mordo adlı bir saksağan Pogo'nun bahçesine dalıp bütün parlak tılsımları kaçırdı. İzini sür, tılsımları geri kazan ve bahçeyi yeniden aydınlat.",
