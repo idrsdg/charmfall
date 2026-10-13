@@ -47,7 +47,15 @@
   .pogo .eyes { transform-origin: 60px 45px; animation: pgBlink 3.6s infinite; }
   .pogo .earL { transform-origin: 38px 30px; animation: pgEar 4.4s infinite; } .pogo .earR { transform-origin: 82px 30px; animation: pgEar 4.4s .3s infinite; }
   .pogo .armL { transform-origin: 42px 88px; } .pogo .armR { transform-origin: 78px 88px; }
-  .pogo .e-h, .pogo .m-h, .pogo .heart, .pogo .jug { display: none; }
+  .pogo .e-h, .pogo .m-h, .pogo .heart, .pogo .jug, .pogo .carrot { display: none; }
+  /* eating: the left paw comes up with a carrot, the eyes close with pleasure, the head chews and the carrot goes in five bites */
+  .pogo.eat .carrot { display: block; } .pogo.eat .carrot .cb { transform-origin: 70px 88px; animation: pgBite 2.7s steps(5, end) .25s forwards; }
+  .pogo.eat .e-o { display: none; } .pogo.eat .e-h { display: block; }
+  .pogo.eat .head { animation: pgChew .34s ease-in-out infinite alternate; }
+  .pogo.eat .armL { animation: pgNibble .34s ease-in-out infinite alternate; }
+  @keyframes pgBite { from { transform: scale(1); } to { transform: scale(.06); } }
+  @keyframes pgChew { from { transform: scale(1, 1); } to { transform: translateY(1.5px) scale(1.03, .955); } }
+  @keyframes pgNibble { from { transform: rotate(-104deg); } to { transform: rotate(-112deg); } }
   @keyframes pgBreath { from { transform: scale(1, 1); } to { transform: scale(1.015, .975); } }
   @keyframes pgTail { from { transform: rotate(-9deg); } to { transform: rotate(13deg); } }
   @keyframes pgBlink { 0%, 91%, 100% { transform: scaleY(1); } 94%, 97% { transform: scaleY(.08); } }
@@ -643,29 +651,30 @@ const pogoSvg = (mood, face) => `<svg class="pogo ${mood || ""}${face ? " face" 
 <ellipse cx="60" cy="125" rx="30" ry="4.5" fill="#1b2150" opacity=".18"/>
 <g class="all" stroke="#1b2150" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
 <g class="tail"><circle cx="86" cy="106" r="8" fill="#ffffff"/></g>
-<ellipse cx="48" cy="120" rx="10" ry="5.5" fill="#ffc9cf"/><ellipse cx="72" cy="120" rx="10" ry="5.5" fill="#ffc9cf"/>
-<ellipse cx="60" cy="98" rx="24" ry="23" fill="#f3ece6"/><ellipse cx="60" cy="103" rx="13.5" ry="15" fill="#ffffff" stroke="none"/>
+<ellipse cx="48" cy="120" rx="10" ry="5.5" fill="#b39d88"/><ellipse cx="72" cy="120" rx="10" ry="5.5" fill="#b39d88"/>
+<ellipse cx="60" cy="98" rx="24" ry="23" fill="#e8dfd3"/><ellipse cx="60" cy="103" rx="13.5" ry="15" fill="#ffffff" stroke="none"/>
 <path d="M44 80 Q60 92 76 80" fill="none" stroke="#ff4b3e" stroke-width="6"/><circle cx="60" cy="88" r="4.6" fill="#ffd23f" stroke-width="2.4"/>
-<g class="armL"><ellipse cx="38" cy="98" rx="6.5" ry="12" fill="#f3ece6" transform="rotate(18 38 98)"/></g><g class="armR"><ellipse cx="82" cy="98" rx="6.5" ry="12" fill="#f3ece6" transform="rotate(-18 82 98)"/></g>
+<g class="armL"><ellipse cx="38" cy="98" rx="6.5" ry="12" fill="#e8dfd3" transform="rotate(18 38 98)"/></g><g class="armR"><ellipse cx="82" cy="98" rx="6.5" ry="12" fill="#e8dfd3" transform="rotate(-18 82 98)"/></g>
 <g class="head">
-<g class="earL"><ellipse cx="42" cy="8" rx="9" ry="24" fill="#f3ece6"/><ellipse cx="42" cy="9" rx="4" ry="16" fill="#ff8fa8" stroke="none"/></g><g class="earR"><ellipse cx="78" cy="8" rx="9" ry="24" fill="#f3ece6"/><ellipse cx="78" cy="9" rx="4" ry="16" fill="#ff8fa8" stroke="none"/></g>
-<ellipse cx="60" cy="47" rx="38" ry="31" fill="#f3ece6"/>
+<g class="earL"><ellipse cx="42" cy="8" rx="9" ry="24" fill="#e8dfd3"/><ellipse cx="42" cy="9" rx="4" ry="16" fill="#d9a2a8" stroke="none"/><ellipse cx="42" cy="-13" rx="6" ry="5" fill="#a8927c" stroke="none"/></g><g class="earR"><ellipse cx="78" cy="8" rx="9" ry="24" fill="#e8dfd3"/><ellipse cx="78" cy="9" rx="4" ry="16" fill="#d9a2a8" stroke="none"/><ellipse cx="78" cy="-13" rx="6" ry="5" fill="#a8927c" stroke="none"/></g>
+<ellipse cx="60" cy="47" rx="38" ry="31" fill="#e8dfd3"/>
 <path d="M23.500 52 C30 62 46 60 60 49 C74 60 90 62 96.500 52 C93 71 78 77.500 60 77.500 C42 77.500 27 71 23.500 52 Z" fill="#ffffff" stroke="none"/>
 <ellipse cx="60" cy="47" rx="38" ry="31" fill="none"/>
 <circle cx="33" cy="60" r="5" fill="#ff9aa2" stroke="none" opacity=".75"/><circle cx="87" cy="60" r="5" fill="#ff9aa2" stroke="none" opacity=".75"/>
 <g class="eyes"><g class="e-o" stroke="none"><ellipse cx="45" cy="45" rx="6.800" ry="7.800" fill="#1b2150"/><ellipse cx="75" cy="45" rx="6.800" ry="7.800" fill="#1b2150"/><circle cx="47.300" cy="42" r="2.700" fill="#fff"/><circle cx="77.300" cy="42" r="2.700" fill="#fff"/><circle cx="43" cy="48.500" r="1.200" fill="#fff"/><circle cx="73" cy="48.500" r="1.200" fill="#fff"/></g>
 <path class="e-h" d="M38.500 47 Q45 38 51.500 47 M68.500 47 Q75 38 81.500 47" fill="none" stroke-width="3.600"/></g>
-<path d="M55 57.500 Q60 55 65 57.500 Q64 63 60 63.500 Q56 63 55 57.500 Z" fill="#1b2150" stroke="none"/>
+<path d="M55 57.500 Q60 55 65 57.500 Q64 63 60 63.500 Q56 63 55 57.500 Z" fill="#b84a60" stroke="none"/>
 <path class="m-o" d="M53 66 Q56.500 70 60 65.500 Q63.500 70 67 66" fill="none" stroke-width="2.600"/>
 <path class="m-h" d="M52 65.500 Q60 67.500 68 65.500 Q66 75 60 75 Q54 75 52 65.500 Z" fill="#c2273a" stroke-width="2.600"/>
 </g>
+<g class="carrot"><g class="cb"><path d="M60 67 C62 74 64 80 67 87 C69 90 74 89 73 85 C71 79 68 73 65 69 Z" fill="#ff8a1a" stroke-width="2.2"/><path d="M63.5 74 l3 -1.2 M66 80 l3 -1.2" fill="none" stroke="#d9641a" stroke-width="1.6"/></g><path d="M70 88 l3 5 M71 87 l7 1 M69 88 l-2 6" fill="none" stroke="#3fbf3f" stroke-width="2.6"/><circle cx="70" cy="90" r="5.5" fill="#e8dfd3" stroke-width="2.2"/></g>
 <g class="jug"><g style="--jd:0s"><circle r="7" fill="#ff2b3d"/></g><g style="--jd:-.8s"><path d="M0 -8.500 L2.500 -3 L8.500 -2.500 L4 1.500 L5.300 7.500 L0 4.400 L-5.300 7.500 L-4 1.500 L-8.500 -2.500 L-2.500 -3 Z" fill="#ffd000"/></g><g style="--jd:-1.6s"><path d="M0 -8.500 L7.500 0 L0 8.500 L-7.500 0 Z" fill="#2f8bff"/></g></g>
 <path class="heart" d="M100 10 c-4 -6 -12 0 -6 6 l6 6 l6 -6 c6 -6 -2 -12 -6 -6z" fill="#ff4b3e" stroke-width="2.400"/>
 </g></svg>`;
 // a short reaction beside the bars (app only): big chains, a full Frenzy meter, special combinations
 let pogoT = 0; function pogoReact() { const el = $("gPogo"); if (!el || !el.firstChild) return; const n = el.firstChild; n.classList.remove("happy"); void n.getBoundingClientRect(); n.classList.add("happy"); clearTimeout(pogoT); pogoT = setTimeout(() => n.classList.remove("happy"), 1100); }
 // every carrot Pogo eats puts a little weight on him, up to a comfortably round rabbit at forty
-const plump = () => Math.min(1, ((typeof save === "object" && save && save.fed) || 0) / 40), pogoKg = () => (1.5 + plump() * 2).toFixed(1);
+const plump = () => Math.min(1, ((typeof save === "object" && save && save.fed) || 0) / 15), pogoKg = () => (1.5 + plump() * 2.5).toFixed(1);
 // carrots: one per rating spark on a win, one for every Frenzy. Tap Pogo on the map to bring him up close and feed him; fresh carrots make him jump for joy when you come back.
 let carrotNew = 0, feedT = 0;
 function flyText(t) { const el = document.createElement("div"); el.className = "fly"; el.textContent = t; el.style.cssText = "left:50%;top:150px;font-weight:900;font-size:22px;color:#fff;text-shadow:0 2px 0 #27096b"; document.body.appendChild(el); if (!el.animate) { el.remove(); return; } el.animate([{ transform: "translate(-50%,10px) scale(.6)", opacity: 0 }, { transform: "translate(-50%,0) scale(1.1)", opacity: 1, offset: .2 }, { transform: "translate(-50%,-46px) scale(1)", opacity: 0 }], { duration: 1100, easing: "ease-out" }).onfinish = () => el.remove(); }
@@ -676,6 +685,7 @@ function feedPogo() {
   const n = pogoEl(); if (!n || n.classList.contains("eat")) return;
   if (!(save.carrots > 0)) { say("No carrots to feed him yet. Carrots are rare: win levels, fill the Frenzy meter, reach a station."); bump("petFeed"); SFX.bad(); pogoMood("cheer", 1600); return; }
   wakePogo(true); save.carrots--; save.fed = (save.fed || 0) + 1; persist(); $("carrots").textContent = save.carrots; petLabel(); bump("carPill"); SFX.swap();
+  say("Crunch, crunch…"); for (let i = 0; i < 5; i++) setTimeout(() => { const m = pogoEl(); if (m && m.classList.contains("eat")) SFX.pop(1); }, 500 + i * 540);
   pogoMood("eat", 3200, () => { pogoMood("happy", 2400); say("Pogo loved it! Carrots eaten: " + save.fed + " · he weighs " + pogoKg() + " kg"); SFX.pop(3); });
 }
 // the pet screen: tap Pogo on the map and he comes up close. Stroke him and he shuts his eyes; keep going and he dozes off.
@@ -716,7 +726,7 @@ const P3 = (() => {
   // fur grain: a small noise canvas used as a bump map on everything furry, so the light catches a soft nap instead of a plastic shell
   const furMap = (() => { const c = document.createElement("canvas"); c.width = c.height = 256; const x = c.getContext("2d"), img = x.createImageData(256, 256); for (let i = 0; i < img.data.length; i += 4) { const v = 118 + Math.random() * 20; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; } x.putImageData(img, 0, 0); for (let k = 0; k < 1400; k++) { x.strokeStyle = "rgba(" + (k % 2 ? 255 : 0) + "," + (k % 2 ? 255 : 0) + "," + (k % 2 ? 255 : 0) + ",.18)"; x.lineWidth = 1; const sx = Math.random() * 256, sy = Math.random() * 256; x.beginPath(); x.moveTo(sx, sy); x.lineTo(sx + (Math.random() - .5) * 3, sy + 6 + Math.random() * 8); x.stroke(); } const tx = new T.CanvasTexture(c); tx.wrapS = tx.wrapT = T.RepeatWrapping; tx.repeat.set(3, 3); return tx; })();
   const mat = (c, o) => new T.MeshStandardMaterial(Object.assign({ color: c, roughness: .55, metalness: 0 }, o)), SPH = new T.SphereGeometry(1, 40, 30);
-  const M = { fur: mat(0xf1e9df, { roughness: .95, bumpMap: furMap, bumpScale: .018 }), cream: mat(0xfffaf3, { roughness: .92, bumpMap: furMap, bumpScale: .014 }), tip: mat(0xd8cbbd, { roughness: .96, bumpMap: furMap, bumpScale: .02 }), dark: mat(0xffc9cf), pink: mat(0xff8fa8), carrot: mat(0xff7a14), leaf: mat(0x3fbf4a), ink: mat(0x120a1c, { roughness: .2 }), iris: mat(0x5a3a1e, { roughness: .25 }), white: mat(0xffffff, { roughness: .2 }), whisk: mat(0xffffff, { transparent: true, opacity: .6 }), red: mat(0xe8332a), gold: mat(0xffc81a, { roughness: .3, metalness: .3 }), blush: mat(0xff8f9a), mouth: mat(0x9c1f2e) };
+  const M = { fur: mat(0xe4d9cb, { roughness: .95, bumpMap: furMap, bumpScale: .018 }), cream: mat(0xf7efe4, { roughness: .92, bumpMap: furMap, bumpScale: .014 }), tip: mat(0xa8927c, { roughness: .96, bumpMap: furMap, bumpScale: .02 }), dark: mat(0xd9a2a8), paw: mat(0xb39d88, { roughness: .96, bumpMap: furMap, bumpScale: .02 }), pink: mat(0xd4647a), carrot: mat(0xff7a14), leaf: mat(0x3fbf4a), ink: mat(0x120a1c, { roughness: .2 }), iris: mat(0x5a3a1e, { roughness: .25 }), white: mat(0xffffff, { roughness: .2 }), whisk: mat(0xffffff, { transparent: true, opacity: .6 }), red: mat(0xe8332a), gold: mat(0xffc81a, { roughness: .3, metalness: .3 }), blush: mat(0xff8f9a), mouth: mat(0x9c1f2e) };
   const ball = (m, x, y, z, sx, sy, sz, par) => { if (sy && sy.isObject3D) { par = sy; sy = sz = sx; } const o = new T.Mesh(SPH, m); o.position.set(x, y, z); o.scale.set(sx, sy === undefined ? sx : sy, sz === undefined ? sx : sz); par.add(o); return o; };   // (m, x, y, z, s, parent) is the short form
   const grp = (x, y, z, par) => { const g = new T.Group(); g.position.set(x, y, z); par.add(g); return g; };
   const shadow = new T.Mesh(new T.CircleGeometry(.75, 32), new T.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: .22 })); shadow.rotation.x = -Math.PI / 2; shadow.position.y = .01; scene.add(shadow);
@@ -724,7 +734,8 @@ const P3 = (() => {
   ball(M.fur, 0, 0, 0, .56, .6, .5, torso); ball(M.cream, 0, -.04, .2, .4, .46, .36, torso); ball(M.cream, 0, .12, .34, .3, .22, .18, torso); ball(M.fur, -.5, .2, -.1, .18, .22, .2, torso); ball(M.fur, .5, .2, -.1, .18, .22, .2, torso);
   const footL = ball(M.fur, -.27, .12, .16, .2, .13, .36, fox), footR = ball(M.fur, .27, .12, .16, .2, .13, .36, fox);
   const armL = grp(-.47, .3, .05, torso), armR = grp(.47, .3, .05, torso);
-  ball(M.fur, 0, -.27, 0, .14, .3, .14, armL); ball(M.dark, 0, -.52, 0, .12, .11, .12, armL); ball(M.fur, 0, -.27, 0, .14, .3, .14, armR); ball(M.dark, 0, -.52, 0, .12, .11, .12, armR);
+  ball(M.fur, 0, -.27, 0, .14, .3, .14, armL); ball(M.paw, 0, -.52, 0, .12, .11, .12, armL); ball(M.fur, 0, -.27, 0, .14, .3, .14, armR); ball(M.paw, 0, -.52, 0, .12, .11, .12, armR);
+  const toeL = ball(M.paw, -.27, .11, .44, .15, .1, .12, fox), toeR = ball(M.paw, .27, .11, .44, .15, .1, .12, fox);   // darker foot tips
   const scarf = new T.Mesh(new T.TorusGeometry(.36, .085, 12, 32), M.red); scarf.rotation.x = Math.PI / 2; scarf.position.y = .47; torso.add(scarf); ball(M.gold, 0, .4, .38, .1, .1, .1, torso);
   const tail = grp(0, -.2, -.4, torso); ball(M.cream, 0, 0, -.14, .24, .22, .22, tail); ball(M.fur, .11, .07, -.22, .11, tail); ball(M.fur, -.1, -.06, -.2, .1, tail);
   const head = grp(0, 1.02, .04, torso);
@@ -735,8 +746,8 @@ const P3 = (() => {
   const eyes = [-1, 1].map(k => { const g = grp(k * .31, .1, .61, head); g.rotation.y = k * .3; ball(M.white, 0, 0, -.01, .16, .19, .08, g); ball(M.iris, 0, 0, .03, .12, .15, .07, g); ball(M.ink, 0, -.01, .07, .075, .1, .04, g); ball(M.white, .05, .07, .1, .045, .045, .03, g); ball(M.white, -.04, -.06, .1, .022, .022, .015, g); return g; });
   ball(M.blush, -.56, -.12, .4, .11, .07, .06, head); ball(M.blush, .56, -.12, .4, .11, .07, .06, head);
   for (const k of [-1, 1]) { ball(M.fur, k * .62, -.2, .22, .2, .17, .18, head); ball(M.cream, k * .18, -.46, .44, .14, .1, .12, head); }   // cheek fluff and a soft chin
-  for (const k of [-1, 1]) for (let i = -1; i <= 1; i++) ball(M.dark, k * .27 + i * .07, .27, .46, .035, .03, .035, fox);   // toe pads on the feet
-  const ears = [-1, 1].map(k => { const g = grp(k * .3, .5, -.02, head); ball(M.fur, 0, .48, 0, .17, .56, .1, g); ball(M.tip, 0, .98, 0, .1, .12, .07, g); ball(M.dark, 0, .5, .055, .1, .44, .06, g); ball(M.pink, 0, .52, .085, .065, .36, .04, g); g.rotation.z = -k * .1; return g; });
+  for (const k of [-1, 1]) for (let i = -1; i <= 1; i++) ball(M.tip, k * .27 + i * .07, .27, .46, .035, .03, .035, fox);   // toe pads on the feet
+  const ears = [-1, 1].map(k => { const g = grp(k * .3, .5, -.02, head); ball(M.fur, 0, .48, 0, .17, .56, .1, g); ball(M.tip, 0, 1.0, 0, .185, .2, .115, g); ball(M.dark, 0, .5, .055, .1, .44, .06, g); ball(M.pink, 0, .52, .085, .065, .36, .04, g); g.rotation.z = -k * .1; return g; });
   // the carrot sits at his mouth and only shows while he eats
   const carrot = grp(.02, -.36, .7, head); carrot.rotation.set(-1.0, 0, -.5); { const c = new T.Mesh(new T.ConeGeometry(.13, .8, 20), M.carrot); c.position.y = -.4; carrot.add(c); for (let i = -1; i <= 1; i++) { const l = ball(M.leaf, i * .08, -.9, 0, .05, .17, .05, carrot); l.rotation.z = i * .5; } }
   // pose values; every frame the current pose eases toward the target one, so acts blend into each other
@@ -753,7 +764,8 @@ const P3 = (() => {
     [3.0, (b, u, p) => { const s = Math.sin(Math.min(1, u * 1.15) * Math.PI); p.lx = p.rx = -1.55 * s; p.lz = -.3 + .45 * s; p.rz = .3 - .45 * s; p.hx = .22 * s; p.eye = 1 - .6 * s; p.mo = .4 * s; p.hz = Math.sin(b * 1.5) * .04 * s; }],   // grooming the face
     [2.6, (b, u, p) => { hop((u * 2) % 1, p, .42); p.x = Math.sin(u * Math.PI) * .18; p.mo = p.y > .12 ? 1 : 0; p.hy = .2; }],   // two small hops
     [3.6, (b, u, p) => { p.hx = -.12 + Math.sin(b * 2) * .03; p.hy = Math.sin(u * Math.PI * 2) * .3; p.tz = Math.sin(u * Math.PI * 2) * .05; p.ear = .06; }],   // sniffing the ground
-    [2.4, (b, u, p) => { const s = Math.sin(Math.min(1, u * 1.1) * Math.PI); p.rz = .3 + 2.2 * s + Math.sin(b * 2) * .3 * s; p.hz = .12 * s; p.tz = -.05 * s; p.mo = s; }]   // a wave
+    [2.4, (b, u, p) => { const s = Math.sin(Math.min(1, u * 1.1) * Math.PI); p.rz = .3 + 2.2 * s + Math.sin(b * 2) * .3 * s; p.hz = .12 * s; p.tz = -.05 * s; p.mo = s; }],   // a wave
+    [3.2, (b, u, p) => { const s = Math.sin(Math.min(1, u * 1.05) * Math.PI); p.hx = -.32 * s; p.eye = 1 - .95 * s; p.mo = s * s; p.ear = .4 * s; p.lx = p.rx = .5 * s; p.lz = -.3 - .35 * s; p.rz = .3 + .35 * s; p.sq = 1 + .035 * s; p.tz = Math.sin(u * Math.PI * 2) * .02; }]   // a yawn, head back, arms stretched down
   ], actsOld = [
     [3.6, (b, u, p) => { const s = Math.sin(b / 2); p.x = s * .2; p.tz = s * .16; p.hz = -s * .22; p.y = Math.abs(s) * .1; p.lz = -(1.9 + Math.sin(b) * .7); p.rz = 1.9 - Math.sin(b) * .7; p.fl = Math.max(0, s) * .18; p.fr = Math.max(0, -s) * .18; p.mo = 1; }],                                  // side sway, arms in the air
     [1.5, (b, u, p) => spin(u, p, 1, 1.5)],
@@ -765,6 +777,9 @@ const P3 = (() => {
     [1.5, (b, u, p) => spin(u, p, 1, 2.9)],
     [2.4, (b, u, p) => { p.rz = 2.5 + Math.sin(b * 2) * .35; p.hz = .14; p.tz = -.06; p.mo = 1; p.y = Math.abs(Math.sin(b / 2)) * .04; }]   // a wave to the player
   ]; void actsOld;
+  const eatAct = (b, u, p) => { const up = Math.min(1, u / .12, (1 - u) / .08), bite = Math.floor(u * 6), bu = (u * 6) % 1, snap = bu < .18 ? Math.sin(bu / .18 * Math.PI) : 0;   // six bites; snap is the little pull-back of the head as the teeth go through
+    p.car = u < .96 ? Math.max(.1, 1 - bite * .16) : 0; p.lx = p.rx = -2.05 * up + snap * .06; p.lz = -.3 + .85 * up; p.rz = .3 - .85 * up; p.hx = .3 * up - snap * .12; p.hz = Math.sin(b / 3) * .05 * up; p.ear = .22 * up; p.eye = 1 - .45 * up;
+    const chew = bu > .25 ? Math.abs(Math.sin((bu - .25) * 10)) : 0; p.mo = up * (bu < .18 ? .9 : .25 + chew * .45); p.sq = 1 + chew * .008; };
   const TOTAL = acts.reduce((a, c) => a + c[0], 0), slots = new Map();
   function target(st, t, mood, face) {
     const p = Z(), b = t * Math.PI * 4; p.nz = twitch(t, st.ph); p.ef = flick(t, st.ph);
@@ -775,7 +790,7 @@ const P3 = (() => {
     if (mood === "sleep") { p.eye = .05; p.hx = .34; p.hz = .13; p.ear = .32; p.sq = .95 + Math.sin(t * 1.5) * .028; p.lz = -.18; p.rz = .18; return p; }   // asleep: head down, slow deep breaths
     if (mood === "pet") { const l = st.lean || 0; p.eye = .05; p.hz = -l * .26; p.hx = .07; p.tz = -l * .07; p.x = l * .05; p.ear = .16; p.mo = .3; p.sq = .975 + Math.sin(t * 15) * .006; p.lz = -.2; p.rz = .2; p.gx = p.gy = 0; p.hy *= .3; return p; }   // being stroked: eyes shut, leaning into the hand
     if (mood === "calm") { p.hz = Math.sin(t * .9) * .06; p.hy = Math.sin(t * .5) * .28; p.hx = Math.sin(t * .7) * .04; p.ear = Math.max(0, Math.sin(t * 1.7) - .93) * 2; return p; }
-    if (mood === "eat") { acts[3][1](b, Math.min(.97, t / 3.2), p); return p; }
+    if (mood === "eat") { eatAct(b, Math.min(.999, t / 3.2), p); return p; }
     if (mood === "cheer") { p.hz = .2 + Math.sin(t * 1.6) * .06; p.hx = .12; p.ear = .5; p.tz = Math.sin(t * 1.6) * .04; p.lx = -.5; p.rx = -.5; p.lz = -.5; p.rz = .5; return p; }
     let u = t % TOTAL, i = 0; while (u >= acts[i][0]) u -= acts[i++][0]; acts[i][1](b, u / acts[i][0], p); return p;
   }
@@ -786,16 +801,16 @@ const P3 = (() => {
     const kh = 1 - Math.exp(-dt * 7), ke = 1 - Math.exp(-dt * 22);
     for (const q in c) c[q] = (p.spin && (q === "ry" || q === "y")) || q === "car" ? p[q] : c[q] + (p[q] - c[q]) * (q === "hy" || q === "hx" ? kh : q === "gx" || q === "gy" ? ke : p.hop && q === "y" ? 1 - Math.exp(-dt * 40) : k); if (!p.spin && Math.abs(c.ry) > Math.PI) { c.ry -= Math.sign(c.ry) * Math.PI * 2; st.pr = c.ry; }
     fox.position.set(c.x, c.y, 0); fox.rotation.y = c.ry + (st.turn || 0); fox.scale.set(2 - c.sq, c.sq, 2 - c.sq);
-    const br = 1 + Math.sin(t * 3) * .015, fat = plump(); torso.scale.set(1 + fat * .36, br * (1 + fat * .06), 1 + fat * .32); head.scale.set((1 + fat * .1) / (1 + fat * .36), 1 / (br * (1 + fat * .06)), (1 + fat * .08) / (1 + fat * .32)); footL.position.x = -.27 - fat * .08; footR.position.x = .27 + fat * .08; torso.rotation.set(0, c.ty, c.tz); head.rotation.set(c.hx, c.hy, c.hz);
-    armL.rotation.set(c.lx, 0, c.lz); armR.rotation.set(c.rx, 0, c.rz); footL.position.y = .12 + c.fl; footR.position.y = .12 + c.fr;
+    const br = 1 + Math.sin(t * 3) * .015, fat = plump(); torso.scale.set(1 + fat * .5, br * (1 + fat * .08), 1 + fat * .46); head.scale.set((1 + fat * .14) / (1 + fat * .5), (1 + fat * .06) / (br * (1 + fat * .08)), (1 + fat * .12) / (1 + fat * .46)); footL.position.x = toeL.position.x = -.27 - fat * .12; footR.position.x = toeR.position.x = .27 + fat * .12; toeL.scale.x = toeR.scale.x = .15 + fat * .04; torso.rotation.set(0, c.ty, c.tz); head.rotation.set(c.hx, c.hy, c.hz);
+    armL.rotation.set(c.lx, 0, c.lz); armR.rotation.set(c.rx, 0, c.rz); footL.position.y = .12 + c.fl; footR.position.y = .12 + c.fr; toeL.position.y = .11 + c.fl; toeR.position.y = .11 + c.fr;
     // ears and tail are not posed: they hang on springs and trail whatever the head does
     const E = st.es, vy = (c.y - st.py) / Math.max(dt, .004), vx = (c.x - st.px) / Math.max(dt, .004), vr = (c.ry - st.pr) / Math.max(dt, .004); st.py = c.y; st.px = c.x; st.pr = c.ry;
     const ta = Math.max(-1, Math.min(.8, -vy * .2 - c.hx * .6)), tb = Math.max(-.6, Math.min(.6, -vx * .35 + c.hz * .5 + (Math.abs(vr) < 30 ? vr * .05 : 0)));
     E.v += ((ta - E.a) * 120 - E.v * 8) * dt; E.a += E.v * dt; E.w += ((tb - E.b) * 120 - E.w * 8) * dt; E.b += E.w * dt;
     ears[0].rotation.set(E.a, 0, .14 + c.ear * 1.3 + E.b + Math.sin(t * 2.3) * .025); ears[1].rotation.set(E.a * .86 - c.ef * .6, 0, -.14 - c.ear * 1.3 + E.b * .9 - Math.sin(t * 2.3 + 1) * .025 - c.ef * .3);
     eyes[0].rotation.set(c.gy, -.3 + c.gx, 0); eyes[1].rotation.set(c.gy, .3 + c.gx, 0); nose.scale.set(c.nz, 1, c.nz);
-    tail.rotation.y = Math.sin(t * 9) * .25 + E.b; tail.position.y = -.2 + E.a * .05; carrot.visible = c.car > .05; carrot.scale.setScalar(Math.max(.05, c.car) * 1.45);
-    const bl = (t + st.ph) % 3.4 > 3.28 ? .1 : 1, ey = Math.min(bl, c.eye); eyes[0].scale.y = eyes[1].scale.y = ey; mouth.scale.set(.11 * c.mo + .001, .1 * c.mo + .001, .08);
+    tail.rotation.y = Math.sin(t * 9) * .25 + E.b; tail.position.y = -.2 + E.a * .05; carrot.visible = c.car > .05; carrot.scale.setScalar(Math.max(.05, c.car) * 2.1);
+    const bu = (t + st.ph) % 3.4, b2 = st.ph > 1.5 && bu > 3.0 && bu < 3.14 ? (bu - 3.0) / .14 : bu > 3.26 ? (bu - 3.26) / .14 : -1, bl = b2 < 0 ? 1 : 1 - Math.sin(b2 * Math.PI) * .95, ey = Math.min(bl, c.eye); eyes[0].scale.y = eyes[1].scale.y = ey; mouth.scale.set(.11 * c.mo + .001, .1 * c.mo + .001, .08);
     const sh = 1 - Math.min(.5, c.y * .8); shadow.scale.set(sh, sh, sh); shadow.position.x = c.x; shadow.visible = !face;
     if (face) { cam.position.set(0, 2.3, 6.6); cam.lookAt(0, 2.28, 0); } else { cam.position.set(0, 2.1, 8.6); cam.lookAt(0, 1.82, 0); }
     R.render(scene, cam); const x = st.x; x.clearRect(0, 0, cv.width, cv.height);
@@ -922,6 +937,7 @@ function normSave() {
   save.stars = save.stars || {}; save.best = save.best || {}; save.boost = Object.assign({}, BOOST0, save.boost); save.daily = Object.assign({ last: "", streak: 0 }, save.daily); save.ach = save.ach || {};
   save.stats = Object.assign({ gems: 0, defused: 0, frenzy: 0, maxCombo: 0, bombs: 0, wins: 0, bestScore: 0 }, save.stats); save.fails = save.fails || {}; save.att = save.att || {};
   if (!save.lang) save.lang = /^tr/i.test(navigator.language || "") ? "tr" : "en";
+  if (!save.carrotZero) { save.carrots = 0; save.carrotFrac = 0; save.carrotZero = 1; }   // 2026-10-13: every carrot stock went back to zero once, on every device (the flag travels with the cloud save)
 }
 normSave();
 function persist() { save.savedAt = Date.now(); try { localStorage.setItem(SAVE, JSON.stringify(save)); } catch (e) {} if (typeof cloudPush === "function") cloudPush(); }
@@ -2608,6 +2624,7 @@ function bestMove() {
 // then templates with {n} slots, and lines joined with " · " are translated piece by piece. A MutationObserver catches text as it appears,
 // so nothing else in the game needs to know about languages. Solver runs stay in English (tests read the English titles).
 const TR = {
+  "Crunch, crunch…": "Kıtır kıtır…",
   "🔋 Low Power Mode is on. The phone shows games at 30 fps until it is turned off.": "🔋 Düşük Güç Modu açık. Telefon kapatılana kadar oyunları 30 fps gösterir.",
   "Play": "Oyna", "Start over": "Baştan başla", "▶ Continue": "▶ Devam et", "Continue": "Devam et", "▶ Resume": "▶ Devam", "Map": "Harita", " Map": " Harita", "Exit to map": "Haritaya dön", "Back to map": "Haritaya dön", "Paused": "Duraklatıldı",
   "Your board is saved. Come back any time.": "Tahtan kaydedildi. İstediğin zaman dön.", "🔊 Sound": "🔊 Ses", "🔊 Sound on": "🔊 Ses açık", "🔇 Sound off": "🔇 Ses kapalı", "🎮 All games": "🎮 Tüm oyunlar", "All games": "Tüm oyunlar", "Sound on": "Ses açık", "Sound off": "Ses kapalı", "Perfect!": "Mükemmel!", "👥 Play with friends": "👥 Arkadaşlarla oyna",
