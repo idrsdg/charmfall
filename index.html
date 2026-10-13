@@ -1060,10 +1060,10 @@ $("map").addEventListener("scroll", () => { $("bg").style.setProperty("--py", (-
 function buildMap() {
   const bm0 = performance.now(); tickLives(); $("lives").textContent = livesTxt(); $("starsTotal").textContent = Math.max(0, starsFree()); $("carrots").textContent = save.carrots || 0;
   $("btnDaily").classList.toggle("ready", !dailyState().claimed); $("achN").textContent = Object.keys(save.ach).length; $("gdN").textContent = gardenN(); $("albN").textContent = albumN(); const ss = seasonOf(); $("ssN").textContent = tierOf(ss); $("btnSeason").classList.toggle("ready", tierOf(ss) > ss.got); const rc = save.race; $("btnRace").innerHTML = ico(rc && huntWeek(rc.w) ? "hunt" : "race"); $("btnRace").classList.toggle("ready", !!rc && huntWeek(rc.w) && HUNT.filter(c => rc.wins >= c[0]).length > (rc.got || 0));
-  const path = $("path"), svg = $("pathSvg"), cur = highest(), G_ = GAP(), N = LEVELS.length, H = 300 + N * G_ + 240; MAPW = path.clientWidth || 420; const W = MAPW, big = W > 600;
+  const path = $("path"), svg = $("pathSvg"), cur = highest(), G_ = GAP(), N = LEVELS.length, B = Math.max(300, innerHeight / 2 + 90), H = B + N * G_ + Math.max(240, innerHeight / 2 + 60); MAPW = path.clientWidth || 420; const W = MAPW, big = W > 600;   // room above and below so even the first and the last stop can sit mid-screen
   path.innerHTML = ""; path.appendChild(svg); path.style.height = H + "px"; svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("preserveAspectRatio", "none");
-  // stops: a gentle S up the page, swinging over 56% of the width, y in px from the top
-  const pts = LEVELS.map((_, i) => [W / 2 + Math.sin(i * .52 + .8) * W * .28 + Math.sin(i * .19) * W * .06, H - 300 - i * G_]);
+  // stops: a gentle S up the page, swinging over 56% of the width, phased so the current stop sits exactly on the centre line; y in px from the top
+  const pts = LEVELS.map((_, i) => [W / 2 + Math.sin((i - cur) * .52) * W * .28 + Math.sin((i - cur) * .19) * W * .06, H - B - i * G_]);
   let d = "M" + pts[0][0].toFixed(1) + " " + pts[0][1].toFixed(1); for (let i = 1; i < N; i++) { const a = pts[i - 1], b = pts[i], my = (a[1] + b[1]) / 2; d += ` C${a[0].toFixed(1)} ${my.toFixed(1)} ${b[0].toFixed(1)} ${my.toFixed(1)} ${b[0].toFixed(1)} ${b[1].toFixed(1)}`; }
   const sw = big ? 44 : 34;
   svg.innerHTML = `<path d="${d}" fill="none" stroke="rgba(40,20,80,.22)" stroke-width="${sw + 6}" stroke-linecap="round" transform="translate(0 8)"/><path d="${d}" fill="none" stroke="#f7e7c4" stroke-width="${sw}" stroke-linecap="round"/><path id="pathDone" d="${d}" fill="none" stroke="#ffd23f" stroke-width="${sw}" stroke-linecap="round"/><path d="${d}" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="${big ? 11 : 9}" stroke-linecap="round" stroke-dasharray="0 ${big ? 30 : 24}"/>`;
@@ -1090,7 +1090,8 @@ function buildMap() {
   { const p = pts[cur], left = p[0] > W / 2; h += `<div class="pogoMap pogoBig${left ? " flip" : ""}" onclick="openPet()" style="left:${Math.round(p[0] + (left ? -130 : 130))}px;top:${p[1] + 6}px">${pogoSvg()}</div>`; }
   path.insertAdjacentHTML("beforeend", h);
   path.querySelectorAll(".lv.done, .lv.now").forEach(n => n.addEventListener("click", () => openLevel(+n.dataset.i)));
-  const yOf = (i) => Math.max(0, pts[i][1] - innerHeight * .56), target = yOf(cur), from = lastCur < 0 ? target + 260 : lastCur !== cur ? yOf(lastCur) : null; lastCur = cur;
+  // the current stop lands in the exact middle of the screen (the map's own offset inside the scroller is measured, not assumed)
+  const off = path.getBoundingClientRect().top - $("map").getBoundingClientRect().top + $("map").scrollTop, yOf = (i) => Math.max(0, pts[i][1] + off - innerHeight / 2), target = yOf(cur), from = lastCur < 0 ? target + 260 : lastCur !== cur ? yOf(lastCur) : null; lastCur = cur;
   requestAnimationFrame(() => scrollMap(target, from));
   if (carrotNew) { carrotNew = 0; setTimeout(() => { pogoMood("happy", 2400); bump("carPill"); }, 700); }
   window.__buildMs = Math.round(performance.now() - bm0); window.__mapEls = path.querySelectorAll("*").length;
