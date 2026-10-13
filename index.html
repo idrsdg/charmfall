@@ -91,7 +91,7 @@
   .path .flow { animation: none; }
   @keyframes flow { to { stroke-dashoffset: -36; } }
   /* ---------- map ---------- */
-  #map { overflow: auto; padding: 0 0 60px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; cursor: grab; } #map.dragging { cursor: grabbing; } #map.dragging .node { pointer-events: none; }
+  #map { overflow: hidden; padding: 0; touch-action: none; cursor: grab; } #map.dragging { cursor: grabbing; } #map.dragging .node { pointer-events: none; }
   .top { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; padding: max(14px, env(safe-area-inset-top)) 18px 10px; background: linear-gradient(#7a30f0 40%, rgba(122, 48, 240, 0)); }
   .logo { font-size: 28px; font-weight: 900; letter-spacing: -.03em; color: #fff; text-shadow: 0 3px 0 #27096b, 0 8px 20px rgba(0, 0, 0, .35); }
   .logo span { background: linear-gradient(100deg, #ffd23f 0%, #fff6b8 30%, #ff8adb 50%, #ffd23f 70%, #ffb300 100%); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; filter: drop-shadow(0 3px 0 #27096b); animation: logoShine 4s linear infinite; }
@@ -127,10 +127,12 @@
   html.petting .prop img, html.petting .prop b, html.petting u.confetti, html.petting .node, html.petting .bg i, html.petting .bg::after, html.petting .path .flow, html.petting .logo, html.petting .mapbar button { animation-play-state: paused !important; }
   html.petting #mPet canvas.pogo { will-change: contents; }
   .path { isolation: isolate; }
-  .gloom { position: absolute; inset: -400px; pointer-events: none; z-index: -2; background: rgba(6, 3, 16, .78); }
+  .gloom { position: absolute; inset: 0; pointer-events: none; z-index: -2; background: rgba(6, 3, 16, .78); }
+  canvas.rail { position: absolute; pointer-events: none; }
+  .prop.scatter { z-index: 0; } .prop.scatter img { width: 2.4em; height: 2.4em; }
   .zone { position: absolute; width: 1440px; height: 1200px; pointer-events: none; z-index: -1; }
   .zone.past { background: var(--zb); }
-  .zone.past::after { content: ""; position: absolute; inset: 22%; border-radius: 50%; background: radial-gradient(circle, rgba(255, 240, 160, .4), rgba(255, 240, 160, 0) 70%); }
+
   .zone.now { width: 1080px; height: 900px; background: radial-gradient(ellipse at 50% 50%, rgba(190, 170, 230, .5), rgba(190, 170, 230, 0) 62%); }
   .prop.house img { width: 3.2em; height: 3.2em; animation: none; }
   .prop.life img { width: 2.6em; height: 2.6em; }
@@ -1000,45 +1002,60 @@ setTimeout(() => { for (let i = 0; i < 16; i++) { const C = COLORS[i % NCOL], o 
 const bg = $("bg"); for (let i = 0; i < 70; i++) { const s = document.createElement("i"); s.style.left = Math.random() * 100 + "%"; s.style.top = Math.random() * 100 + "%"; s.style.animationDelay = Math.random() * 3 + "s"; bg.appendChild(s); }
 function highest() { let h = 0; while (save.stars[h]) h++; return Math.min(h, LEVELS.length - 1); }
 const totalStars = () => Object.values(save.best).reduce((a, b) => a + starsOf(b), 0);
-let mapRaf = 0, lastCur = -1; const GAP = 172;   // vertical distance between stops (doubled on 2026-10-12 at İdris's request)
-function scrollMap(target, from) {   // target and from are [x, y] scroll positions
-  const el = $("map"); cancelAnimationFrame(mapRaf);
-  if (from === null || window.__fast || (from[0] === target[0] && from[1] === target[1])) { el.scrollLeft = target[0]; el.scrollTop = target[1]; centreCurrent(); return; }
-  el.scrollLeft = from[0]; el.scrollTop = from[1]; from = [el.scrollLeft, el.scrollTop]; const t0 = performance.now(), dur = Math.min(1300, 500 + Math.hypot(target[0] - from[0], target[1] - from[1]) * 1.2);
-  const step = (ts) => { const t = clamp01((ts - t0) / dur); el.scrollLeft = from[0] + (target[0] - from[0]) * ease(t); el.scrollTop = from[1] + (target[1] - from[1]) * ease(t); if (t < 1) mapRaf = requestAnimationFrame(step); else centreCurrent(); };
+let mapRaf = 0, lastCur = -1; const GAP = 172;
+// The map is not scrolled freely: the view sits on the rails. mapS is the distance along the track; a drag, a wheel turn or a swipe is projected onto the
+// rail's direction and moves mapS, so the rails stay in the middle of the screen and the user can never drift off to the edges.
+let TRACK = null, mapS = 0, mapV = 0, inertiaRaf = 0, mapGoal = 0, smoothRaf = 0, smoothLast = 0;
+function applyView(s) { if (!TRACK) return; mapS = ((s % TRACK.len) + TRACK.len) % TRACK.len; const q = TRACK.at(mapS), el = $("map"); el.scrollLeft = q[0] * TRACK.Z - innerWidth / 2 + (TRACK.ox || 0); el.scrollTop = q[1] * TRACK.Z - innerHeight / 2 + (TRACK.oy || 0);
+  if (TRACK.ox === undefined) { const P = $("path").getBoundingClientRect(); TRACK.ox = P.left + q[0] * TRACK.Z - innerWidth / 2; TRACK.oy = P.top + q[1] * TRACK.Z - innerHeight / 2; el.scrollLeft += TRACK.ox; el.scrollTop += TRACK.oy; } }   // measured once: whatever the layout adds around the map, the rail point lands on the screen centre
+// every change of view goes through a goal that the real position eases toward each frame, so a finger, a wheel or a jump all land without a jolt
+function viewAt(s, now) { if (!TRACK) return; if (now) { mapGoal = s; applyView(s); return; } mapGoal = s; if (!smoothRaf) { smoothLast = performance.now(); smoothRaf = requestAnimationFrame(smoothStep); } }
+function smoothStep(ts) { const dt = Math.min(.05, (ts - smoothLast) / 1000); smoothLast = ts; const L = TRACK.len; let d = mapGoal - mapS; d = ((d % L) + L) % L; if (d > L / 2) d -= L; const k = 1 - Math.exp(-dt * 16); applyView(mapS + d * k); if (Math.abs(d) * TRACK.Z > .3) smoothRaf = requestAnimationFrame(smoothStep); else { applyView(mapGoal); smoothRaf = 0; } }
+function tangentAt(s) { const a = TRACK.at(s - 12), b = TRACK.at(s + 12), dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1; return [dx / L, dy / L]; }
+function nudgeView(dx, dy) { const [tx, ty] = tangentAt(mapS); return -(dx * tx + dy * ty) / TRACK.Z; }   // screen movement -> distance along the rails (the map follows the finger)
+function glide(ds, v) { cancelAnimationFrame(inertiaRaf); mapV = v; let last = performance.now(); const step = (now) => { const dt = Math.min(.05, (now - last) / 1000); last = now; viewAt(mapGoal + mapV * dt); mapV *= Math.pow(.1, dt); if (Math.abs(mapV) > 30) inertiaRaf = requestAnimationFrame(step); }; if (Math.abs(v) > 30) inertiaRaf = requestAnimationFrame(step); }
+function scrollMap(target, from) {   // target and from are distances along the track
+  cancelAnimationFrame(mapRaf); cancelAnimationFrame(inertiaRaf);
+  if (from === null || window.__fast || from === target) { viewAt(target, true); return; }
+  let d = target - from; const L = TRACK.len; if (d > L / 2) d -= L; if (d < -L / 2) d += L;   // the short way round the loop
+  viewAt(from, true); const t0 = performance.now(), dur = Math.min(1400, 500 + Math.abs(d) * TRACK.Z * 1.2);
+  const step = (ts) => { const t = clamp01((ts - t0) / dur); viewAt(from + d * ease(t), true); if (t < 1) mapRaf = requestAnimationFrame(step); };
   mapRaf = requestAnimationFrame(step);
 }
-function centreCurrent() { const el = $("map"), n = el.querySelector(".node.current"); if (!n) return; const r = n.getBoundingClientRect(); el.scrollLeft += r.left + r.width / 2 - innerWidth / 2; el.scrollTop += r.top + r.height / 2 - innerHeight / 2; }
-["pointerdown", "wheel", "touchstart"].forEach(ev => $("map").addEventListener(ev, () => cancelAnimationFrame(mapRaf), { passive: true }));
+["pointerdown", "wheel", "touchstart"].forEach(ev => $("map").addEventListener(ev, () => { cancelAnimationFrame(mapRaf); cancelAnimationFrame(inertiaRaf); }, { passive: true }));
 $("map").addEventListener("scroll", () => { $("bg").style.setProperty("--py", (-Math.min(120, $("map").scrollTop * .03)).toFixed(1) + "px"); }, { passive: true });
-// with a mouse the map is dragged like a real map: press anywhere and pull it in any direction; a drag longer than 6 px swallows the click underneath
+// finger, mouse or wheel: the movement is projected onto the rails and the view slides along them; a drag longer than 6 px swallows the click underneath
 { const el = $("map"); let drag = null;
-  el.addEventListener("pointerdown", (e) => { if (e.pointerType !== "mouse" || e.button !== 0) return; drag = { x: e.clientX, y: e.clientY, sl: el.scrollLeft, st: el.scrollTop, moved: 0 }; cancelAnimationFrame(mapRaf); });
-  el.addEventListener("pointermove", (e) => { if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.moved = Math.max(drag.moved, Math.hypot(dx, dy)); if (drag.moved > 6) { el.scrollLeft = drag.sl - dx; el.scrollTop = drag.st - dy; el.classList.add("dragging"); } });
-  const end = () => { if (!drag) return; const moved = drag.moved; drag = null; setTimeout(() => el.classList.remove("dragging"), 0); if (moved > 6) el.addEventListener("click", (e) => { e.stopPropagation(); e.preventDefault(); }, { capture: true, once: true }); };
-  el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end); el.addEventListener("pointerleave", end); }   // the sky drifts slower than the trail: depth
+  el.addEventListener("pointerdown", (e) => { if (e.button !== 0 || !TRACK) return; drag = { x: e.clientX, y: e.clientY, moved: 0, v: 0, t: performance.now() }; cancelAnimationFrame(mapRaf); cancelAnimationFrame(inertiaRaf); mapGoal = mapS; });
+  el.addEventListener("pointermove", (e) => { if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY; drag.moved += Math.hypot(dx, dy); if (drag.moved > 6) { const ds = nudgeView(dx, dy), now = performance.now(), dt = Math.max(.004, (now - drag.t) / 1000); drag.t = now; drag.v = drag.v * .5 + (ds / dt) * .5; viewAt(mapGoal + ds); el.classList.add("dragging"); } });
+  const end = () => { if (!drag) return; const moved = drag.moved, v = drag.v; drag = null; setTimeout(() => el.classList.remove("dragging"), 0); if (moved > 6) { glide(0, v); el.addEventListener("click", (e) => { e.stopPropagation(); e.preventDefault(); }, { capture: true, once: true }); } };
+  el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end); el.addEventListener("pointerleave", end);
+  el.addEventListener("wheel", (e) => { if (!TRACK) return; e.preventDefault(); viewAt(mapGoal + nudgeView(-e.deltaX, -e.deltaY)); }, { passive: false });
+  addEventListener("keydown", (e) => { if (!TRACK || $("map").hidden || isOpen("mStart")) return; if (e.key === "ArrowUp" || e.key === "ArrowRight") viewAt(mapGoal + 300); if (e.key === "ArrowDown" || e.key === "ArrowLeft") viewAt(mapGoal - 300); }); }   // the sky drifts slower than the trail: depth
 function buildMap() {
-  tickLives(); $("lives").textContent = livesTxt(); $("starsTotal").textContent = Math.max(0, starsFree()); $("carrots").textContent = save.carrots || 0;
+  const bm0 = performance.now(); tickLives(); $("lives").textContent = livesTxt(); $("starsTotal").textContent = Math.max(0, starsFree()); $("carrots").textContent = save.carrots || 0;
   $("btnDaily").classList.toggle("ready", !dailyState().claimed); $("achN").textContent = Object.keys(save.ach).length; $("gdN").textContent = gardenN(); $("albN").textContent = albumN(); const ss = seasonOf(); $("ssN").textContent = tierOf(ss); $("btnSeason").classList.toggle("ready", tierOf(ss) > ss.got); const rc = save.race; $("btnRace").innerHTML = ico(rc && huntWeek(rc.w) ? "hunt" : "race"); $("btnRace").classList.toggle("ready", !!rc && huntWeek(rc.w) && HUNT.filter(c => rc.wins >= c[0]).length > (rc.got || 0));
   const path = $("path"), svg = $("pathSvg"); path.querySelectorAll(".node, .pogoMap").forEach(n => n.remove());
   // The trail is the Suzuka circuit itself, traced from the track map (18 numbered corners, the crossover under the bridge between 9-10 and 14-15),
   // scaled up until the stops are about 125 px apart: a wide plane that scrolls both ways, with only one stretch of rail in view at a time.
   // The curve is a closed Catmull-Rom spline through the traced points, sampled every 6 px; the 200 stops sit at equal distances along it.
-  const { pts, road: roadPts, H, MW, roadLen } = (() => {
-    const S = (window.__nativeApp || matchMedia("(max-width: 600px)").matches) ? 96 : 48, P = [[683, 345], [672, 372], [650, 385], [618, 372], [582, 345], [567, 305], [527, 290], [507, 245], [470, 205], [430, 190], [395, 220], [367, 250], [330, 258], [300, 250], [298, 200], [305, 140], [312, 100], [305, 78], [280, 82], [240, 105], [190, 130], [150, 110], [112, 45], [70, 40], [40, 78], [60, 100], [150, 125], [230, 158], [300, 185], [325, 195], [360, 175], [415, 130], [440, 135], [460, 122], [483, 120], [520, 150], [600, 250]]
-      .map(([x, y]) => [x * S + 80, y * S + 80]);
+  const { pts, road: roadPts, H, MW, roadLen, trackAt, pS, cum: roadCum } = (() => {
+    const MZ0 = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--mz")) || 1, S = (window.__nativeApp || matchMedia("(max-width: 600px)").matches) ? 192 : 72, PAD = Math.ceil(Math.max(innerWidth, innerHeight) / MZ0 * .6) + 400, P = [[683, 345], [672, 372], [650, 385], [618, 372], [582, 345], [567, 305], [527, 290], [507, 245], [470, 205], [430, 190], [395, 220], [367, 250], [330, 258], [300, 250], [298, 200], [305, 140], [312, 100], [305, 78], [280, 82], [240, 105], [190, 130], [150, 110], [112, 45], [70, 40], [40, 78], [60, 100], [150, 125], [230, 158], [300, 185], [325, 195], [360, 175], [415, 130], [440, 135], [460, 122], [483, 120], [520, 150], [600, 250]]
+      .map(([x, y]) => [x * S + PAD, y * S + PAD]);
     const n = P.length, pt = (i) => P[(i % n + n) % n], road = [];
-    for (let i = 0; i < n; i++) { const a = pt(i - 1), b = pt(i), c = pt(i + 1), d = pt(i + 2), seg = Math.hypot(c[0] - b[0], c[1] - b[1]), steps = Math.max(4, Math.round(seg / 10));
+    for (let i = 0; i < n; i++) { const a = pt(i - 1), b = pt(i), c = pt(i + 1), d = pt(i + 2), seg = Math.hypot(c[0] - b[0], c[1] - b[1]), steps = Math.max(4, Math.round(seg / 16));
       for (let k = 0; k < steps; k++) { const u = k / steps, u2 = u * u, u3 = u2 * u; road.push([.5 * (2 * b[0] + (-a[0] + c[0]) * u + (2 * a[0] - 5 * b[0] + 4 * c[0] - d[0]) * u2 + (-a[0] + 3 * b[0] - 3 * c[0] + d[0]) * u3), .5 * (2 * b[1] + (-a[1] + c[1]) * u + (2 * a[1] - 5 * b[1] + 4 * c[1] - d[1]) * u2 + (-a[1] + 3 * b[1] - 3 * c[1] + d[1]) * u3)]); } }
     let L = 0; const cum = [0]; for (let i = 1; i < road.length; i++) { L += Math.hypot(road[i][0] - road[i - 1][0], road[i][1] - road[i - 1][1]); cum.push(L); } L += Math.hypot(road[0][0] - road[road.length - 1][0], road[0][1] - road[road.length - 1][1]);
     const at = (s) => { let j = 0; while (j < cum.length - 1 && cum[j + 1] < s) j++; const a = road[j], b = road[(j + 1) % road.length], f = Math.min(1, (s - cum[j]) / Math.max(1e-6, (cum[j + 1] || L) - cum[j])); return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]; };
-    const gap = L / LEVELS.length; let best = null, bestD = -1;
-    for (let o = 0; o < 12; o++) { const cand = []; for (let i = 0; i < LEVELS.length; i++) cand.push(at((i * gap + o * gap / 12) % L)); let md = 1e9; for (let i = 0; i < cand.length; i++) for (let j = i + 2; j < cand.length; j++) md = Math.min(md, Math.hypot(cand[i][0] - cand[j][0], cand[i][1] - cand[j][1])); if (md > bestD) { bestD = md; best = cand; } }
-    return { pts: best, road, H: Math.max(...road.map(q => q[1])) + 260, MW: Math.max(...road.map(q => q[0])) + 240, roadLen: L }; })();
+    const gap = L / LEVELS.length; let best = null, bestD = -1, bestO = 0;
+    for (let o = 0; o < 12; o++) { const cand = []; for (let i = 0; i < LEVELS.length; i++) cand.push(at((i * gap + o * gap / 12) % L)); let md = 1e9; for (let i = 0; i < cand.length; i++) for (let j = i + 2; j < cand.length; j++) md = Math.min(md, Math.hypot(cand[i][0] - cand[j][0], cand[i][1] - cand[j][1])); if (md > bestD) { bestD = md; best = cand; bestO = o; } }
+    const pS = LEVELS.map((_, i) => (i * gap + bestO * gap / 12) % L);
+    return { pts: best, road, H: Math.max(...road.map(q => q[1])) + PAD, MW: Math.max(...road.map(q => q[0])) + PAD, roadLen: L, trackAt: (s) => at(((s % L) + L) % L), pS, cum }; })();
   path.style.width = MW + "px";
-  path.style.height = H + "px"; svg.setAttribute("viewBox", `0 0 ${MW} ${H}`); const MZ = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--mz")) || 1, MS = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ms")) || 1;
+  path.style.height = H + "px"; svg.setAttribute("viewBox", `0 0 ${MW} ${H}`); const MZ = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--mz")) || 1, MS = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ms")) || 1; TRACK = { at: trackAt, len: roadLen, pS, Z: MZ }; 
   // nothing may sit on the rails: a prop that lands too close to the road is pushed sideways until it is clear
-  const nearRoad = (x, y) => { let best = 1e9; for (const q of roadPts) { if (Math.abs(q[1] - y) > 140) continue; best = Math.min(best, Math.hypot(q[0] - x, q[1] - y)); } return best; };
+  const RB = 400, roadGrid = new Map(); roadPts.forEach(q => { const k = (q[0] / RB | 0) + ":" + (q[1] / RB | 0); (roadGrid.get(k) || roadGrid.set(k, []).get(k)).push(q); });
+  const nearRoad = (x, y, r = 2 * RB) => { let best = 1e9; const cx = x / RB | 0, cy = y / RB | 0, n = Math.ceil(r / RB); for (let a = cx - n; a <= cx + n; a++) for (let b = cy - n; b <= cy + n; b++) { const cell = roadGrid.get(a + ":" + b); if (cell) for (const q of cell) best = Math.min(best, Math.hypot(q[0] - x, q[1] - y)); } return Math.min(best, r); };
   const clearX = (x, y, dir, half = 0) => { let n = 0; while (nearRoad(x, y) < 58 + half && n++ < 18) x += dir * 14; if (nearRoad(x, y) < 58 + half) { x = x - dir * 14 * 36; n = 0; while (nearRoad(x, y) < 58 + half && n++ < 18) x += dir * 14; } return Math.max(24 + half * .4, Math.min(MW - 24 - half * .4, x)); };
   // a box (the village picture) is clear when its centre, corners and edge midpoints are all off the rails; it slides sideways and shrinks until it is
   const boxClear = (x, y, w, h, c = 30) => { for (let dx = -w / 2; dx <= w / 2 + 1; dx += Math.min(24, w / 2)) for (let dy = -h / 2; dy <= h / 2 + 1; dy += Math.min(24, h / 2)) if (nearRoad(x + dx, y + dy) < c) return false; return true; };
@@ -1047,7 +1064,16 @@ function buildMap() {
   // the path is a dusky slate trail through the stones with a line of lights drifting along it
   let d = "M" + roadPts[0][0].toFixed(1) + " " + roadPts[0][1].toFixed(1); for (let i = 1; i < roadPts.length; i++) d += ` L${roadPts[i][0].toFixed(1)} ${roadPts[i][1].toFixed(1)}`; d += " Z";
   const doneLen = highest() * roadLen / LEVELS.length;
-  svg.innerHTML = `<path d="${d}" fill="none" stroke="#120838" stroke-width="72" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 12)"/><path d="${d}" fill="none" stroke="#6a5a88" stroke-width="72" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="#1a1008" stroke-width="54" stroke-dasharray="12 16" stroke-linecap="butt" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="#c8c0d8" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="#ffc83a" stroke-width="30" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${doneLen.toFixed(1)} ${(roadLen - doneLen + 10).toFixed(1)}"/>`;
+  svg.innerHTML = ""; path.querySelectorAll("canvas.rail").forEach(c => c.remove());
+  { const TS = 2048, DPR = Math.min(2, devicePixelRatio || 1), tiles = new Set(); roadPts.forEach(q => { for (const dx of [-40, 40]) for (const dy of [-40, 40]) tiles.add(((q[0] + dx) / TS | 0) + ":" + ((q[1] + dy) / TS | 0)); });
+    const px = Math.round(TS * MZ * DPR), frag = document.createDocumentFragment();
+    for (const key of tiles) { const [tx, ty] = key.split(":").map(Number); const cv = document.createElement("canvas"); cv.className = "rail"; cv.width = cv.height = px; cv.style.cssText = `left:${tx * TS}px;top:${ty * TS}px;width:${TS}px;height:${TS}px`;
+      const x = cv.getContext("2d"); x.scale(MZ * DPR, MZ * DPR); x.translate(-tx * TS, -ty * TS); x.lineJoin = "round";
+      const x0 = tx * TS - 90, x1 = (tx + 1) * TS + 90, y0 = ty * TS - 90, y1 = (ty + 1) * TS + 90, n = roadPts.length, inside = (i) => { const q = roadPts[((i % n) + n) % n]; return q[0] >= x0 && q[0] <= x1 && q[1] >= y0 && q[1] <= y1; };
+      const runs = []; let i = 0; while (i < n) { if (!inside(i)) { i++; continue; } let j = i; while (j < n && inside(j)) j++; runs.push([Math.max(0, i - 1), Math.min(n, j + 1)]); i = j; }
+      const stroke = (c, w, dash, cap) => { x.strokeStyle = c; x.lineWidth = w; x.lineCap = cap || "round"; for (const [a, b] of runs) { x.beginPath(); x.moveTo(roadPts[a][0], roadPts[a][1]); for (let k = a + 1; k <= b; k++) { const q = roadPts[k % n]; x.lineTo(q[0], q[1]); } x.setLineDash(dash || []); x.lineDashOffset = -(roadCum[a] || 0); x.stroke(); } };
+      stroke("#6a5a88", 72); stroke("#1a1008", 54, [12, 16], "butt"); stroke("#c8c0d8", 30); stroke("#ffc83a", 30, [doneLen, roadLen - doneLen + 10]); frag.appendChild(cv); }
+    path.insertBefore(frag, svg.nextSibling); }
   const cur = highest(), villX = {}; path.querySelectorAll(".chap, .station, .prop").forEach(n => n.remove());
   path.querySelectorAll(".gloom, .zone").forEach(n => n.remove()); path.insertAdjacentHTML("afterbegin", `<div class="gloom"></div>`);
   { let h = ""; pts.forEach((p, i) => { const C = CHAPTERS[chapOf(i)], dark = i > cur;
@@ -1061,7 +1087,7 @@ function buildMap() {
         if (D3 && past) { const [cx, vy, vs] = placeBox(p[0] + side * 300 * MS, p[1] + 280 * MS, 520 * MS, 390 * MS, side, true, 90), vw = Math.round(520 * MS * vs); if (vs > 0) { villX[i] = cx; h += `<div class="prop village${dark ? " dark" : past ? " party" : ""}" style="left:${cx }px;top:${vy}px;width:${vw}px"><img src="${D3.village(chapOf(i), past, 480)}" alt=""></div>`; } }   // no room at all: no village rather than one on the rails
         if (past) for (let k = 0; k < 22; k++) { const y = p[1] + 40 + (k * 55) % 230, x = clearX(p[0] + side * -(60 + (k * 79) % 300), y, side); h += `<u class="confetti" style="left:${x }px;top:${y}px;background:${["#ff5c8a", "#ffd23f", "#4fc3f7", "#7be36f"][k % 4]};--dl:-${(k * .23).toFixed(2)}s"></u>`; }
         return; }
-      if (dark) { if (D3 && i % 3 === 0) { const [dx, dy, ds] = placeBox(p[0] + side * (380 + (i * 37) % 160), p[1] - 40 + (i * 13) % 80, 150, 150, side, false, 80); if (ds >= .7) h += `<div class="prop dead" style="left:${dx}px;top:${dy}px;font-size:${Math.round(60 * MS * ds)}px"><img src="${D3.sprite("deadtree", 128)}" alt=""></div>`; } if (i % 2 === 0) for (let f = 0; f < 2; f++) { const fy = p[1] - 160 + (f * 97) % 320, fx = clearX(p[0] + (f % 2 ? side : -side) * (300 + (f * 83 + i * 17) % 300), fy, f % 2 ? side : -side, 60); h += `<u class="fog" style="left:${fx}px;top:${fy}px;--dl:-${((i + f) % 9) * .7}s"></u>`; } return; }
+      if (dark) { if (D3 && i % 3 === 0) { const [dx, dy, ds] = placeBox(p[0] + side * (380 + (i * 37) % 160), p[1] - 40 + (i * 13) % 80, 150, 150, side, false, 80); if (ds >= .7) h += `<div class="prop dead" style="left:${dx}px;top:${dy}px;font-size:${Math.round(60 * MS * ds)}px"><img src="${D3.sprite("deadtree", 128)}" alt=""></div>`; } if (i % 3 === 0) for (let f = 0; f < 2; f++) { const fy = p[1] - 160 + (f * 97) % 320, fx = clearX(p[0] + (f % 2 ? side : -side) * (300 + (f * 83 + i * 17) % 300), fy, f % 2 ? side : -side, 60); h += `<u class="fog" style="left:${fx}px;top:${fy}px;--dl:-${((i + f) % 9) * .7}s"></u>`; } return; }
       const fs = Math.round((isMordo(i) ? 64 : 50 + (i * 11) % 28) * MS), inner = D3 ? `<img src="${D3.sprite(isMordo(i) && !save.stars[i] ? "magpie" : (D3.EMO[e] || "bush"), 112)}" alt="">` : `<b>${e}</b>`, [pxc, py, ps] = placeBox(px, p[1] - 50 + (i * 13) % 46, fs * 2.3, fs * 2.3, side, false, 62);
       if (ps < .7) { /* no room beside the rails here */ } else
       if (D3 && save.stars[i] && i % 10 !== 0) { const LIFE = [["forest", 1.9, 0], ["deer", 1.2, 1], ["butterfly", .8, 1], ["hedgehog", .9, 1], ["duck", .9, 1], ["fox", 1.1, 1], ["rabbit", .9, 1], ["forest", 1.6, 0], ["tulip", .8, 0], ["flower", .8, 0]];
@@ -1071,6 +1097,14 @@ function buildMap() {
         if (i % 10 === 5) for (let b = 0; b < 2; b++) h += `<div class="prop birdfly" style="left:${p[0] - 480}px;top:${p[1] - 90 + b * 130}px;--fd:${(14 + b * 5)}s;--dl:-${b * 7}s;--sc:${b ? -1 : 1}"><img src="${D3.sprite(b ? "bird2" : "bird", 96)}" alt=""></div>`; }
       h += `<div class="prop${dark ? " dark" : (i * 5) % 3 === 0 ? " lit" : ""}" style="left:${pxc }px;top:${py}px;font-size:${Math.round(fs * ps)}px;--t:${(2.6 + (i % 5) * .35).toFixed(2)}s;--dl:-${(i % 7) * .4}s">${inner}</div>`;
     });
+    // the rest of the land, on a 1600 px grid: nothing may sit on the rails, nothing lives in the dark, and the lit ground around won stops gets woods and flowers
+    { let seed = 11; const R = () => { seed = seed + 0x6D2B79F5 | 0; let q = Math.imul(seed ^ seed >>> 15, 1 | seed); q = q + Math.imul(q ^ q >>> 7, 61 | q) ^ q; return ((q ^ q >>> 14) >>> 0) / 4294967296; };
+      const won = pts.slice(0, Math.max(0, cur)), lit = (x, y) => won.some(q => Math.hypot(q[0] - x, q[1] - y) < 900);
+      // only the band the player can ever see: the view is locked to the rails, so beyond half a screen from the road nothing is drawn
+      const reach = Math.max(innerWidth, innerHeight) / 2 / MZ + 300;
+      for (let gy = 800; gy < H - 400; gy += 3600) for (let gx = 800; gx < MW - 400; gx += 3600) { const x = gx + R() * 2600, y = gy + R() * 2600, nr = nearRoad(x, y, reach + 100); if (nr < 420 || nr >= reach) continue; const isLit = lit(x, y), kind = isLit ? ["forest", "round", "tulip", "flower", "bush", "pine"][Math.floor(R() * 6)] : ["deadtree", "deadtree", "rock", "deadtree"][Math.floor(R() * 4)];
+        h += `<div class="prop scatter${isLit ? "" : " dead"}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;font-size:${Math.round((isLit ? 56 : 60) * MS * (.8 + R() * .5))}px"><img src="${D3.sprite(kind, 128)}" alt=""></div>`;
+        if (!isLit && R() < .2) h += `<u class="fog" style="left:${Math.round(x + (R() - .5) * 600)}px;top:${Math.round(y + (R() - .5) * 400)}px;--dl:-${(R() * 9).toFixed(1)}s"></u>`; } }
     path.insertAdjacentHTML("beforeend", h); }
   pts.forEach((p, i) => {
     const n = document.createElement("div"); n.className = "node" + (save.stars[i] ? " done" : i === cur ? " current" : i > cur ? " locked" : "") + (LEVELS[i].fuse ? " fz" : "") + (hardOf(i) ? " hard" + hardOf(i) : "");
@@ -1083,9 +1117,10 @@ function buildMap() {
     if (save.stars[i]) { const s = document.createElement("div"); s.className = "stars"; s.textContent = "✦".repeat(save.stars[i]); n.appendChild(s); }
     if (i <= cur) n.addEventListener("click", () => openLevel(i)); path.appendChild(n);
   });
-  const Z = MZ, at = (i) => [Math.max(0, pts[i][0] * Z - innerWidth / 2), Math.max(0, pts[i][1] * Z - innerHeight / 2)], target = at(cur), from = lastCur < 0 ? [target[0], target[1] + 240] : lastCur !== cur ? at(lastCur) : null; lastCur = cur;
+  const target = pS[cur], from = lastCur < 0 ? target - 600 : lastCur !== cur ? pS[lastCur] : null; lastCur = cur;
   requestAnimationFrame(() => scrollMap(target, from));
   if (carrotNew) { carrotNew = 0; setTimeout(() => { pogoMood("happy", 2400); bump("carPill"); }, 700); }
+  window.__buildMs = Math.round(performance.now() - bm0); window.__mapEls = $("path").querySelectorAll("*").length;
 }
 const goalShow = (v) => G && G.L.goal === "score" ? String(Math.ceil(v / STAR)) : fmt(v);
 function goalText(L) { return L.goal === "score" ? `Earn ${L.target / STAR} star${L.target / STAR === 1 ? "" : "s"}` : L.goal === "jelly" ? "Clear all the jelly" : L.goal === "ingredients" ? `Bring down ${L.need} keys` : "Break all the blockers"; }
