@@ -387,25 +387,25 @@
   /* ---- map v3: bands, path, stops, props */
   .band { position: absolute; left: -30px; right: -30px; z-index: 0; background: linear-gradient(180deg, var(--s1) 0%, var(--s2) 13%, var(--g) 14%, color-mix(in srgb, var(--g) 72%, #2a6a3a) 100%); border-top: 3px solid rgba(255, 255, 255, .55); box-shadow: inset 0 -40px 60px rgba(0, 0, 0, .12); }
   .band::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, .25), rgba(255, 255, 255, 0) 60%); }
-  .band.lock { filter: saturate(.35) brightness(.78); } .band.lock { border-top: 0; }
-  .band.ground { background: linear-gradient(180deg, var(--g) 0%, color-mix(in srgb, var(--g) 72%, #2a6a3a) 100%); border-top: 0; }
+  .band.lock { filter: saturate(.12) brightness(.5); } .band.lock { border-top: 0; }
+  .band.ground { background: linear-gradient(180deg, var(--g) 0%, color-mix(in srgb, var(--g) 72%, #2a6a3a) 100%); border-top: 4px solid rgba(255, 255, 255, .9); box-shadow: 0 -2px 0 rgba(40, 20, 80, .6); }
   .dawn { position: absolute; left: -30px; right: -30px; height: 40px; z-index: 0; background: linear-gradient(180deg, rgba(80, 70, 110, 0), rgba(80, 70, 110, .35) 60%, rgba(255, 255, 255, .6) 100%); pointer-events: none; } .band.lock::after { background: repeating-linear-gradient(135deg, rgba(255, 255, 255, .06) 0 14px, rgba(255, 255, 255, 0) 14px 28px); }
   .path svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 1; }
-  .mprop { position: absolute; transform: translate(-50%, -100%); pointer-events: none; z-index: 1; } .mprop img { display: block; width: 100%; height: auto; } .mprop.lock { filter: grayscale(.8) brightness(.78); opacity: .75; }
+  .mprop { position: absolute; transform: translate(-50%, -100%); pointer-events: none; z-index: 1; } .mprop img { display: block; width: 100%; height: auto; } .mprop.lock { filter: grayscale(1) brightness(.5); opacity: .8; }
   .mprop.live img { animation: villagerHop 1.3s ease-in-out var(--dl, 0s) infinite alternate; }
   .mvillage { position: absolute; width: 180px; transform: translate(-50%, -50%); pointer-events: none; z-index: 1; } .mvillage img { display: block; width: 100%; height: auto; filter: drop-shadow(0 10px 8px rgba(0, 0, 0, .3)); } .mvillage.lock { filter: grayscale(.8) brightness(.8); opacity: .8; }
   @media (max-width: 600px) { .mvillage { width: 85px; } } @media (min-width: 601px) { .pogoMap.pogoBig { width: 130px; margin: -109px 0 0 -65px; } }
-  .lv { position: absolute; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; display: grid; place-items: center; font-size: 18px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); cursor: pointer; z-index: 2; border: 3px solid #fff3c4; box-shadow: 0 5px 0 #8a5a00, 0 10px 16px rgba(0, 0, 0, .35), inset 0 -5px 8px rgba(0, 0, 0, .2), inset 0 2px 0 rgba(255, 255, 255, .5);
+  .lv { position: absolute; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; display: grid; place-items: center; font-size: 24px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); cursor: pointer; z-index: 2; border: 4px solid #fff; outline: 3px solid rgba(40, 20, 80, .55); box-shadow: 0 6px 0 #8a5a00, 0 12px 18px rgba(0, 0, 0, .4), inset 0 -6px 9px rgba(0, 0, 0, .2), inset 0 2px 0 rgba(255, 255, 255, .5);
     background: radial-gradient(circle at 35% 28%, #fff3a8, #ffd23f 55%, #f0a400); color: #5a1fd0; text-shadow: 0 1px 0 rgba(255, 255, 255, .6); transition: transform .12s; }
-  @media (min-width: 601px) { .lv { width: 60px; height: 60px; margin: -30px 0 0 -30px; font-size: 21px; } }
+  @media (min-width: 601px) { .lv { width: 76px; height: 76px; margin: -38px 0 0 -38px; font-size: 28px; } }
   .lv:active { transform: translateY(3px); box-shadow: 0 2px 0 #8a5a00, 0 5px 9px rgba(0, 0, 0, .3), inset 0 -5px 8px rgba(0, 0, 0, .2); }
   .lv.now { background: radial-gradient(circle at 35% 28%, #ffd9a8, #ff8a1a 55%, #e05a00); color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); box-shadow: 0 5px 0 #8a3a00, 0 10px 16px rgba(0, 0, 0, .35), 0 0 0 7px rgba(255, 200, 80, .35), inset 0 -5px 8px rgba(0, 0, 0, .2), inset 0 2px 0 rgba(255, 255, 255, .5); animation: lvPulse 1.4s ease-in-out infinite; }
   .lv.now::before { content: ""; position: absolute; inset: -14px; border-radius: 50%; border: 3px solid #ffd23f; animation: beacon 1.6s ease-out infinite; }
   @keyframes lvPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
-  .lv.lock { background: radial-gradient(circle at 35% 28%, #d8d0f0, #9a90c0 55%, #6a6090); color: #f4f0ff; text-shadow: 0 2px 0 rgba(0, 0, 0, .3); border-color: rgba(255, 255, 255, .6); box-shadow: 0 5px 0 #403868, 0 8px 12px rgba(0, 0, 0, .28), inset 0 -5px 8px rgba(0, 0, 0, .2); cursor: default; }
+  .lv.lock { background: radial-gradient(circle at 35% 28%, #a8a0bc, #6a6288 55%, #46405e); color: #d8d4e8; text-shadow: 0 2px 0 rgba(0, 0, 0, .3); border-color: rgba(255, 255, 255, .45); box-shadow: 0 5px 0 #403868, 0 8px 12px rgba(0, 0, 0, .28), inset 0 -5px 8px rgba(0, 0, 0, .2); cursor: default; }
   .lv.lock::after { content: ""; position: absolute; right: -3px; top: -3px; width: 16px; height: 16px; border-radius: 50%; background: #403868 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 10V8a5 5 0 0 1 10 0v2h1v10H6V10zM9 10h6V8a3 3 0 0 0-6 0z' fill='%23fff'/%3E%3C/svg%3E") center / 10px no-repeat; border: 2px solid #fff; }
   .lv.hard1 { border-color: #ff8a9a; } .lv.hard2 { border-color: #d6a0ff; }
-  .lv s { position: absolute; bottom: -16px; font-size: 12px; letter-spacing: -1px; color: #ffe27a; text-shadow: 0 2px 0 #5a1fd0; text-decoration: none; }
+  .lv s { position: absolute; top: -26px; font-size: 17px; letter-spacing: -1px; color: #ffe27a; text-shadow: 0 2px 0 #5a1fd0, 0 0 6px rgba(0, 0, 0, .5); text-decoration: none; white-space: nowrap; } .lv s i { font-style: normal; color: rgba(255, 255, 255, .35); text-shadow: 0 2px 0 rgba(40, 20, 80, .5); }
   .lv em { position: absolute; top: -20px; font-size: 19px; font-style: normal; animation: bob 2.4s ease-in-out infinite alternate; }
   .lvplate { position: absolute; left: calc(100% + 10px); top: 50%; transform: translateY(-50%); width: max-content; max-width: 130px; padding: 4px 10px; border-radius: 9px; font-size: 10px; font-weight: 900; line-height: 1.15; letter-spacing: .04em; text-transform: uppercase; color: #fff3c4; background: linear-gradient(#ff7ad9, #d12fd0); border: 2px solid #ffe7a3; box-shadow: 0 4px 0 #27096b, 0 8px 12px rgba(0, 0, 0, .3); white-space: normal; text-align: center; pointer-events: none; }
   .lvplate.st { background: linear-gradient(#3fd06a, #1d7a3c); border-color: #c8ffd8; color: #fff; text-transform: none; font-size: 11px; } .lvplate.st small { display: block; font-size: 8px; letter-spacing: .12em; text-transform: uppercase; color: #d8ffe4; }
@@ -835,7 +835,7 @@ const P3 = (() => {
   requestAnimationFrame(frame); return true;
 })();
 // ---------------------------------------------------------------- persistence
-const SAVE = "prismpop.v2";   // v2 on 2026-10-13: everyone starts over under the new rules (quarter carrots, 16 new charms, the Green Line); the v1 save and its cloud copy are simply left behind
+const SAVE = "prismpop.v3";   // v3 on 2026-10-13 (night): everyone starts over again under the harder booster rules and easier stars; v2 before that; older saves and their cloud copies are simply left behind
 // ---- levels 31-100 are built by rule: a seeded pick of board shape, goal and obstacle mix that gets heavier every ten levels.
 // CAL holds the tuned number for each one (moves, or the score target on score levels), measured with the solver.
 Object.assign(M, {
@@ -1059,7 +1059,7 @@ let mapRaf = 0, lastCur = -1;
 // ---- the map. One winding path up the screen, scrolled natively; twenty chapter bands each with its own daylight colours; big glossy stops; a big Pogo at the
 // current one. Chapters ahead are the same world under a grey haze, never dark. Few, large pieces: the whole map is about 450 elements.
 // the map is seen from far: stops half as far apart, every piece half size
-const GAP = () => innerWidth <= 600 ? 71 : 98; let MAPW = 420;
+const GAP = () => innerWidth <= 600 ? 142 : 196; let MAPW = 420;
 const CHAP_SKY = [["#8be0ff", "#d7f7a0"], ["#9fe8c8", "#eaf9b0"], ["#a9d9ff", "#d9f0ff"], ["#ffd9a8", "#ffefc2"], ["#b8f0b0", "#e0ffd0"], ["#ffc2d8", "#ffe4ee"], ["#ffe08a", "#fff5c8"], ["#c9c2ff", "#e8e4ff"], ["#b6ffd9", "#e4fff0"], ["#ffd2a0", "#ffe9c8"],
   ["#9fd8ff", "#dff3ff"], ["#ffe9a8", "#fff8d8"], ["#9fe8e0", "#e0fbf7"], ["#ffd6b0", "#fff0e0"], ["#c4f0a8", "#e8ffd4"], ["#d9c8ff", "#f0e8ff"], ["#ffcfcf", "#ffeaea"], ["#bfe6ff", "#e6f6ff"], ["#e0c8ff", "#f4ecff"], ["#ffe0a0", "#fff4d8"]];
 const CHAP_GROUNDC = ["#5fc96a", "#7fd45a", "#4fc4a4", "#a8c850", "#5cc460", "#60b878", "#c8d050", "#7a9ae8", "#5ac88a", "#8aa0e0", "#f0c870", "#9ad8c0", "#60c0e0", "#f0cc88", "#a0cc78", "#c0b8d8", "#8ad860", "#a89ae8", "#b070e8", "#9090e8"];
@@ -1095,7 +1095,7 @@ function buildMap() {
   for (let c = 0; c < CHAPTERS.length; c++) { const top = c === CHAPTERS.length - 1 ? 0 : pts[Math.min(N - 1, c * 10 + 9)][1] - G_ * .55, bot = c === 0 ? H : pts[c * 10][1] + G_ * .45, vars = `--s1:${CHAP_SKY[c][0]};--s2:${CHAP_SKY[c][1]};--g:${CHAP_GROUNDC[c]}`;
     if (c * 10 > cur) h += `<div class="band lock" style="top:${top}px;height:${bot - top}px;${vars}"></div>`;
     else if (c * 10 + 9 <= cur) h += `<div class="band" style="top:${top}px;height:${bot - top}px;${vars}"></div>`;
-    else { const cut = pts[cur][1] - G_ * .5; h += `<div class="band lock" style="top:${top}px;height:${cut - top}px;${vars}"></div><div class="band ground" style="top:${cut}px;height:${bot - cut}px;${vars}"></div><div class="dawn" style="top:${cut - 40}px"></div>`; } }
+    else { const cut = pts[cur][1] - G_ * .5; h += `<div class="band lock" style="top:${top}px;height:${cut - top}px;${vars}"></div><div class="band ground" style="top:${cut}px;height:${bot - cut}px;${vars}"></div>`; } }
   // props: twelve large pieces per chapter, six a side, from the chapter's own list; the village of every chapter sits beside its middle
   let seed = 5; const R = () => { seed = seed + 0x6D2B79F5 | 0; let q = Math.imul(seed ^ seed >>> 15, 1 | seed); q = q + Math.imul(q ^ q >>> 7, 61 | q) ^ q; return ((q ^ q >>> 14) >>> 0) / 4294967296; };
   const LIFE = ["deer", "fox", "rabbit", "hedgehog", "duck", "butterfly", "bird", "bird2"];
@@ -1106,7 +1106,7 @@ function buildMap() {
     if (won) for (let f = 0; f < 3; f++) { const p = pts[c * 10 + 2 + f * 3]; h += `<u class="firefly" style="left:${Math.round(p[0] + (f % 2 ? 45 : -45))}px;top:${p[1] - 25 + f * 15}px;--dl:-${f * .8}s"></u>`; } }
   // stops
   pts.forEach((p, i) => { const st = save.stars[i] ? "done" : i === cur ? "now" : "lock", hd = hardOf(i), md = isMordo(i) && !save.stars[i], pl = (i === cur ? p[0] <= W / 2 : p[0] > W / 2) ? " l" : "";   // signs hang on the roomier side of the stop; at the current stop Pogo takes that side, so its sign hangs on the other
-    h += `<div class="lv ${st}${hd ? " hard" + hd : ""}" data-i="${i}" style="left:${Math.round(p[0])}px;top:${p[1]}px"><b>${i + 1}</b>${save.stars[i] ? `<s>${"✦".repeat(save.stars[i])}</s>` : ""}${md ? `<em>${MORDO}</em>` : ""}${i % 10 === 0 ? `<i class="lvplate${pl}">${i / 10 + 1} · ${CHAPTERS[chapOf(i)].name}</i>` : ""}${(i + 1) % STATION_EVERY === 0 ? `<i class="lvplate${pl} st"><small>Station ${(i + 1) / STATION_EVERY}</small>${STATIONS[(i + 1) / STATION_EVERY - 1].name}</i>` : i === cur && i % 10 !== 0 ? `<i class="lvplate${pl} go">Play</i>` : ""}</div>`; });
+    h += `<div class="lv ${st}${hd ? " hard" + hd : ""}" data-i="${i}" style="left:${Math.round(p[0])}px;top:${p[1]}px"><b>${i + 1}</b>${save.stars[i] ? `<s>${"★".repeat(save.stars[i])}<i>${"★".repeat(3 - save.stars[i])}</i></s>` : ""}${md ? `<em>${MORDO}</em>` : ""}${i % 10 === 0 ? `<i class="lvplate${pl}">${i / 10 + 1} · ${CHAPTERS[chapOf(i)].name}</i>` : ""}${(i + 1) % STATION_EVERY === 0 ? `<i class="lvplate${pl} st"><small>Station ${(i + 1) / STATION_EVERY}</small>${STATIONS[(i + 1) / STATION_EVERY - 1].name}</i>` : i === cur && i % 10 !== 0 ? `<i class="lvplate${pl} go">Play</i>` : ""}</div>`; });
   // Pogo beside the current stop, on the roomier side
   { const p = pts[cur], left = p[0] > W / 2; h += `<div class="pogoMap pogoBig${left ? " flip" : ""}" onclick="openPet()" style="left:${Math.round(p[0] + (left ? -65 : 65))}px;top:${p[1] + 3}px">${pogoSvg()}</div>`; }
   path.insertAdjacentHTML("beforeend", h);
@@ -1218,7 +1218,7 @@ const STATION_EVERY = 25, STATIONS = [
 const stationN = () => Math.min(STATIONS.length, Math.floor(highest() / STATION_EVERY)), forestPct = () => Math.min(100, Math.round(highest() / LEVELS.length * 100));
 function stationCheck() {
   if (window.__fast || roomStart) return false; const k = stationN(); if ((save.stationSeen || 0) >= k || k < 1) return false;
-  save.stationSeen = k; const S = STATIONS[k - 1]; save.carrots = (save.carrots || 0) + 1; carrotNew += 1; save.boost.hammer++; persist();
+  save.stationSeen = k; const S = STATIONS[k - 1]; save.carrots = (save.carrots || 0) + 1; carrotNew += 1; if (k % 2 === 0) save.boost.hammer++; persist();
   $("snChip").textContent = "Station " + k + " of " + STATIONS.length + " · " + S.name; $("snTitle").textContent = S.task; $("snPct").textContent = forestPct() + "%"; $("snBar").style.width = forestPct() + "%";
   $("snText").textContent = S.story; $("snNext").textContent = k < STATIONS.length ? "Next station: " + STATIONS[k].name + " · " + S.next : S.next; $("snPay").textContent = "🎁 Station gift: +1 🥕 · +1 Hammer";
   if (D3) D3.show($("snScene"), { props: [{ kind: "forest", x: -2.2, z: .2, s: 1.3 }, { kind: "forest", x: 2.2, z: -.3, s: 1.2, ry: 1 }, { kind: "pogo", x: -.3, z: 1.3, s: 1 }, { kind: ["sprout", "pond", "tulip", "round", "bird", "bee", "bridge", "star"][k - 1], x: 1.2, z: 1.1, s: 1, bob: true }, { kind: "deer", x: .6, z: -1.2, s: .9, ry: -.8 }], ground: 0x3fc85f, hill: 0x2d8b3c });
@@ -1417,7 +1417,7 @@ $("gdBuild").addEventListener("click", () => {
 });
 
 // ---- weekly race: first to 15 wins. The four rivals are Pogo's friends, played by the game: each keeps a steady pace that is fixed for the week.
-const RACE_N = 15, RIVALS = [["🦊", "Miso"], ["🦉", "Bibi"], ["🦔", "Tako"], ["🐿️", "Nutmeg"]], RACE_PRIZE = [[1, 2], [1, 1], [0, 0], [0, 0], [0, 0]];
+const RACE_N = 15, RIVALS = [["🦊", "Miso"], ["🦉", "Bibi"], ["🦔", "Tako"], ["🐿️", "Nutmeg"]], RACE_PRIZE = [[1, 1], [1, 0], [0, 0], [0, 0], [0, 0]];
 const weekNo = (t = Date.now()) => Math.floor((t / 86400000 + 3) / 7), weekStart = (w) => (w * 7 - 3) * 86400000;
 function rivalPace(w, i) { let x = (w * 2654435761 + (i + 1) * 40503) >>> 0; const r = () => { x = (Math.imul(x ^ x >>> 15, 2246822519) + 0x9e3779b9) >>> 0; return (x >>> 8) / 16777216; }; return { rate: 1.4 + r() * 2.1, delay: r() * .6 }; }
 const rivalWins = (w, i, t) => { const p = rivalPace(w, i); return Math.max(0, Math.min(RACE_N, Math.floor(((t - weekStart(w)) / 86400000 - p.delay) * p.rate))); };
@@ -1531,7 +1531,7 @@ const ALBUM = [
 ];
 const albumOf = () => (save.album = save.album || { c: {}, paid: {} }), cardN = (k) => albumOf().c[k] || 0, setDone = (s) => ALBUM[s].cards.every((_, i) => cardN(s + ":" + i) > 0), albumN = () => ALBUM.reduce((n, S, s) => n + S.cards.filter((_, i) => cardN(s + ":" + i) > 0).length, 0);
 function dropCard(hard) {
-  const A = albumOf(), open = ALBUM.map((S, s) => s).filter(s => highest() >= ALBUM[s].from && !setDone(s)); if (!open.length || Math.random() > .5 + hard * .15) return null;
+  const A = albumOf(), open = ALBUM.map((S, s) => s).filter(s => highest() >= ALBUM[s].from && !setDone(s)); if (!open.length || Math.random() > .25 + hard * .075) return null;
   const s = open[rnd(open.length)], miss = ALBUM[s].cards.map((_, i) => i).filter(i => !cardN(s + ":" + i)), i = Math.random() < .7 && miss.length ? miss[rnd(miss.length)] : rnd(5), k = s + ":" + i;
   if (A.c[k]) { A.c[k]++; return addCarrots(1) ? "🃏 Double card: +1 🥕" : "🃏 Double card"; }
   A.c[k] = 1; let txt = "🃏 New card " + ALBUM[s].cards[i];
@@ -1547,7 +1547,7 @@ function openAlbum() {
 $("btnAlbum").addEventListener("click", openAlbum); $("albClose").addEventListener("click", () => hide("mAlbum")); $("mAlbum").addEventListener("click", e => { if (e.target === $("mAlbum")) hide("mAlbum"); });
 
 // ---- season pass: 28-day seasons, points from wins, twenty free tiers
-const SEASON_EPOCH = Date.UTC(2026, 9, 5), SEASON_MS = 28 * 86400000, TIER_PTS = 40;
+const SEASON_EPOCH = Date.UTC(2026, 9, 5), SEASON_MS = 28 * 86400000, TIER_PTS = 60;
 const SEASON_RW = [{ boost: "moves" }, { boost: "hammer" }, { carrots: 1 }, { boost: "moves" }, { inf: 30 }, { boost: "cross" }, { boost: "undo" }, { boost: "switch" }, { card: 1 }, { carrots: 1 }, { boost: "undo" }, { inf: 60 }, { boost: "hammer" }, { boost: "hammer", n: 2 }, { card: 1 }, { carrots: 1 }, { boost: "cross", n: 2 }, { inf: 120 }, { carrots: 1 }, { all: 2 }];
 const seasonNo = () => Math.floor((Date.now() - SEASON_EPOCH) / SEASON_MS);
 function seasonOf() { const n = seasonNo(); if (!save.season || save.season.n !== n) save.season = { n, pts: 0, got: 0 }; return save.season; }
@@ -1568,7 +1568,7 @@ $("ssClaim").addEventListener("click", () => {
 $("btnSeason").addEventListener("click", openSeason); $("ssClose").addEventListener("click", () => hide("mSeason")); $("mSeason").addEventListener("click", e => { if (e.target === $("mSeason")) hide("mSeason"); });
 
 // ---- chest hunt: on odd weeks the race makes way for three chests that open at 5, 12 and 20 wins
-const HUNT = [[5, "+1 Hammer", () => { save.boost.hammer++; }], [12, "1 🥕 and +1 Cross Blast, +1 Free Switch", () => { save.carrots += 1; carrotNew += 1; save.boost.cross++; save.boost.switch++; }], [20, "1 🥕 and ∞ lives for 30 min", () => { save.carrots += 1; carrotNew += 1; save.infUntil = Math.max(Date.now(), save.infUntil || 0) + 1800000; save.lives = 5; }]];
+const HUNT = [[8, "+1 Hammer", () => { save.boost.hammer++; }], [18, "1 🥕 and +1 Cross Blast", () => { save.carrots += 1; carrotNew += 1; save.boost.cross++; }], [30, "1 🥕 and ∞ lives for 30 min", () => { save.carrots += 1; carrotNew += 1; save.infUntil = Math.max(Date.now(), save.infUntil || 0) + 1800000; save.lives = 5; }]];
 const huntWeek = (w) => w % 2 === 1;
 function openHunt(rc) {
   const left = weekStart(rc.w + 1) - Date.now(), d = Math.floor(left / 86400000), h = Math.floor(left / 3600000) % 24, got = rc.got || 0;
@@ -1586,17 +1586,17 @@ $("sPlay").addEventListener("click", () => { hide("mStart"); clearProgress(); st
 $("mStart").addEventListener("click", e => { if (e.target === $("mStart")) hide("mStart"); });
 $("btnBack").addEventListener("click", () => { if (G && !G.over) { snapshot(); logEv("quit"); } showMap(); });
 function showMap() { tip(""); G = null; $("game").hidden = true; $("map").hidden = false; buildMap(); if (!storyCheck()) stationCheck(); }
-function starTargets(L) { if (L.target) return [L.target, L.target * 3, L.target * 6]; const base = { jelly: 20000, ingredients: 18000, blockers: 18000 }[L.goal] * (1 + L.moves / 40); return [base, base * 1.6, base * 2.3].map(Math.round); }
+function starTargets(L) { if (L.target) return [L.target, L.target * 2, L.target * 3.5]; const base = { jelly: 20000, ingredients: 18000, blockers: 18000 }[L.goal] * (1 + L.moves / 40); return [base, base * 1.3, base * 1.65].map(Math.round); }   // 2026-10-13: the climb above the winning score halved
 
 // ---------------------------------------------------------------- daily reward (login streak)
 const BICON = {}; document.querySelectorAll(".boost").forEach(el => { BICON[el.dataset.b] = el.querySelector("svg").outerHTML; });
 const BNAME = { hammer: "Hammer", moves: "+5 Moves", switch: "Free Switch", cross: "Cross Blast", undo: "Undo" };
-const DAILY = [{ hammer: 1 }, { moves: 1 }, { cross: 1 }, { undo: 1 }, { switch: 1, hammer: 1 }, { cross: 1, moves: 1 }, { hammer: 1, moves: 1, switch: 1, cross: 1, undo: 1 }];
+const DAILY = [{ hammer: 1 }, {}, { cross: 1 }, {}, { switch: 1 }, {}, { hammer: 1, moves: 1, cross: 1 }];   // every other day is a plain check-in
 function dayStr(off) { const d = new Date(Date.now() + ((window.__dayShift || 0) + (off || 0)) * 864e5), p = (n) => (n < 10 ? "0" : "") + n; return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); }
 function dailyState() { const claimed = save.daily.last === dayStr(), streak = claimed ? save.daily.streak : save.daily.last === dayStr(-1) ? save.daily.streak + 1 : 1; return { claimed, streak, idx: (streak - 1) % 7 }; }
 function openDaily() {
   const s = dailyState(), rw = DAILY[s.idx];
-  $("dDays").innerHTML = DAILY.map((d, i) => `<div class="${i < s.idx || (i === s.idx && s.claimed) ? "got" : i === s.idx ? "now" : ""}"><small>Day ${i + 1}</small><b>${i === 6 ? "🎁" : Object.keys(d).map(k => BICON[k]).join("")}</b></div>`).join("");
+  $("dDays").innerHTML = DAILY.map((d, i) => `<div class="${i < s.idx || (i === s.idx && s.claimed) ? "got" : i === s.idx ? "now" : ""}"><small>Day ${i + 1}</small><b>${i === 6 ? "🎁" : Object.keys(d).map(k => BICON[k]).join("") || "✓"}</b></div>`).join("");
   $("dText").textContent = s.claimed ? `Day ${s.streak} collected. Come back tomorrow to keep the streak going.` : `Day ${s.streak} of your streak. Today: ` + Object.keys(rw).map(k => "+" + rw[k] + " " + BNAME[k]).join(", ") + (s.idx === 6 ? " and full lives." : ".");
   $("dClaim").hidden = s.claimed; $("dClose").textContent = s.claimed ? "Great" : "Later"; show("mDaily");
 }
@@ -1636,7 +1636,7 @@ function achPop(a) {
 }
 function checkAch() {
   let any = false;
-  for (const a of ACH) if (!save.ach[a.id] && a.ok(save.stats)) { save.ach[a.id] = 1; save.boost.hammer++; achPop(a); any = true; }
+  for (const a of ACH) if (!save.ach[a.id] && a.ok(save.stats)) { save.ach[a.id] = 1; if (Object.keys(save.ach).length % 2 === 0) save.boost.hammer++; achPop(a); any = true; }
   if (any) { persist(); if (G) updateHud(); else $("achN").textContent = Object.keys(save.ach).length + "/" + ACH.length; $("gdN").textContent = gardenN(); }
 }
 function openAch() {
@@ -2660,7 +2660,7 @@ const TR = {
   "Build {1} {2}": "{1} {2} yap", "You need ★ {1} more. Win levels to earn stars.": "★ {1} daha gerek. Yıldız için seviye kazan.", "{1} built! +1 {2}": "{1} yapıldı! +1 {2}", "Carrot patch": "Havuç tarlası", "Tulips": "Laleler", "Log bench": "Kütük bank", "Lantern": "Fener", "Mushrooms": "Mantarlar", "Oak tree": "Meşe ağacı", "Burrow house": "Yuva evi", "Fountain": "Çeşme", "Ferris wheel": "Dönme dolap", "Rainbow": "Gökkuşağı",
   "Weekly race": "Haftalık yarış", "Race": "Yarış", "Chest hunt": "Sandık avı", "You": "Sen", "First to {1} wins. You are {2}. {3} left.": "İlk {1} galibiyete ulaşan kazanır. {2} sıradasın. {3} kaldı.", "You finished this week's race. A new one starts Monday.": "Bu haftanın yarışını bitirdin. Yenisi pazartesi başlar.",
   "1st": "1.", "2nd": "2.", "3rd": "3.", "4th": "4.", "5th": "5.", "🏁 {1} place: +{2} 🥕": "🏁 {1} sıra: +{2} 🥕", "🏁 {1} place: +{2} 🥕 and +{3} of every booster": "🏁 {1} sıra: +{2} 🥕 ve her güçlendiriciden +{3}",
-  "Chest hunt week: every win fills the chests. {1} left. The race is back next Monday.": "Sandık avı haftası: her galibiyet sandıkları doldurur. {1} kaldı. Yarış gelecek pazartesi döner.", "{1} wins: {2}": "{1} galibiyet: {2}", "+1 Hammer": "+1 Çekiç", "1 🥕 and +1 Cross Blast, +1 Free Switch": "1 🥕 ve +1 Çapraz Patlama, +1 Serbest Takas", "1 🥕 and ∞ lives for 30 min": "1 🥕 ve 30 dakika ∞ can",
+  "Chest hunt week: every win fills the chests. {1} left. The race is back next Monday.": "Sandık avı haftası: her galibiyet sandıkları doldurur. {1} kaldı. Yarış gelecek pazartesi döner.", "{1} wins: {2}": "{1} galibiyet: {2}", "+1 Hammer": "+1 Çekiç", "1 🥕 and +1 Cross Blast": "1 🥕 ve +1 Çapraz Patlama", "1 🥕 and ∞ lives for 30 min": "1 🥕 ve 30 dakika ∞ can",
   "Team": "Takım", "Loading…": "Yükleniyor…", "Teams need a connection to the game server. Try again later.": "Takım için oyun sunucusuna bağlantı gerekir. Sonra tekrar dene.", "Play with up to 9 friends. Every win counts for the team.": "9 arkadaşınla oyna. Her galibiyet takıma yazılır.", "Your name": "Adın", "Team name, or a team code to join": "Takım adı ya da katılmak için takım kodu",
   "Create": "Kur", "Join": "Katıl", "code {1}": "kod {1}", "This week: {1} wins": "Bu hafta: {1} galibiyet", "goals {1}": "hedefler {1}", "Collect team reward": "Takım ödülünü al", "Leave team": "Takımdan ayrıl", "Team code copied": "Takım kodu kopyalandı", "Team reward: +{1} 🥕": "Takım ödülü: +{1} 🥕", "Could not reach the server.": "Sunucuya ulaşılamadı.",
   "Pogo": "Pogo", "🥕 Feed": "🥕 Besle", "🥕 Feed ({1})": "🥕 Besle ({1})", "Stroke him with your finger. He loves it. Weight: {1} kg": "Parmağınla okşa. Buna bayılıyor. Ağırlık: {1} kg", "He likes that. Keep going.": "Hoşuna gitti. Devam et.", "He is getting sleepy…": "Uykusu geliyor…", "Shh… Pogo fell asleep. Tap him to wake him up.": "Şşş… Pogo uyudu. Uyandırmak için dokun.",
