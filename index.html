@@ -127,13 +127,17 @@
   html.petting .prop img, html.petting .prop b, html.petting u.confetti, html.petting .node, html.petting .bg i, html.petting .bg::after, html.petting .path .flow, html.petting .logo, html.petting .mapbar button { animation-play-state: paused !important; }
   html.petting #mPet canvas.pogo { will-change: contents; }
   .path { isolation: isolate; }
-  .gloom { position: absolute; inset: 0; pointer-events: none; z-index: -2; background: rgba(6, 3, 16, .78); }
+  .gloom { position: absolute; inset: 0; pointer-events: none; z-index: -2; background: rgba(2, 1, 10, .9); }
   canvas.rail { position: absolute; pointer-events: none; }
   .prop.scatter { z-index: 0; } .prop.scatter img { width: 2.4em; height: 2.4em; }
-  .zone { position: absolute; width: 1440px; height: 1200px; pointer-events: none; z-index: -1; }
+  .zone { position: absolute; width: 3800px; height: 3200px; pointer-events: none; z-index: -1; }
   .zone.past { background: var(--zb); }
+  .zone.past::before { content: ""; position: absolute; inset: 18%; border-radius: 50%; background: radial-gradient(circle, rgba(255, 250, 215, .9), rgba(255, 240, 170, .45) 40%, rgba(255, 240, 170, 0) 70%); }
 
-  .zone.now { width: 1080px; height: 900px; background: radial-gradient(ellipse at 50% 50%, rgba(190, 170, 230, .5), rgba(190, 170, 230, 0) 62%); }
+  .zone.now { background: radial-gradient(ellipse at 50% 50%, rgba(255, 200, 120, .55), rgba(255, 170, 90, .25) 28%, rgba(255, 170, 90, 0) 55%); }
+  .node.current::before { content: ""; position: absolute; inset: -34%; border-radius: 50%; border: 4px solid #ffd23f; opacity: .9; animation: beacon 1.6s ease-out infinite; }
+  @keyframes beacon { from { transform: scale(.7); opacity: .9; } to { transform: scale(1.5); opacity: 0; } }
+  .node.current .plate.go { background: linear-gradient(#ffe680, #ffb000); color: #3a1f08; border-color: #fff3c4; text-transform: none; font-weight: 900; }
   .prop.house img { width: 3.2em; height: 3.2em; animation: none; }
   .prop.life img { width: 2.6em; height: 2.6em; }
   .prop.birdfly { width: 78px; height: 78px; animation: birdFly var(--fd, 16s) linear var(--dl, 0s) infinite; } .prop.birdfly img { width: 52px; height: 52px; animation: birdFlap .5s ease-in-out infinite alternate; }
@@ -316,8 +320,8 @@
   .prop { position: absolute; transform: translate(-50%, -50%); line-height: 1; pointer-events: none; }
   .prop b { display: block; font-weight: 400; transform-origin: 50% 100%; animation: sway var(--t, 3.4s) ease-in-out var(--dl, 0s) infinite alternate; }
   .prop.dark { opacity: .3; } .prop.dark b { animation: none; }
-  .prop.dead { opacity: .7; } .prop.dead img { width: 2.6em; height: 2.6em; }
-  u.fog { position: absolute; width: 260px; height: 90px; margin: -45px 0 0 -130px; border-radius: 50%; background: radial-gradient(ellipse, rgba(120, 110, 150, .32), rgba(120, 110, 150, 0) 70%); pointer-events: none; animation: fogDrift 9s ease-in-out var(--dl, 0s) infinite alternate; }
+  .prop.dead { opacity: .55; } .prop.dead img { width: 2.6em; height: 2.6em; }
+  u.fog { position: absolute; width: 360px; height: 120px; margin: -60px 0 0 -180px; border-radius: 50%; background: radial-gradient(ellipse, rgba(90, 100, 160, .42), rgba(90, 100, 160, 0) 70%); pointer-events: none; animation: fogDrift 9s ease-in-out var(--dl, 0s) infinite alternate; }
   @keyframes fogDrift { from { translate: -40px 0; opacity: .6; } to { translate: 40px -10px; opacity: 1; } }
   .prop.lit::after { content: ""; position: absolute; left: 50%; top: 55%; width: 190%; height: 190%; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, rgba(255, 226, 150, .26), rgba(255, 226, 150, 0) 68%); z-index: -1; animation: glow 2.6s ease-in-out var(--dl, 0s) infinite alternate; }
   @keyframes sway { from { transform: rotate(-5deg) translateY(0); } to { transform: rotate(5deg) translateY(-3px); } }
@@ -1077,8 +1081,8 @@ function buildMap() {
   const cur = highest(), villX = {}; path.querySelectorAll(".chap, .station, .prop").forEach(n => n.remove());
   path.querySelectorAll(".gloom, .zone").forEach(n => n.remove()); path.insertAdjacentHTML("afterbegin", `<div class="gloom"></div>`);
   { let h = ""; pts.forEach((p, i) => { const C = CHAPTERS[chapOf(i)], dark = i > cur;
-      if (i < cur) h += `<div class="zone past" style="top:${p[1] - 600}px;left:${p[0] - 720}px;--zb:radial-gradient(ellipse at 50% 50%, #${(CHAP_GROUND[chapOf(i)] || 0x3f8a4d).toString(16).padStart(6, "0")} 0%, rgba(0,0,0,0) 62%)"></div>`;
-      else if (i === cur) h += `<div class="zone now" style="top:${p[1] - 450}px;left:${p[0] - 540}px"></div>`;
+      if (i < cur) h += `<div class="zone past" style="top:${p[1] - 1600}px;left:${p[0] - 1900}px;--zb:radial-gradient(ellipse at 50% 50%, #${(CHAP_GROUND[chapOf(i)] || 0x3f8a4d).toString(16).padStart(6, "0")} 0%, #${(CHAP_GROUND[chapOf(i)] || 0x3f8a4d).toString(16).padStart(6, "0")}e6 34%, rgba(0,0,0,0) 62%)"></div>`;
+      else if (i === cur) h += `<div class="zone now" style="top:${p[1] - 1600}px;left:${p[0] - 1900}px"></div>`;
       const side = p[0] > MW / 2 ? -1 : 1, px = Math.max(26, Math.min(MW - 26, p[0] + side * (330 + (i * 37) % 90))), e = isMordo(i) && !save.stars[i] ? MORDO : C.props[(i * 7 + chapOf(i)) % 4];
       if (i % 10 === 0) {
 
@@ -1110,6 +1114,7 @@ function buildMap() {
     const n = document.createElement("div"); n.className = "node" + (save.stars[i] ? " done" : i === cur ? " current" : i > cur ? " locked" : "") + (LEVELS[i].fuse ? " fz" : "") + (hardOf(i) ? " hard" + hardOf(i) : "");
     n.style.left = p[0] + "px"; n.style.top = p[1] + "px"; n.textContent = i + 1; n.insertAdjacentHTML("afterbegin", `<i class="plat"></i>`);
     if (i % 10 === 0) n.insertAdjacentHTML("beforeend", `<i class="plate">${i / 10 + 1} · ${CHAPTERS[chapOf(i)].name}</i>`);   // the chapter's name board on its first stop
+    else if (i === cur) n.insertAdjacentHTML("beforeend", `<i class="plate go">Clear this stop to light the way</i>`);
     if ((i + 1) % STATION_EVERY === 0) n.insertAdjacentHTML("beforeend", `<i class="plate st"><small>Station ${(i + 1) / STATION_EVERY}</small>${STATIONS[(i + 1) / STATION_EVERY - 1].name}</i>`);   // the Green Line station board n.style.setProperty("--d", Math.min(.45, Math.abs(i - cur) * .05) + "s"); n.style.setProperty("--bd", -(i % 5) * .5 + "s");
     if (i === cur) { let left = p[0] > MW / 2; const vc = Math.floor(i / 10) * 10, vx = villX[vc]; if (vx !== undefined && i - vc <= 2) left = vx > p[0] ? true : false;   // the village takes one side of the rails, Pogo the other
       const px = clearX(p[0] + (left ? -170 : 170) * MS, p[1] + 30 * MS, left ? -1 : 1, 80 * MS);
@@ -2673,7 +2678,7 @@ const TR = {
   "Garden charms": "Bahçe tılsımları", "Pond lights": "Gölet ışıkları", "Moon road": "Ay yolu", "Far shore": "Uzak kıyı",
   "Season": "Sezon", "Season {1}": "{1}. sezon", "{1} pts": "{1} puan", "tier {1} of {2}": "{2} kademeden {1}", "{1} day left": "{1} gün kaldı", "{1} days left": "{1} gün kaldı", "a win is 10 pts, hard levels and 3 stars pay more": "galibiyet 10 puan, zor seviye ve 3 yıldız daha fazla verir",
   "{1} / {2} to tier {3}": "{3}. kademeye {1} / {2}", "All tiers done": "Bütün kademeler tamam", "Tier {1}": "{1}. kademe", "∞ lives {1} min": "{1} dakika ∞ can", "🃏 album card": "🃏 albüm kartı",
-  "The end": "Son", "Chapter {1}": "{1}. bölüm", "Station {1} of {2}": "{2} duraktan {1}.", "Station {1}": "{1}. durak", "Charmwood is {1} green": "Tılsım Ormanı %{1} yeşil", "Next station: {1}": "Sonraki durak: {1}", "🎁 Station gift: +2 🥕 · +1 Hammer": "🎁 Durak hediyesi: +2 🥕 · +1 Çekiç", "Onward": "Yola devam", "✨ New charms: {1} and {2} join the board from here on": "✨ Yeni tılsımlar: {1} ve {2} bundan sonra tahtada", "Brass Key": "Pirinç Anahtar", "Wild Berry": "Yaban Mersini", "Half Moon": "Hilal", "Pearl Clam": "İnci Midyesi", "Thunderbolt": "Yıldırım", "Night Rose": "Gece Gülü", "Ice Crystal": "Buz Kristali", "Little Sun": "Küçük Güneş", "Ember Lantern": "Kor Feneri", "Tide Shell": "Gelgit Kabuğu", "Oak Acorn": "Meşe Palamudu", "Maple Leaf": "Akçaağaç Yaprağı", "Sky Feather": "Gök Tüyü", "Honeycomb": "Petek", "Snowflake": "Kar Tanesi", "Starfruit": "Yıldız Meyvesi",
+  "The end": "Son", "Chapter {1}": "{1}. bölüm", "Station {1} of {2}": "{2} duraktan {1}.", "Station {1}": "{1}. durak", "Charmwood is {1} green": "Tılsım Ormanı %{1} yeşil", "Next station: {1}": "Sonraki durak: {1}", "🎁 Station gift: +2 🥕 · +1 Hammer": "🎁 Durak hediyesi: +2 🥕 · +1 Çekiç", "Onward": "Yola devam", "Clear this stop to light the way": "Yolu aydınlatmak için bu durağı geç", "✨ New charms: {1} and {2} join the board from here on": "✨ Yeni tılsımlar: {1} ve {2} bundan sonra tahtada", "Brass Key": "Pirinç Anahtar", "Wild Berry": "Yaban Mersini", "Half Moon": "Hilal", "Pearl Clam": "İnci Midyesi", "Thunderbolt": "Yıldırım", "Night Rose": "Gece Gülü", "Ice Crystal": "Buz Kristali", "Little Sun": "Küçük Güneş", "Ember Lantern": "Kor Feneri", "Tide Shell": "Gelgit Kabuğu", "Oak Acorn": "Meşe Palamudu", "Maple Leaf": "Akçaağaç Yaprağı", "Sky Feather": "Gök Tüyü", "Honeycomb": "Petek", "Snowflake": "Kar Tanesi", "Starfruit": "Yıldız Meyvesi",
   "Ash Gate": "Kül Kapısı", "Dry Spring": "Kuru Pınar", "Seed Hollow": "Tohum Çukuru", "Old Oak": "Yaşlı Meşe", "Bird Ridge": "Kuş Sırtı", "Bee Meadow": "Arı Çayırı", "River Bridge": "Nehir Köprüsü", "The Crown": "Taç Tepe",
   "Clear the ash": "Külü temizle", "Wake the spring": "Pınarı uyandır", "Sow the hollow": "Çukuru ek", "Wake the Old Oak": "Yaşlı Meşe'yi uyandır", "Call the birds home": "Kuşları eve çağır", "Bring the bees": "Arıları getir", "Mend the bridge": "Köprüyü onar", "Light the Crown": "Taç Tepe'yi aydınlat",
   "The forest edge was grey with ash from the old fire. Every charm you won back drew a little green up through it. The first saplings are standing.": "Ormanın kıyısı eski yangının külüyle griydi. Geri kazandığın her tılsım külün arasından biraz yeşil çekti. İlk fidanlar ayakta.",
