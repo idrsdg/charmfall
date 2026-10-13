@@ -91,7 +91,7 @@
   .path .flow { animation: none; }
   @keyframes flow { to { stroke-dashoffset: -36; } }
   /* ---------- map ---------- */
-  #map { overflow-y: auto; overflow-x: hidden; padding: 0 0 80px; overscroll-behavior: contain; cursor: grab; } #map.dragging { cursor: grabbing; } #map.dragging .lv { pointer-events: none; }
+  #map { overflow-y: auto; overflow-x: hidden; padding: 0; overscroll-behavior: contain; cursor: grab; } #map.dragging { cursor: grabbing; } #map.dragging .lv { pointer-events: none; }
   .top { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; padding: max(14px, env(safe-area-inset-top)) 18px 10px; background: linear-gradient(#7a30f0 40%, rgba(122, 48, 240, 0)); }
   .logo { font-size: 28px; font-weight: 900; letter-spacing: -.03em; color: #fff; text-shadow: 0 3px 0 #27096b, 0 8px 20px rgba(0, 0, 0, .35); }
   .logo span { background: linear-gradient(100deg, #ffd23f 0%, #fff6b8 30%, #ff8adb 50%, #ffd23f 70%, #ffb300 100%); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; filter: drop-shadow(0 3px 0 #27096b); animation: logoShine 4s linear infinite; }
@@ -587,6 +587,7 @@ const palFor = (i) => { const pal = COLORS.slice(), k = Math.min(NEWGEMS.length 
 let PAL = COLORS;
 const rnd = (n) => Math.floor(Math.random() * n);
 // a sleep only wakes up if the same game is still running, so leaving a level mid-cascade quietly drops the rest of that cascade
+// in-level motion runs a quarter slower than the original pace (İdris, 2026-10-13): SWAP_MS, FALL_K, BOUNCE_MS, FLY_MS and the chain stagger carry the slower numbers
 const sleep = (ms) => { const g0 = G; return new Promise(r => setTimeout(() => { if (G === g0) r(); }, window.__fast ? 0 : ms)); };
 const $ = (id) => document.getElementById(id);
 
@@ -1064,14 +1065,14 @@ function buildMap() {
   path.innerHTML = ""; path.appendChild(svg); path.style.height = H + "px"; svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("preserveAspectRatio", "none");
   // stops: a gentle S up the page, swinging over 56% of the width, phased so the current stop sits exactly on the centre line; y in px from the top
   const pts = LEVELS.map((_, i) => [W / 2 + Math.sin((i - cur) * .52) * W * .28 + Math.sin((i - cur) * .19) * W * .06, H - B - i * G_]);
-  let d = "M" + pts[0][0].toFixed(1) + " " + pts[0][1].toFixed(1); for (let i = 1; i < N; i++) { const a = pts[i - 1], b = pts[i], my = (a[1] + b[1]) / 2; d += ` C${a[0].toFixed(1)} ${my.toFixed(1)} ${b[0].toFixed(1)} ${my.toFixed(1)} ${b[0].toFixed(1)} ${b[1].toFixed(1)}`; }
+  let d = "M" + pts[0][0].toFixed(1) + " " + pts[0][1].toFixed(1); for (let i = 0; i < N - 1; i++) { const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(N - 1, i + 2)]; d += ` C${(p1[0] + (p2[0] - p0[0]) / 6).toFixed(1)} ${(p1[1] + (p2[1] - p0[1]) / 6).toFixed(1)} ${(p2[0] - (p3[0] - p1[0]) / 6).toFixed(1)} ${(p2[1] - (p3[1] - p1[1]) / 6).toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`; }
   const sw = big ? 44 : 34;
   svg.innerHTML = `<path d="${d}" fill="none" stroke="rgba(40,20,80,.22)" stroke-width="${sw + 6}" stroke-linecap="round" transform="translate(0 8)"/><path d="${d}" fill="none" stroke="#f7e7c4" stroke-width="${sw}" stroke-linecap="round"/><path id="pathDone" d="${d}" fill="none" stroke="#ffd23f" stroke-width="${sw}" stroke-linecap="round"/><path d="${d}" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="${big ? 11 : 9}" stroke-linecap="round" stroke-dasharray="0 ${big ? 30 : 24}"/>`;
   { const pd = svg.querySelector("#pathDone"), L = pd.getTotalLength(), done = cur * L / (N - 1); pd.setAttribute("stroke-dasharray", `${done.toFixed(1)} ${(L - done + 10).toFixed(1)}`); }
   let h = "";
   // chapter bands: sky to ground, in the chapter's own colours; ahead of the player the band is hazed and desaturated
   // the light reaches exactly the current stop: the band of the chapter the player is in is cut just above it, bright below and hazed above
-  for (let c = 0; c < CHAPTERS.length; c++) { const top = pts[Math.min(N - 1, c * 10 + 9)][1] - G_ * .55, bot = pts[c * 10][1] + G_ * .45, vars = `--s1:${CHAP_SKY[c][0]};--s2:${CHAP_SKY[c][1]};--g:${CHAP_GROUNDC[c]}`;
+  for (let c = 0; c < CHAPTERS.length; c++) { const top = c === CHAPTERS.length - 1 ? 0 : pts[Math.min(N - 1, c * 10 + 9)][1] - G_ * .55, bot = c === 0 ? H : pts[c * 10][1] + G_ * .45, vars = `--s1:${CHAP_SKY[c][0]};--s2:${CHAP_SKY[c][1]};--g:${CHAP_GROUNDC[c]}`;
     if (c * 10 > cur) h += `<div class="band lock" style="top:${top}px;height:${bot - top}px;${vars}"></div>`;
     else if (c * 10 + 9 <= cur) h += `<div class="band" style="top:${top}px;height:${bot - top}px;${vars}"></div>`;
     else { const cut = pts[cur][1] - G_ * .5; h += `<div class="band lock" style="top:${top}px;height:${cut - top}px;${vars}"></div><div class="band ground" style="top:${cut}px;height:${bot - cut}px;${vars}"></div><div class="dawn" style="top:${cut - 70}px"></div>`; } }
@@ -1081,7 +1082,7 @@ function buildMap() {
   for (let c = 0; c < CHAPTERS.length; c++) { const C = CHAPTERS[c], lock = c * 10 > cur, won = c * 10 + 9 < cur;
     for (let k = 0; k < 12; k++) { const i = c * 10 + Math.floor(k * 9 / 12), p = pts[Math.min(N - 1, i)], side = k % 2 ? 1 : -1, lock = i > cur, kind = won && k % 4 === 1 ? LIFE[(c + k) % LIFE.length] : D3 ? (D3.EMO[C.props[k % 4]] || "bush") : "bush", sz = Math.round((66 + R() * 40) * (big ? 1.35 : 1)), xo = W * (.34 + R() * .16), x = Math.max(W * .07, Math.min(W * .93, p[0] + side * xo)), y = p[1] - 40 + R() * 90;
       if (D3) h += `<div class="mprop${lock ? " lock" : ""}${won && k % 4 === 1 ? " live" : ""}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px;--dl:-${(R() * 3).toFixed(1)}s"><img src="${D3.sprite(kind, 128)}" alt=""></div>`; }
-    if (D3) { const i = c * 10 + 6, p = pts[i], side = p[0] > W / 2 ? -1 : 1, x = Math.max(W * .03, Math.min(W * .97, p[0] + side * W * .5)); h += `<div class="mvillage${i > cur ? " lock" : ""}" style="left:${Math.round(x)}px;top:${p[1] + 10}px"><img src="${D3.village(c, won, 480)}" alt=""></div>`; }
+    if (D3) { const i = c * 10 + 6, p = pts[i], side = p[0] > W / 2 ? -1 : 1, vw = big ? 360 : 170, x = Math.max(vw * .4, Math.min(W - vw * .4, p[0] + side * Math.max(W * .5, vw * .5 + 190))); h += `<div class="mvillage${i > cur ? " lock" : ""}" style="left:${Math.round(x)}px;top:${p[1] + 10}px"><img src="${D3.village(c, won, 480)}" alt=""></div>`; }
     if (won) for (let f = 0; f < 3; f++) { const p = pts[c * 10 + 2 + f * 3]; h += `<u class="firefly" style="left:${Math.round(p[0] + (f % 2 ? 90 : -90))}px;top:${p[1] - 50 + f * 30}px;--dl:-${f * .8}s"></u>`; } }
   // stops
   pts.forEach((p, i) => { const st = save.stars[i] ? "done" : i === cur ? "now" : "lock", hd = hardOf(i), md = isMordo(i) && !save.stars[i];
@@ -1832,7 +1833,7 @@ function shuffle(silent) {
 }
 
 // ---------------------------------------------------------------- resolving a move
-const SWAP_MS = 220;
+const SWAP_MS = 290;
 async function trySwap(r1, c1, r2, c2) {
   if (!G || G.busy || G.over || G.paused) return false;
   const a = cell(r1, c1), b = cell(r2, c2); if (!a || !b || Math.abs(r1 - r2) + Math.abs(c1 - c2) !== 1) return false;
@@ -1882,7 +1883,7 @@ async function frenzy() {
   const set = new Set();
   for (let i = 0; i < 5 && pool.length; i++) {
     const g = pool.splice(rnd(pool.length), 1)[0]; g.special = ["h", "v", "wrap"][rnd(3)]; g.sx = 1.6; g.pop = performance.now(); sparkle(g.c + .5, g.r + .5, PAL[g.color].c); ring(g.c + .5, g.r + .5, "#ffd200", 1.2, 460, 8);
-    set.add(g.r * COLS + g.c); SFX.pop(i + 1); await sleep(95);
+    set.add(g.r * COLS + g.c); SFX.pop(i + 1); await sleep(125);
   }
   await sleep(240); G.combo = 1;
   await blast(set); await gravity(); await resolve(null);
@@ -1925,7 +1926,7 @@ function flyTarget(set, taken) {
     else if (g && g.kind === "gem") tiers[3].push(k); }
   const t = tiers.find(a => a.length); return t ? t[rnd(t.length)] : -1;
 }
-const FLY_MS = 260;
+const FLY_MS = 345;
 // carry: a line or wrapped gem the firefly was swapped with goes off where it lands
 function launchFly(set, r, c, color, carry) {
   const taken = G.flyTaken || (G.flyTaken = new Set()), k = flyTarget(set, taken); if (k < 0) return; taken.add(k);
@@ -2013,7 +2014,7 @@ function hitBlock(r, c, direct, color) {
 }
 
 // Falls are real free fall (time grows with the square root of the distance), then a small fixed-height bounce.
-const FALL_K = 150, BOUNCE_MS = 170, spawnN = new Int8Array(COLS);
+const FALL_K = 200, BOUNCE_MS = 225, spawnN = new Int8Array(COLS);
 async function gravity() {
   let moved = true, maxFall = 0, falls = 0; spawnN.fill(0);
   const canHold = (r, c) => r >= 0 && c >= 0 && r < ROWS && c < COLS && !G.hole[r][c] && !G.block[r][c];
