@@ -379,7 +379,8 @@
   /* ---- map v3: bands, path, stops, props */
   .band { position: absolute; left: -30px; right: -30px; z-index: 0; background: linear-gradient(180deg, var(--s1) 0%, var(--s2) 13%, var(--g) 14%, color-mix(in srgb, var(--g) 72%, #2a6a3a) 100%); border-top: 3px solid rgba(255, 255, 255, .55); box-shadow: inset 0 -40px 60px rgba(0, 0, 0, .12); }
   .band::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, .25), rgba(255, 255, 255, 0) 60%); }
-  .band.lock { filter: saturate(.35) brightness(.78); } .band.lock::after { background: repeating-linear-gradient(135deg, rgba(255, 255, 255, .06) 0 14px, rgba(255, 255, 255, 0) 14px 28px); }
+  .band.lock { filter: saturate(.35) brightness(.78); } .band.lock { border-top: 0; }
+  .dawn { position: absolute; left: -30px; right: -30px; height: 70px; z-index: 0; background: linear-gradient(180deg, rgba(80, 70, 110, 0), rgba(80, 70, 110, .35) 60%, rgba(255, 255, 255, .6) 100%); pointer-events: none; } .band.lock::after { background: repeating-linear-gradient(135deg, rgba(255, 255, 255, .06) 0 14px, rgba(255, 255, 255, 0) 14px 28px); }
   .path svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 1; }
   .mprop { position: absolute; transform: translate(-50%, -100%); pointer-events: none; z-index: 1; } .mprop img { display: block; width: 100%; height: auto; } .mprop.lock { filter: grayscale(.8) brightness(.78); opacity: .75; }
   .mprop.live img { animation: villagerHop 1.3s ease-in-out var(--dl, 0s) infinite alternate; }
@@ -1068,14 +1069,18 @@ function buildMap() {
   { const pd = svg.querySelector("#pathDone"), L = pd.getTotalLength(), done = cur * L / (N - 1); pd.setAttribute("stroke-dasharray", `${done.toFixed(1)} ${(L - done + 10).toFixed(1)}`); }
   let h = "";
   // chapter bands: sky to ground, in the chapter's own colours; ahead of the player the band is hazed and desaturated
-  for (let c = 0; c < CHAPTERS.length; c++) { const top = pts[Math.min(N - 1, c * 10 + 9)][1] - G_ * .55, bot = pts[c * 10][1] + G_ * .45, lock = c * 10 > cur; h += `<div class="band${lock ? " lock" : ""}" style="top:${top}px;height:${bot - top}px;--s1:${CHAP_SKY[c][0]};--s2:${CHAP_SKY[c][1]};--g:${CHAP_GROUNDC[c]}"></div>`; }
+  // the light reaches exactly the current stop: the band of the chapter the player is in is cut just above it, bright below and hazed above
+  for (let c = 0; c < CHAPTERS.length; c++) { const top = pts[Math.min(N - 1, c * 10 + 9)][1] - G_ * .55, bot = pts[c * 10][1] + G_ * .45, vars = `--s1:${CHAP_SKY[c][0]};--s2:${CHAP_SKY[c][1]};--g:${CHAP_GROUNDC[c]}`;
+    if (c * 10 > cur) h += `<div class="band lock" style="top:${top}px;height:${bot - top}px;${vars}"></div>`;
+    else if (c * 10 + 9 <= cur) h += `<div class="band" style="top:${top}px;height:${bot - top}px;${vars}"></div>`;
+    else { const cut = pts[cur][1] - G_ * .5; h += `<div class="band lock" style="top:${top}px;height:${cut - top}px;${vars}"></div><div class="band" style="top:${cut}px;height:${bot - cut}px;${vars}"></div><div class="dawn" style="top:${cut - 70}px"></div>`; } }
   // props: twelve large pieces per chapter, six a side, from the chapter's own list; the village of every chapter sits beside its middle
   let seed = 5; const R = () => { seed = seed + 0x6D2B79F5 | 0; let q = Math.imul(seed ^ seed >>> 15, 1 | seed); q = q + Math.imul(q ^ q >>> 7, 61 | q) ^ q; return ((q ^ q >>> 14) >>> 0) / 4294967296; };
   const LIFE = ["deer", "fox", "rabbit", "hedgehog", "duck", "butterfly", "bird", "bird2"];
   for (let c = 0; c < CHAPTERS.length; c++) { const C = CHAPTERS[c], lock = c * 10 > cur, won = c * 10 + 9 < cur;
-    for (let k = 0; k < 12; k++) { const i = c * 10 + Math.floor(k * 9 / 12), p = pts[Math.min(N - 1, i)], side = k % 2 ? 1 : -1, kind = won && k % 4 === 1 ? LIFE[(c + k) % LIFE.length] : D3 ? (D3.EMO[C.props[k % 4]] || "bush") : "bush", sz = Math.round((66 + R() * 40) * (big ? 1.35 : 1)), xo = W * (.34 + R() * .16), x = Math.max(W * .07, Math.min(W * .93, p[0] + side * xo)), y = p[1] - 40 + R() * 90;
+    for (let k = 0; k < 12; k++) { const i = c * 10 + Math.floor(k * 9 / 12), p = pts[Math.min(N - 1, i)], side = k % 2 ? 1 : -1, lock = i > cur, kind = won && k % 4 === 1 ? LIFE[(c + k) % LIFE.length] : D3 ? (D3.EMO[C.props[k % 4]] || "bush") : "bush", sz = Math.round((66 + R() * 40) * (big ? 1.35 : 1)), xo = W * (.34 + R() * .16), x = Math.max(W * .07, Math.min(W * .93, p[0] + side * xo)), y = p[1] - 40 + R() * 90;
       if (D3) h += `<div class="mprop${lock ? " lock" : ""}${won && k % 4 === 1 ? " live" : ""}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px;--dl:-${(R() * 3).toFixed(1)}s"><img src="${D3.sprite(kind, 128)}" alt=""></div>`; }
-    if (D3) { const i = c * 10 + 6, p = pts[i], side = p[0] > W / 2 ? -1 : 1, x = Math.max(W * .03, Math.min(W * .97, p[0] + side * W * .5)); h += `<div class="mvillage${lock ? " lock" : ""}" style="left:${Math.round(x)}px;top:${p[1] + 10}px"><img src="${D3.village(c, won, 480)}" alt=""></div>`; }
+    if (D3) { const i = c * 10 + 6, p = pts[i], side = p[0] > W / 2 ? -1 : 1, x = Math.max(W * .03, Math.min(W * .97, p[0] + side * W * .5)); h += `<div class="mvillage${i > cur ? " lock" : ""}" style="left:${Math.round(x)}px;top:${p[1] + 10}px"><img src="${D3.village(c, won, 480)}" alt=""></div>`; }
     if (won) for (let f = 0; f < 3; f++) { const p = pts[c * 10 + 2 + f * 3]; h += `<u class="firefly" style="left:${Math.round(p[0] + (f % 2 ? 90 : -90))}px;top:${p[1] - 50 + f * 30}px;--dl:-${f * .8}s"></u>`; } }
   // stops
   pts.forEach((p, i) => { const st = save.stars[i] ? "done" : i === cur ? "now" : "lock", hd = hardOf(i), md = isMordo(i) && !save.stars[i];
