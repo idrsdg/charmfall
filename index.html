@@ -177,8 +177,15 @@
   .node .stars { position: absolute; bottom: calc(-42px * var(--ms)); font-size: calc(32px * var(--ms)); letter-spacing: -2px; color: #ffe27a; text-shadow: 0 2px 0 #5a1fd0; }
 
   /* ---------- game ---------- */
-  #game { display: flex; flex-direction: column; }
-  html:not(.app) #game { justify-content: center; } html:not(.app) #boardWrap { flex: 0 0 min(100vw, 56vh); } html:not(.app) .hud { padding-top: 8px; }
+  #game { display: flex; flex-direction: column; background: linear-gradient(180deg, var(--gs1, #8be0ff) 0%, var(--gs2, #d7f7a0) 44%, var(--gg, #5fc96a) 45%, color-mix(in srgb, var(--gg, #5fc96a) 68%, #2a6a3a) 100%); }
+  #game::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 46%, rgba(255, 255, 255, .22), rgba(255, 255, 255, 0) 60%), repeating-linear-gradient(135deg, rgba(0, 0, 0, 0) 0 14px, rgba(0, 0, 0, .025) 14px 15px); pointer-events: none; }
+  #game.boss { background: linear-gradient(180deg, #2a2340 0%, #3a3050 44%, #2e3a2a 45%, #1d2a1c 100%); }
+  #game > :not(#gMordo) { position: relative; }
+  html:not(.app) #game { justify-content: flex-start; } html:not(.app) #boardWrap { flex: 0 0 min(100vw, 56vh); } html:not(.app) .hud { padding-top: max(12px, env(safe-area-inset-top)); }
+  /* wide screens: the panels on the left, the board in the middle as big as the height allows, the boosters down the right */
+  @media (min-width: 900px) { html:not(.app) #game { display: grid; grid-template-columns: minmax(230px, 1fr) minmax(0, min(88vh, 780px)) minmax(230px, 1fr); grid-template-rows: auto auto auto 1fr; grid-template-areas: "hud board tools" "bar board tools" "frz board tools" "fill board tools"; column-gap: 20px; align-items: start; padding: 18px 28px; }
+    html:not(.app) .hud { grid-area: hud; width: auto; flex-wrap: wrap; justify-content: flex-start; margin: 0; } html:not(.app) .bar { grid-area: bar; width: auto; margin: 12px 0 0; } html:not(.app) .frz { grid-area: frz; width: auto; margin: 10px 0 0; }
+    html:not(.app) #boardWrap { grid-area: board; flex: none; align-self: center; height: min(88vh, 780px); } html:not(.app) .boosters { grid-area: tools; width: auto; flex-direction: column; align-self: center; justify-self: start; padding: 0; } }
   /* on the web the HUD, the bars and the boosters are no wider than the board, so on a desktop they sit as one block above and below it */
   html:not(.app) .hud, html:not(.app) .bar, html:not(.app) .frz, html:not(.app) .boosters { width: min(100%, 56vh); box-sizing: border-box; margin-left: auto; margin-right: auto; }
   html:not(.app) .hud { justify-content: center; gap: 10px; } html:not(.app) .bar { margin-left: auto; margin-right: auto; }
@@ -186,7 +193,7 @@
   #c { filter: none !important; }   /* no per-frame colour filter on the board: the palette is vivid on its own and the GPU keeps the frame */
   .hud { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: max(12px, env(safe-area-inset-top)) 14px 8px; }
   .hud .box { flex: 0 1 auto; background: rgba(8, 10, 34, .7); border: 2px solid rgba(255, 255, 255, .28); border-radius: 16px; padding: 6px 12px; text-align: center; min-width: 78px; box-shadow: 0 4px 0 rgba(0, 0, 0, .35); }
-  .hud .box { border-color: #ffd23f; background: linear-gradient(#9a5cff, #5a1fd0); box-shadow: 0 5px 0 #27096b, 0 10px 16px rgba(0, 0, 0, .35), inset 0 2px 0 rgba(255, 255, 255, .28), inset 0 -6px 10px rgba(39, 9, 107, .4); }
+  .hud .box { border-color: #ffe7a3; background: linear-gradient(#b07a42, #6b4a2b); box-shadow: 0 5px 0 #3a2410, 0 10px 16px rgba(0, 0, 0, .35), inset 0 2px 0 rgba(255, 255, 255, .28), inset 0 -6px 10px rgba(40, 24, 10, .4); }
   .hud .box small { display: block; font-size: 11px; font-weight: 900; color: #ffe7a3; text-transform: uppercase; letter-spacing: .08em; }
   .hud .box b { display: inline-block; font-size: clamp(17px, 5vw, 23px); font-weight: 900; line-height: 1.1; text-shadow: 0 2px 0 rgba(0, 0, 0, .5); font-variant-numeric: tabular-nums; }
   .hud .box.score small { color: #ffd200; }
@@ -195,13 +202,15 @@
   .hud .goal b { font-size: clamp(15px, 4.4vw, 19px); }
   .bump { animation: bump .35s cubic-bezier(.2, 1.6, .4, 1); }
   @keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.35); color: #ffd200; } 100% { transform: scale(1); } }
-  @media (max-width: 560px) { .hud { padding-left: 8px; padding-right: 8px; gap: 5px; } .hud .box { min-width: 0; padding: 5px 8px; } .back { padding: 8px 10px; } .back .lbl { display: none; } .hud .goal { gap: 6px; } .hud .goal span { font-size: 18px !important; } }
-  .bar { height: 14px; margin: 0 14px; border-radius: 999px; background: #27096b; overflow: hidden; position: relative; border: 2px solid #ffe7a3; }
+  @media (max-width: 560px) { html:not(.app) #btnBack, html:not(.app) #btnSound { display: none; } .hud { padding-left: 8px; padding-right: 8px; gap: 5px; } .hud .box { min-width: 0; padding: 5px 8px; } .back { padding: 8px 10px; } .back .lbl { display: none; } .hud .goal { gap: 6px; } .hud .goal span { font-size: 18px !important; } }
+  .bar { height: 18px; margin: 0 14px; border-radius: 999px; background: #27096b; overflow: hidden; position: relative; border: 2px solid #ffe7a3; }
   .bar i { position: absolute; inset: 0; background: linear-gradient(90deg, #b6f24a, #ffd23f, #ff8a3c); transform: translateX(-100%); transition: transform .6s cubic-bezier(.2, .8, .2, 1); border-radius: 999px; will-change: transform; }
-  .bar s { position: absolute; top: -3px; width: 3px; height: 16px; background: #fff; transition: background .25s, scale .35s cubic-bezier(.3, 1.8, .5, 1); }
+  .bar s { position: absolute; top: -3px; width: 3px; height: 20px; background: #fff; transition: background .25s, scale .35s cubic-bezier(.3, 1.8, .5, 1); }
+  .bar s::after { content: "★"; position: absolute; left: 5px; top: 2px; font-size: 11px; line-height: 1; color: #fff; text-shadow: 0 1px 0 #27096b; } .bar s.end { right: 2px; left: auto; width: 0; background: none; } .bar s.end::after { left: auto; right: 6px; }
   .bar s.hit { background: #ffd23f; scale: 1.6 1; }
   #boardWrap { flex: 1; display: grid; place-items: center; padding: 8px; min-height: 0; }
-  #c { display: block; touch-action: none; border-radius: 16px; background: #1a0e3a; box-shadow: 0 0 0 3px #ffe7a3, 0 0 0 10px #9a5cff, 0 0 0 13px #27096b, 0 14px 0 13px #1a0650, 0 30px 44px rgba(0, 0, 0, .55), inset 0 0 0 1px rgba(255, 255, 255, .06); outline: 3px dotted #d9a866; outline-offset: 5px; }
+  #game.boss #c { box-shadow: 0 0 0 3px #d8d0f0, 0 0 0 10px #1a1726, 0 0 0 13px #0a0812, 0 14px 0 13px #050408, 0 30px 44px rgba(0, 0, 0, .7), inset 0 0 0 1px rgba(255, 255, 255, .06); outline-color: #6a6090; }
+  #c { display: block; touch-action: none; border-radius: 16px; background: #1a0e3a; box-shadow: 0 0 0 3px #ffe7a3, 0 0 0 10px #8a5a32, 0 0 0 13px #3a2410, 0 14px 0 13px #26170a, 0 30px 44px rgba(0, 0, 0, .55), inset 0 0 0 1px rgba(255, 255, 255, .06); outline: 3px dotted #d9a866; outline-offset: 5px; }
   #boardWrap::before { content: ""; position: absolute; left: 50%; bottom: -2px; width: 86%; height: 26px; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(rgba(0, 0, 0, .5), rgba(0, 0, 0, 0) 70%); pointer-events: none; }
   #boardWrap { position: relative; }
   .boosters { display: flex; justify-content: center; gap: 10px; padding: 8px 0 max(14px, env(safe-area-inset-bottom)); }
@@ -383,7 +392,7 @@
   @media (max-width: 420px) { .logo { font-size: 20px; } html.app .logo { font-size: 22px; } .top { padding-left: 12px; padding-right: 12px; } .top .pill { padding: 5px 7px; font-size: 13px; gap: 3px; } .top > div { gap: 5px !important; } }
   @media (max-width: 560px) { .boosters { gap: 8px; } .boost { width: 54px; height: 54px; border-radius: 16px; } .boost svg { width: 36px; height: 36px; } }
   /* gloss: a light rim on top and a soft shade below on every pill, HUD box and bar button */
-  .pill, .hud .box, .mapbar button:not(.ready) { box-shadow: 0 4px 0 #27096b, inset 0 2px 0 rgba(255, 255, 255, .45), inset 0 -6px 10px rgba(39, 9, 107, .35); }
+  .pill, .mapbar button:not(.ready) { box-shadow: 0 4px 0 #27096b, inset 0 2px 0 rgba(255, 255, 255, .45), inset 0 -6px 10px rgba(39, 9, 107, .35); }
   /* ---- map v3: bands, path, stops, props */
   .band { position: absolute; left: -30px; right: -30px; z-index: 0; background: linear-gradient(180deg, var(--s1) 0%, var(--s2) 13%, var(--g) 14%, color-mix(in srgb, var(--g) 72%, #2a6a3a) 100%); border-top: 3px solid rgba(255, 255, 255, .55); box-shadow: inset 0 -40px 60px rgba(0, 0, 0, .12); }
   .band::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, .25), rgba(255, 255, 255, 0) 60%); }
@@ -416,6 +425,8 @@
   .lvplate.st { pointer-events: auto; cursor: pointer; }
   .mprop.stn { pointer-events: auto; cursor: pointer; z-index: 2; } .mprop.stn .lvplate { left: 50%; right: auto; top: auto; bottom: calc(100% - 4px); transform: translateX(-50%); }
   .mprop.train { z-index: 2; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .3)); }
+  .mprop.mordo { z-index: 2; } .mprop.mordo img, #gMordo img { animation: mordoBob 1.5s ease-in-out infinite alternate; } @keyframes mordoBob { from { translate: 0 0; rotate: -3deg; } to { translate: 0 -6px; rotate: 3deg; } }
+  #gMordo { position: absolute; right: 8px; top: calc(max(12px, env(safe-area-inset-top)) + 54px); width: 64px; z-index: 3; pointer-events: none; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .35)); } #gMordo img { display: block; width: 100%; }
   #mStation .card, #mStory .card, #mSign .card, #mGuide .card { background: linear-gradient(160deg, #3a9a55, #1c5e34 70%); }
   .guideArt { display: flex; justify-content: center; margin: 2px 0 6px; } .guideArt img { width: 150px; height: 150px; filter: drop-shadow(0 10px 10px rgba(0, 0, 0, .35)); }
   .dots { display: flex; justify-content: center; gap: 7px; margin: 4px 0 14px; } .dots i { width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, .35); } .dots i.on { background: #ffe27a; }
@@ -440,15 +451,16 @@
 </section>
 
 <section class="screen" id="game" hidden>
+  <div id="gMordo" hidden></div>
   <div class="hud">
     <button class="back" id="btnBack"><i class="ico" data-ico="back"></i><span class="lbl"> Map</span></button>
     <button class="back pause" id="btnPause" title="Pause"><i class="ico" data-ico="pause"></i></button>
     <button class="back snd" id="btnSound" title="Sound"><i class="ico" data-ico="sound"></i></button>
     <div class="box"><small>Moves</small><b id="moves">0</b></div>
     <div class="box goal" id="goalBox"></div>
-    <div class="box score"><small>Stars</small><b id="score">0</b></div>
+    <div class="box score"><small>Score</small><b id="score">0</b></div>
   </div>
-  <div class="bar"><i id="barFill"></i><s style="left:33%"></s><s style="left:66%"></s></div>
+  <div class="bar" title="Stars for this level"><i id="barFill"></i><s style="left:33%"></s><s style="left:66%"></s><s class="end"></s></div>
   <div class="frz" id="frz" title="Frenzy meter: pop gems to fill it"><span>⚡</span><div class="fbar"><i id="frzFill"></i></div>Frenzy</div>
   <div id="gPogo"></div>
   <div id="boardWrap"><canvas id="c"></canvas></div>
@@ -462,7 +474,7 @@
 </section>
 
 <div class="modal" id="mStart" hidden><div class="card">
-  <div id="sPogo"></div><p id="sHard" class="chip" hidden></p><h2 id="sTitle">Level 1</h2><p id="sGoal"></p><p id="sFuse" hidden style="font-size:13px;color:#ffd200"></p>
+  <div id="sPogo"></div><p id="sHard" class="chip" hidden></p><h2 id="sTitle">Level 1</h2><p id="sGoal"></p><p id="sNew" hidden style="font-size:14px;color:#ffe27a"></p><p id="sFuse" hidden style="font-size:13px;color:#ffd200"></p>
   <div class="goalrow" id="sRow"></div>
   <p id="sGift" hidden style="font-size:14px;color:#ffe27a;margin-top:-8px"></p>
   <p class="rate">★ 1 star = 1,000 points</p>
@@ -924,7 +936,7 @@ const CAL = [29, 12, 25, 21600, 19, 12, 16100, 17, 12, 31, 20, 14, 20, 7400, 50,
 // TUNE is the measured number for every one of the 200 levels: moves, or the score target on score levels, from 70 to 400 solver games per level (tune/pick4.cjs).
 // The curve is a straight line from 99% solver wins on level 1 to 5% on level 200 with every level strictly harder than the one before it (tune/pick5.cjs, a DP over
 // the measured games), and then every target keeps only half of its losses ("50% easier", 2026-10-13): level 200 sits near 52%. Hard labels: the last quarter is hard, the last eighth super hard.
-const HARDER = new Set([2, 5, 6, 10, 21, 22, 31, 34, 35, 38, 41, 42, 45, 48, 71]), TUNE = [1000,1000,23,1000,30,23,19,35,9000,21,16,35,21000,27,24,43,14000,45,28,35,56000,14,10,13,28000,17,29,23,34,26,23,15,16,32000,17,16,24000,18,9,17,19,43,36,2000,37,20,18000,22,16,52,31,45,34,3000,32,28,22000,24,46,33,43,20,31,6000,35,24,25000,19,45,42,39,23,29,8000,42,34,5000,26,16,62,46,17,31,31000,15,27,7000,21,14,31,41,28,24,8000,22,33,3000,28,21,36,37,14,29,4000,40,24,2000,42,8,51,26,14,23,36000,13,17,29000,21,8,39,30,14,26,11000,47,27,2000,32,24,38,29,21,22,3000,21,18,11000,26,16,42,22,12,25,5000,29,21,3000,20,8,35,38,16,34,2000,28,22,5000,26,23,35,25,14,22,4000,29,8,23000,26,20,39,32,8,17,9000,17,15,1000,25,11,35,13,9,20,38000,12,12,10000,24,13,39,15,18,24,10000,26,23,22000,22,12,29];
+const HARDER = new Set([2, 5, 6, 10, 21, 22, 31, 34, 35, 38, 41, 42, 45, 48, 71]), TUNE = [1000, 1000, 23, 1000, 30, 23, 19, 35, 19000, 12, 12, 29, 26000, 19, 16, 33, 17000, 36, 18, 24, 52000, 15, 12, 12, 33000, 14, 31, 23, 25, 14, 23, 15, 15, 38000, 15, 14, 24000, 18, 12, 13, 26, 28, 22, 7000, 29, 15, 25000, 19, 12, 28, 33, 62, 42, 16000, 25, 23, 23000, 23, 28, 24, 52, 24, 39, 12000, 29, 20, 26000, 18, 35, 24, 45, 30, 33, 8000, 42, 55, 9000, 25, 12, 28, 46, 18, 35, 33000, 13, 23, 4000, 23, 13, 25, 53, 31, 24, 20000, 20, 29, 3000, 31, 17, 25, 40, 16, 31, 4000, 42, 37, 7000, 37, 12, 33, 28, 15, 26, 37000, 12, 17, 9000, 34, 12, 31, 34, 17, 30, 10000, 48, 21, 2000, 31, 16, 29, 32, 26, 26, 3000, 27, 12, 21000, 25, 12, 31, 25, 14, 28, 5000, 29, 20, 3000, 24, 12, 32, 67, 28, 32, 8000, 24, 19, 5000, 26, 15, 27, 29, 15, 26, 3000, 31, 12, 13000, 27, 17, 33, 41, 12, 22, 3000, 22, 18, 2000, 23, 12, 26, 15, 12, 24, 19000, 12, 12, 3000, 28, 12, 33, 21, 28, 44, 3000, 34, 16, 10000, 26, 12, 25];
 for (const i of [17, 25, 29, 69]) LEVELS[i].colors = 5;
 // the far shore levels the solver could not win even with 120 moves are thinned: one frost layer less, stone gone, two keys fewer
 for (const i of [101, 104, 108, 111, 118, 124, 128, 138, 141, 148, 151]) { const L = LEVELS[i]; if (L.layout) L.layout = L.layout.map(r => r.replace(/G/g, "F").replace(/s/g, ".").replace(/F/g, (m, k) => k % 2 ? "f" : "F")); if (L.jelly) L.jelly = L.jelly.map(r => r.replace(/J/g, "j")); if (L.need) L.need = Math.max(3, L.need - 2); if (L.fuse) L.fuse = Object.assign({}, L.fuse, { start: 1, max: 2 }); }
@@ -950,7 +962,7 @@ for (const i of [26, 40, 52, 62, 75, 80, 90, 105, 106, 115, 116, 117, 118, 135, 
 // One star is always 1,000 points: the HUD, goals and results talk in stars, never in raw points.
 // From level 51 on the solver wins under 40% of the time, from 86 on under 15%: those levels are labelled, and pay extra carrots.
 // The curve is a saw inside every chapter, not a straight slide: positions 5 and 8 are hard, 10 is Mordo's (super hard from chapter 6 on) and the level after a hard one is a breather.
-const chapN = (i) => Math.floor(i / 10), hardOf = (i) => i >= 175 ? 2 : i >= 150 ? 1 : 0, HARD_TXT = ["", "Hard level", "Super hard level"];
+const chapN = (i) => Math.floor(i / 10), hardOf = (i) => i % 10 === 9 ? 2 : i % 10 === 8 ? 1 : 0, HARD_TXT = ["", "Hard level", "Hardest of the place"];
 const STAR = 1000, starsOf = (pts) => Math.floor(pts / STAR);
 LEVELS.forEach((L) => { if (L.target) L.target = Math.max(STAR, Math.round(L.target / STAR) * STAR); });
 const BOOST0 = { hammer: 3, moves: 3, switch: 3, cross: 2, undo: 3 };
@@ -1140,7 +1152,8 @@ function buildMap() {
   // stations: one at the start and one every twenty-five levels, on the side the sign leaves free; the train waits just behind the current stop
   if (D3) { for (let k = 0; k <= STATIONS.length; k++) { const si = k ? k * STATION_EVERY - 1 : 0, p = pts[si], side = p[0] > W / 2 ? 1 : -1, stw = big ? 170 : 115, x = k ? Math.max(stw * .5, Math.min(W - stw * .5, p[0] + side * (big ? 165 : 105))) : Math.max(stw * .5, Math.min(W - stw * .5, p[0] + side * (big ? 90 : 60))), y = k ? p[1] + 22 : p[1] + (big ? 300 : 250);
       h += `<div class="mprop stn${si > cur ? " lock" : ""}" data-k="${k}" style="left:${Math.round(x)}px;top:${y}px;width:${stw}px"><img src="${D3.sprite("station", 192)}" alt=""><i class="lvplate st"><small>${k ? "Station " + k : "Start"}</small>${k ? STATIONS[k - 1].name : "Charmwood Station"}</i></div>`; }
-    const q = cur ? pts[cur - 1] : null, tx = q ? (pts[cur][0] * .55 + q[0] * .45) : pts[0][0] - (pts[0][0] > W / 2 ? 1 : -1) * 30, ty = q ? (pts[cur][1] * .55 + q[1] * .45) : pts[0][1] + (big ? 200 : 160); h += `<div class="mprop train" style="left:${Math.round(tx)}px;top:${Math.round(ty) + 16}px;width:${big ? 96 : 66}px"><img src="${D3.sprite("train", 128)}" alt=""></div>`; }
+    const q = cur ? pts[cur - 1] : null, tx = q ? (pts[cur][0] * .55 + q[0] * .45) : pts[0][0] - (pts[0][0] > W / 2 ? 1 : -1) * 30, ty = q ? (pts[cur][1] * .55 + q[1] * .45) : pts[0][1] + (big ? 200 : 160); h += `<div class="mprop train" style="left:${Math.round(tx)}px;top:${Math.round(ty) + 16}px;width:${big ? 96 : 66}px"><img src="${D3.sprite("train", 128)}" alt=""></div>`;
+    if (!allDone()) { const mi = Math.min(N - 1, cur + 2), mp = pts[mi], ms = mp[0] > W / 2 ? -1 : 1; h += `<div class="mprop mordo" style="left:${Math.round(mp[0] + ms * (big ? 120 : 80))}px;top:${mp[1] - 6}px;width:${big ? 96 : 68}px"><img src="${D3.sprite("magpie", 128)}" alt=""></div>`; } }
   // stops
   pts.forEach((p, i) => { const st = save.stars[i] ? "done" : i === cur ? "now" : "lock", hd = hardOf(i), md = isMordo(i) && !save.stars[i], pl = (i === cur ? p[0] <= W / 2 : p[0] > W / 2) ? " l" : "";   // signs hang on the roomier side of the stop; at the current stop Pogo takes that side, so its sign hangs on the other
     h += `<div class="lv ${st}${hd ? " hard" + hd : ""}" data-i="${i}" style="left:${Math.round(p[0])}px;top:${p[1]}px"><b>${i + 1}</b>${save.stars[i] ? `<s>${"★".repeat(save.stars[i])}<i>${"★".repeat(3 - save.stars[i])}</i></s>` : ""}${md ? `<em>${MORDO}</em>` : ""}${i === cur ? `<i class="lvplate${pl} go">Play</i>` : (i + 1) % 20 === 0 ? `<i class="lvplate${pl} st"><small>Level ${i + 1}</small>${CHAPTERS[chapOf(i)].name}</i>` : ""}</div>`; });
@@ -1165,6 +1178,7 @@ function openLevel(i) {
   if (save.lives <= 0) { showLives(); return; }
   const L = LEVELS[i]; pendingLevel = i;
   $("sPogo").innerHTML = pogoSvg();
+  { const nk = Math.min(NEWGEMS.length / 2, Math.floor((i + 1) / 25)); $("sNew").hidden = !(nk > (save.gemSeen || 0)); if (nk > (save.gemSeen || 0)) $("sNew").textContent = "✨ New charms from here on: " + NEWGEMS[nk * 2 - 2].label + " and " + NEWGEMS[nk * 2 - 1].label; }
   $("sTitle").textContent = "Level " + (i + 1); $("sGoal").innerHTML = ico({ score: "star", jelly: "jelly", ingredients: "key", blockers: "ice" }[L.goal]) + " "; $("sGoal").appendChild(document.createTextNode(goalText(L)));
   { const h = hardOf(i), st = Math.min(3, save.streak || 0), c = $("mStart").firstElementChild; c.classList.toggle("hard1", h === 1); c.classList.toggle("hard2", h === 2);
     const md = isMordo(i), extra = h + (md ? 2 : 0);
@@ -1220,8 +1234,8 @@ function afterWinOnline() { if (save.refBy && !save.refDone) api("invite/done").
 // ---- the story. Mordo the magpie has carried off every shining charm from Pogo's garden; the trail runs through ten places, ten levels each,
 // and the last level of every place is one Mordo guards himself. A story card opens each chapter; finishing one pays a chapter chest.
 const MORDO = "🐦‍⬛", CHAPTERS = [
-  { name: "The Burrow", props: ["🌱", "🥕", "🌼", "🪵"], title: "The night the lights went out", text: "A magpie called Mordo swooped over Pogo's garden and carried off every shining charm. Follow his trail, win the charms back and light the garden again." },
-  { name: "Clover Meadow", props: ["🍀", "🌼", "🌾", "🦋"], title: "Feathers in the clover", text: "The burrow glows again. Black feathers lead across the meadow. Line up four charms in a square and a firefly will come to help." },
+  { name: "The Burrow", props: ["🌱", "🥕", "🌼", "🪵"], title: "The night the lights went out", text: "A magpie called Mordo swooped over Pogo's garden and carried off every shining charm. Follow his trail, win the charms back and light the garden again. Every charm you bring home puts a little green back into the grey wood; the stations of the Green Line show how far it has come." },
+  { name: "Clover Meadow", props: ["🍀", "🌼", "🌾", "🦋"], title: "Feathers in the clover", text: "The burrow glows again. Black feathers lead across the meadow. Line up four charms in a square and a firefly will come to help. The last two stops of every place are the hard ones, and the magpie himself waits at the tenth." },
   { name: "Firefly Pond", props: ["🪷", "🐸", "🌿", "🪻"], title: "Ticking in the reeds", text: "Mordo has hidden charms inside ticking gems. Each one counts down with every move: match it before it reaches zero." },
   { name: "Mushroom Hollow", props: ["🍄", "🌰", "🐌", "🍂"], title: "A glow under the caps", text: "The mushrooms still shine a little, and the trail is fresh. Win a few levels in a row and Pogo leaves gifts on the board." },
   { name: "The Old Oak", props: ["🌳", "🦉", "🍃", "🌰"], title: "What the owl saw", text: "The owl watched the thief pack charms into coloured crates and wall them in with stone. Crates open to their own colour. Stone only gives way to a special gem." },
@@ -1233,15 +1247,15 @@ const MORDO = "🐦‍⬛", CHAPTERS = [
   // part two: the far shore. Mordo gave the charms back, but his flock had already carried half of them over the water
   { name: "Harbour Steps", props: ["⚓", "🐚", "🪸", "⛵"], title: "The far shore", text: "Mordo kept his word, but his flock did not. Half the charms are across the water. Pogo takes the ferry. Crates and stone now turn up together." },
   { name: "Lighthouse Rock", props: ["🗼", "🌊", "🐚", "⭐"], title: "A light to steer by", text: "The lighthouse keeper saw magpies heading up the coast. The keys are hidden deeper here: bring them all the way down." },
-  { name: "Tide Pools", props: ["🐚", "🦀", "🪸", "💧"], title: "Caught in the pools", text: "Charms glint under the water at low tide. Double jelly covers the pools: clear each twice. Hard levels begin here, and they pay extra carrots." },
+  { name: "Tide Pools", props: ["🐚", "🦀", "🪸", "💧"], title: "Caught in the pools", text: "Charms glint under the water at low tide. Double jelly covers the pools: clear each twice." },
   { name: "Driftwood Beach", props: ["🪵", "🐚", "🌴", "🏖️"], title: "Along the sand", text: "The flock dropped charms as they flew. The beach is wide and the countdown gems come faster." },
   { name: "Salt Marsh", props: ["🌾", "🦆", "🐸", "🌫️"], title: "Fog in the reeds", text: "Half the board hides in fog. Mordo's cousin Gritt leads the flock now, and she guards the last level of every place." },
   { name: "Cliff Path", props: ["🪨", "🦅", "🌬️", "🌿"], title: "Up the cliff", text: "The path narrows and every board bites a little harder. Keep a special gem in reserve." },
-  { name: "Hermit's Orchard", props: ["🍎", "🍐", "🐝", "🪜"], title: "The orchard keeper", text: "An old hedgehog traded the magpies apples for charms. He will trade them back for a cleared board. Super hard levels start here and pay three carrots." },
+  { name: "Hermit's Orchard", props: ["🍎", "🍐", "🐝", "🪜"], title: "The orchard keeper", text: "An old hedgehog traded the magpies apples for charms. He will trade them back for a cleared board." },
   { name: "Thunder Ridge", props: ["⛈️", "🪨", "🌲", "⚡"], title: "Storm on the ridge", text: "Lightning on every level: stone and crates in the same board. Specials are the way through." },
   { name: "Glass Caves", props: ["💎", "🔮", "🕯️", "🦇"], title: "Where the light bends", text: "The caves are full of crystal. Six colours, long boards, and the flock's whole hoard at the end." },
   { name: "Gritt's Roost", props: ["🪶", "🌙", "💎", "🪺"], title: "The roost", text: "Gritt's roost on the highest rock. Ten levels to the last of the far shore's charms." }
-], STORY_END = { title: "The garden shines again", text: "Gritt hands back the last charm, Mordo pretends he never took the first one, and both get a carrot. Pogo's garden has never been brighter." };
+], STORY_END = { title: "The garden shines again", text: "Gritt hands back the last charm, Mordo pretends he never took the first one, and both get a carrot. Pogo's garden has never been brighter, and the Green Line runs bright from Ash Gate to the Crown: the highest ridge of Charmwood is green from end to end." };
 const chapOf = (i) => Math.min(CHAPTERS.length - 1, Math.floor(i / 10)), isMordo = (i) => i % 10 === 9, allDone = () => !!save.stars[LEVELS.length - 1];
 // ---- the Green Line: the whole trail is one job, bringing Charmwood back to green. The charms were the forest's light; when Mordo took them the trees went grey.
 // Every 25 levels is a station. A station card says how far the forest has come, tells a few lines of its story, names the next station and its task, and pays a little.
@@ -1256,7 +1270,7 @@ const STATION_EVERY = 25, STATIONS = [
   { name: "The Crown", task: "Light the Crown", story: "The highest ridge of Charmwood is green from end to end. Every charm is home. Mordo and Gritt watch from the pines, a little ashamed and very well fed on carrots.", next: "Keep the forest bright. New stretches of the Green Line open with every update." }
 ];
 // signs on the rails and the stations open a card; the first station explains the whole trip
-function openSign(i) { const ch = chapOf(i), C = CHAPTERS[ch], k = Math.floor((i + 1) / STATION_EVERY) + 1, S = STATIONS[k - 1];
+function openSign(i) { const ch = chapOf(Math.min(LEVELS.length - 1, i + 1)), C = CHAPTERS[ch], k = Math.floor((i + 1) / STATION_EVERY) + 1, S = STATIONS[k - 1];
   $("sgChip").textContent = "Level " + (i + 1) + " · " + C.name; $("sgTitle").textContent = C.title; $("sgText").textContent = C.text; $("sgArt").innerHTML = D3 ? `<img src="${D3.sprite(D3.EMO[C.props[0]] || "bush", 160)}" alt="">` : "";
   $("sgNext").textContent = S ? "Next station: " + S.name + " · " + S.task + " · level " + k * STATION_EVERY : ""; show("mSign"); }
 function openStation(k) { const S = k ? STATIONS[k - 1] : null, reached = highest() >= k * STATION_EVERY; $("sgArt").innerHTML = D3 ? `<img src="${D3.sprite(k ? "station" : "train", 160)}" alt="">` : "";
@@ -1279,10 +1293,10 @@ $("gdSkip").addEventListener("click", endGuide); $("gdNext").addEventListener("c
 $("setGuide").addEventListener("click", () => { hide("mSet"); openGuide(); });
 const stationN = () => Math.min(STATIONS.length, Math.floor(highest() / STATION_EVERY)), forestPct = () => Math.min(100, Math.round(highest() / LEVELS.length * 100));
 function stationCheck() {
-  if (window.__fast || roomStart) return false; const k = stationN(); if ((save.stationSeen || 0) >= k || k < 1) return false;
-  save.stationSeen = k; const S = STATIONS[k - 1]; save.carrots = (save.carrots || 0) + 1; carrotNew += 1; if (k % 2 === 0) save.boost.hammer++; persist();
+  if (window.__fast || roomStart) return false; if (allDone()) { save.stationSeen = STATIONS.length; return false; } const k = stationN(); if ((save.stationSeen || 0) >= k || k < 1) return false;   // the end has one card, the story's
+  save.stationSeen = k; const S = STATIONS[k - 1]; save.carrots = (save.carrots || 0) + 1; carrotNew += 1; for (const b in BOOST0) save.boost[b] += 2; save.infUntil = Math.max(Date.now(), save.infUntil || 0) + 30 * 60000; save.lives = 5; persist();
   $("snChip").textContent = "Station " + k + " of " + STATIONS.length + " · " + S.name; $("snTitle").textContent = S.task; $("snPct").textContent = forestPct() + "%"; $("snBar").style.width = forestPct() + "%";
-  $("snText").textContent = S.story; $("snNext").textContent = k < STATIONS.length ? "Next station: " + STATIONS[k].name + " · " + S.next : S.next; $("snPay").textContent = "🎁 Station gift: +1 🥕 · +1 Hammer";
+  $("snText").textContent = S.story; $("snNext").textContent = k < STATIONS.length ? "Next station: " + STATIONS[k].name + " · " + S.next : S.next; $("snPay").textContent = "🎁 Station gift: +1 🥕 · +2 of every booster · ∞ lives for 30 min";
   if (D3) D3.show($("snScene"), { props: [{ kind: "forest", x: -2.2, z: .2, s: 1.3 }, { kind: "forest", x: 2.2, z: -.3, s: 1.2, ry: 1 }, { kind: "pogo", x: -.3, z: 1.3, s: 1 }, { kind: ["sprout", "pond", "tulip", "round", "bird", "bee", "bridge", "star"][k - 1], x: 1.2, z: 1.1, s: 1, bob: true }, { kind: "deer", x: .6, z: -1.2, s: .9, ry: -.8 }], ground: 0x3fc85f, hill: 0x2d8b3c });
   show("mStation"); SFX.reward(); return true;
 }
@@ -1297,7 +1311,8 @@ function storyScene(ch, end) {
 // opens the card for the chapter the player has just reached (once); returns true when a card is up
 function storyCheck() {
   if (window.__fast || roomStart) return false; const end = allDone(), ch = end ? CHAPTERS.length : chapOf(highest()); if ((save.chapSeen === undefined ? -1 : save.chapSeen) >= ch) return false;
-  const first = save.chapSeen === undefined, paid = !first && ch > 0; save.chapSeen = ch;
+  if (!end && ch > 0) { save.chapSeen = ch; persist(); return false; }   // chapters along the way open from their signs; the station every twenty-five levels carries the chest
+  const first = save.chapSeen === undefined, paid = false; save.chapSeen = ch;
   if (paid) { for (const k in BOOST0) save.boost[k]++; save.infUntil = Math.max(Date.now(), save.infUntil || 0) + 15 * 60000; save.lives = 5; }
   persist(); const C = end ? STORY_END : CHAPTERS[ch];
   $("stChip").textContent = end ? "The end" : "Chapter " + (ch + 1) + " · " + C.name; $("stTitle").textContent = C.title; $("stText").textContent = C.text; $("stScene").innerHTML = D3 ? Array.from({ length: 9 }, (_, i) => `<u style="left:${8 + i * 10.5}%;top:${12 + (i * 37) % 44}%;--dl:-${i * .3}s"></u>`).join("") : storyScene(ch, end);
@@ -1651,7 +1666,7 @@ $("sPlay").addEventListener("click", () => { hide("mStart"); clearProgress(); st
 $("mStart").addEventListener("click", e => { if (e.target === $("mStart")) hide("mStart"); });
 $("btnBack").addEventListener("click", () => { if (G && !G.over) { snapshot(); logEv("quit"); } showMap(); });
 function showMap() { tip(""); G = null; $("game").hidden = true; $("map").hidden = false; buildMap(); if (!storyCheck()) stationCheck(); }
-function starTargets(L) { if (L.target) return [L.target, L.target * 2, L.target * 3.5]; const base = { jelly: 20000, ingredients: 18000, blockers: 18000 }[L.goal] * (1 + L.moves / 40); return [base, base * 1.3, base * 1.65].map(Math.round); }   // 2026-10-13: the climb above the winning score halved
+function starTargets(L) { if (L.target) return [L.target, L.target * 2, L.target * 3]; const base = { jelly: 20000, ingredients: 18000, blockers: 18000 }[L.goal] * (1 + L.moves / 40); return [base, base * 1.3, base * 1.65].map(Math.round); }   // 2026-10-13: the climb above the winning score halved
 
 // ---------------------------------------------------------------- daily reward (login streak)
 const BICON = {}; document.querySelectorAll(".boost").forEach(el => { BICON[el.dataset.b] = el.querySelector("svg").outerHTML; });
@@ -1734,6 +1749,7 @@ function unpack(s) {
 function snapshot() { if (!G || G.over || G.busy) return; save.inProgress = pack(); persist(); }
 function clearProgress() { delete save.inProgress; persist(); }
 function startLevel(i, snap) {
+  { const ch = chapOf(i), g = $("game"); g.style.setProperty("--gs1", CHAP_SKY[ch][0]); g.style.setProperty("--gs2", CHAP_SKY[ch][1]); g.style.setProperty("--gg", CHAP_GROUNDC[ch]); g.classList.toggle("boss", isMordo(i)); $("gMordo").hidden = !isMordo(i); $("gMordo").innerHTML = isMordo(i) && typeof D3 !== "undefined" && D3 ? `<img src="${D3.sprite("magpie", 128)}" alt="">` : ""; }
   const L = LEVELS[i]; PAL = palFor(i);
   G = { level: i, L, moves: L.moves, score: 0, over: false, busy: false, paused: false, sel: null, selT: 0, boost: null, hintAt: performance.now() + 4000, hint: null, combo: 0,
     collected: 0, spawned: 0, chocEaten: false, shake: 0, frenzy: 0, inFrenzy: false, fuseIn: L.fuse ? L.fuse.every : 0, undo: null,
@@ -1772,7 +1788,7 @@ function startLevel(i, snap) {
       save.att[i] = (save.att[i] || 0) + 1; }
   }
   G.t0 = performance.now(); if (!resumed) logEv("start"); if (i < 2) G.hintAt = performance.now() + 900;
-  { const k = Math.min(NEWGEMS.length / 2, Math.floor((i + 1) / 25)); if (k > (save.gemSeen || 0) && !window.__fast) { save.gemSeen = k; persist(); const g0 = G; setTimeout(() => { if (G === g0) { tip("✨ New charms: " + NEWGEMS[k * 2 - 2].label + " and " + NEWGEMS[k * 2 - 1].label + " join the board from here on", 4200); SFX.reward(); } }, 1400); } }
+  { const k = Math.min(NEWGEMS.length / 2, Math.floor((i + 1) / 25)); if (k > (save.gemSeen || 0) && !window.__fast) { save.gemSeen = k; persist(); } }
   particles.length = 0; fx.length = 0; floaters.length = 0; dying.length = 0;
   tip(""); $("map").hidden = true; $("game").hidden = false; $("gPogo").innerHTML = pogoSvg("", true); layout(); hudInit(); SFX.go();
   if (!resumed) snapshot();
@@ -1846,9 +1862,9 @@ const HUD = { score: $("score"), moves: $("moves"), bar: $("barFill"), marks: do
 document.querySelectorAll(".boost").forEach(el => { HUD.boosts[el.dataset.b] = el; HUD.counts[el.dataset.b] = el.querySelector("u"); });
 function hudInit() {
   const L = G.L, icon = { score: "⭐", jelly: "🟪", ingredients: "🔑", blockers: "🧊" }[L.goal], st = HUD.st = starTargets(L);
-  $("goalBox").innerHTML = `<span style="font-size:22px">${icon}</span><div><small>${L.goal === "score" ? "to go" : L.goal === "ingredients" ? "keys" : L.goal}</small><b id="goalN"></b></div>`;
+  $("goalBox").innerHTML = `<span style="font-size:22px">${icon}</span><div><small>${L.goal === "score" ? "stars to go" : L.goal === "ingredients" ? "keys left" : L.goal === "jelly" ? "jelly left" : "blocks left"}</small><b id="goalN"></b></div>`;
   HUD.goalN = $("goalN"); HUD.left = HUD.lS = HUD.lT = goalLeft(); HUD.goalN.textContent = goalShow(HUD.left);
-  HUD.sS = HUD.sT = HUD.sG = G.score; HUD.score.textContent = "★ " + starsOf(G.score); HUD.mT = G.moves; HUD.moves.textContent = G.moves;
+  HUD.sS = HUD.sT = HUD.sG = G.score; HUD.score.textContent = fmt(G.score); HUD.mT = G.moves; HUD.moves.textContent = G.moves;
   HUD.marks[0].style.left = st[0] / st[2] * 100 + "%"; HUD.marks[1].style.left = st[1] / st[2] * 100 + "%";
   updateHud();
 }
@@ -1864,7 +1880,7 @@ function updateHud() {
 }
 function hudTick(dt) {
   const k = Math.min(1, dt * 9);
-  if (HUD.sS !== G.score) { const d = G.score - HUD.sS; HUD.sS = Math.abs(d) < 1 ? G.score : HUD.sS + d * k; const v = Math.round(HUD.sS); if (v !== HUD.sT) { HUD.sT = v; HUD.score.textContent = "★ " + starsOf(v); } }
+  if (HUD.sS !== G.score) { const d = G.score - HUD.sS; HUD.sS = Math.abs(d) < 1 ? G.score : HUD.sS + d * k; const v = Math.round(HUD.sS); if (v !== HUD.sT) { HUD.sT = v; HUD.score.textContent = fmt(v); } }
   if (HUD.lS !== HUD.left) { const d = HUD.left - HUD.lS; HUD.lS = Math.abs(d) < .5 ? HUD.left : HUD.lS + d * k; const v = Math.round(HUD.lS); if (v !== HUD.lT) { HUD.lT = v; HUD.goalN.textContent = goalShow(v); } }
 }
 
@@ -2322,7 +2338,7 @@ function badge(n) {
 function layout() {
   if (!G) return; DPR = Math.min(devicePixelRatio || 1, 2) * (Arcade.gfx.quality < 0.6 ? 0.75 : 1);
   // the board is a whole number of CSS pixels per cell, so cell edges and resting gems land on exact pixels
-  const wrap = $("boardWrap"), w = wrap.clientWidth - 28, h = wrap.clientHeight - 28, size = Math.floor(Math.max(198, Math.min(w, h, 621)) / COLS) * COLS;
+  const wrap = $("boardWrap"), w = wrap.clientWidth - 28, h = wrap.clientHeight - 28, size = Math.floor(Math.max(198, Math.min(w, h, 756)) / COLS) * COLS;
   if (canvas.width !== size * DPR || canvas.height !== size * DPR) { canvas.width = size * DPR; canvas.height = size * DPR; canvas.style.width = canvas.style.height = size + "px"; }
   CELL = size / COLS; OX = 0; OY = 0;
   // pre-build sprites so the first cascade never stalls
@@ -2690,6 +2706,7 @@ function bestMove() {
 // then templates with {n} slots, and lines joined with " · " are translated piece by piece. A MutationObserver catches text as it appears,
 // so nothing else in the game needs to know about languages. Solver runs stay in English (tests read the English titles).
 const TR = {
+  "Score": "Puan", "stars to go": "yıldız kaldı", "keys left": "anahtar kaldı", "jelly left": "jöle kaldı", "blocks left": "blok kaldı", "Hardest of the place": "Buranın en zoru", "✨ New charms from here on: {1} and {2}": "✨ Buradan itibaren yeni tılsımlar: {1} ve {2}", "Stars for this level": "Bu seviyenin yıldızları",
   "Skip": "Atla", "Next": "İleri", "Start": "Başla", "Close": "Kapat", "Step {1} of {2}": "{2} adımdan {1}.", "Show the guide": "Rehberi göster", "Level {1} · {2}": "Seviye {1} · {2}", "Next station: {1} · {2} · level {3}": "Sıradaki durak: {1} · {2} · seviye {3}", "Then: {1}": "Sonra: {1}", "Charmwood Station · the Green Line": "Charmwood İstasyonu · Yeşil Hat", "Where this train goes": "Bu tren nereye gidiyor", "Charmwood Station": "Charmwood İstasyonu",
   "The Green Line runs from here to the Crown, the highest ridge of Charmwood: eight stations, one every twenty-five levels. Mordo the magpie carried off the forest's charms and the woods went grey. Every level you win brings a charm home, and every charm draws a little green back into the trees.": "Yeşil Hat buradan Charmwood'un en yüksek sırtı Crown'a gider: sekiz durak, her yirmi beş seviyede bir. Saksağan Mordo ormanın tılsımlarını kaçırdı ve ağaçlar griye döndü. Kazandığın her seviye bir tılsımı eve getirir, her tılsım ağaçlara biraz yeşil geri verir.",
   "What is asked of you: clear the levels one by one, three stars where you can, and watch the forest turn green at every station. First stop: Ash Gate · Clear the ash · level 25": "Senden beklenen: seviyeleri tek tek geç, yapabildiğin yerde üç yıldız al ve her durakta ormanın yeşermesini izle. İlk durak: Ash Gate · Külleri temizle · seviye 25",
@@ -2748,7 +2765,7 @@ const TR = {
   "Garden charms": "Bahçe tılsımları", "Pond lights": "Gölet ışıkları", "Moon road": "Ay yolu", "Far shore": "Uzak kıyı",
   "Season": "Sezon", "Season {1}": "{1}. sezon", "{1} pts": "{1} puan", "tier {1} of {2}": "{2} kademeden {1}", "{1} day left": "{1} gün kaldı", "{1} days left": "{1} gün kaldı", "a win is 10 pts, hard levels and 3 stars pay more": "galibiyet 10 puan, zor seviye ve 3 yıldız daha fazla verir",
   "{1} / {2} to tier {3}": "{3}. kademeye {1} / {2}", "All tiers done": "Bütün kademeler tamam", "Tier {1}": "{1}. kademe", "∞ lives {1} min": "{1} dakika ∞ can", "🃏 album card": "🃏 albüm kartı",
-  "The end": "Son", "Chapter {1}": "{1}. bölüm", "Station {1} of {2}": "{2} duraktan {1}.", "Station {1}": "{1}. durak", "Charmwood is {1} green": "Tılsım Ormanı %{1} yeşil", "Next station: {1}": "Sonraki durak: {1}", "🎁 Station gift: +1 🥕 · +1 Hammer": "🎁 Durak hediyesi: +1 🥕 · +1 Çekiç", "Onward": "Yola devam", "Clear this stop to light the way": "Yolu aydınlatmak için bu durağı geç", "✨ New charms: {1} and {2} join the board from here on": "✨ Yeni tılsımlar: {1} ve {2} bundan sonra tahtada", "Brass Key": "Pirinç Anahtar", "Wild Berry": "Yaban Mersini", "Half Moon": "Hilal", "Pearl Clam": "İnci Midyesi", "Thunderbolt": "Yıldırım", "Night Rose": "Gece Gülü", "Ice Crystal": "Buz Kristali", "Little Sun": "Küçük Güneş", "Ember Lantern": "Kor Feneri", "Tide Shell": "Gelgit Kabuğu", "Oak Acorn": "Meşe Palamudu", "Maple Leaf": "Akçaağaç Yaprağı", "Sky Feather": "Gök Tüyü", "Honeycomb": "Petek", "Snowflake": "Kar Tanesi", "Starfruit": "Yıldız Meyvesi",
+  "The end": "Son", "Chapter {1}": "{1}. bölüm", "Station {1} of {2}": "{2} duraktan {1}.", "Station {1}": "{1}. durak", "Charmwood is {1} green": "Tılsım Ormanı %{1} yeşil", "Next station: {1}": "Sonraki durak: {1}", "🎁 Station gift: +1 🥕 · +2 of every booster · ∞ lives for 30 min": "🎁 Durak hediyesi: +1 🥕 · her güçlendiriciden +2 · 30 dk ∞ can", "Onward": "Yola devam", "Clear this stop to light the way": "Yolu aydınlatmak için bu durağı geç", "✨ New charms: {1} and {2} join the board from here on": "✨ Yeni tılsımlar: {1} ve {2} bundan sonra tahtada", "Brass Key": "Pirinç Anahtar", "Wild Berry": "Yaban Mersini", "Half Moon": "Hilal", "Pearl Clam": "İnci Midyesi", "Thunderbolt": "Yıldırım", "Night Rose": "Gece Gülü", "Ice Crystal": "Buz Kristali", "Little Sun": "Küçük Güneş", "Ember Lantern": "Kor Feneri", "Tide Shell": "Gelgit Kabuğu", "Oak Acorn": "Meşe Palamudu", "Maple Leaf": "Akçaağaç Yaprağı", "Sky Feather": "Gök Tüyü", "Honeycomb": "Petek", "Snowflake": "Kar Tanesi", "Starfruit": "Yıldız Meyvesi",
   "Ash Gate": "Kül Kapısı", "Dry Spring": "Kuru Pınar", "Seed Hollow": "Tohum Çukuru", "Old Oak": "Yaşlı Meşe", "Bird Ridge": "Kuş Sırtı", "Bee Meadow": "Arı Çayırı", "River Bridge": "Nehir Köprüsü", "The Crown": "Taç Tepe",
   "Clear the ash": "Külü temizle", "Wake the spring": "Pınarı uyandır", "Sow the hollow": "Çukuru ek", "Wake the Old Oak": "Yaşlı Meşe'yi uyandır", "Call the birds home": "Kuşları eve çağır", "Bring the bees": "Arıları getir", "Mend the bridge": "Köprüyü onar", "Light the Crown": "Taç Tepe'yi aydınlat",
   "The forest edge was grey with ash from the old fire. Every charm you won back drew a little green up through it. The first saplings are standing.": "Ormanın kıyısı eski yangının külüyle griydi. Geri kazandığın her tılsım külün arasından biraz yeşil çekti. İlk fidanlar ayakta.",
@@ -2769,8 +2786,8 @@ const TR = {
   "Keep the forest bright. New stretches of the Green Line open with every update.": "Ormanı aydınlık tut. Yeşil Hat'ın yeni bölümleri her güncellemeyle açılır.", "🎁 Chapter chest: +1 of every booster · ∞ lives for 15 min": "🎁 Bölüm sandığı: her güçlendiriciden +1 · 15 dakika ∞ can", "+1 of every booster": "her güçlendiriciden +1", "∞ lives for 15 min": "15 dakika ∞ can",
   "The Burrow": "Yuva", "Clover Meadow": "Yonca Çayırı", "Firefly Pond": "Ateş Böceği Göleti", "Mushroom Hollow": "Mantar Çukuru", "The Old Oak": "Yaşlı Meşe", "Bramble Maze": "Böğürtlen Labirenti", "Windmill Hill": "Yel Değirmeni Tepesi", "Moon Bridge": "Ay Köprüsü", "Magpie's Wood": "Saksağan Ormanı", "The Nest": "Yuva Tepesi",
   "Harbour Steps": "Liman Merdivenleri", "Lighthouse Rock": "Fener Kayası", "Tide Pools": "Gelgit Gölcükleri", "Driftwood Beach": "Kütük Kumsalı", "Salt Marsh": "Tuzlu Bataklık", "Cliff Path": "Kayalık Yolu", "Hermit's Orchard": "Münzevinin Bahçesi", "Thunder Ridge": "Gök Gürültüsü Sırtı", "Glass Caves": "Cam Mağaraları", "Gritt's Roost": "Gritt'in Tüneği",
-  "The night the lights went out": "Işıkların söndüğü gece", "A magpie called Mordo swooped over Pogo's garden and carried off every shining charm. Follow his trail, win the charms back and light the garden again.": "Mordo adlı bir saksağan Pogo'nun bahçesine dalıp bütün parlak tılsımları kaçırdı. İzini sür, tılsımları geri kazan ve bahçeyi yeniden aydınlat.",
-  "Feathers in the clover": "Yoncada tüyler", "The burrow glows again. Black feathers lead across the meadow. Line up four charms in a square and a firefly will come to help.": "Yuva yeniden parlıyor. Siyah tüyler çayıra uzanıyor. Dört tılsımı kare dizersen bir ateş böceği yardıma gelir.",
+  "The night the lights went out": "Işıkların söndüğü gece", "A magpie called Mordo swooped over Pogo's garden and carried off every shining charm. Follow his trail, win the charms back and light the garden again. Every charm you bring home puts a little green back into the grey wood; the stations of the Green Line show how far it has come.": "Mordo adlı bir saksağan Pogo'nun bahçesine dalıp bütün parlak tılsımları kaçırdı. İzini sür, tılsımları geri kazan ve bahçeyi yeniden aydınlat. Eve getirdiğin her tılsım gri ormana biraz yeşil katar; Yeşil Hat'ın durakları ne kadar yol alındığını gösterir.",
+  "Feathers in the clover": "Yoncada tüyler", "The burrow glows again. Black feathers lead across the meadow. Line up four charms in a square and a firefly will come to help. The last two stops of every place are the hard ones, and the magpie himself waits at the tenth.": "Yuva yeniden parlıyor. Siyah tüyler çayıra uzanıyor. Dört tılsımı kare dizersen bir ateş böceği yardıma gelir. Her yerin son iki durağı zordur, onuncusunda saksağanın kendisi bekler.",
   "Ticking in the reeds": "Sazlarda tik tak", "Mordo has hidden charms inside ticking gems. Each one counts down with every move: match it before it reaches zero.": "Mordo tılsımları tik tak eden taşların içine sakladı. Her biri her hamlede geri sayar: sıfıra inmeden eşleştir.",
   "A glow under the caps": "Şapkaların altında ışık", "The mushrooms still shine a little, and the trail is fresh. Win a few levels in a row and Pogo leaves gifts on the board.": "Mantarlar hâlâ biraz parlıyor ve iz taze. Art arda birkaç seviye kazan, Pogo tahtaya hediye bıraksın.",
   "What the owl saw": "Baykuşun gördüğü", "The owl watched the thief pack charms into coloured crates and wall them in with stone. Crates open to their own colour. Stone only gives way to a special gem.": "Baykuş hırsızın tılsımları renkli sandıklara koyup taşla ördüğünü gördü. Sandıklar kendi rengiyle açılır. Taşı yalnız özel bir taş kırar.",
@@ -2781,15 +2798,15 @@ const TR = {
   "The tallest pine": "En uzun çam", "The nest sits at the very top, full of light. Ten levels to the last charm.": "Yuva en tepede, ışıkla dolu. Son tılsıma on seviye.",
   "The far shore": "Uzak kıyı", "Mordo kept his word, but his flock did not. Half the charms are across the water. Pogo takes the ferry. Crates and stone now turn up together.": "Mordo sözünü tuttu ama sürüsü tutmadı. Tılsımların yarısı suyun ötesinde. Pogo feribota biniyor. Sandıklar ve taşlar artık birlikte çıkıyor.",
   "A light to steer by": "Yol gösteren ışık", "The lighthouse keeper saw magpies heading up the coast. The keys are hidden deeper here: bring them all the way down.": "Fener bekçisi saksağanların kıyı boyunca gittiğini gördü. Anahtarlar burada daha derinde: hepsini en aşağıya indir.",
-  "Caught in the pools": "Gölcüklere takılanlar", "Charms glint under the water at low tide. Double jelly covers the pools: clear each twice. Hard levels begin here, and they pay extra carrots.": "Tılsımlar cezir vakti suyun altında parlıyor. Gölcükleri çift jöle kaplıyor: her birini iki kez temizle. Zor seviyeler burada başlar, fazladan havuç verirler.",
+  "Caught in the pools": "Gölcüklere takılanlar", "Charms glint under the water at low tide. Double jelly covers the pools: clear each twice.": "Tılsımlar cezir vakti suyun altında parlıyor. Gölcükleri çift jöle kaplıyor: her birini iki kez temizle.",
   "Along the sand": "Kum boyunca", "The flock dropped charms as they flew. The beach is wide and the countdown gems come faster.": "Sürü uçarken tılsım düşürdü. Kumsal geniş, geri sayım taşları daha hızlı geliyor.",
   "Fog in the reeds": "Sazlarda sis", "Half the board hides in fog. Mordo's cousin Gritt leads the flock now, and she guards the last level of every place.": "Tahtanın yarısı siste. Sürüyü artık Mordo'nun kuzeni Gritt yönetiyor ve her yerin son seviyesini o koruyor.",
   "Up the cliff": "Kayalığa doğru", "The path narrows and every board bites a little harder. Keep a special gem in reserve.": "Yol daralıyor ve her tahta biraz daha sert. Yedekte bir özel taş tut.",
-  "The orchard keeper": "Bahçe bekçisi", "An old hedgehog traded the magpies apples for charms. He will trade them back for a cleared board. Super hard levels start here and pay three carrots.": "Yaşlı bir kirpi saksağanlara elma karşılığı tılsım verdi. Temiz bir tahta karşılığında geri verecek. Çok zor seviyeler burada başlar ve üç havuç verir.",
+  "The orchard keeper": "Bahçe bekçisi", "An old hedgehog traded the magpies apples for charms. He will trade them back for a cleared board.": "Yaşlı bir kirpi saksağanlara elma karşılığı tılsım verdi. Temiz bir tahta karşılığında geri verecek.",
   "Storm on the ridge": "Sırtta fırtına", "Lightning on every level: stone and crates in the same board. Specials are the way through.": "Her seviyede şimşek: aynı tahtada taş ve sandık. Yol özel taşlardan geçer.",
   "Where the light bends": "Işığın kırıldığı yer", "The caves are full of crystal. Six colours, long boards, and the flock's whole hoard at the end.": "Mağaralar kristal dolu. Altı renk, uzun tahtalar ve sonunda sürünün bütün hazinesi.",
   "The roost": "Tünek", "Gritt's roost on the highest rock. Ten levels to the last of the far shore's charms.": "Gritt'in tüneği en yüksek kayada. Uzak kıyının son tılsımına on seviye.",
-  "The garden shines again": "Bahçe yeniden parlıyor", "Gritt hands back the last charm, Mordo pretends he never took the first one, and both get a carrot. Pogo's garden has never been brighter.": "Gritt son tılsımı geri veriyor, Mordo ilkini hiç almamış gibi yapıyor ve ikisi de havuç alıyor. Pogo'nun bahçesi hiç bu kadar parlak olmamıştı.",
+  "The garden shines again": "Bahçe yeniden parlıyor", "Gritt hands back the last charm, Mordo pretends he never took the first one, and both get a carrot. Pogo's garden has never been brighter, and the Green Line runs bright from Ash Gate to the Crown: the highest ridge of Charmwood is green from end to end.": "Gritt son tılsımı geri veriyor, Mordo ilkini hiç almamış gibi yapıyor ve ikisi de havuç alıyor. Pogo'nun bahçesi hiç bu kadar parlak olmamıştı; Yeşil Hat Ash Gate'ten Crown'a pırıl pırıl işliyor, Charmwood'un en yüksek sırtı baştan başa yeşil.",
   "Mordo hands back the last charm, a little ashamed, and gets a carrot for his trouble. Pogo's garden has never been brighter.": "Mordo son tılsımı biraz utanarak geri veriyor ve zahmetine karşılık havuç alıyor. Pogo'nun bahçesi hiç bu kadar parlak olmamıştı.",
   "{1} d {2} h left": "{1} g {2} s kaldı", "{1} h left": "{1} s kaldı", "{1} d {2} h": "{1} g {2} s", "{1} h": "{1} s", "{1} min": "{1} dk", "𝕏 Share on X": "𝕏 X'te paylaş", "Prism": "Prism", "Pop": "Pop"
 };
