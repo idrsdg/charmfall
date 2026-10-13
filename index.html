@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>Prism Pop</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Cpath d=%2732 4 60 32 32 60 4 32z%27 fill=%27%234d8dff%27/%3E%3Cpath d=%2732 4 60 32 32 32z%27 fill=%27%23a9ccff%27/%3E%3C/svg%3E">
-<meta name="description" content="Match three gems, make specials, clear jelly, bring down keys. One hundred levels, daily rewards, boosters and a frenzy meter.">
+<meta name="description" content="Match three forest charms, clear the ash, bring the seeds down to the soil and turn Charmwood green again. Two hundred levels along the Green Line.">
 <meta name="theme-color" content="#4514a6">
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -427,7 +427,7 @@
   .mprop.stn { pointer-events: auto; cursor: pointer; z-index: 2; } .mprop.stn .lvplate { left: 50%; right: auto; top: auto; bottom: calc(100% - 4px); transform: translateX(-50%); }
   .mprop.train { z-index: 2; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .3)); }
   .mprop.mordo { z-index: 2; } .mprop.mordo img, #gMordo img { animation: mordoBob 1.5s ease-in-out infinite alternate; } @keyframes mordoBob { from { translate: 0 0; rotate: -3deg; } to { translate: 0 -6px; rotate: 3deg; } }
-  #gMordo { position: absolute; right: 8px; top: calc(max(12px, env(safe-area-inset-top)) + 54px); width: 64px; z-index: 3; pointer-events: none; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .35)); } #gMordo img { display: block; width: 100%; }
+  #gMordo { position: absolute; right: 2px; top: calc(max(12px, env(safe-area-inset-top)) + 84px); width: 50px; z-index: 3; pointer-events: none; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .35)); } #gMordo img { display: block; width: 100%; }
   #mStation .card, #mStory .card, #mSign .card, #mGuide .card { background: linear-gradient(160deg, #3a9a55, #1c5e34 70%); }
   .guideArt { display: flex; justify-content: center; margin: 2px 0 6px; } .guideArt img { width: 150px; height: 150px; filter: drop-shadow(0 10px 10px rgba(0, 0, 0, .35)); }
   .dots { display: flex; justify-content: center; gap: 7px; margin: 4px 0 14px; } .dots i { width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, .35); } .dots i.on { background: #ffe27a; }
@@ -614,21 +614,21 @@
 "use strict";
 // ================================================================ config
 const COLS = 9, ROWS = 9, NCOL = 6;
-const COLORS = [
-  { name: "coral", c: "#ff6b8b", l: "#ffc9d6", d: "#b8324f", shape: "puff" },
-  { name: "mango", c: "#ffb347", l: "#ffe6bd", d: "#c96a00", shape: "gumdrop" },
-  { name: "mint", c: "#3ddc97", l: "#cdffe9", d: "#108a55", shape: "clover" },
-  { name: "sky", c: "#4fc3f7", l: "#d0f1ff", d: "#0d6fa8", shape: "egg" },
-  { name: "grape", c: "#9d6bff", l: "#e4d6ff", d: "#5a2bc0", shape: "squircle" },
-  { name: "cream", c: "#ffe9a0", l: "#ffffff", d: "#b88a2a", shape: "button" }
+const COLORS = [   // the forest's own charms (2026-10-14): six colours, six silhouettes, each one a thing that grows in Charmwood
+  { name: "mushroom", c: "#f0483e", l: "#ffc2b8", d: "#9c1f1f", shape: "mushroom" },
+  { name: "acorn", c: "#f09a3e", l: "#ffe0b0", d: "#9a4d0a", shape: "nut" },
+  { name: "leaf", c: "#4fcf5a", l: "#d2ffd0", d: "#1c7a2e", shape: "leaf" },
+  { name: "bluebell", c: "#4fa8ff", l: "#d6ecff", d: "#1a55b0", shape: "bell" },
+  { name: "berry", c: "#9a5cf0", l: "#e2d2ff", d: "#4f22a8", shape: "bramble" },
+  { name: "honey", c: "#ffcf3a", l: "#fff6c8", d: "#b07400", shape: "drop" }
 ];
 // every 25 levels a charm nobody has seen yet joins the board and takes over one colour slot from then on (the shape and the colour are new, the count of colours is not)
 const NEWGEMS = [   // pairs: the two that arrive together always take two different slots and never look alike
   { name: "ember", label: "Ember Lantern", c: "#ff6a00", l: "#ffd0a8", d: "#a63a00", shape: "lantern" }, { name: "shell", label: "Tide Shell", c: "#ff9ecb", l: "#ffe4f1", d: "#b84a7a", shape: "shell" },
-  { name: "acorn", label: "Oak Acorn", c: "#c0813a", l: "#f2d2a6", d: "#6b3a10", shape: "acorn" }, { name: "feather", label: "Sky Feather", c: "#8ce0ff", l: "#eafbff", d: "#2a7ab0", shape: "feather" },
-  { name: "maple", label: "Maple Leaf", c: "#9be31c", l: "#e3ffb0", d: "#4a8a00", shape: "maple" }, { name: "honey", label: "Honeycomb", c: "#f2b300", l: "#ffeaa0", d: "#8a5a00", shape: "hex" },
+  { name: "clover", label: "Lucky Clover", c: "#2fbf5a", l: "#c8ffd0", d: "#0f6a30", shape: "clover" }, { name: "feather", label: "Sky Feather", c: "#8ce0ff", l: "#eafbff", d: "#2a7ab0", shape: "feather" },
+  { name: "plum", label: "Wild Plum", c: "#8a3ccf", l: "#e0c8ff", d: "#45158a", shape: "squircle" }, { name: "honey", label: "Honeycomb", c: "#f2b300", l: "#ffeaa0", d: "#8a5a00", shape: "hex" },
   { name: "snow", label: "Snowflake", c: "#e6f6ff", l: "#ffffff", d: "#5a98c8", shape: "snowflake" }, { name: "starfruit", label: "Starfruit", c: "#ff2dd4", l: "#ffc2f0", d: "#8a0a70", shape: "starfruit" },
-  { name: "key", label: "Brass Key", c: "#e8b84a", l: "#fff0c0", d: "#7a5a10", shape: "keyring" }, { name: "berry", label: "Wild Berry", c: "#7a3cff", l: "#d6c2ff", d: "#3a0a8a", shape: "berry" },
+  { name: "key", label: "Brass Key", c: "#e8b84a", l: "#fff0c0", d: "#7a5a10", shape: "keyring" }, { name: "egg", label: "Robin Egg", c: "#5fd0e8", l: "#dcf8ff", d: "#1a7a98", shape: "egg" },
   { name: "moon", label: "Half Moon", c: "#f4e9c8", l: "#ffffff", d: "#8a7a4a", shape: "halfmoon" }, { name: "clam", label: "Pearl Clam", c: "#5fe0d0", l: "#d0fff8", d: "#107a70", shape: "clam" },
   { name: "bolt", label: "Thunderbolt", c: "#ffe600", l: "#fffbb0", d: "#8a7a00", shape: "thunder" }, { name: "rose", label: "Night Rose", c: "#e8104a", l: "#ffb0c8", d: "#7a0020", shape: "rose" },
   { name: "crystal", label: "Ice Crystal", c: "#b0f0ff", l: "#ffffff", d: "#3a90c0", shape: "crystal" }, { name: "sun", label: "Little Sun", c: "#ff9500", l: "#ffe0a0", d: "#a04a00", shape: "sun" }
@@ -1076,9 +1076,9 @@ const ICO = (() => {
     mute: W(R("M4 9h4l5-4v14l-5-4H4z", "#fff") + L("M16 9l5 6M21 9l-5 6", "#ff3b5c", 2.2)),
     back: W(L("M15 5l-7 7 7 7", "#fff", 3)),
     pause: W(R("M7 5h3v14H7zM14 5h3v14h-3z", "#fff")),
-    jelly: W(R("M4 6h16v12H4z", "#c25cff") + L("M7 9h4", "#fff", 1.8)),
-    key: W(R("M8 6a4 4 0 1 0 2.6 7L18 20l2-2-1.5-1.5 1.5-1.5-1.5-1.5L20 12l-8.5-4.5A4 4 0 0 0 8 6") + `<circle cx="8" cy="10" r="1.4" fill="#4a1a06"/>`),
-    ice: W(R("M12 2l3 4 5 1-1 5 1 5-5 1-3 4-3-4-5-1 1-5-1-5 5-1z", "#9fe0ff") + L("M12 7v10M8 9.5l8 5M8 14.5l8-5", "#fff", 1.4)),
+    jelly: W(R("M2.5 19c1-5.5 4.5-9.5 9.5-9.5s8.5 4 9.5 9.5z", "#a9a6b4") + L("M8 15l2-2M13.5 16l2.5-1.5", "#fff", 1.5)),   // a heap of ash
+    key: W(R("M12 22c-3.6 0-6-2.4-6-5.5S8.6 11 12 11s6 2.4 6 5.5-2.4 5.5-6 5.5z", "#fff1c9") + R("M12 11c0-4-2.6-6.5-6.5-6.5 0 4 2.6 6.5 6.5 6.5z", "#5fd36f") + R("M12 11c0-3.4 2.2-5.5 5.5-5.5 0 3.4-2.2 5.5-5.5 5.5z", "#5fd36f")),   // a seed with a sprout
+    ice: W(R("M12 2l2 5.5 5.5-2-2 5.5 4.5 1-4.5 1 2 5.5-5.5-2-2 5.5-2-5.5-5.5 2 2-5.5L2 12l4.5-1-2-5.5 5.5 2z", "#3f9a4a") + L("M9 12h6M12 9v6", "#d8ffd0", 1.4)),   // a thorny thicket
     pogo: W(R("M9 3c-1 0-1.5 4 0 7h6c1.5-3 1-7 0-7s-1 2.5-1.5 4h-3C10 5.5 10 3 9 3z", "#fff") + R("M6 15a6 5 0 1 0 12 0 6 5 0 1 0-12 0", "#fff") + `<circle cx="10" cy="14" r="1" fill="#4a1a06"/><circle cx="14" cy="14" r="1" fill="#4a1a06"/><circle cx="12" cy="16.2" r=".9" fill="#ff7a9a"/>`)
   };
 })();
@@ -1175,7 +1175,7 @@ function buildMap() {
 }
 { let rt = 0; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { if (!$("map").hidden) { lastCur = -1; buildMap(); } }, 250); }); }
 const goalShow = (v) => G && G.L.goal === "score" ? String(Math.ceil(v / STAR)) : fmt(v);
-function goalText(L) { return L.goal === "score" ? `Earn ${L.target / STAR} star${L.target / STAR === 1 ? "" : "s"}` : L.goal === "jelly" ? "Clear all the jelly" : L.goal === "ingredients" ? `Bring down ${L.need} keys` : "Break all the blockers"; }
+function goalText(L) { return L.goal === "score" ? `Earn ${L.target / STAR} star${L.target / STAR === 1 ? "" : "s"}` : L.goal === "jelly" ? "Clear all the ash" : L.goal === "ingredients" ? `Bring ${L.need} seeds down to the soil` : "Cut back all the brambles"; }
 function openLevel(i) {
   tickLives();
   if (save.lives <= 0) { showLives(); return; }
@@ -1249,8 +1249,8 @@ const MORDO = "🐦‍⬛", CHAPTERS = [
   { name: "The Nest", props: ["🌲", "🪶", "💎", "🪺"], title: "The tallest pine", text: "The nest sits at the very top, full of light. Ten levels to the last charm." },
   // part two: the far shore. Mordo gave the charms back, but his flock had already carried half of them over the water
   { name: "Harbour Steps", props: ["⚓", "🐚", "🪸", "⛵"], title: "The far shore", text: "Mordo kept his word, but his flock did not. Half the charms are across the water. Pogo takes the ferry. Crates and stone now turn up together." },
-  { name: "Lighthouse Rock", props: ["🗼", "🌊", "🐚", "⭐"], title: "A light to steer by", text: "The lighthouse keeper saw magpies heading up the coast. The keys are hidden deeper here: bring them all the way down." },
-  { name: "Tide Pools", props: ["🐚", "🦀", "🪸", "💧"], title: "Caught in the pools", text: "Charms glint under the water at low tide. Double jelly covers the pools: clear each twice." },
+  { name: "Lighthouse Rock", props: ["🗼", "🌊", "🐚", "⭐"], title: "A light to steer by", text: "The lighthouse keeper saw magpies heading up the coast. The seeds are buried deeper here: bring every one down to the soil." },
+  { name: "Tide Pools", props: ["🐚", "🦀", "🪸", "💧"], title: "Caught in the pools", text: "Charms glint under the water at low tide. Ash lies twice as thick over the pools: clear each patch twice." },
   { name: "Driftwood Beach", props: ["🪵", "🐚", "🌴", "🏖️"], title: "Along the sand", text: "The flock dropped charms as they flew. The beach is wide and the countdown gems come faster." },
   { name: "Salt Marsh", props: ["🌾", "🦆", "🐸", "🌫️"], title: "Fog in the reeds", text: "Half the board hides in fog. Mordo's cousin Gritt leads the flock now, and she guards the last level of every place." },
   { name: "Cliff Path", props: ["🪨", "🦅", "🌬️", "🌿"], title: "Up the cliff", text: "The path narrows and every board bites a little harder. Keep a special gem in reserve." },
@@ -1864,8 +1864,8 @@ function defuse(g, r, c) { g.fuse = 0; save.stats.defused++; addScore(r, c, 300)
 const HUD = { score: $("score"), moves: $("moves"), bar: $("barFill"), marks: document.querySelectorAll(".bar s"), frz: $("frz"), frzFill: $("frzFill"), boosts: {}, counts: {}, goalN: null, st: [1, 2, 3], sS: 0, sT: 0, sG: 0, lS: 0, lT: 0, left: 0, mT: -1 };
 document.querySelectorAll(".boost").forEach(el => { HUD.boosts[el.dataset.b] = el; HUD.counts[el.dataset.b] = el.querySelector("u"); });
 function hudInit() {
-  const L = G.L, icon = { score: "⭐", jelly: "🟪", ingredients: "🔑", blockers: "🧊" }[L.goal], st = HUD.st = starTargets(L);
-  $("goalBox").innerHTML = `<span style="font-size:22px">${icon}</span><div><small>${L.goal === "score" ? "stars to go" : L.goal === "ingredients" ? "keys left" : L.goal === "jelly" ? "jelly left" : "blocks left"}</small><b id="goalN"></b></div>`;
+  const L = G.L, icon = L.goal === "score" ? "⭐" : ico({ jelly: "jelly", ingredients: "key", blockers: "ice" }[L.goal]), st = HUD.st = starTargets(L);
+  $("goalBox").innerHTML = `<span style="font-size:22px">${icon}</span><div><small>${L.goal === "score" ? "stars to go" : L.goal === "ingredients" ? "seeds left" : L.goal === "jelly" ? "ash left" : "brambles left"}</small><b id="goalN"></b></div>`;
   HUD.goalN = $("goalN"); HUD.left = HUD.lS = HUD.lT = goalLeft(); HUD.goalN.textContent = goalShow(HUD.left);
   HUD.sS = HUD.sT = HUD.sG = G.score; HUD.score.textContent = fmt(G.score); HUD.mT = G.moves; HUD.moves.textContent = G.moves;
   HUD.marks[0].style.left = st[0] / st[2] * 100 + "%"; HUD.marks[1].style.left = st[1] / st[2] * 100 + "%";
@@ -2078,7 +2078,7 @@ async function blast(clear, spawn = [], opts = {}) {
     if (g.kind === "ing") continue;
     if (g.lock) { g.lock = false; addScore(r, c, 100); ring(c + .5, r + .5, "#d0d4ff", 1); if (!keep.has(k)) continue; }
     if (g.fuse) defuse(g, r, c);
-    if (G.jelly[r][c]) { G.jelly[r][c]--; G.jellyHit[r][c] = now; addScore(r, c, 250); if (G.L.goal === "jelly") flyGoal(r, c, "🟪"); burst(c + .5, r + .8, "#ff7a4d", 4, "round"); }
+    if (G.jelly[r][c]) { G.jelly[r][c]--; G.jellyHit[r][c] = now; addScore(r, c, 250); if (G.L.goal === "jelly") flyGoal(r, c, "💨"); burst(c + .5, r + .8, "#ff7a4d", 4, "round"); }
     for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) if (G.block[r + dr] && G.block[r + dr][c + dc] && !clear.has((r + dr) * COLS + c + dc)) hitBlock(r + dr, c + dc, false, g.color);
     if (keep.has(k)) continue;
     // a short ripple runs along the match instead of everything popping on the same frame
@@ -2107,14 +2107,14 @@ function flyGoal(r, c, txt, big) {
     an.onfinish = () => { el.remove(); bump("goalBox"); };
   } catch (e) {}
 }
-const flyKey = (r, c) => flyGoal(r, c, "🔑", true);
+const flyKey = (r, c) => flyGoal(r, c, "🌱", true);
 function hitBlock(r, c, direct, color) {
   const b = G.block[r][c]; if (!b) return;
   if (b.kind === "stone" || b.kind === "cbox") {   // stone: only a direct hit (special gem, firefly, booster). colour crate: that, or a match of its colour beside it
-    if (direct || (b.kind === "cbox" && color === b.color)) { G.block[r][c] = null; addScore(r, c, 180); const col = b.kind === "stone" ? "#aab0c4" : PAL[b.color].c; burst(c + .5, r + .5, col, 14, "tri"); ring(c + .5, r + .5, "#fff", 1.1); if (G.L.goal === "blockers") flyGoal(r, c, "🧊"); }
+    if (direct || (b.kind === "cbox" && color === b.color)) { G.block[r][c] = null; addScore(r, c, 180); const col = b.kind === "stone" ? "#aab0c4" : PAL[b.color].c; burst(c + .5, r + .5, col, 14, "tri"); ring(c + .5, r + .5, "#fff", 1.1); if (G.L.goal === "blockers") flyGoal(r, c, "🌿"); }
     else { b.hit = performance.now(); if (!b.told && !window.__fast && !save["seen_" + b.kind]) { save["seen_" + b.kind] = 1; tip(b.kind === "stone" ? "Stone: only a special gem can break it" : "Colour crate: match its colour next to it", 3600); } }
     return; }
-  if (b.kind === "frost") { b.hp--; if (b.hp <= 0) { G.block[r][c] = null; addScore(r, c, 120); if (G.L.goal === "blockers") flyGoal(r, c, "🧊"); burst(c + .5, r + .5, "#bfe6ff", 12, "tri"); ring(c + .5, r + .5, "#fff", 1.1); } else { b.hit = performance.now(); burst(c + .5, r + .5, "#e6f7ff", 3, "tri"); } }
+  if (b.kind === "frost") { b.hp--; if (b.hp <= 0) { G.block[r][c] = null; addScore(r, c, 120); if (G.L.goal === "blockers") flyGoal(r, c, "🌿"); burst(c + .5, r + .5, "#5fc46a", 12, "tri"); ring(c + .5, r + .5, "#fff", 1.1); } else { b.hit = performance.now(); burst(c + .5, r + .5, "#e6f7ff", 3, "tri"); } }
   else if (b.kind === "choc") { G.block[r][c] = null; G.chocEaten = true; addScore(r, c, 150); burst(c + .5, r + .5, "#8a4a22", 12, "square"); ring(c + .5, r + .5, "#ffb000", 1); }
 }
 
@@ -2301,16 +2301,23 @@ function buildStatic() {
     x.fillStyle = (r + c) % 2 ? "#221a3e" : "#2c2250"; x.fillRect(px, py, CELL, CELL);   // bevelled wells: light along the top and left, shade along the bottom and right
     x.fillStyle = "rgba(255,255,255,.09)"; x.fillRect(px, py, CELL, 2); x.fillRect(px, py, 2, CELL); x.fillStyle = "rgba(0,0,0,.35)"; x.fillRect(px, py + CELL - 3, CELL, 3); x.fillRect(px + CELL - 3, py, 3, CELL); }
   ST.bg = cv;
+  // ash over the ground (it was jelly): one layer is pale and thin, two are dark and heaped; a few cinders and flecks so it never reads as a plain tile
   ST.jelly = [1, 2].map(n => { const [c2, j] = mkCan(CELL, CELL); j.translate(CELL / 2, CELL / 2);
-    j.fillStyle = n === 2 ? "#8a3f86" : "#6b3a6c"; j.beginPath(); j.roundRect(-CELL / 2 + 2, -CELL / 2 + 2, CELL - 4, CELL - 4, 9); j.fill(); j.strokeStyle = n === 2 ? "#ffd0fb" : "#e3a6dd"; j.lineWidth = 2; j.stroke();
-    j.fillStyle = "rgba(255,255,255,.22)"; j.beginPath(); j.ellipse(-CELL * .14, -CELL * .22, CELL * .22, CELL * .09, -.3, 0, 6.28); j.fill();
-    if (n === 2) { j.strokeStyle = "rgba(255,255,255,.6)"; j.lineWidth = 2; j.beginPath(); j.roundRect(-CELL / 2 + 9, -CELL / 2 + 9, CELL - 18, CELL - 18, 6); j.stroke(); }
+    const ag = j.createLinearGradient(0, -CELL / 2, 0, CELL / 2); ag.addColorStop(0, n === 2 ? "#6f6a7a" : "#a39fae"); ag.addColorStop(1, n === 2 ? "#45414f" : "#7d798a");
+    j.fillStyle = ag; j.beginPath(); j.roundRect(-CELL / 2 + 2, -CELL / 2 + 2, CELL - 4, CELL - 4, 9); j.fill(); j.strokeStyle = n === 2 ? "#2c2934" : "#5c5868"; j.lineWidth = 2; j.stroke();
+    let sd = 7 + n; const rr = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+    for (let i = 0; i < 16 + n * 8; i++) { const px = (rr() - .5) * (CELL - 12), py = (rr() - .5) * (CELL - 12), r = 1 + rr() * (n === 2 ? 2.6 : 1.8); j.fillStyle = rr() < .5 ? "rgba(255,255,255,.3)" : "rgba(20,16,30,.35)"; j.beginPath(); j.arc(px, py, r, 0, 6.28); j.fill(); }
+    if (n === 2) { j.fillStyle = "rgba(255,140,60,.7)"; for (let i = 0; i < 4; i++) { j.beginPath(); j.arc((rr() - .5) * (CELL - 16), (rr() - .5) * (CELL - 16), 1.4, 0, 6.28); j.fill(); } }
     return c2; });
+  // brambles (they were frost): a thorny thicket that thins out as it is cut back; three layers at most
   ST.frost = [1, 2, 3].map(hp => { const [c2, f] = mkCan(CELL, CELL); f.translate(CELL / 2, CELL / 2);
-    const ig = f.createLinearGradient(-CELL / 2, -CELL / 2, CELL / 2, CELL / 2); ig.addColorStop(0, ["#7fd0ff", "#b6e6ff", "#e6f7ff"][hp - 1]); ig.addColorStop(1, ["#1e7fe0", "#4aa6f0", "#8cccff"][hp - 1]);
-    f.fillStyle = ig; f.beginPath(); f.roundRect(-CELL / 2 + 3, -CELL / 2 + 3, CELL - 6, CELL - 6, 8); f.fill(); f.strokeStyle = "#fff"; f.lineWidth = 2.5; f.stroke();
-    f.fillStyle = "rgba(255,255,255,.75)"; f.beginPath(); f.ellipse(-CELL * .15, -CELL * .22, CELL * .2, CELL * .08, -.5, 0, 6.28); f.fill();
-    f.strokeStyle = "rgba(10,60,140,.8)"; f.lineWidth = 2; const cr = 4 - hp; for (let i = 0; i < cr; i++) { f.beginPath(); f.moveTo(-CELL * .32 + i * 9, CELL * .3 - i * 5); f.lineTo(-CELL * .05 + i * 6, -CELL * .05 + i * 3); f.lineTo(CELL * .3 - i * 7, -CELL * .32 + i * 8); f.stroke(); }
+    const ig = f.createLinearGradient(-CELL / 2, -CELL / 2, CELL / 2, CELL / 2); ig.addColorStop(0, ["#5a9a58", "#467f48", "#35683c"][hp - 1]); ig.addColorStop(1, ["#35683c", "#27552f", "#1b4224"][hp - 1]);
+    f.fillStyle = ig; f.beginPath(); f.roundRect(-CELL / 2 + 3, -CELL / 2 + 3, CELL - 6, CELL - 6, 8); f.fill(); f.strokeStyle = "#123a1c"; f.lineWidth = 2.5; f.stroke();
+    f.lineCap = "round"; const a = CELL * .36, vines = [[-a, a * .7, -a * .2, -a * .9, a, -a * .5], [-a, -a * .5, a * .1, a * .9, a, a * .6], [-a * .6, -a, a * .9, -a * .1, -a * .2, a]].slice(0, hp);
+    for (const [x0, y0, cx, cy, x1, y1] of vines) { f.strokeStyle = "#5a3a1c"; f.lineWidth = Math.max(2.5, CELL * .075); f.beginPath(); f.moveTo(x0, y0); f.quadraticCurveTo(cx, cy, x1, y1); f.stroke();
+      f.fillStyle = "#f2ead0"; f.strokeStyle = "#3a2410"; f.lineWidth = 1; for (let i = 1; i <= 4; i++) { const u = i / 5, v = 1 - u, px = v * v * x0 + 2 * v * u * cx + u * u * x1, py = v * v * y0 + 2 * v * u * cy + u * u * y1, dx = 2 * v * (cx - x0) + 2 * u * (x1 - cx), dy = 2 * v * (cy - y0) + 2 * u * (y1 - cy), m = Math.hypot(dx, dy) || 1, sgn = i % 2 ? 1 : -1, nx = -dy / m * sgn, ny = dx / m * sgn, t2 = CELL * .12, b2 = CELL * .045;
+        f.beginPath(); f.moveTo(px + nx * t2, py + ny * t2); f.lineTo(px + dx / m * b2, py + dy / m * b2); f.lineTo(px - dx / m * b2, py - dy / m * b2); f.closePath(); f.fill(); f.stroke(); } }
+    f.fillStyle = "rgba(255,255,255,.22)"; f.beginPath(); f.ellipse(-CELL * .16, -CELL * .26, CELL * .18, CELL * .07, -.5, 0, 6.28); f.fill();
     return c2; });
   { const [c2, k] = mkCan(CELL, CELL); k.translate(CELL / 2, CELL / 2);
     k.fillStyle = "#4a2410"; k.beginPath(); k.roundRect(-CELL / 2 + 3, -CELL / 2 + 3, CELL - 6, CELL - 6, 10); k.fill(); k.strokeStyle = "#2a1206"; k.lineWidth = 2; k.stroke();
@@ -2418,6 +2425,36 @@ const SHAPES = (() => {
   S.rose = { o: ring(30, (a) => 1.05 + .22 * Math.cos(5 * a) * Math.cos(a * 2)), mode: "fan", cx: 0, cy: 0, soft: .5 };
   S.crystal = { o: [[0, -1.36], [.72, -.5], [.52, .9], [0, 1.36], [-.52, .9], [-.72, -.5]], mode: "table", k: .46, cx: 0, cy: 0, soft: .2 };
   S.sun = { o: ring(16, (a, i) => i % 2 ? .88 : 1.3), mode: "fan", cx: 0, cy: 0, soft: .45 };
+  // the six forest charms. art(x, s, C) paints inside the outline in place of facets; over(x, s, C) paints after the outline; glint is where the sparkle sits
+  const dot = (x, s, px, py, r) => { x.beginPath(); x.arc(px * s, py * s, r * s, 0, 6.2832); x.fill(); }, LEAFA = .6;
+  S.mushroom = { o: (() => { const o = []; for (let i = 0; i <= 10; i++) { const a = P + i * P / 10; o.push([Math.cos(a) * 1.3, -.02 + Math.sin(a) * 1.22]); } return o.concat([[1.02, .28], [.5, .28], [.56, 1.08], [.3, 1.3], [-.3, 1.3], [-.56, 1.08], [-.5, .28], [-1.02, .28]]); })(), mode: "table", k: .5, cx: 0, cy: -.3, soft: .4, glint: [-.18, -.92],
+    art: (x, s, C) => { x.fillStyle = mixc(C.d, "#000000", .2); x.fillRect(-s * 1.4, s * .06, s * 2.8, s * .26);
+      const g = x.createLinearGradient(-s * .6, 0, s * .6, 0); g.addColorStop(0, "#fffaf0"); g.addColorStop(1, "#dcc8a0"); x.fillStyle = g; x.fillRect(-s * .7, s * .28, s * 1.4, s * 1.2);
+      x.fillStyle = "#fff"; dot(x, s, -.64, -.38, .23); dot(x, s, .3, -.7, .21); dot(x, s, .8, -.2, .15); dot(x, s, -.02, -.16, .13); } };
+  S.nut = { o: S.acorn.o, mode: "table", k: .5, cx: 0, cy: -.1, soft: .5,
+    art: (x, s, C) => { x.fillStyle = mixc(C.d, "#3a1c00", .45); x.fillRect(-s * 1.4, -s * 1.5, s * 2.8, s * 1.24);
+      x.strokeStyle = "rgba(255,255,255,.26)"; x.lineWidth = Math.max(1, s * .07); for (let i = -6; i <= 6; i++) { x.beginPath(); x.moveTo((i * .36 - .6) * s, -1.5 * s); x.lineTo((i * .36 + .6) * s, -.26 * s); x.moveTo((i * .36 + .6) * s, -1.5 * s); x.lineTo((i * .36 - .6) * s, -.26 * s); x.stroke(); }
+      x.fillStyle = mixc(C.d, "#000000", .25); x.fillRect(-s * 1.4, -s * .3, s * 2.8, s * .1);
+      x.fillStyle = "rgba(255,255,255,.4)"; x.beginPath(); x.ellipse(-s * .4, s * .32, s * .15, s * .42, .25, 0, 6.2832); x.fill(); },
+    over: (x, s, C) => { x.fillStyle = mixc(C.d, "#3a1c00", .6); x.strokeStyle = mixc(C.d, "#000000", .5); x.lineWidth = Math.max(1.2, s * .07); x.beginPath(); x.roundRect(-s * .13, -s * 1.62, s * .26, s * .42, s * .08); x.fill(); x.stroke(); } };
+  S.leaf = { o: (() => { const o = [], n = 9, pt = (u, sd) => { const y = -1.38 + 2.7 * u, w = .8 * Math.pow(Math.sin(P * u), .75) * sd; return [w * Math.cos(LEAFA) - y * Math.sin(LEAFA), w * Math.sin(LEAFA) + y * Math.cos(LEAFA)]; }; for (let i = 0; i <= n; i++) o.push(pt(i / n, 1)); for (let i = n - 1; i >= 1; i--) o.push(pt(i / n, -1)); return o; })(), mode: "table", k: .5, cx: 0, cy: 0, soft: .45, glint: [.1, -.68],
+    art: (x, s, C) => { x.save(); x.rotate(LEAFA); x.fillStyle = "rgba(255,255,255,.2)"; x.fillRect(0, -s * 1.6, s * 1.6, s * 3.2);
+      x.strokeStyle = mixc(C.d, "#000000", .1); x.lineCap = "round"; x.lineWidth = Math.max(1.4, s * .1); x.beginPath(); x.moveTo(0, -s * 1.3); x.lineTo(0, s * 1.3); x.stroke();
+      x.lineWidth = Math.max(1, s * .06); x.beginPath(); for (let k = -2; k <= 2; k++) { const y = k * .42 * s + s * .15; x.moveTo(0, y); x.lineTo(s * .6, y - s * .42); x.moveTo(0, y); x.lineTo(-s * .6, y - s * .42); } x.stroke(); x.restore(); },
+    over: (x, s, C) => { x.save(); x.rotate(LEAFA); x.strokeStyle = mixc(C.d, "#000000", .3); x.lineCap = "round"; x.lineWidth = Math.max(2, s * .15); x.beginPath(); x.moveTo(0, s * 1.26); x.lineTo(0, s * 1.6); x.stroke(); x.restore(); } };
+  S.bell = { o: [[0, -1.3], [.42, -1.16], [.58, -.45], [.8, .28], [1.27, .72], [1.06, 1.22], [.55, .98], [0, 1.32], [-.55, .98], [-1.06, 1.22], [-1.27, .72], [-.8, .28], [-.58, -.45], [-.42, -1.16]], mode: "table", k: .5, cx: 0, cy: .1, soft: .45, glint: [-.3, -.4],
+    art: (x, s, C) => { x.fillStyle = mixc(C.d, "#000000", .15); x.beginPath(); x.ellipse(0, s * .95, s * .8, s * .27, 0, 0, 6.2832); x.fill();
+      x.fillStyle = "#ffd23f"; dot(x, s, -.2, 1.0, .11); dot(x, s, 0, 1.07, .11); dot(x, s, .2, 1.0, .11);
+      x.strokeStyle = "rgba(255,255,255,.45)"; x.lineWidth = Math.max(1, s * .07); x.lineCap = "round"; x.beginPath(); x.moveTo(-s * .16, -s * 1.05); x.quadraticCurveTo(-s * .3, 0, -s * .58, s * .78); x.moveTo(s * .16, -s * 1.05); x.quadraticCurveTo(s * .3, 0, s * .58, s * .78); x.stroke(); },
+    over: (x, s, C) => { x.strokeStyle = "#1c5a2a"; x.lineCap = "round"; x.lineWidth = Math.max(2, s * .13); x.beginPath(); x.moveTo(0, -s * 1.3); x.quadraticCurveTo(s * .05, -s * 1.5, s * .22, -s * 1.62); x.stroke();
+      x.fillStyle = "#4cbf5a"; x.lineWidth = Math.max(1.2, s * .06); x.beginPath(); x.ellipse(0, -s * 1.24, s * .42, s * .2, 0, 0, 6.2832); x.fill(); x.stroke(); } };
+  S.bramble = { o: ring(24, () => 1.16).map(q => [q[0] * (1 - .2 * Math.max(0, q[1] / 1.16)), q[1] * 1.04 + .08]), mode: "table", k: .5, cx: 0, cy: .1, soft: .5, glint: [-.5, -.62],
+    art: (x, s, C) => { for (const [px, py] of [[-.62, -.6], [0, -.66], [.62, -.6], [-.93, -.02], [-.31, .0], [.31, .0], [.93, -.02], [-.6, .58], [0, .62], [.6, .58], [-.28, 1.1], [.28, 1.1]]) { const g = x.createRadialGradient((px - .1) * s, (py - .12) * s, 0, px * s, py * s, .38 * s); g.addColorStop(0, mixc(C.c, C.l, .8)); g.addColorStop(.5, C.c); g.addColorStop(1, mixc(C.c, C.d, .8)); x.fillStyle = g; dot(x, s, px, py, .36); x.fillStyle = "rgba(255,255,255,.7)"; dot(x, s, px - .12, py - .13, .07); } },
+    over: (x, s, C) => { x.fillStyle = "#4cbf5a"; x.strokeStyle = "#1c5a2a"; x.lineWidth = Math.max(1.2, s * .06); for (const a of [-1, 0, 1]) { x.save(); x.translate(0, -s * 1.02); x.rotate(a); x.beginPath(); x.ellipse(0, -s * .26, s * .17, s * .32, 0, 0, 6.2832); x.fill(); x.stroke(); x.restore(); } } };
+  S.drop = { o: (() => { const o = [[0, -1.4], [.4, -.72]]; for (let i = 0; i <= 12; i++) { const a = (-35 + i * 250 / 12) * P / 180; o.push([Math.cos(a) * 1.04, .3 + Math.sin(a) * 1.04]); } o.push([-.4, -.72]); return o; })(), mode: "table", k: .5, cx: 0, cy: .2, soft: .45, glint: [-.38, .0],
+    art: (x, s, C) => { x.fillStyle = mixc(C.c, C.d, .45); x.globalAlpha = .55; x.beginPath(); x.ellipse(s * .12, s * .78, s * .82, s * .5, 0, 0, 6.2832); x.fill(); x.globalAlpha = 1;
+      x.fillStyle = "rgba(255,255,255,.5)"; x.beginPath(); x.ellipse(-s * .34, s * .2, s * .2, s * .46, .3, 0, 6.2832); x.fill();
+      x.strokeStyle = "rgba(255,255,255,.55)"; x.lineWidth = Math.max(1, s * .06); for (const [hx_, hy] of [[.34, .5], [.02, .86], [.56, .92]]) { x.beginPath(); for (let i = 0; i < 6; i++) { const a = i * 1.0472 + .5236; x.lineTo((hx_ + Math.cos(a) * .2) * s, (hy + Math.sin(a) * .2) * s); } x.closePath(); x.stroke(); } } };
   return S;
 })();
 const hx = (h) => { const n = parseInt(h.slice(1), 16); return [n >> 16, n >> 8 & 255, n & 255]; };
@@ -2459,14 +2496,14 @@ function drawGem(g, px, py, scale, now, sy = 1, rot = 0) {
 }
 function drawGemRaw(ctx, g, now) {
   const C = PAL[g.color]; ctx.save();
-  if (g.kind === "ing") { // key
-    ctx.fillStyle = "#ffd200"; ctx.strokeStyle = "#7a4a00"; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(0, -CELL * .14, CELL * .18, 0, 6.28); ctx.fill(); ctx.stroke();
-    ctx.shadowColor = "transparent";
-    ctx.fillStyle = "#10123e"; ctx.beginPath(); ctx.arc(0, -CELL * .14, CELL * .065, 0, 6.28); ctx.fill();
-    ctx.fillStyle = "#ffd200"; ctx.strokeStyle = "#7a4a00"; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.roundRect(-CELL * .055, 0, CELL * .11, CELL * .34, 2); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.rect(0, CELL * .15, CELL * .15, CELL * .07); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.rect(0, CELL * .26, CELL * .12, CELL * .07); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = "rgba(255,255,255,.8)"; ctx.beginPath(); ctx.ellipse(-CELL * .06, -CELL * .2, CELL * .05, CELL * .03, -.7, 0, 6.28); ctx.fill();
+  if (g.kind === "ing") { // a seed on its way to the soil: a pale halo so it is never lost among the charms, a brown seed, two green leaves
+    const u = CELL; ctx.fillStyle = "rgba(255,255,255,.3)"; ctx.beginPath(); ctx.arc(0, 0, u * .43, 0, 6.28); ctx.fill(); ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = 2; ctx.setLineDash([u * .1, u * .07]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.shadowColor = "transparent"; ctx.lineJoin = "round"; ctx.lineCap = "round";
+    ctx.strokeStyle = "#1c5a2a"; ctx.lineWidth = Math.max(2, u * .06); ctx.beginPath(); ctx.moveTo(0, u * .02); ctx.lineTo(0, -u * .2); ctx.stroke();
+    ctx.fillStyle = "#5fd36f"; ctx.lineWidth = Math.max(1.4, u * .035); for (const sx of [-1, 1]) { ctx.beginPath(); ctx.moveTo(0, -u * .18); ctx.quadraticCurveTo(sx * u * .08, -u * .4, sx * u * .3, -u * .34); ctx.quadraticCurveTo(sx * u * .22, -u * .14, 0, -u * .18); ctx.fill(); ctx.stroke(); }
+    const sg = ctx.createRadialGradient(-u * .07, u * .08, 0, 0, u * .16, u * .24); sg.addColorStop(0, "#fffdf2"); sg.addColorStop(1, "#e6c98c"); ctx.fillStyle = sg; ctx.strokeStyle = "#6b4a1c"; ctx.lineWidth = Math.max(1.6, u * .045);
+    ctx.beginPath(); ctx.ellipse(0, u * .17, u * .19, u * .22, 0, 0, 6.28); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "rgba(255,255,255,.6)"; ctx.beginPath(); ctx.ellipse(-u * .07, u * .09, u * .045, u * .08, .5, 0, 6.28); ctx.fill();
     ctx.restore(); return;
   }
   const s = CELL * .355, Q = SHAPES[C.shape], o = Q.o, edge = mixc(C.d, "#000000", .5);
@@ -2479,7 +2516,8 @@ function drawGemRaw(ctx, g, now) {
   gemPath(ctx, C.shape, s); ctx.fillStyle = edge; ctx.fill(); ctx.lineWidth = Math.max(2.5, CELL * .06); ctx.strokeStyle = edge; ctx.stroke();   // the gem sits on a thicker slab of its own dark edge
   { const bg = ctx.createRadialGradient(-s * .45, -s * .6, s * .1, 0, 0, s * 1.7); bg.addColorStop(0, mixc(C.c, C.l, .9)); bg.addColorStop(.45, C.c); bg.addColorStop(1, mixc(C.c, C.d, .85)); gemPath(ctx, C.shape, s); ctx.fillStyle = bg; ctx.fill(); }
   ctx.save(); gemPath(ctx, C.shape, s); ctx.clip(); ctx.globalAlpha = .38;
-  if (Q.mode === "fan") {
+  if (Q.art) { ctx.globalAlpha = 1; ctx.save(); Q.art(ctx, s, C); ctx.restore(); }
+  else if (Q.mode === "fan") {
     const n = o.length; for (let i = 0; i < n; i++) { const p = o[i], q = o[(i + 1) % n]; poly([[Q.cx, Q.cy], p, q], shade(lit(p, q, Q.cx, Q.cy) * .9 + (i % 2 ? -.18 : .2))); }
     ctx.strokeStyle = "rgba(255,255,255,.45)"; ctx.lineWidth = 1; ctx.beginPath(); for (let i = 0; i < n; i += 2) { ctx.moveTo(Q.cx * s, Q.cy * s); ctx.lineTo(o[i][0] * s, o[i][1] * s); } ctx.stroke();
   } else if (Q.mode === "strip") {
@@ -2498,12 +2536,13 @@ function drawGemRaw(ctx, g, now) {
   }
   ctx.globalAlpha = 1;
   // soft gloss across the upper half, a lighter rim along the bottom
-  { const gl = ctx.createLinearGradient(0, -s * 1.25, 0, s * .15); gl.addColorStop(0, "rgba(255,255,255,.55)"); gl.addColorStop(1, "rgba(255,255,255,0)"); ctx.fillStyle = gl; ctx.beginPath(); ctx.ellipse(-s * .1, -s * .62, s * 1.05, s * .62, -.25, 0, 6.2832); ctx.fill();
+  { const gl = ctx.createLinearGradient(0, -s * 1.25, 0, s * .15); gl.addColorStop(0, Q.art ? "rgba(255,255,255,.3)" : "rgba(255,255,255,.55)"); gl.addColorStop(1, "rgba(255,255,255,0)"); ctx.fillStyle = gl; ctx.beginPath(); ctx.ellipse(-s * .1, -s * .62, s * 1.05, s * .62, -.25, 0, 6.2832); ctx.fill();
     const rm = ctx.createRadialGradient(s * .35, s * 1.05, 0, s * .35, s * 1.05, s * .9); rm.addColorStop(0, mixc(C.c, C.l, .7)); rm.addColorStop(1, "rgba(255,255,255,0)"); ctx.globalAlpha = .4; ctx.fillStyle = rm; ctx.fillRect(-s * 1.5, 0, s * 3, s * 1.5); ctx.globalAlpha = 1; }
   ctx.restore();
   // smooth outline and one four-point glint
   gemPath(ctx, C.shape, s); ctx.lineWidth = Math.max(1.6, CELL * .032); ctx.strokeStyle = mixc(C.d, "#000000", .35); ctx.stroke();
-  { const gx = C.shape === "moon" ? -s * .62 : -s * .42, gy = C.shape === "moon" ? s * .05 : -s * .5, a = s * .3, b = s * .07; ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.beginPath(); ctx.moveTo(gx, gy - a); ctx.lineTo(gx + b, gy - b); ctx.lineTo(gx + a, gy); ctx.lineTo(gx + b, gy + b); ctx.lineTo(gx, gy + a); ctx.lineTo(gx - b, gy + b); ctx.lineTo(gx - a, gy); ctx.lineTo(gx - b, gy - b); ctx.closePath(); ctx.fill(); }
+  if (Q.over) { ctx.save(); ctx.shadowColor = "transparent"; Q.over(ctx, s, C); ctx.restore(); }
+  { const gx = Q.glint ? Q.glint[0] * s : C.shape === "moon" ? -s * .62 : -s * .42, gy = Q.glint ? Q.glint[1] * s : C.shape === "moon" ? s * .05 : -s * .5, a = s * .3, b = s * .07; ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.beginPath(); ctx.moveTo(gx, gy - a); ctx.lineTo(gx + b, gy - b); ctx.lineTo(gx + a, gy); ctx.lineTo(gx + b, gy + b); ctx.lineTo(gx, gy + a); ctx.lineTo(gx - b, gy + b); ctx.lineTo(gx - a, gy); ctx.lineTo(gx - b, gy - b); ctx.closePath(); ctx.fill(); }
   if (g.special === "h" || g.special === "v") { ctx.save(); gemPath(ctx, C.shape, s); ctx.clip(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 3.5; for (let i = -2; i <= 2; i++) { ctx.beginPath(); if (g.special === "h") { ctx.moveTo(-s * 1.4, i * s * .42); ctx.lineTo(s * 1.4, i * s * .42); } else { ctx.moveTo(i * s * .42, -s * 1.4); ctx.lineTo(i * s * .42, s * 1.4); } ctx.stroke(); } ctx.restore(); }
   if (g.special === "wrap") { ctx.strokeStyle = "#fff"; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(-s * 1.05, -s * 1.05, s * 2.1, s * 2.1, s * .25); ctx.stroke(); ctx.shadowColor = "transparent"; ctx.strokeStyle = C.d; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(-s * .78, -s * .78, s * 1.56, s * 1.56, s * .18); ctx.stroke(); }
   if (g.special === "fly") {   // a firefly: two wings and a glowing belly on the gem
@@ -2709,7 +2748,7 @@ function bestMove() {
 // then templates with {n} slots, and lines joined with " · " are translated piece by piece. A MutationObserver catches text as it appears,
 // so nothing else in the game needs to know about languages. Solver runs stay in English (tests read the English titles).
 const TR = {
-  "Score": "Puan", "stars to go": "yıldız kaldı", "keys left": "anahtar kaldı", "jelly left": "jöle kaldı", "blocks left": "blok kaldı", "Hardest of the place": "Buranın en zoru", "✨ New charms from here on: {1} and {2}": "✨ Buradan itibaren yeni tılsımlar: {1} ve {2}", "Stars for this level": "Bu seviyenin yıldızları",
+  "Score": "Puan", "stars to go": "yıldız kaldı", "seeds left": "tohum kaldı", "ash left": "kül kaldı", "brambles left": "diken kaldı", "Lucky Clover": "Şans Yoncası", "Wild Plum": "Yaban Eriği", "Robin Egg": "Kızılgerdan Yumurtası", "Hardest of the place": "Buranın en zoru", "✨ New charms from here on: {1} and {2}": "✨ Buradan itibaren yeni tılsımlar: {1} ve {2}", "Stars for this level": "Bu seviyenin yıldızları",
   "Skip": "Atla", "Next": "İleri", "Start": "Başla", "Close": "Kapat", "Step {1} of {2}": "{2} adımdan {1}.", "Show the guide": "Rehberi göster", "Level {1} · {2}": "Seviye {1} · {2}", "Next station: {1} · {2} · level {3}": "Sıradaki durak: {1} · {2} · seviye {3}", "Then: {1}": "Sonra: {1}", "Charmwood Station · the Green Line": "Charmwood İstasyonu · Yeşil Hat", "Where this train goes": "Bu tren nereye gidiyor", "Charmwood Station": "Charmwood İstasyonu",
   "The Green Line runs from here to the Crown, the highest ridge of Charmwood: eight stations, one every twenty-five levels. Mordo the magpie carried off the forest's charms and the woods went grey. Every level you win brings a charm home, and every charm draws a little green back into the trees.": "Yeşil Hat buradan Charmwood'un en yüksek sırtı Crown'a gider: sekiz durak, her yirmi beş seviyede bir. Saksağan Mordo ormanın tılsımlarını kaçırdı ve ağaçlar griye döndü. Kazandığın her seviye bir tılsımı eve getirir, her tılsım ağaçlara biraz yeşil geri verir.",
   "What is asked of you: clear the levels one by one, three stars where you can, and watch the forest turn green at every station. First stop: Ash Gate · Clear the ash · level 25": "Senden beklenen: seviyeleri tek tek geç, yapabildiğin yerde üç yıldız al ve her durakta ormanın yeşermesini izle. İlk durak: Ash Gate · Külleri temizle · seviye 25",
@@ -2726,7 +2765,7 @@ const TR = {
   "Your board is saved. Come back any time.": "Tahtan kaydedildi. İstediğin zaman dön.", "🔊 Sound": "🔊 Ses", "🔊 Sound on": "🔊 Ses açık", "🔇 Sound off": "🔇 Ses kapalı", "🎮 All games": "🎮 Tüm oyunlar", "All games": "Tüm oyunlar", "Sound on": "Ses açık", "Sound off": "Ses kapalı", "Perfect!": "Mükemmel!", "👥 Play with friends": "👥 Arkadaşlarla oyna",
   "Moves": "Hamle", "Goal": "Hedef", "Best": "En iyi", "Stars": "Yıldız", "Frenzy": "Çılgınlık", "Frenzy meter: pop gems to fill it": "Çılgınlık ölçeri: taş patlattıkça dolar", "Pause": "Duraklat", "Sound": "Ses", "Settings": "Ayarlar",
   "Level {1}": "Seviye {1}", "Level {1} complete": "Seviye {1} tamamlandı", "Level complete": "Seviye tamamlandı", "★ 1 star = 1,000 points": "★ 1 yıldız = 1.000 puan", "Stars earned ★ {1}": "Kazanılan yıldız ★ {1}",
-  "Earn {1} star": "{1} yıldız kazan", "Earn {1} stars": "{1} yıldız kazan", "Clear all the jelly": "Bütün jöleyi temizle", "Bring down {1} keys": "{1} anahtarı aşağı indir", "Break all the blockers": "Bütün engelleri kır",
+  "Earn {1} star": "{1} yıldız kazan", "Earn {1} stars": "{1} yıldız kazan", "Clear all the ash": "Bütün külü temizle", "Bring {1} seeds down to the soil": "{1} tohumu toprağa indir", "Cut back all the brambles": "Bütün dikenleri temizle",
   "⭐ {1}": "⭐ {1}", "{1} moves left, ★ {2}": "{1} hamle kaldı, ★ {2}", "★ {1}": "★ {1}", "🔑 {1}": "🔑 {1}", "🟪 all": "🟪 hepsi", "🧊 all": "🧊 hepsi",
   "Hard level": "Zor seviye", "Super hard level": "Çok zor seviye", "🔥 Hard level": "🔥 Zor seviye", "☠️ Super hard level": "☠️ Çok zor seviye", "+{1} 🥕": "+{1} 🥕", "{1} Mordo's level": "{1} Mordo'nun seviyesi",
   "🎁 Win streak ×{1}: start with {2} special gem": "🎁 Galibiyet serisi ×{1}: {2} özel taşla başla", "🎁 Win streak ×{1}: start with {2} special gems": "🎁 Galibiyet serisi ×{1}: {2} özel taşla başla", "🎁 Win streak ×{1}: Pogo's gift is on the board": "🎁 Galibiyet serisi ×{1}: Pogo'nun hediyesi tahtada",
@@ -2800,8 +2839,8 @@ const TR = {
   "His wood": "Onun ormanı", "Every tree here hides something stolen. The last stretch is the hardest Mordo has.": "Buradaki her ağaç çalıntı bir şey saklıyor. Son bölüm Mordo'nun en zoru.",
   "The tallest pine": "En uzun çam", "The nest sits at the very top, full of light. Ten levels to the last charm.": "Yuva en tepede, ışıkla dolu. Son tılsıma on seviye.",
   "The far shore": "Uzak kıyı", "Mordo kept his word, but his flock did not. Half the charms are across the water. Pogo takes the ferry. Crates and stone now turn up together.": "Mordo sözünü tuttu ama sürüsü tutmadı. Tılsımların yarısı suyun ötesinde. Pogo feribota biniyor. Sandıklar ve taşlar artık birlikte çıkıyor.",
-  "A light to steer by": "Yol gösteren ışık", "The lighthouse keeper saw magpies heading up the coast. The keys are hidden deeper here: bring them all the way down.": "Fener bekçisi saksağanların kıyı boyunca gittiğini gördü. Anahtarlar burada daha derinde: hepsini en aşağıya indir.",
-  "Caught in the pools": "Gölcüklere takılanlar", "Charms glint under the water at low tide. Double jelly covers the pools: clear each twice.": "Tılsımlar cezir vakti suyun altında parlıyor. Gölcükleri çift jöle kaplıyor: her birini iki kez temizle.",
+  "A light to steer by": "Yol gösteren ışık", "The lighthouse keeper saw magpies heading up the coast. The seeds are buried deeper here: bring every one down to the soil.": "Fener bekçisi saksağanların kıyı boyunca gittiğini gördü. Tohumlar burada daha derinde: hepsini toprağa indir.",
+  "Caught in the pools": "Gölcüklere takılanlar", "Charms glint under the water at low tide. Ash lies twice as thick over the pools: clear each patch twice.": "Tılsımlar cezir vakti suyun altında parlıyor. Gölcüklerin üstünde kül iki kat kalın: her birini iki kez temizle.",
   "Along the sand": "Kum boyunca", "The flock dropped charms as they flew. The beach is wide and the countdown gems come faster.": "Sürü uçarken tılsım düşürdü. Kumsal geniş, geri sayım taşları daha hızlı geliyor.",
   "Fog in the reeds": "Sazlarda sis", "Half the board hides in fog. Mordo's cousin Gritt leads the flock now, and she guards the last level of every place.": "Tahtanın yarısı siste. Sürüyü artık Mordo'nun kuzeni Gritt yönetiyor ve her yerin son seviyesini o koruyor.",
   "Up the cliff": "Kayalığa doğru", "The path narrows and every board bites a little harder. Keep a special gem in reserve.": "Yol daralıyor ve her tahta biraz daha sert. Yedekte bir özel taş tut.",
