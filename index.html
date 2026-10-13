@@ -2326,6 +2326,14 @@ addEventListener("resize", layout); Arcade.gfx.onChange(() => layout());
 // ---------------------------------------------------------------- rendering
 // Everything that never changes during a level is drawn once into off-screen canvases.
 const ST = { bg: null, jelly: [], frost: [], choc: null, badge: new Map(), fonts: ["", "", ""] }, FCOL = ["#fff", "#a8e2ff", "#ffd200"];
+// Phones draw this canvas on the CPU, so every transparent pixel of a sprite still costs: this records the tight box of what was
+// actually drawn (bx, by, bw, bh) and drawGem copies only that box.
+function trimBox(c) {
+  try { const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data, W = c.width; let x0 = W, y0 = c.height, x1 = -1, y1 = -1;
+    for (let i = 3; i < d.length; i += 4) { if (!d[i]) continue; const px = (i >> 2) % W, py = ((i >> 2) / W) | 0; if (px < x0) x0 = px; if (px > x1) x1 = px; if (py < y0) y0 = py; if (py > y1) y1 = py; }
+    if (x1 >= x0) { c.bx = x0; c.by = y0; c.bw = x1 - x0 + 1; c.bh = y1 - y0 + 1; } } catch (err) {}
+  return c;
+}
 function mkCan(w, h) { const c = document.createElement("canvas"); c.width = Math.ceil(w * DPR); c.height = Math.ceil(h * DPR); const x = c.getContext("2d"); x.setTransform(DPR, 0, 0, DPR, 0, 0); return [c, x]; }
 function buildStatic() {
   const W = CELL * COLS; let [cv, x] = mkCan(W, W);
@@ -2427,7 +2435,9 @@ function shadowSprite() {
   if (SPR.shadow && SPR.shadowSize === CELL * DPR) return SPR.shadow;
   const S = Math.ceil(CELL * 1.6 * DPR), c = document.createElement("canvas"); c.width = S; c.height = S; const x = c.getContext("2d");
   const g = x.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2); g.addColorStop(0, "rgba(0,0,0,.55)"); g.addColorStop(.55, "rgba(0,0,0,.3)"); g.addColorStop(1, "rgba(0,0,0,0)");
-  x.fillStyle = g; x.beginPath(); x.ellipse(S / 2, S / 2, S / 2, S / 2 * .55, 0, 0, 6.28); x.fill(); SPR.shadow = c; SPR.shadowSize = CELL * DPR; return c;
+  x.fillStyle = g; x.beginPath(); x.ellipse(S / 2, S / 2, S / 2, S / 2 * .55, 0, 0, 6.28); x.fill(); SPR.shadow = c; SPR.shadowSize = CELL * DPR;
+  const rw = Math.round(S * .72), rh = Math.ceil(rw * .55), rc = document.createElement("canvas"); rc.width = rw; rc.height = rh; const rx = rc.getContext("2d"); rx.globalAlpha = .9; rx.drawImage(c, 0, S * .225, S, S * .55, 0, 0, rw, rh); SPR.shadowRest = rc;   // resting gems: already at size and strength, copied 1:1
+  return c;
 }
 const easeBack = (t) => { const c = 1.9; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
 const clamp01 = (t) => t < 0 ? 0 : t > 1 ? 1 : t;
@@ -2535,14 +2545,14 @@ function sprite(g) {
   let sp = SPR.map.get(key); if (sp) return sp;
   const S = Math.ceil(CELL * 1.9 * DPR), c = document.createElement("canvas"); c.width = S; c.height = S;
   const x = c.getContext("2d"); x.setTransform(DPR, 0, 0, DPR, 0, 0); x.translate(S / DPR / 2, S / DPR / 2);
-  drawGemRaw(x, g, 0); SPR.map.set(key, c); return c;
+  drawGemRaw(x, g, 0); SPR.map.set(key, trimBox(c)); return c;
 }
 const easeSwap = (t) => { const c = .9, u = t - 1; return 1 + (c + 1) * u * u * u + c * u * u; };   // quick start, tiny overshoot, soft settle
 function drawGem(g, px, py, scale, now, sy = 1, rot = 0) {
-  const sp = sprite(g), w = sp.width / DPR * scale, h = w * sy;
-  if (rot) { ctx.save(); ctx.translate(px, py); ctx.rotate(rot); ctx.drawImage(sp, -w / 2, -h / 2, w, h); ctx.restore(); }
-  else if (scale === 1 && sy === 1) ctx.drawImage(sp, Math.round((px - w / 2) * DPR) / DPR, Math.round((py - h / 2) * DPR) / DPR, w, h);   // resting gems sit on whole device pixels: no shimmer
-  else ctx.drawImage(sp, px - w / 2, py - h / 2, w, h);
+  const sp = sprite(g), w = sp.width / DPR * scale, h = w * sy, k = scale / DPR, bx = sp.bx || 0, by = sp.by || 0, bw = sp.bw || sp.width, bh = sp.bh || sp.height;
+  if (rot) { ctx.save(); ctx.translate(px, py); ctx.rotate(rot); ctx.drawImage(sp, bx, by, bw, bh, -w / 2 + bx * k, -h / 2 + by * k * sy, bw * k, bh * k * sy); ctx.restore(); }
+  else if (scale === 1 && sy === 1) ctx.drawImage(sp, bx, by, bw, bh, (Math.round((px - w / 2) * DPR) + bx) / DPR, (Math.round((py - h / 2) * DPR) + by) / DPR, bw / DPR, bh / DPR);   // resting gems sit on whole device pixels: no shimmer, no resampling
+  else ctx.drawImage(sp, bx, by, bw, bh, px - w / 2 + bx * k, py - h / 2 + by * k * sy, bw * k, bh * k * sy);
   if (g.special === "bomb") {   // the orb is a cached sprite, only the orbiting beads are drawn live
     const s = CELL * .36 * scale; ctx.lineWidth = 1.5; ctx.strokeStyle = "#fff";
     for (let i = 0; i < 7; i++) { const a = now / 500 + i * .9 + rot, rr = s * (.62 + .08 * Math.sin(now / 250 + i)); ctx.beginPath(); ctx.arc(px + Math.cos(a) * rr, py + Math.sin(a) * rr * sy, s * .2, 0, 6.2832); ctx.fillStyle = PAL[i % NCOL].c; ctx.fill(); ctx.stroke(); }
@@ -2687,7 +2697,8 @@ function render(ts) { ts = Arcade.gfx.time(ts);
     if (vel > .01) sy *= 1 + Math.min(.2, vel * 1.4);   // stretch while falling fast
     const px = (g.x + ox + .5) * CELL, py = (g.y + oy + .5) * CELL + (1 - sy) * CELL * .22;
     // contact shadow (grows + softens when the gem lifts)
-    const sw = shw * (.72 + lift * .25) * sc; ctx.globalAlpha = (.9 - lift * .4) * al; ctx.drawImage(shd, px - sw / 2, py + CELL * (.12 + lift * .1) - sw / 2, sw, sw);
+    if (sc === 1 && !lift && al === 1) { const rs = SPR.shadowRest; ctx.globalAlpha = 1; ctx.drawImage(rs, Math.round(px * DPR - rs.width / 2) / DPR, Math.round((py + CELL * .12) * DPR - rs.height / 2) / DPR, rs.width / DPR, rs.height / DPR); }
+    else { const sw = shw * (.72 + lift * .25) * sc; ctx.globalAlpha = (.9 - lift * .4) * al; ctx.drawImage(shd, 0, shd.height * .225, shd.width, shd.height * .55, px - sw / 2, py + CELL * (.12 + lift * .1) - sw * .275, sw, sw * .55); }
     if (vel > .06 && !g.intro) { ctx.globalAlpha = Math.min(.28, vel * 2) * al; drawGem(g, px, py - vel * CELL * 1.5, sc, now, sy * 1.08, rot); }   // short trail
     ctx.globalAlpha = al; drawGem(g, px, py - lift * CELL * .08, sc, now, sy, rot);
     if (g.fuse) {
