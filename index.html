@@ -100,7 +100,8 @@
   @keyframes flow { to { stroke-dashoffset: -36; } }
   /* ---------- map ---------- */
   #map { overflow: auto; padding: 0; overscroll-behavior: none; overscroll-behavior-x: none; background: var(--mapbg, #5fc96a); cursor: grab; scroll-snap-type: y proximity; scrollbar-width: none; } #map::-webkit-scrollbar { display: none; } .lv { scroll-snap-align: center; } #map.dragging { cursor: grabbing; } #map.dragging .lv { pointer-events: none; }
-  .top { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; padding: max(14px, env(safe-area-inset-top)) 18px 10px; background: linear-gradient(#7a30f0 40%, rgba(122, 48, 240, 0)); }
+  /* fixed to the screen, not sticky: the map now scrolls sideways too, and a sticky bar slid away with it */
+  .top { position: fixed; top: 0; left: 0; right: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; padding: max(14px, env(safe-area-inset-top)) 18px 10px; background: linear-gradient(#7a30f0 40%, rgba(122, 48, 240, 0)); }
   .logo { font-size: 28px; font-weight: 900; letter-spacing: -.03em; color: #fff; text-shadow: 0 3px 0 #27096b, 0 8px 20px rgba(0, 0, 0, .35); }
   .logo span { background: linear-gradient(100deg, #ffd23f 0%, #fff6b8 30%, #ff8adb 50%, #ffd23f 70%, #ffb300 100%); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; filter: drop-shadow(0 3px 0 #27096b); animation: logoShine 4s linear infinite; }
   @keyframes logoShine { from { background-position: 0% 0; } to { background-position: 220% 0; } }
@@ -134,7 +135,7 @@
   canvas.pogo { filter: none !important; }
   html.petting .prop img, html.petting .prop b, html.petting u.confetti, html.petting .node, html.petting .bg i, html.petting .bg::after, html.petting .path .flow, html.petting .logo, html.petting .mapbar button { animation-play-state: paused !important; }
   html.petting #mPet canvas.pogo { will-change: contents; }
-  .path { isolation: isolate; }
+  .path { isolation: isolate; overflow: clip; }
   .gloom { position: absolute; inset: 0; pointer-events: none; z-index: -2; background: rgba(2, 1, 10, .9); }
   canvas.rail { position: absolute; pointer-events: none; }
   .prop.scatter { z-index: 0; } .prop.scatter img { width: 2.4em; height: 2.4em; }
@@ -394,7 +395,7 @@
   /* gloss: a light rim on top and a soft shade below on every pill, HUD box and bar button */
   .pill, .mapbar button:not(.ready) { box-shadow: 0 4px 0 #27096b, inset 0 2px 0 rgba(255, 255, 255, .45), inset 0 -6px 10px rgba(39, 9, 107, .35); }
   /* ---- map v3: bands, path, stops, props */
-  .band { position: absolute; left: -30px; right: -30px; z-index: 0; background: linear-gradient(180deg, var(--s1) 0%, var(--s2) 13%, var(--g) 14%, color-mix(in srgb, var(--g) 72%, #2a6a3a) 100%); border-top: 3px solid rgba(255, 255, 255, .55); box-shadow: inset 0 -40px 60px rgba(0, 0, 0, .12); }
+  .band { position: absolute; left: 0; right: 0; z-index: 0; background: linear-gradient(180deg, var(--s1) 0%, var(--s2) 13%, var(--g) 14%, color-mix(in srgb, var(--g) 72%, #2a6a3a) 100%); border-top: 3px solid rgba(255, 255, 255, .55); box-shadow: inset 0 -40px 60px rgba(0, 0, 0, .12); }
   .band::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, .25), rgba(255, 255, 255, 0) 60%); }
   .band.lock { filter: saturate(.12) brightness(.5); } .band.lock { border-top: 0; } .band:not(.lock):not(.ground) { filter: saturate(1.25) brightness(1.04); }
   .band.ground { background: linear-gradient(180deg, var(--g) 0%, color-mix(in srgb, var(--g) 72%, #2a6a3a) 100%); border-top: 4px solid rgba(255, 255, 255, .9); box-shadow: 0 -2px 0 rgba(40, 20, 80, .6); }
