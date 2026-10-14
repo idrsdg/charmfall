@@ -103,7 +103,7 @@
   /* fixed to the screen, not sticky: the map now scrolls sideways too, and a sticky bar slid away with it */
   .top { position: fixed; top: 0; left: 0; right: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; padding: max(14px, env(safe-area-inset-top)) 18px 10px; background: linear-gradient(#2f8f4a 40%, rgba(47, 143, 74, 0)); }
   .logo { font-size: 28px; font-weight: 900; letter-spacing: -.03em; color: #fff; text-shadow: 0 3px 0 #123a1c, 0 8px 20px rgba(0, 0, 0, .35); }
-  .logo span { background: linear-gradient(100deg, #ffd23f 0%, #fff6b8 30%, #ff8adb 50%, #ffd23f 70%, #ffb300 100%); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; filter: drop-shadow(0 3px 0 #123a1c); animation: logoShine 4s linear infinite; }
+  .logo span { background: linear-gradient(100deg, #ffd23f 0%, #fff6b8 30%, #ff8adb 50%, #ffd23f 70%, #ffb300 100%); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; filter: drop-shadow(0 3px 0 #123a1c); }   /* the shine sweep repainted the filtered logo on every frame of the map */
   @keyframes logoShine { from { background-position: 0% 0; } to { background-position: 220% 0; } }
   .node::after { content: ""; position: absolute; left: 16%; top: 9%; width: 46%; height: 30%; border-radius: 50%; background: linear-gradient(rgba(255, 255, 255, .7), rgba(255, 255, 255, 0)); transform: rotate(-24deg); pointer-events: none; }
   .node.done { animation: nodeIn .5s cubic-bezier(.2, 1.4, .4, 1) both, nodeBob 2.8s ease-in-out var(--bd, 0s) infinite; }
@@ -264,7 +264,7 @@
   .btn { position: relative; overflow: hidden; }
   .btn::before { content: ""; position: absolute; left: 6%; right: 6%; top: 3px; height: 42%; border-radius: 999px; background: linear-gradient(rgba(255, 255, 255, .55), rgba(255, 255, 255, 0)); pointer-events: none; }
   .btn:not(.ghost)::after { content: ""; position: absolute; top: -20%; bottom: -20%; left: -60%; width: 38%; transform: skewX(-22deg); background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .75), rgba(255, 255, 255, 0)); animation: shine 3.2s ease-in-out infinite; pointer-events: none; }
-  @keyframes shine { 0%, 55% { left: -60%; } 85%, 100% { left: 130%; } }
+  @keyframes shine { 0%, 55% { transform: translateX(0) skewX(-22deg); } 85%, 100% { transform: translateX(500%) skewX(-22deg); } }   /* moved by transform, not by left: no layout while it sweeps */
   #sPlay:not(.ghost), #sCont, #stGo, #dClaim { animation: breathe 1.5s ease-in-out infinite; }
   @keyframes breathe { 0%, 100% { scale: 1; } 50% { scale: 1.045; } }
   .btn.ghost { background: linear-gradient(#63d6ff, #2a8ff5); color: #fff; text-shadow: 0 2px 0 rgba(10, 50, 130, .55); box-shadow: 0 5px 0 #1557b0, 0 10px 20px rgba(0, 0, 0, .3); }
@@ -435,7 +435,7 @@
   .lvplate.l { left: auto; right: calc(100% + 10px); }
   .lvplate.st { pointer-events: auto; cursor: pointer; }
   .mprop.stn { pointer-events: auto; cursor: pointer; z-index: 2; } .mprop.stn .lvplate { left: 50%; right: auto; top: auto; bottom: calc(100% - 4px); transform: translateX(-50%); }
-  .mprop.train { z-index: 2; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .3)); }
+  .mprop.train { z-index: 2; }
   #path .mprop:not(.vis) img, #path u.firefly:not(.vis) { animation-play-state: paused !important; }
   #map:not([hidden]) { animation: screenIn .28s ease-out both; } @keyframes screenIn { from { opacity: 0; } to { opacity: 1; } }
   .mprop.work { pointer-events: auto; cursor: pointer; z-index: 2; } .mprop.work::before { content: ""; position: absolute; left: 4%; right: 4%; bottom: -4%; height: 34%; border-radius: 50%; background: radial-gradient(ellipse, #b08a5a 0 55%, #8a6a40 56% 100%); box-shadow: 0 4px 0 rgba(0, 0, 0, .25); z-index: -1; } .mprop.work.lock::before { filter: grayscale(1) brightness(.6); } .mprop.work.ruin img { filter: grayscale(.9) brightness(.8); opacity: .85; } .mprop.work .lvplate { left: 50%; right: auto; top: auto; bottom: calc(100% - 6px); transform: translateX(-50%); animation: pulse 1.4s infinite; }
@@ -451,7 +451,7 @@
   .dots { display: flex; justify-content: center; gap: 7px; margin: 4px 0 14px; } .dots i { width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, .35); } .dots i.on { background: #ffe27a; }
   .row { display: flex; gap: 10px; justify-content: center; } .row .btn { min-width: 120px; }
   .lv.lock .lvplate { opacity: .7; filter: grayscale(.5); }
-  .pogoMap.pogoBig { width: 105px; margin: -88px 0 0 -52px; z-index: 3; filter: drop-shadow(0 12px 10px rgba(0, 0, 0, .35)); }
+  .pogoMap.pogoBig { width: 105px; margin: -88px 0 0 -52px; z-index: 3; }   /* no drop-shadow filter: his canvas changes every frame and the filter was redone each time; he has his own ground shadow */
   @media (max-width: 600px) { .pogoMap.pogoBig { width: 90px; margin: -75px 0 0 -45px; } }
   #map u.firefly { width: 30px; height: 30px; margin: -15px 0 0 -15px; }
 </style>
@@ -903,7 +903,7 @@ const P3 = (() => {
     });
     for (const cv of slots.keys()) if (!cv.isConnected) slots.delete(cv);
     if (wantW) { const w = Math.min(RW, Math.max(96, wantW)); if (w !== bufW) { bufW = w; bufH = Math.round(w * RH / RW); R.setSize(bufW, bufH, false); } wantW = 0; }   // takes effect from the next frame
-    if (window.__p3) { window.__p3.ms += performance.now() - p3t; window.__p3.n++; }
+    if (window.__p3) { const d = performance.now() - p3t; window.__p3.ms += d; window.__p3.n++; if (d >= 3 && PERF.cur.length < 12) PERF.cur.push("p3:" + Math.round(d)); }
   }
   requestAnimationFrame(frame); return true;
 })();
@@ -2673,17 +2673,19 @@ const LIST = [];
 let lastTs = 0;
 // Frame-pacing probe (app only): what the phone really does cannot be seen from a desktop browser, so the app reports a short summary
 // of real frame intervals and of the time this function takes, split into quiet frames and frames with something moving.
-const PERF = { last: 0, iv: [[], []], js: [0, 0], jsMax: [0, 0], sent: 0, pMax: 0, cur: [], long: [] };
+const PERF = { last: 0, iv: [[], []], js: [0, 0], jsMax: [0, 0], sent: 0, pMax: 0, cur: [], long: [], prev: "" };
 function perfNote(raw, t0, moving) {
-  const k = moving ? 1 : 0, d = raw - PERF.last; PERF.last = raw; if (d > 0 && d < 400) PERF.iv[k].push(d); if (d > (Arcade.gfx.period || 16.7) * 2.4 && d < 2000 && PERF.long.length < 10) PERF.long.push(Math.round(d) + (moving ? "m " : "i ") + PERF.cur.join(",")); PERF.cur.length = 0; const j = performance.now() - t0; PERF.js[k] += j; if (j > PERF.jsMax[k]) PERF.jsMax[k] = j; if (particles.length > PERF.pMax) PERF.pMax = particles.length;
+  const k = moving ? 1 : 0, d = raw - PERF.last; PERF.last = raw; if (d > 0 && d < 400) PERF.iv[k].push(d); if (d > (Arcade.gfx.period || 16.7) * 2.4 && d < 2000 && PERF.long.length < 10) PERF.long.push(Math.round(d) + (moving ? "m " : "i ") + PERF.prev + "|" + PERF.cur.join(",")); PERF.prev = PERF.cur.join(","); PERF.cur.length = 0; const j = performance.now() - t0; PERF.js[k] += j; if (j > PERF.jsMax[k]) PERF.jsMax[k] = j; if (particles.length > PERF.pMax) PERF.pMax = particles.length;
   if (PERF.iv[0].length + PERF.iv[1].length < 420 || PERF.sent >= 30) return;
   const sum = (a, tj, mx) => { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y), q = (p) => +s[Math.min(s.length - 1, Math.floor(s.length * p))].toFixed(1); return { n: a.length, med: q(.5), p90: q(.9), p99: q(.99), max: q(1), o20: a.filter(x => x > 20).length, o34: a.filter(x => x > 34).length, o50: a.filter(x => x > 50).length, js: +(tj / a.length).toFixed(2), jsMax: +mx.toFixed(1) }; };
-  const p = { v: 5, long: PERF.long.splice(0), idle: sum(PERF.iv[0], PERF.js[0], PERF.jsMax[0]), move: sum(PERF.iv[1], PERF.js[1], PERF.jsMax[1]), dpr: devicePixelRatio, DPR, cw: canvas.width, q: Arcade.gfx.quality, per: +(Arcade.gfx.period || 0).toFixed(2), low: !!window.__lowPower, pMax: PERF.pMax, lv: G ? G.level : -1, scr: screen.width + "x" + screen.height, ua: (navigator.userAgent.match(/OS [\d_]+/) || [""])[0] };
+  const p = { v: 7, long: PERF.long.splice(0), idle: sum(PERF.iv[0], PERF.js[0], PERF.jsMax[0]), move: sum(PERF.iv[1], PERF.js[1], PERF.jsMax[1]), dpr: devicePixelRatio, DPR, cw: canvas.width, q: Arcade.gfx.quality, per: +(Arcade.gfx.period || 0).toFixed(2), low: !!window.__lowPower, pMax: PERF.pMax, lv: G ? G.level : -1, scr: screen.width + "x" + screen.height, ua: (navigator.userAgent.match(/OS [\d_]+/) || [""])[0] };
   PERF.iv = [[], []]; PERF.js = [0, 0]; PERF.jsMax = [0, 0]; PERF.pMax = 0; PERF.sent++; api("perf", { p });
 }
 if (window.__nativeApp) {   // time the things that run outside the draw loop, so a long frame can name its cause
   for (const n of ["persist", "snapshot", "layout", "buildStatic", "updateHud", "hudInit", "checkAch", "cloudPush", "flyGoal", "toast", "tip", "findMatches", "findMove", "startLevel", "openLevel", "showMap", "buildMap", "mordoTurn", "sprite", "floatSprite", "confetti", "burst", "logEv", "evFlush", "pogoReact", "show", "hide", "bump", "spawnIngredient", "shuffle", "pack", "tr"]) {
     try { const f = eval(n); if (typeof f !== "function") continue; const w = function () { const t = performance.now(); try { return f.apply(this, arguments); } finally { const d = performance.now() - t; if (d >= 2 && PERF.cur.length < 12) PERF.cur.push(n + Math.round(d)); } }; eval(n + " = w"); } catch (e) {} }
+  for (const k in SFX) { const f = SFX[k]; if (typeof f === "function") SFX[k] = function () { const t = performance.now(); try { return f.apply(this, arguments); } finally { const d = performance.now() - t; if (d >= 1 && PERF.cur.length < 12) PERF.cur.push("sfx." + k + Math.round(d)); } }; }
+  { const v = navigator.vibrate; navigator.vibrate = function (p) { const t = performance.now(), r = v.call(navigator, p), d = performance.now() - t; if (d >= 1 && PERF.cur.length < 12) PERF.cur.push("buzz" + Math.round(d)); return r; }; }
   window.__p3 = { ms: 0, n: 0 }; let scrSent = 0; setInterval(() => { if (document.hidden || scrSent >= 14) return; const where = document.documentElement.classList.contains("petting") ? "pet" : !$("map").hidden ? "map" : ""; if (!where) return; const st = Arcade.gfx.stats, p3 = window.__p3, p3ms = p3.n ? +(p3.ms / p3.n).toFixed(2) : 0; p3.ms = p3.n = 0; scrSent++; api("perf", { p: { v: 6, where, p3ms, anims: document.getAnimations ? document.getAnimations().filter(a => a.playState === "running").length : -1, els: document.querySelectorAll("#map *").length, fps: st.fps, med: +(+st.med).toFixed(1), p90: +(+st.p90).toFixed(1), worst: st.worst, q: Arcade.gfx.quality, low: !!window.__lowPower } }); }, 7000);
 }
 function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
