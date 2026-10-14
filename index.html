@@ -2650,7 +2650,17 @@ function floatSprite(txt, cls) {
 }
 const LIST = [];
 let lastTs = 0;
-function render(ts) { ts = Arcade.gfx.time(ts);
+// Frame-pacing probe (app only): what the phone really does cannot be seen from a desktop browser, so the app reports a short summary
+// of real frame intervals and of the time this function takes, split into quiet frames and frames with something moving.
+const PERF = { last: 0, iv: [[], []], js: [0, 0], jsMax: [0, 0], sent: 0, pMax: 0 };
+function perfNote(raw, t0, moving) {
+  const k = moving ? 1 : 0, d = raw - PERF.last; PERF.last = raw; if (d > 0 && d < 400) PERF.iv[k].push(d); const j = performance.now() - t0; PERF.js[k] += j; if (j > PERF.jsMax[k]) PERF.jsMax[k] = j; if (particles.length > PERF.pMax) PERF.pMax = particles.length;
+  if (PERF.iv[0].length + PERF.iv[1].length < 420 || PERF.sent >= 30) return;
+  const sum = (a, tj, mx) => { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y), q = (p) => +s[Math.min(s.length - 1, Math.floor(s.length * p))].toFixed(1); return { n: a.length, med: q(.5), p90: q(.9), p99: q(.99), max: q(1), o20: a.filter(x => x > 20).length, o34: a.filter(x => x > 34).length, o50: a.filter(x => x > 50).length, js: +(tj / a.length).toFixed(2), jsMax: +mx.toFixed(1) }; };
+  const p = { v: 3, idle: sum(PERF.iv[0], PERF.js[0], PERF.jsMax[0]), move: sum(PERF.iv[1], PERF.js[1], PERF.jsMax[1]), dpr: devicePixelRatio, DPR, cw: canvas.width, q: Arcade.gfx.quality, per: +(Arcade.gfx.period || 0).toFixed(2), low: !!window.__lowPower, pMax: PERF.pMax, lv: G ? G.level : -1, scr: screen.width + "x" + screen.height, ua: (navigator.userAgent.match(/OS [\d_]+/) || [""])[0] };
+  PERF.iv = [[], []]; PERF.js = [0, 0]; PERF.jsMax = [0, 0]; PERF.pMax = 0; PERF.sent++; api("perf", { p });
+}
+function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
   requestAnimationFrame(render); if (!G) { lastTs = ts; return; }
   // the frame's own timestamp drives every animation, so motion advances by exactly one display interval per frame
   if (G.hold) { const pn = performance.now(); if (pn > G.hold + 60) G.hold = 0; else if (pn > G.hold) return; }
@@ -2805,6 +2815,7 @@ function render(ts) { ts = Arcade.gfx.time(ts);
     ctx.setTransform(sc, 0, 0, sc, f.x * CD + bx, (f.y - easeOut(t) * 1.1) * CD + by); ctx.drawImage(sp, -sp.width / 2, -sp.bl);
   }
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.globalAlpha = 1;
+  if (window.__nativeApp && !G.paused && !G.over) perfNote(raw, pf0, G.busy || particles.length > 0 || fx.length > 0 || dying.length > 0);
 }
 requestAnimationFrame(render);
 
