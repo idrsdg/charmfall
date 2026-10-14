@@ -801,6 +801,8 @@ const P3 = (() => {
   const nose = new T.Mesh(new T.ConeGeometry(.085, .09, 3), M.pink); nose.rotation.x = Math.PI; nose.position.set(0, -.15, .75); head.add(nose); ball(M.pink, 0, -.12, .74, .06, .04, .05, head);
   for (const k of [-1, 1]) for (let i = 0; i < 3; i++) { const w = new T.Mesh(new T.CylinderGeometry(.007, .003, .5, 4), M.whisk); w.position.set(k * .4, -.3 + i * .06, .58); w.rotation.set((i - 1) * .18, 0, k * (1.42 + i * .16)); head.add(w); }
   ball(M.white, -.045, -.36, .7, .04, .07, .03, head); ball(M.white, .045, -.36, .7, .04, .07, .03, head); const mouth = ball(M.mouth, 0, -.36, .62, .11, .1, .08, head);
+  // a small smile under the nose for whenever the mouth is shut: two short arcs that meet in the middle, the way a rabbit's mouth is drawn
+  const smile = grp(0, -.245, .735, head); for (const k of [-1, 1]) { const a = new T.Mesh(new T.TorusGeometry(.062, .011, 8, 18, Math.PI * .8), M.mouth); a.position.x = k * .06; a.rotation.z = Math.PI + Math.PI * .1; a.rotation.y = k * .35; smile.add(a); }
   const eyes = [-1, 1].map(k => { const g = grp(k * .31, .1, .61, head); g.rotation.y = k * .3; ball(M.white, 0, 0, -.01, .16, .19, .08, g); ball(M.iris, 0, 0, .03, .12, .15, .07, g); ball(M.ink, 0, -.01, .07, .075, .1, .04, g); ball(M.white, .05, .07, .1, .045, .045, .03, g); ball(M.white, -.04, -.06, .1, .022, .022, .015, g); return g; });
   ball(M.blush, -.56, -.12, .4, .11, .07, .06, head); ball(M.blush, .56, -.12, .4, .11, .07, .06, head);
   for (const k of [-1, 1]) { ball(M.fur, k * .62, -.2, .22, .2, .17, .18, head); ball(M.cream, k * .18, -.46, .44, .14, .1, .12, head); }   // cheek fluff and a soft chin
@@ -835,9 +837,14 @@ const P3 = (() => {
     [1.5, (b, u, p) => spin(u, p, 1, 2.9)],
     [2.4, (b, u, p) => { p.rz = 2.5 + Math.sin(b * 2) * .35; p.hz = .14; p.tz = -.06; p.mo = 1; p.y = Math.abs(Math.sin(b / 2)) * .04; }]   // a wave to the player
   ]; void actsOld;
-  const eatAct = (b, u, p) => { const up = Math.min(1, u / .12, (1 - u) / .08), bite = Math.floor(u * 6), bu = (u * 6) % 1, snap = bu < .18 ? Math.sin(bu / .18 * Math.PI) : 0;   // six bites; snap is the little pull-back of the head as the teeth go through
-    p.car = u < .96 ? Math.max(.1, 1 - bite * .16) : 0; p.lx = p.rx = -2.05 * up + snap * .06; p.lz = -.3 + .85 * up; p.rz = .3 - .85 * up; p.hx = .3 * up - snap * .12; p.hz = Math.sin(b / 3) * .05 * up; p.ear = .22 * up; p.eye = 1 - .45 * up;
-    const chew = bu > .25 ? Math.abs(Math.sin((bu - .25) * 10)) : 0; p.mo = up * (bu < .18 ? .9 : .25 + chew * .45); p.sq = 1 + chew * .008; };
+  // eating: the paws lift the carrot on an ease, five bites each followed by three rounded chews; the carrot gets shorter while the teeth
+  // are going through it (not in steps), the head nods into every bite and the ears and nose keep time with the chewing
+  const sm = (x) => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
+  const eatAct = (b, u, p) => { const up = sm(u / .14) * sm((1 - u) / .1), N = 5, f = Math.min(.999, Math.max(0, (u - .12) / .78)), bite = Math.floor(f * N), bu = (f * N) % 1;
+    const snap = f > 0 && bu < .22 ? Math.sin(bu / .22 * Math.PI) : 0, ct = bu > .22 ? (bu - .22) / .78 : 0, chew = ct ? (.5 - .5 * Math.cos(ct * Math.PI * 6)) * (1 - ct * .3) : 0;
+    p.car = u < .93 ? Math.max(.08, 1 - (bite + sm(bu / .22)) * .18) : 0; p.lx = p.rx = -2.05 * up + snap * .08; p.lz = -.3 + .85 * up; p.rz = .3 - .85 * up;
+    p.hx = .28 * up - snap * .14 + chew * .03; p.hz = Math.sin(u * Math.PI * 3) * .06 * up; p.hy = Math.sin(u * Math.PI * 2) * .08 * up; p.tz = Math.sin(u * Math.PI * 4) * .015 * up;
+    p.ear = .2 * up + chew * .05; p.eye = 1 - (.35 + .25 * chew) * up; p.mo = up * (snap ? .25 + .7 * snap : .12 + chew * .4); p.sq = 1 + chew * .012 - snap * .015; p.nz = 1 + chew * .15; };
   const TOTAL = acts.reduce((a, c) => a + c[0], 0), slots = new Map();
   function target(st, t, mood, face) {
     const p = Z(), b = t * Math.PI * 4; p.nz = twitch(t, st.ph); p.ef = flick(t, st.ph);
@@ -850,7 +857,8 @@ const P3 = (() => {
     if (mood === "calm") { p.hz = Math.sin(t * .9) * .06; p.hy = Math.sin(t * .5) * .28; p.hx = Math.sin(t * .7) * .04; p.ear = Math.max(0, Math.sin(t * 1.7) - .93) * 2; return p; }
     if (mood === "eat") { eatAct(b, Math.min(.999, t / 3.2), p); return p; }
     if (mood === "cheer") { p.hz = .2 + Math.sin(t * 1.6) * .06; p.hx = .12; p.ear = .5; p.tz = Math.sin(t * 1.6) * .04; p.lx = -.5; p.rx = -.5; p.lz = -.5; p.rz = .5; return p; }
-    let u = t % TOTAL, i = 0; while (u >= acts[i][0]) u -= acts[i++][0]; acts[i][1](b, u / acts[i][0], p); return p;
+    let u = t % TOTAL, i = 0; while (u >= acts[i][0]) u -= acts[i++][0]; acts[i][1](b, u / acts[i][0], p);
+    p.tz += Math.sin(t * .8) * .012; p.lz += Math.sin(t * 1.3) * .03; p.rz -= Math.sin(t * 1.3 + .6) * .03; p.hx += Math.sin(t * 1.1 + 1) * .015; return p;   // never quite still: weight shifts, the arms hang loose
   }
   function draw(cv, st, now, dt) {
     const cl = cv.classList, mood = cl.contains("eat") ? "eat" : cl.contains("sleep") ? "sleep" : cl.contains("pet") ? "pet" : cl.contains("happy") ? "happy" : cl.contains("cheer") ? "cheer" : cl.contains("calm") ? "calm" : "", face = cv.classList.contains("face"), t = (now - st.t0) / 1000;
@@ -868,7 +876,7 @@ const P3 = (() => {
     ears[0].rotation.set(E.a, 0, .14 + c.ear * 1.3 + E.b + Math.sin(t * 2.3) * .025); ears[1].rotation.set(E.a * .86 - c.ef * .6, 0, -.14 - c.ear * 1.3 + E.b * .9 - Math.sin(t * 2.3 + 1) * .025 - c.ef * .3);
     eyes[0].rotation.set(c.gy, -.3 + c.gx, 0); eyes[1].rotation.set(c.gy, .3 + c.gx, 0); nose.scale.set(c.nz, 1, c.nz);
     tail.rotation.y = Math.sin(t * 9) * .25 + E.b; tail.position.y = -.2 + E.a * .05; carrot.visible = c.car > .05; carrot.scale.setScalar(Math.max(.05, c.car) * 2.1);
-    const bu = (t + st.ph) % 3.4, b2 = st.ph > 1.5 && bu > 3.0 && bu < 3.14 ? (bu - 3.0) / .14 : bu > 3.26 ? (bu - 3.26) / .14 : -1, bl = b2 < 0 ? 1 : 1 - Math.sin(b2 * Math.PI) * .95, ey = Math.min(bl, c.eye); eyes[0].scale.y = eyes[1].scale.y = ey; mouth.scale.set(.11 * c.mo + .001, .1 * c.mo + .001, .08);
+    const bu = (t + st.ph) % 3.4, b2 = st.ph > 1.5 && bu > 3.0 && bu < 3.14 ? (bu - 3.0) / .14 : bu > 3.26 ? (bu - 3.26) / .14 : -1, bl = b2 < 0 ? 1 : 1 - Math.sin(b2 * Math.PI) * .95, ey = Math.min(bl, c.eye); eyes[0].scale.y = eyes[1].scale.y = ey; mouth.scale.set(.11 * c.mo + .001, .1 * c.mo + .001, .08); { const sk = Math.max(0, 1 - c.mo * 4); smile.visible = sk > .02; smile.scale.set(.7 + .3 * sk, sk, 1); }
     const sh = 1 - Math.min(.5, c.y * .8); shadow.scale.set(sh, sh, sh); shadow.position.x = c.x; shadow.visible = !face;
     if (face) { cam.position.set(0, 2.3, 6.6); cam.lookAt(0, 2.28, 0); } else { cam.position.set(0, 2.1, 8.6); cam.lookAt(0, 1.82, 0); }
     R.render(scene, cam); const x = st.x; x.clearRect(0, 0, cv.width, cv.height);
@@ -882,11 +890,11 @@ const P3 = (() => {
     const inGame = !$("game").hidden, petting = document.documentElement.classList.contains("petting");
     if (window.__noPogo) return;
     document.querySelectorAll("canvas.pogo").forEach(cv => {
-      let st = slots.get(cv); if (inGame && (cv.closest("#map") || (st && st.drawn && cv.classList.contains("face")))) return;   // checked before offsetParent, which forces a layout
+      let st = slots.get(cv); if (inGame && (cv.closest("#map") || (st && st.drawn && st.idle && cv.classList.contains("face") && !cv.classList.contains("happy")))) return;   // checked before offsetParent, which forces a layout
       if (!cv.offsetParent) return;
       if (!st) { const d = Math.min(devicePixelRatio || 1, 2); cv.width = Math.round(cv.clientWidth * d); cv.height = Math.round(cv.clientHeight * d); st = { x: cv.getContext("2d"), c: Z(), es: { a: 0, v: 0, b: 0, w: 0 }, py: 0, px: 0, pr: 0, t0: now, ph: Math.random() * 3, mood: "", turn: cv.closest(".pogoMap.flip") ? .3 : cv.closest(".pogoMap") ? -.3 : 0, drawn: 0 }; slots.set(cv, st); }
       // while a level is on screen Pogo only moves when he reacts, and the map copy behind it rests; while the pet screen is up only that one Pogo is drawn
-      if (inGame && cv.closest("#map")) return; if (petting && !cv.closest("#mPet")) return; if (inGame && cv.classList.contains("face") && st.drawn) return;
+      if (inGame && cv.closest("#map")) return; if (petting && !cv.closest("#mPet")) return; if (inGame && cv.classList.contains("face") && st.drawn && !cv.classList.contains("happy") && st.idle) return;
       draw(cv, st, now, dt); st.drawn = 1; st.idle = !cv.classList.contains("happy");
     });
     for (const cv of slots.keys()) if (!cv.isConnected) slots.delete(cv);
@@ -1824,6 +1832,7 @@ function startLevel(i, snap) {
   { const k = Math.min(NEWGEMS.length / 2, Math.floor((i + 1) / 25)); if (k > (save.gemSeen || 0) && !window.__fast) { save.gemSeen = k; persist(); } }
   particles.length = 0; fx.length = 0; floaters.length = 0; dying.length = 0;
   tip(""); $("map").hidden = true; $("game").hidden = false; $("gPogo").innerHTML = pogoSvg("", true); layout(); hudInit(); SFX.go();
+  if (window.__lowPower && !window.__lpTold) { window.__lpTold = 1; setTimeout(() => tip("Low Power Mode is on: iPhone holds games at 30 fps", 4800), 1300); }
   if (!resumed) snapshot();
   introDrop();
   if (G.gift) { const g0 = G; setTimeout(() => { if (G !== g0) return; tip("🎁 Win streak ×" + save.streak + ": Pogo's gift is on the board", 3200); const now = performance.now(); for (const row of G.grid) for (const g of row) if (g && g.gift) { g.gift = false; g.sx = 1.5; g.pop = now; ring(g.c + .5, g.r + .5, "#ffd200", 1.3, 520, 8); } SFX.reward(); }, 1100); }
@@ -2873,7 +2882,7 @@ const TR = {
   "Hard level": "Zor seviye", "Super hard level": "Çok zor seviye", "🔥 Hard level": "🔥 Zor seviye", "☠️ Super hard level": "☠️ Çok zor seviye", "+{1} 🥕": "+{1} 🥕", "{1} Mordo's level": "{1} Mordo'nun seviyesi",
   "🎁 Win streak ×{1}: start with {2} special gem": "🎁 Galibiyet serisi ×{1}: {2} özel taşla başla", "🎁 Win streak ×{1}: start with {2} special gems": "🎁 Galibiyet serisi ×{1}: {2} özel taşla başla", "🎁 Win streak ×{1}: Pogo's gift is on the board": "🎁 Galibiyet serisi ×{1}: Pogo'nun hediyesi tahtada",
   "⏱ Countdown gems lose 1 every move. Match them before they hit 0.": "⏱ Geri sayım taşları her hamlede 1 düşer. Sıfıra inmeden eşleştir.", "⏱ A countdown gem is at 3: match it before it hits 0": "⏱ Bir geri sayım taşı 3'te: sıfıra inmeden eşleştir",
-  "Out of moves": "Hamle bitti", "Countdown hit zero": "Geri sayım sıfırlandı", "Boom!": "Bum!", "Frenzy!": "Çılgınlık!", "Seed!": "Tohum!", "Sweet!": "Harika!", "Tasty!": "Süper!", "Divine!": "Muhteşem!", "No moves, shuffling": "Hamle yok, karıştırılıyor", "Charmfall!": "Charmfall!", "Charmfall!": "Charmfall!",
+  "Out of moves": "Hamle bitti", "Low Power Mode is on: iPhone holds games at 30 fps": "Düşük Güç Modu açık: iPhone oyunları 30 fps'te tutar", "Countdown hit zero": "Geri sayım sıfırlandı", "Boom!": "Bum!", "Frenzy!": "Çılgınlık!", "Seed!": "Tohum!", "Sweet!": "Harika!", "Tasty!": "Süper!", "Divine!": "Muhteşem!", "No moves, shuffling": "Hamle yok, karıştırılıyor", "Charmfall!": "Charmfall!", "Charmfall!": "Charmfall!",
   "A gem with a number reached 0. It loses 1 every move: match it before it runs out, even with moves left.": "Sayılı bir taş sıfıra indi. Her hamlede 1 düşer: hamlen kalsa bile bitmeden eşleştir.", "{1} to go": "{1} kaldı",
   "+{1} 🥕 for Pogo": "Pogo'ya +{1} 🥕", "🥕 a piece of carrot for Pogo": "🥕 Pogo'ya bir parça havuç", "+{1} 🥕 for Pogo ({2} Mordo drops his loot)": "Pogo'ya +{1} 🥕 ({2} Mordo ganimeti bıraktı)", "+{1} 🥕 for Pogo (hard level +{2})": "Pogo'ya +{1} 🥕 (zor seviye +{2})", "+{1} 🥕 for Pogo (super hard level +{2})": "Pogo'ya +{1} 🥕 (çok zor seviye +{2})",
   "🔥 streak ×{1}": "🔥 seri ×{1}", "🎫 +{1}": "🎫 +{1}", "🃏 New card {1}": "🃏 Yeni kart {1}", "🃏 Double card: +1 🥕": "🃏 Çift kart: +1 🥕", "set complete! +{1} 🥕": "seri tamamlandı! +{1} 🥕", "album complete! +3 🥕": "albüm tamamlandı! +3 🥕", "🃏 Double card": "🃏 Çift kart",
