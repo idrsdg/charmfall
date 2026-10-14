@@ -1139,7 +1139,7 @@ let mapRaf = 0, lastCur = -1;
 // ---- the map. One winding path up the screen, scrolled natively; twenty chapter bands each with its own daylight colours; big glossy stops; a big Pogo at the
 // current one. Chapters ahead are the same world under a grey haze, never dark. Few, large pieces: the whole map is about 450 elements.
 // the map is seen from far: stops half as far apart, every piece half size
-const GAP = () => innerWidth <= 600 ? 213 : 294; let MAPW = 420, mapIO = null;
+const GAP = () => innerWidth <= 600 ? 213 : 294; let MAPW = 420, mapIO = null, mapTok = 0;
 const CHAP_SKY = [["#8be0ff", "#d7f7a0"], ["#9fe8c8", "#eaf9b0"], ["#a9d9ff", "#d9f0ff"], ["#ffd9a8", "#ffefc2"], ["#b8f0b0", "#e0ffd0"], ["#ffc2d8", "#ffe4ee"], ["#ffe08a", "#fff5c8"], ["#c9c2ff", "#e8e4ff"], ["#b6ffd9", "#e4fff0"], ["#ffd2a0", "#ffe9c8"],
   ["#9fd8ff", "#dff3ff"], ["#ffe9a8", "#fff8d8"], ["#9fe8e0", "#e0fbf7"], ["#ffd6b0", "#fff0e0"], ["#c4f0a8", "#e8ffd4"], ["#d9c8ff", "#f0e8ff"], ["#ffcfcf", "#ffeaea"], ["#bfe6ff", "#e6f6ff"], ["#e0c8ff", "#f4ecff"], ["#ffe0a0", "#fff4d8"]];
 const CHAP_GROUNDC = ["#5fc96a", "#7fd45a", "#4fc4a4", "#a8c850", "#5cc460", "#60b878", "#c8d050", "#7a9ae8", "#5ac88a", "#8aa0e0", "#f0c870", "#9ad8c0", "#60c0e0", "#f0cc88", "#a0cc78", "#c0b8d8", "#8ad860", "#a89ae8", "#b070e8", "#9090e8"];
@@ -1186,14 +1186,18 @@ function buildMap() {
   // props: twelve large pieces per chapter, six a side, from the chapter's own list; the village of every chapter sits beside its middle
   let seed = 5; const R = () => { seed = seed + 0x6D2B79F5 | 0; let q = Math.imul(seed ^ seed >>> 15, 1 | seed); q = q + Math.imul(q ^ q >>> 7, 61 | q) ^ q; return ((q ^ q >>> 14) >>> 0) / 4294967296; };
   const LIFE = ["deer", "fox", "rabbit", "hedgehog", "duck", "butterfly", "bird", "bird2"];
-  for (let c = 0; c < CHAPTERS.length; c++) { const C = CHAPTERS[c], lock = c * 10 > cur, won = c * 10 + 9 < cur;
+  // Only the place the player is in and its two neighbours are built at once. The scenery of the other seventeen places is added a moment
+  // later, off screen, so coming back to the map does not wait for seven hundred pictures to be laid out.
+  let late = "";
+  for (let c = 0; c < CHAPTERS.length; c++) { const C = CHAPTERS[c], lock = c * 10 > cur, won = c * 10 + 9 < cur, h0 = h, far = Math.abs(c - chapOf(cur)) > 1; h = "";
     for (let k = 0; k < 20; k++) { const i = c * 10 + Math.floor(k * 9 / 20), p = pts[Math.min(N - 1, i)], side = (k >> 1) % 2 ? 1 : -1, lock = i > cur, life = won && k % 2 === 1, kind = life ? LIFE[(c + k) % LIFE.length] : D3 ? (D3.EMO[C.props[k % 4]] || "bush") : "bush", sz = Math.round((66 + R() * 40) * (big ? 1.35 : 1) * (life ? 1.5 : 1)), xo = (big ? 100 : 70) + R() * (big ? 260 : 150), x = Math.max(W * .04, Math.min(W * .96, p[0] + side * xo)), y = p[1] - 40 + R() * 150;
       if (D3) h += `<div class="mprop${lock ? " lock" : ""}${won ? (k % 2 === 1 ? " live" : " won") : ""}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px;--dl:-${(R() * 3).toFixed(1)}s"><img src="${D3.sprite(kind, 128)}" alt=""></div>`; }
     if (D3) for (let k = 0; k < 10; k++) { const i = c * 10 + k, p = pts[Math.min(N - 1, i)], side = k % 2 ? 1 : -1, lock = i > cur, kind = D3.EMO[C.props[(k + 1) % 4]] || "bush", sz = Math.round((70 + R() * 50) * (big ? 1.35 : 1)), x = Math.max(W * .03, Math.min(W * .97, p[0] + side * ((big ? 380 : 240) + R() * W * .22))), y = p[1] - 70 + R() * 170;
       h += `<div class="mprop${lock ? " lock" : won ? " won" : ""}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px;--dl:-${(R() * 3).toFixed(1)}s"><img src="${D3.sprite(kind, 128)}" alt=""></div>`; }
     if (D3) { const i = c * 10 + 6, p = pts[i], side = p[0] > W / 2 ? -1 : 1, vw = big ? 180 : 85, x = Math.max(vw * .4, Math.min(W - vw * .4, p[0] + side * Math.max(W * .5, vw * .5 + 95))); h += `<div class="mvillage${i > cur ? " lock" : ""}" style="left:${Math.round(x)}px;top:${p[1] + 5}px"><img src="${D3.village(c, won, 480)}" alt=""></div>`; }
     if (won) { for (let f = 0; f < 8; f++) { const p = pts[c * 10 + Math.floor(f * 1.25)]; h += `<u class="firefly" style="left:${Math.round(p[0] + (f % 2 ? 55 : -55) + (f % 3) * 18)}px;top:${p[1] - 70 + (f % 4) * 45}px;--dl:-${f * .6}s"></u>`; }
-      if (D3) for (let f = 0; f < 14; f++) { const p = pts[c * 10 + Math.floor(f * 10 / 14)], side = f % 2 ? 1 : -1, x = Math.max(W * .04, Math.min(W * .96, p[0] + side * (36 + R() * 90))), y = p[1] - 60 + R() * 180, sz = Math.round((40 + R() * 22) * (big ? 1.3 : 1)); h += `<div class="mprop won flower" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px;--dl:-${(R() * 3).toFixed(1)}s"><img src="${D3.sprite(["flower", "tulip", "clover", "sprout"][f % 4], 64)}" alt=""></div>`; } } }
+      if (D3) for (let f = 0; f < 14; f++) { const p = pts[c * 10 + Math.floor(f * 10 / 14)], side = f % 2 ? 1 : -1, x = Math.max(W * .04, Math.min(W * .96, p[0] + side * (36 + R() * 90))), y = p[1] - 60 + R() * 180, sz = Math.round((40 + R() * 22) * (big ? 1.3 : 1)); h += `<div class="mprop won flower" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px;--dl:-${(R() * 3).toFixed(1)}s"><img src="${D3.sprite(["flower", "tulip", "clover", "sprout"][f % 4], 64)}" alt=""></div>`; } }
+    if (far) { late += h; h = h0; } else h = h0 + h; }
   // stations: one at the start and one every twenty-five levels, on the side the sign leaves free; the train waits just behind the current stop
   if (D3) { for (let k = 0; k <= STATIONS.length; k++) { const si = k ? k * STATION_EVERY - 1 : 0, p = pts[si], side = p[0] > W / 2 ? 1 : -1, stw = big ? 170 : 115, x = k ? Math.max(stw * .5, Math.min(W - stw * .5, p[0] + side * (big ? 165 : 105))) : Math.max(stw * .5, Math.min(W - stw * .5, p[0] + side * (big ? 90 : 60))), y = k ? p[1] + 22 : p[1] + (big ? 300 : 250);
       h += `<div class="mprop stn${si > cur ? " lock" : ""}" data-k="${k}" style="left:${Math.round(x)}px;top:${y}px;width:${stw}px"><img src="${D3.sprite("station", 192)}" alt=""><i class="lvplate st"><small>${k ? "Station " + k : "Start"}</small>${k ? STATIONS[k - 1].name : "Charmwood Station"}</i></div>`; }
@@ -1207,6 +1211,8 @@ function buildMap() {
   // Pogo beside the current stop, on the roomier side
   { const p = pts[cur], left = p[0] > W / 2; h += `<div class="pogoMap pogoBig${left ? " flip" : ""}" onclick="openPet()" style="left:${Math.round(p[0] + (left ? -65 : 65))}px;top:${p[1] + 3}px">${pogoSvg()}</div>`; }
   path.insertAdjacentHTML("beforeend", h);
+  { const tok = ++mapTok; if (late) setTimeout(() => { if (tok !== mapTok) return; const first = path.querySelector(".lv"); if (!first) return; first.insertAdjacentHTML("beforebegin", late);
+    if (mapIO) path.querySelectorAll(".mprop.live, .mprop.won, .mprop.mordo, u.firefly").forEach(n => mapIO.observe(n)); else path.querySelectorAll(".mprop, u.firefly").forEach(n => n.classList.add("vis")); }, window.__fast ? 0 : 120); }
   path.querySelectorAll(".lv.done, .lv.now").forEach(n => n.addEventListener("click", () => openLevel(+n.dataset.i)));
   path.querySelectorAll(".lv .lvplate.st").forEach(n => n.addEventListener("click", (e) => { e.stopPropagation(); openSign(+n.parentNode.dataset.i); }));
   path.querySelectorAll(".mprop.stn").forEach(n => n.addEventListener("click", () => openStation(+n.dataset.k)));
@@ -1507,8 +1513,11 @@ const D3 = (() => {
     const g = grp(scene); BUILD.village(g, past, ch);
     const cam = new T.PerspectiveCamera(28, 4 / 3, .1, 40); cam.position.set(3.2, 6.2, 8.4); cam.lookAt(0, .3, 0);
     R.shadowMap.enabled = true; R.shadowMap.type = T.PCFSoftShadowMap; R.setSize(px, Math.round(px * .75), false); R.render(scene, cam); const cv = document.createElement("canvas"); cv.width = px; cv.height = Math.round(px * .75); cv.getContext("2d").drawImage(R.domElement, 0, 0); R.setSize(RW, RH, false); R.shadowMap.enabled = false;
-    const url = cv.toDataURL(); sprites.set(key, url); return url;
+    const url = shortUrl(cv); sprites.set(key, url); return url;
   }
+  // A picture is handed out as a short blob address, not as a data URL: the map uses the same eighty pictures seven hundred times, and written
+  // out as data URLs its markup was almost six megabytes that had to be parsed on every visit.
+  function shortUrl(cv) { const d = cv.toDataURL(); try { const bin = atob(d.slice(d.indexOf(",") + 1)), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); return URL.createObjectURL(new Blob([u8], { type: "image/png" })); } catch (e) { return d; } }
   function sprite(kind, px, top) {
     const key = kind + ":" + px + (top ? ":t" : ""); if (sprites.has(key)) return sprites.get(key);
     const scene = new T.Scene(); scene.add(new T.HemisphereLight(0xfff6e8, 0x4a3a6a, .95)); const sun = new T.DirectionalLight(0xfff0d0, .8); sun.position.set(2, 4, 3); scene.add(sun);
@@ -1517,7 +1526,7 @@ const D3 = (() => {
     const box = new T.Box3().setFromObject(g), sz = box.getSize(new T.Vector3()), ctr = box.getCenter(new T.Vector3()), fit = (top ? 2.1 : 1.3) / (Math.max(sz.x, sz.y, sz.z) || 1); g.scale.setScalar(fit); g.position.set(-ctr.x * fit, top ? -ctr.y * fit : -box.min.y * fit, -ctr.z * fit);
     const cam = new T.PerspectiveCamera(30, 1, .1, 20); if (top) { cam.position.set(0, 4.2, .9); cam.lookAt(0, 0, 0); } else { cam.position.set(.5, 1.0, 3.1); cam.lookAt(0, .62, 0); }
     R.setSize(px, px, false); R.render(scene, cam); const cv = document.createElement("canvas"); cv.width = cv.height = px; cv.getContext("2d").drawImage(R.domElement, 0, 0); R.setSize(RW, RH, false);
-    const url = cv.toDataURL(); sprites.set(key, url); return url;
+    const url = shortUrl(cv); sprites.set(key, url); return url;
   }
   let last = 0;
   function frame(now) {
