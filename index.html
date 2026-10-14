@@ -1790,6 +1790,8 @@ function unpack(s) {
 }
 // only stable boards are stored (never one that is mid-cascade)
 function snapshot() { if (!G || G.over || G.busy) return; save.inProgress = pack(); persist(); }
+// after a move the save is written a moment later, and only while the board is still: writing it in the same frame the next swap starts in showed up as a stutter
+let saveT = 0; function saveSoon() { clearTimeout(saveT); saveT = setTimeout(() => { if (G && G.busy) saveSoon(); else { checkAch(); snapshot(); } }, 350); }
 function clearProgress() { delete save.inProgress; persist(); }
 function startLevel(i, snap) {
   { const ch = chapOf(i), g = $("game"); g.style.setProperty("--gs1", CHAP_SKY[ch][0]); g.style.setProperty("--gs2", CHAP_SKY[ch][1]); g.style.setProperty("--gg", CHAP_GROUNDC[ch]); g.classList.toggle("boss", isMordo(i)); $("gMordo").hidden = !isMordo(i); $("gMordo").innerHTML = isMordo(i) && typeof D3 !== "undefined" && D3 ? `<img src="${D3.sprite("magpie", 128)}" alt="">` : ""; }
@@ -2018,7 +2020,7 @@ async function endOfMove(isMove) {
   if (G.moves <= 0) { await lose(); return; }
   if (isMove && isMordo(G.level) && !roomStart) mordoTurn();
   let mv = findMove(); if (!mv) { await sleep(300); shuffle(false); mv = null; }
-  G.hint = mv; G.busy = false; G.hintAt = performance.now() + 4000; updateHud(); checkAch(); snapshot(); runQueued();
+  G.hint = mv; G.busy = false; G.hintAt = performance.now() + 4000; updateHud(); saveSoon(); runQueued();
 }
 // Mordo's levels (the tenth of every place): every fourth move he swoops down and cages a charm. A caged charm cannot be moved, but a match or a blast on it opens the cage.
 // Any special charm going off scares him away: he skips his next two visits. Never more than three cages at once.
@@ -2151,11 +2153,12 @@ async function blast(clear, spawn = [], opts = {}) {
   await sleep(detonated.size ? 300 : 230);
 }
 // cleared goal pieces fly from the board to the goal counter (a few per blast at most)
-let flyBudget = 5;
+let flyBudget = 5, FLYR = null;
 function flyGoal(r, c, txt, big) {
   if (window.__fast || (!big && flyBudget-- <= 0)) return;
   try {
-    const rect = canvas.getBoundingClientRect(), tgt = $("goalBox").getBoundingClientRect(), el = document.createElement("div"), h = big ? 15 : 11; el.className = "fly"; el.textContent = txt; if (!big) el.style.fontSize = "22px";
+    if (!FLYR || performance.now() - FLYR.at > 4000) FLYR = { rect: canvas.getBoundingClientRect(), tgt: $("goalBox").getBoundingClientRect(), at: performance.now() };   // measuring forces a layout: once every few seconds is plenty
+    const rect = FLYR.rect, tgt = FLYR.tgt, el = document.createElement("div"), h = big ? 15 : 11; el.className = "fly"; el.textContent = txt; if (!big) el.style.fontSize = "22px";
     const x0 = rect.left + (c + .5) * rect.width / COLS - h, y0 = rect.top + (r + .5) * rect.height / ROWS - h, x1 = tgt.left + tgt.width / 2 - h, y1 = tgt.top + tgt.height / 2 - h;
     el.style.left = x0 + "px"; el.style.top = y0 + "px"; document.body.appendChild(el);
     const an = el.animate([{ transform: `translate(0,0) scale(${big ? 1.3 : 1}) rotate(0deg)`, opacity: 1 }, { transform: `translate(${(x1 - x0) * .5}px,${(y1 - y0) * .5 - (big ? 80 : 40)}px) scale(${big ? 1.6 : 1.2}) rotate(${big ? 180 : 0}deg)`, opacity: 1, offset: .5 }, { transform: `translate(${x1 - x0}px,${y1 - y0}px) scale(.6) rotate(${big ? 360 : 0}deg)`, opacity: .9 }], { duration: big ? 700 : 520, easing: "cubic-bezier(.3,.7,.3,1)" });
@@ -2345,17 +2348,18 @@ canvas.addEventListener("pointerup", e => {
   G.sel = cell(r, c) ? [r, c] : null; G.selT = performance.now(); SFX.swap();
 });
 canvas.addEventListener("pointercancel", () => { down = null; });
-addEventListener("resize", layout); Arcade.gfx.onChange(() => layout());
+addEventListener("resize", layout); Arcade.gfx.onChange(() => { if (Math.min(devicePixelRatio || 1, 2) * (Arcade.gfx.quality < 0.6 ? 0.75 : 1) !== DPR) layout(); });   // a quality step that leaves the resolution alone must not rebuild every sprite
 
 // ---------------------------------------------------------------- rendering
 // Everything that never changes during a level is drawn once into off-screen canvases.
 const ST = { bg: null, jelly: [], frost: [], choc: null, badge: new Map(), fonts: ["", "", ""] }, FCOL = ["#fff", "#a8e2ff", "#ffd200"];
 // Phones draw this canvas on the CPU, so every transparent pixel of a sprite still costs: this records the tight box of what was
 // actually drawn (bx, by, bw, bh) and drawGem copies only that box.
-function trimBox(c) {
-  try { const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data, W = c.width; let x0 = W, y0 = c.height, x1 = -1, y1 = -1;
-    for (let i = 3; i < d.length; i += 4) { if (!d[i]) continue; const px = (i >> 2) % W, py = ((i >> 2) / W) | 0; if (px < x0) x0 = px; if (px > x1) x1 = px; if (py < y0) y0 = py; if (py > y1) y1 = py; }
-    if (x1 >= x0) { c.bx = x0; c.by = y0; c.bw = x1 - x0 + 1; c.bh = y1 - y0 + 1; } } catch (err) {}
+function trimBox(c, draw) {   // the charm is drawn a second time on a canvas kept in ordinary memory; reading the real sprite back would stall the GPU
+  try { const n = c.width, k = 1, t = document.createElement("canvas"); t.width = t.height = n; const x = t.getContext("2d", { willReadFrequently: true }); x.setTransform(DPR * k, 0, 0, DPR * k, 0, 0); x.translate(c.width / DPR / 2, c.height / DPR / 2); draw(x);
+    const d = x.getImageData(0, 0, n, n).data; let x0 = n, y0 = n, x1 = -1, y1 = -1;
+    for (let i = 3; i < d.length; i += 4) { if (!d[i]) continue; const px = (i >> 2) % n, py = ((i >> 2) / n) | 0; if (px < x0) x0 = px; if (px > x1) x1 = px; if (py < y0) y0 = py; if (py > y1) y1 = py; }
+    if (x1 >= x0) { const bx = Math.max(0, x0 - 1), by = Math.max(0, y0 - 1); c.bx = bx; c.by = by; c.bw = Math.min(c.width, x1 + 2) - bx; c.bh = Math.min(c.height, y1 + 2) - by; } } catch (err) {}
   return c;
 }
 function mkCan(w, h) { const c = document.createElement("canvas"); c.width = Math.ceil(w * DPR); c.height = Math.ceil(h * DPR); const x = c.getContext("2d"); x.setTransform(DPR, 0, 0, DPR, 0, 0); return [c, x]; }
@@ -2412,7 +2416,7 @@ function badge(n) {
   ST.badge.set(n, c); return c;
 }
 function layout() {
-  if (!G) return; DPR = Math.min(devicePixelRatio || 1, 2) * (Arcade.gfx.quality < 0.6 ? 0.75 : 1);
+  if (!G) return; FLYR = null; DPR = Math.min(devicePixelRatio || 1, 2) * (Arcade.gfx.quality < 0.6 ? 0.75 : 1);
   // the board is a whole number of CSS pixels per cell, so cell edges and resting gems land on exact pixels
   const wrap = $("boardWrap"), w = wrap.clientWidth - 28, h = wrap.clientHeight - 28, size = Math.floor(Math.max(198, Math.min(w, h, 756)) / COLS) * COLS;
   if (canvas.width !== size * DPR || canvas.height !== size * DPR) { canvas.width = size * DPR; canvas.height = size * DPR; canvas.style.width = canvas.style.height = size + "px"; }
@@ -2569,7 +2573,7 @@ function sprite(g) {
   let sp = SPR.map.get(key); if (sp) return sp;
   const S = Math.ceil(CELL * 1.9 * DPR), c = document.createElement("canvas"); c.width = S; c.height = S;
   const x = c.getContext("2d"); x.setTransform(DPR, 0, 0, DPR, 0, 0); x.translate(S / DPR / 2, S / DPR / 2);
-  drawGemRaw(x, g, 0); SPR.map.set(key, trimBox(c)); return c;
+  drawGemRaw(x, g, 0); SPR.map.set(key, trimBox(c, (t) => drawGemRaw(t, g, 0))); return c;
 }
 const easeSwap = (t) => { const c = .9, u = t - 1; return 1 + (c + 1) * u * u * u + c * u * u; };   // quick start, tiny overshoot, soft settle
 function drawGem(g, px, py, scale, now, sy = 1, rot = 0) {
@@ -2663,13 +2667,18 @@ const LIST = [];
 let lastTs = 0;
 // Frame-pacing probe (app only): what the phone really does cannot be seen from a desktop browser, so the app reports a short summary
 // of real frame intervals and of the time this function takes, split into quiet frames and frames with something moving.
-const PERF = { last: 0, iv: [[], []], js: [0, 0], jsMax: [0, 0], sent: 0, pMax: 0 };
+const PERF = { last: 0, iv: [[], []], js: [0, 0], jsMax: [0, 0], sent: 0, pMax: 0, cur: [], long: [] };
 function perfNote(raw, t0, moving) {
-  const k = moving ? 1 : 0, d = raw - PERF.last; PERF.last = raw; if (d > 0 && d < 400) PERF.iv[k].push(d); const j = performance.now() - t0; PERF.js[k] += j; if (j > PERF.jsMax[k]) PERF.jsMax[k] = j; if (particles.length > PERF.pMax) PERF.pMax = particles.length;
+  const k = moving ? 1 : 0, d = raw - PERF.last; PERF.last = raw; if (d > 0 && d < 400) PERF.iv[k].push(d); if (d > (Arcade.gfx.period || 16.7) * 2.4 && d < 2000 && PERF.long.length < 10) PERF.long.push(Math.round(d) + (moving ? "m " : "i ") + PERF.cur.join(",")); PERF.cur.length = 0; const j = performance.now() - t0; PERF.js[k] += j; if (j > PERF.jsMax[k]) PERF.jsMax[k] = j; if (particles.length > PERF.pMax) PERF.pMax = particles.length;
   if (PERF.iv[0].length + PERF.iv[1].length < 420 || PERF.sent >= 30) return;
   const sum = (a, tj, mx) => { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y), q = (p) => +s[Math.min(s.length - 1, Math.floor(s.length * p))].toFixed(1); return { n: a.length, med: q(.5), p90: q(.9), p99: q(.99), max: q(1), o20: a.filter(x => x > 20).length, o34: a.filter(x => x > 34).length, o50: a.filter(x => x > 50).length, js: +(tj / a.length).toFixed(2), jsMax: +mx.toFixed(1) }; };
-  const p = { v: 3, idle: sum(PERF.iv[0], PERF.js[0], PERF.jsMax[0]), move: sum(PERF.iv[1], PERF.js[1], PERF.jsMax[1]), dpr: devicePixelRatio, DPR, cw: canvas.width, q: Arcade.gfx.quality, per: +(Arcade.gfx.period || 0).toFixed(2), low: !!window.__lowPower, pMax: PERF.pMax, lv: G ? G.level : -1, scr: screen.width + "x" + screen.height, ua: (navigator.userAgent.match(/OS [\d_]+/) || [""])[0] };
+  const p = { v: 5, long: PERF.long.splice(0), idle: sum(PERF.iv[0], PERF.js[0], PERF.jsMax[0]), move: sum(PERF.iv[1], PERF.js[1], PERF.jsMax[1]), dpr: devicePixelRatio, DPR, cw: canvas.width, q: Arcade.gfx.quality, per: +(Arcade.gfx.period || 0).toFixed(2), low: !!window.__lowPower, pMax: PERF.pMax, lv: G ? G.level : -1, scr: screen.width + "x" + screen.height, ua: (navigator.userAgent.match(/OS [\d_]+/) || [""])[0] };
   PERF.iv = [[], []]; PERF.js = [0, 0]; PERF.jsMax = [0, 0]; PERF.pMax = 0; PERF.sent++; api("perf", { p });
+}
+if (window.__nativeApp) {   // time the things that run outside the draw loop, so a long frame can name its cause
+  for (const n of ["persist", "snapshot", "layout", "buildStatic", "updateHud", "hudInit", "checkAch", "cloudPush", "flyGoal", "toast", "tip", "findMatches", "findMove", "startLevel", "openLevel", "showMap", "buildMap", "mordoTurn", "sprite", "floatSprite", "confetti", "burst", "logEv", "evFlush", "pogoReact", "show", "hide", "bump", "spawnIngredient", "shuffle", "pack", "tr"]) {
+    try { const f = eval(n); if (typeof f !== "function") continue; const w = function () { const t = performance.now(); try { return f.apply(this, arguments); } finally { const d = performance.now() - t; if (d >= 2 && PERF.cur.length < 12) PERF.cur.push(n + Math.round(d)); } }; eval(n + " = w"); } catch (e) {} }
+  let scrSent = 0; setInterval(() => { if (document.hidden || scrSent >= 14) return; const where = document.documentElement.classList.contains("petting") ? "pet" : !$("map").hidden ? "map" : ""; if (!where) return; const st = Arcade.gfx.stats; scrSent++; api("perf", { p: { v: 5, where, fps: st.fps, med: +(+st.med).toFixed(1), p90: +(+st.p90).toFixed(1), worst: st.worst, q: Arcade.gfx.quality, low: !!window.__lowPower } }); }, 7000);
 }
 function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
   requestAnimationFrame(render); if (!G) { lastTs = ts; return; }
