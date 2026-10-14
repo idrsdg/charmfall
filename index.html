@@ -496,7 +496,7 @@
   <div id="sPogo"></div><p id="sHard" class="chip" hidden></p><h2 id="sTitle">Level 1</h2><p id="sGoal"></p><p id="sNew" hidden style="font-size:14px;color:#ffe27a"></p><p id="sFuse" hidden style="font-size:13px;color:#ffd200"></p>
   <div class="goalrow" id="sRow"></div>
   <p id="sGift" hidden style="font-size:14px;color:#ffe27a;margin-top:-8px"></p>
-  <p class="rate">★ 1 star = 1,000 points</p>
+  <p class="rate">★ 1 star = 10 points</p>
   <button class="btn" id="sCont" hidden>▶ Continue</button>
   <button class="btn" id="sPlay">Play</button>
   <button class="btn ghost" type="button" data-arcade-room>👥 Play with friends</button>
@@ -988,7 +988,7 @@ for (const i of [26, 28, 51, 58, 60, 68, 70, 71, 74, 81, 88, 89, 91, 94, 98, 99,
 for (const i of [26, 40, 52, 62, 75, 80, 90, 105, 106, 115, 116, 117, 118, 135, 145, 165, 170, 175, 180, 192]) { const L = LEVELS[i];
   if (L.jelly) L.jelly = L.jelly.map(r => r.replace(/j/g, "J")); if (L.layout) L.layout = L.layout.map(r => r.replace(/f/g, "F").replace(/F/g, (m, k) => k % 2 ? "G" : "F")); if (L.need) L.need = Math.min(8, L.need + 2);
   if (L.goal === "score") L.target = Math.round(L.target * 1.4); else if (!L.fuse && i >= 20) L.fuse = { n: 12, start: 1, every: 7, max: 2 }; }
-// One star is always 1,000 points: the HUD, goals and results talk in stars, never in raw points.
+// One star is always 1,000 points inside (10 as shown): the HUD, goals and results talk in stars, never in raw points.
 // From level 51 on the solver wins under 40% of the time, from 86 on under 15%: those levels are labelled, and pay extra carrots.
 // The curve is a saw inside every chapter, not a straight slide: positions 5 and 8 are hard, 10 is Mordo's (super hard from chapter 6 on) and the level after a hard one is a breather.
 const chapN = (i) => Math.floor(i / 10), hardOf = (i) => i % 10 === 9 ? 2 : i % 10 === 8 ? 1 : 0, HARD_TXT = ["", "Hard level", "Hardest of the place"];
@@ -1053,6 +1053,8 @@ const SFX = {
 };
 
 // ---------------------------------------------------------------- small helpers
+// Points are kept as they always were inside (levels, star thresholds and saves depend on them) and shown divided by 100, so a level ends in the hundreds, not the tens of thousands.
+const PT = 100, shown = (v) => Math.round(v / PT);
 const fmt = (n) => { n = Math.max(0, Math.round(n)); let s = String(n), o = ""; while (s.length > 3) { o = "," + s.slice(-3) + o; s = s.slice(0, -3); } return s + o; };
 // modals fade out instead of vanishing; a closing modal counts as closed
 function show(id) { const el = $(id); clearTimeout(el._t); el.classList.remove("out"); el.hidden = false; }
@@ -1740,7 +1742,7 @@ const ACH = [
   { id: "gems", icon: "💎", name: "Gem Crusher", desc: "Pop 1,000 gems", ok: s => s.gems >= 1000, prog: s => [s.gems, 1000] },
   { id: "defuse", icon: "⏱", name: "Bomb Squad", desc: "Defuse 10 countdown gems", ok: s => s.defused >= 10, prog: s => [s.defused, 10] },
   { id: "streak3", icon: "📅", name: "Regular", desc: "Reach a 3-day login streak", ok: () => save.daily.streak >= 3, prog: () => [save.daily.streak, 3] },
-  { id: "big", icon: "💰", name: "High Roller", desc: "Score 50,000 in one level", ok: s => s.bestScore >= 50000 },
+  { id: "big", icon: "💰", name: "High Roller", desc: "Score 500 in one level", ok: s => s.bestScore >= 50000 },
   { id: "stars30", icon: "⭐", name: "Star Collector", desc: "Earn 30 stars", ok: () => totalStars() >= 30, prog: () => [totalStars(), 30] },
   { id: "perfect", icon: "🏅", name: "Perfectionist", desc: "Get 3 sparks on 10 levels", ok: () => Object.values(save.stars).filter(v => v >= 3).length >= 10, prog: () => [Object.values(save.stars).filter(v => v >= 3).length, 10] },
   { id: "l20", icon: "🏆", name: "Classic Champion", desc: "Beat level 20", ok: () => !!save.stars[19] },
@@ -1907,7 +1909,7 @@ function hudInit() {
   const L = G.L, icon = L.goal === "score" ? "⭐" : ico({ jelly: "jelly", ingredients: "key", blockers: "ice" }[L.goal]), st = HUD.st = starTargets(L);
   $("goalBox").innerHTML = `<span style="font-size:22px">${icon}</span><div><small>${L.goal === "score" ? "stars to go" : L.goal === "ingredients" ? "seeds left" : L.goal === "jelly" ? "ash left" : "brambles left"}</small><b id="goalN"></b></div>`;
   HUD.goalN = $("goalN"); HUD.left = HUD.lS = HUD.lT = goalLeft(); HUD.goalN.textContent = goalShow(HUD.left);
-  HUD.sS = HUD.sT = HUD.sG = G.score; HUD.score.textContent = fmt(G.score); HUD.mT = G.moves; HUD.moves.textContent = G.moves;
+  HUD.sS = HUD.sG = G.score; HUD.sT = shown(G.score); HUD.score.textContent = fmt(HUD.sT); HUD.mT = G.moves; HUD.moves.textContent = G.moves;
   HUD.marks[0].style.left = st[0] / st[2] * 100 + "%"; HUD.marks[1].style.left = st[1] / st[2] * 100 + "%";
   updateHud();
 }
@@ -1925,7 +1927,7 @@ let hudAcc = 0;
 function hudTick(dt) {
   hudAcc += dt; if (hudAcc < .085) return; dt = hudAcc; hudAcc = 0;   // the counters step about twelve times a second: every text change repaints the whole top bar
   const k = Math.min(1, dt * 9);
-  if (HUD.sS !== G.score) { const d = G.score - HUD.sS; HUD.sS = Math.abs(d) < 1 ? G.score : HUD.sS + d * k; const v = Math.round(HUD.sS); if (v !== HUD.sT) { HUD.sT = v; HUD.score.textContent = fmt(v); } }
+  if (HUD.sS !== G.score) { const d = G.score - HUD.sS; HUD.sS = Math.abs(d) < 1 ? G.score : HUD.sS + d * k; const v = shown(HUD.sS); if (v !== HUD.sT) { HUD.sT = v; HUD.score.textContent = fmt(v); } }
   if (HUD.lS !== HUD.left) { const d = HUD.left - HUD.lS; HUD.lS = Math.abs(d) < .5 ? HUD.left : HUD.lS + d * k; const v = Math.round(HUD.lS); if (v !== HUD.lT) { HUD.lT = v; HUD.goalN.textContent = goalShow(v); } }
 }
 
@@ -2073,7 +2075,7 @@ async function resolve(opts) {
     groups = findMatches();
   }
 }
-function addScore(r, c, pts) { G.score += pts; if (floaters.length > 26) floaters.shift(); floaters.push({ x: c + .5, y: r + .5, t: performance.now(), txt: "+" + pts, v: pts }); }
+function addScore(r, c, pts) { G.score += pts; const sh = shown(pts); if (sh < 1) return; if (floaters.length > 26) floaters.shift(); floaters.push({ x: c + .5, y: r + .5, t: performance.now(), txt: "+" + sh, v: pts }); }   // a plain match of three is worth less than one shown point: it scores quietly
 
 // ---- fireflies: one clears the four gems around it and flies to a cell that matters for the goal (a countdown about to end comes first)
 function flyTarget(set, taken) {
@@ -2876,7 +2878,7 @@ const TR = {
   "Play": "Oyna", "Start over": "Baştan başla", "▶ Continue": "▶ Devam et", "Continue": "Devam et", "▶ Resume": "▶ Devam", "Map": "Harita", " Map": " Harita", "Exit to map": "Haritaya dön", "Back to map": "Haritaya dön", "Paused": "Duraklatıldı",
   "Your board is saved. Come back any time.": "Tahtan kaydedildi. İstediğin zaman dön.", "🔊 Sound": "🔊 Ses", "🔊 Sound on": "🔊 Ses açık", "🔇 Sound off": "🔇 Ses kapalı", "🎮 All games": "🎮 Tüm oyunlar", "All games": "Tüm oyunlar", "Sound on": "Ses açık", "Sound off": "Ses kapalı", "Perfect!": "Mükemmel!", "👥 Play with friends": "👥 Arkadaşlarla oyna",
   "Moves": "Hamle", "Goal": "Hedef", "Best": "En iyi", "Stars": "Yıldız", "Frenzy": "Çılgınlık", "Frenzy meter: pop gems to fill it": "Çılgınlık ölçeri: taş patlattıkça dolar", "Pause": "Duraklat", "Sound": "Ses", "Settings": "Ayarlar",
-  "Level {1}": "Seviye {1}", "Level {1} complete": "Seviye {1} tamamlandı", "Level complete": "Seviye tamamlandı", "★ 1 star = 1,000 points": "★ 1 yıldız = 1.000 puan", "Stars earned ★ {1}": "Kazanılan yıldız ★ {1}",
+  "Level {1}": "Seviye {1}", "Level {1} complete": "Seviye {1} tamamlandı", "Level complete": "Seviye tamamlandı", "★ 1 star = 10 points": "★ 1 yıldız = 10 puan", "Stars earned ★ {1}": "Kazanılan yıldız ★ {1}",
   "Earn {1} star": "{1} yıldız kazan", "Earn {1} stars": "{1} yıldız kazan", "Clear all the ash": "Bütün külü temizle", "Bring {1} seeds down to the soil": "{1} tohumu toprağa indir", "Cut back all the brambles": "Bütün dikenleri temizle",
   "⭐ {1}": "⭐ {1}", "{1} moves left, ★ {2}": "{1} hamle kaldı, ★ {2}", "★ {1}": "★ {1}", "🔑 {1}": "🔑 {1}", "🟪 all": "🟪 hepsi", "🧊 all": "🧊 hepsi",
   "Hard level": "Zor seviye", "Super hard level": "Çok zor seviye", "🔥 Hard level": "🔥 Zor seviye", "☠️ Super hard level": "☠️ Çok zor seviye", "+{1} 🥕": "+{1} 🥕", "{1} Mordo's level": "{1} Mordo'nun seviyesi",
@@ -2901,7 +2903,7 @@ const TR = {
   "Firefly! A 2×2 square makes one. It flies to what you need.": "Ateş böceği! 2×2 kare bir tane yapar. İhtiyacın olana uçar.", "Colour crate: match its colour next to it": "Renk sandığı: yanında kendi rengini eşleştir", "Stone: only a special gem can break it": "Taş: yalnız özel bir taş kırar",
   "Awards": "Ödüller", "{1} of {2} unlocked": "{2} ödülden {1} açıldı", "each one gives +1 Woodpecker": "her biri +1 Ağaçkakan verir", "🏆 {1} · +1 🐦": "🏆 {1} · +1 🐦", "Close": "Kapat",
   "First Sparkle": "İlk Kıvılcım", "Complete a level": "Bir seviye bitir", "Chain Reaction": "Zincirleme Tepki", "Get a 5x cascade from one move": "Tek hamlede 5'li zincir yap", "Charm Maker": "Tılsım Ustası", "Line up 5 to make a Rainbow Charm": "Tılsım Bombası için 5'li diz", "Fill the Frenzy meter": "Çılgınlık ölçerini doldur",
-  "Gem Crusher": "Taş Kırıcı", "Pop 1,000 gems": "1.000 taş patlat", "Bomb Squad": "Bomba İmha", "Defuse 10 countdown gems": "10 geri sayım taşı etkisiz kıl", "Regular": "Müdavim", "Reach a 3-day login streak": "3 günlük giriş serisi yap", "High Roller": "Büyük Oyuncu", "Score 50,000 in one level": "Bir seviyede 50.000 puan yap",
+  "Gem Crusher": "Taş Kırıcı", "Pop 1,000 gems": "1.000 taş patlat", "Bomb Squad": "Bomba İmha", "Defuse 10 countdown gems": "10 geri sayım taşı etkisiz kıl", "Regular": "Müdavim", "Reach a 3-day login streak": "3 günlük giriş serisi yap", "High Roller": "Büyük Oyuncu", "Score 500 in one level": "Bir seviyede 500 puan yap",
   "Star Collector": "Yıldız Toplayıcı", "Earn 30 stars": "30 yıldız kazan", "Perfectionist": "Mükemmeliyetçi", "Get 3 sparks on 10 levels": "10 seviyede 3 yıldız al", "Classic Champion": "Klasik Şampiyon", "Beat level 20": "20. seviyeyi geç", "Charm Master": "Tılsım Üstadı", "Beat level 30": "30. seviyeyi geç", "({1}/{2})": "({1}/{2})",
   "Pogo's garden": "Pogo'nun bahçesi", "Garden": "Bahçe", "Light the garden again: {1} of {2} built": "Bahçeyi yeniden aydınlat: {2} parçadan {1} yapıldı", "you have ★ {1}": "★ {1} var", "The garden is complete, and brighter than before Mordo came.": "Bahçe tamamlandı, Mordo gelmeden öncekinden de parlak.",
   "Build {1} {2}": "{1} {2} yap", "You need ★ {1} more. Win levels to earn stars.": "★ {1} daha gerek. Yıldız için seviye kazan.", "{1} built! +1 {2}": "{1} yapıldı! +1 {2}", "Carrot patch": "Havuç tarlası", "Tulips": "Laleler", "Log bench": "Kütük bank", "Lantern": "Fener", "Mushrooms": "Mantarlar", "Oak tree": "Meşe ağacı", "Burrow house": "Yuva evi", "Fountain": "Çeşme", "Ferris wheel": "Dönme dolap", "Rainbow": "Gökkuşağı",
