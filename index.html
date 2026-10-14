@@ -777,13 +777,15 @@ setInterval(() => { const n = document.querySelector(".pogoMap svg.pogo"); if (!
 const P3 = (() => {
   if (!window.THREE) return null; const T = THREE; let R;
   try { R = new T.WebGLRenderer({ alpha: true, antialias: true }); } catch (e) { return null; }
-  const RW = 720, RH = 792; R.setPixelRatio(1); R.setSize(RW, RH, false); R.setClearColor(0, 0); R.outputEncoding = T.sRGBEncoding; if (T.ACESFilmicToneMapping) { R.toneMapping = T.ACESFilmicToneMapping; R.toneMappingExposure = 1.08; }
+  // The drawing buffer is only as large as the largest Pogo on screen needs (the small one on the map is a quarter of the pet-screen one):
+  // every frame is copied out of it into a 2D canvas, and on phones that copy and the shading both cost by the pixel.
+  const RW = 720, RH = 792; let bufW = RW, bufH = RH, wantW = 0; R.setPixelRatio(1); R.setSize(RW, RH, false); R.setClearColor(0, 0); R.outputEncoding = T.sRGBEncoding; if (T.ACESFilmicToneMapping) { R.toneMapping = T.ACESFilmicToneMapping; R.toneMappingExposure = 1.08; }
   const scene = new T.Scene(), cam = new T.PerspectiveCamera(30, RW / RH, .1, 50);
   scene.add(new T.HemisphereLight(0xffffff, 0x7a5a48, .6)); const sun = new T.DirectionalLight(0xfff2d8, .7); sun.position.set(2.5, 4, 5); scene.add(sun);
   const rim = new T.DirectionalLight(0xbfe8ff, .3); rim.position.set(-3, 2, -4); scene.add(rim); const fill = new T.DirectionalLight(0xffe4f0, .22); fill.position.set(0, -1, 4); scene.add(fill);
   // fur grain: a small noise canvas used as a bump map on everything furry, so the light catches a soft nap instead of a plastic shell
   const furMap = (() => { const c = document.createElement("canvas"); c.width = c.height = 256; const x = c.getContext("2d"), img = x.createImageData(256, 256); for (let i = 0; i < img.data.length; i += 4) { const v = 118 + Math.random() * 20; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; } x.putImageData(img, 0, 0); for (let k = 0; k < 1400; k++) { x.strokeStyle = "rgba(" + (k % 2 ? 255 : 0) + "," + (k % 2 ? 255 : 0) + "," + (k % 2 ? 255 : 0) + ",.18)"; x.lineWidth = 1; const sx = Math.random() * 256, sy = Math.random() * 256; x.beginPath(); x.moveTo(sx, sy); x.lineTo(sx + (Math.random() - .5) * 3, sy + 6 + Math.random() * 8); x.stroke(); } const tx = new T.CanvasTexture(c); tx.wrapS = tx.wrapT = T.RepeatWrapping; tx.repeat.set(3, 3); return tx; })();
-  const mat = (c, o) => new T.MeshStandardMaterial(Object.assign({ color: c, roughness: .55, metalness: 0 }, o)), SPH = new T.SphereGeometry(1, 40, 30);
+  const mat = (c, o) => new T.MeshStandardMaterial(Object.assign({ color: c, roughness: .55, metalness: 0 }, o)), SPH = new T.SphereGeometry(1, 28, 20);
   const M = { fur: mat(0xe4d9cb, { roughness: .95, bumpMap: furMap, bumpScale: .018 }), cream: mat(0xf7efe4, { roughness: .92, bumpMap: furMap, bumpScale: .014 }), tip: mat(0xa8927c, { roughness: .96, bumpMap: furMap, bumpScale: .02 }), dark: mat(0xd9a2a8), paw: mat(0xb39d88, { roughness: .96, bumpMap: furMap, bumpScale: .02 }), pink: mat(0xd4647a), carrot: mat(0xff7a14), leaf: mat(0x3fbf4a), ink: mat(0x120a1c, { roughness: .2 }), iris: mat(0x5a3a1e, { roughness: .25 }), white: mat(0xffffff, { roughness: .2 }), whisk: mat(0xffffff, { transparent: true, opacity: .6 }), red: mat(0xe8332a), gold: mat(0xffc81a, { roughness: .3, metalness: .3 }), blush: mat(0xff8f9a), mouth: mat(0x9c1f2e) };
   const ball = (m, x, y, z, sx, sy, sz, par) => { if (sy && sy.isObject3D) { par = sy; sy = sz = sx; } const o = new T.Mesh(SPH, m); o.position.set(x, y, z); o.scale.set(sx, sy === undefined ? sx : sy, sz === undefined ? sx : sz); par.add(o); return o; };   // (m, x, y, z, s, parent) is the short form
   const grp = (x, y, z, par) => { const g = new T.Group(); g.position.set(x, y, z); par.add(g); return g; };
@@ -880,12 +882,14 @@ const P3 = (() => {
     const sh = 1 - Math.min(.5, c.y * .8); shadow.scale.set(sh, sh, sh); shadow.position.x = c.x; shadow.visible = !face;
     if (face) { cam.position.set(0, 2.3, 6.6); cam.lookAt(0, 2.28, 0); } else { cam.position.set(0, 2.1, 8.6); cam.lookAt(0, 1.82, 0); }
     R.render(scene, cam); const x = st.x; x.clearRect(0, 0, cv.width, cv.height);
-    if (face) x.drawImage(R.domElement, 0, (RH - RW) / 2, RW, RW, 0, 0, cv.width, cv.height); else x.drawImage(R.domElement, 0, 0, cv.width, cv.height);
+    if (cv.width > wantW) wantW = cv.width;
+    if (face) x.drawImage(R.domElement, 0, (bufH - bufW) / 2, bufW, bufW, 0, 0, cv.width, cv.height); else x.drawImage(R.domElement, 0, 0, bufW, bufH, 0, 0, cv.width, cv.height);
   }
   let last = 0, fpsN = 0, fpsT = 0;
   function frame(now) {
     requestAnimationFrame(frame); const dt = Math.min(.05, (now - last) / 1000); last = now; if (document.hidden) return;
     fpsN++; if (now - fpsT >= 1000) { window.__fps = fpsN; fpsN = 0; fpsT = now; }
+    const p3t = performance.now();
     document.querySelectorAll("svg.pogo").forEach(sv => { const cv = document.createElement("canvas"); cv.className = sv.getAttribute("class"); sv.replaceWith(cv); });
     const inGame = !$("game").hidden, petting = document.documentElement.classList.contains("petting");
     if (window.__noPogo) return;
@@ -898,6 +902,8 @@ const P3 = (() => {
       draw(cv, st, now, dt); st.drawn = 1; st.idle = !cv.classList.contains("happy");
     });
     for (const cv of slots.keys()) if (!cv.isConnected) slots.delete(cv);
+    if (wantW) { const w = Math.min(RW, Math.max(96, wantW)); if (w !== bufW) { bufW = w; bufH = Math.round(w * RH / RW); R.setSize(bufW, bufH, false); } wantW = 0; }   // takes effect from the next frame
+    if (window.__p3) { window.__p3.ms += performance.now() - p3t; window.__p3.n++; }
   }
   requestAnimationFrame(frame); return true;
 })();
@@ -2678,7 +2684,7 @@ function perfNote(raw, t0, moving) {
 if (window.__nativeApp) {   // time the things that run outside the draw loop, so a long frame can name its cause
   for (const n of ["persist", "snapshot", "layout", "buildStatic", "updateHud", "hudInit", "checkAch", "cloudPush", "flyGoal", "toast", "tip", "findMatches", "findMove", "startLevel", "openLevel", "showMap", "buildMap", "mordoTurn", "sprite", "floatSprite", "confetti", "burst", "logEv", "evFlush", "pogoReact", "show", "hide", "bump", "spawnIngredient", "shuffle", "pack", "tr"]) {
     try { const f = eval(n); if (typeof f !== "function") continue; const w = function () { const t = performance.now(); try { return f.apply(this, arguments); } finally { const d = performance.now() - t; if (d >= 2 && PERF.cur.length < 12) PERF.cur.push(n + Math.round(d)); } }; eval(n + " = w"); } catch (e) {} }
-  let scrSent = 0; setInterval(() => { if (document.hidden || scrSent >= 14) return; const where = document.documentElement.classList.contains("petting") ? "pet" : !$("map").hidden ? "map" : ""; if (!where) return; const st = Arcade.gfx.stats; scrSent++; api("perf", { p: { v: 5, where, fps: st.fps, med: +(+st.med).toFixed(1), p90: +(+st.p90).toFixed(1), worst: st.worst, q: Arcade.gfx.quality, low: !!window.__lowPower } }); }, 7000);
+  window.__p3 = { ms: 0, n: 0 }; let scrSent = 0; setInterval(() => { if (document.hidden || scrSent >= 14) return; const where = document.documentElement.classList.contains("petting") ? "pet" : !$("map").hidden ? "map" : ""; if (!where) return; const st = Arcade.gfx.stats, p3 = window.__p3, p3ms = p3.n ? +(p3.ms / p3.n).toFixed(2) : 0; p3.ms = p3.n = 0; scrSent++; api("perf", { p: { v: 6, where, p3ms, anims: document.getAnimations ? document.getAnimations().filter(a => a.playState === "running").length : -1, els: document.querySelectorAll("#map *").length, fps: st.fps, med: +(+st.med).toFixed(1), p90: +(+st.p90).toFixed(1), worst: st.worst, q: Arcade.gfx.quality, low: !!window.__lowPower } }); }, 7000);
 }
 function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
   requestAnimationFrame(render); if (!G) { lastTs = ts; return; }
