@@ -201,6 +201,7 @@
   .cere u { position: absolute; bottom: -30px; width: 14px; height: 9px; border-radius: 50% 0; background: #7fe39a; opacity: 0; animation: leafUp 2.6s var(--d) cubic-bezier(.2, .6, .4, 1) forwards; } .cere u:nth-child(3n) { background: #ffd23f; } .cere u:nth-child(4n) { background: #b6f24a; }
   @keyframes leafUp { 10% { opacity: 1; } to { opacity: 0; transform: translate(var(--x), -78vh) rotate(var(--r)); } }
   /* the place's weather, behind the board: night, fog, a storm, fireflies, falling leaves, rising bubbles */
+  #game > #gGround { position: absolute !important; left: 0; right: 0; bottom: 0; height: 60px; display: flex; justify-content: space-around; align-items: flex-end; pointer-events: none; z-index: 0; margin: 0 !important; } #gGround img { width: var(--s); height: var(--s); margin-bottom: -4px; }
   #game > #gWeather { position: absolute !important; inset: 0; margin: 0 !important; padding: 0 !important; pointer-events: none; overflow: hidden; z-index: 0; } #gWeather[hidden] { display: none; }
   #gWeather.night::before, #gWeather.storm::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 46%; background: linear-gradient(rgba(10, 14, 50, .62), rgba(10, 14, 50, .1)); }
   #gWeather.storm::after { content: ""; position: absolute; inset: 0; background: #fff; opacity: 0; animation: flashSky 7s 2s infinite; } @keyframes flashSky { 0%, 90%, 94%, 100% { opacity: 0; } 91%, 93% { opacity: .55; } }
@@ -220,6 +221,9 @@
   .zoomin { position: fixed; z-index: 40; width: 60px; height: 60px; border-radius: 50%; background: radial-gradient(circle, #3fa860, #1c5e34); pointer-events: none; transform: scale(.2); animation: zoomGrow .42s var(--e-in) forwards; } .zoomin.done { animation: zoomGrow .42s var(--e-in) forwards, fadeOut .36s ease-out forwards; }
   @keyframes zoomGrow { to { transform: scale(var(--z)); } }
   .mprop.mordo.arrive img { animation: mordoArrive 1.1s .5s cubic-bezier(.3, 1.3, .5, 1) both, mordoBob 1.5s 1.6s ease-in-out infinite alternate; } @keyframes mordoArrive { from { translate: -90px 160px; scale: .5; rotate: -25deg; opacity: 0; } 60% { translate: 8px -16px; scale: 1.1; rotate: 6deg; opacity: 1; } to { translate: 0 0; scale: 1; rotate: 0deg; } }
+  .mprop.small { z-index: 0; }
+  .mcloud { position: absolute; z-index: 4; pointer-events: none; opacity: .85; animation: cloudDrift var(--t) var(--dl) ease-in-out infinite alternate; } .mcloud img { display: block; width: 100%; } @keyframes cloudDrift { to { transform: translateX(120px); } }
+  .mprop.flutter { z-index: 4; } .mprop.flutter img { animation: flutter 3.2s var(--dl) ease-in-out infinite; } @keyframes flutter { 0%, 100% { translate: 0 0; rotate: -8deg; } 25% { translate: var(--fx) -18px; rotate: 10deg; } 50% { translate: calc(var(--fx) * .4) -34px; rotate: -6deg; } 75% { translate: calc(var(--fx) * -.5) -12px; rotate: 8deg; } }
   .gate { position: absolute; transform: translate(-50%, -50%); z-index: 1; pointer-events: none; padding: 5px 14px; border-radius: 999px; background: rgba(12, 42, 20, .72); border: 2px solid #ffe7a3; color: #ffe7a3; font-size: 12px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; } .gate.lock { opacity: .55; filter: grayscale(.7); }
   .mprop.feather { pointer-events: auto; cursor: pointer; z-index: 3; } .mprop.feather img { animation: featherBob 1.8s ease-in-out infinite alternate; } .mprop.feather::before { content: ""; position: absolute; inset: -30%; border-radius: 50%; background: radial-gradient(circle, rgba(255, 240, 160, .75), rgba(255, 240, 160, 0) 65%); }   /* a glow behind it, not a filter on it: a filter on a moving picture is redrawn every frame */ @keyframes featherBob { from { transform: translateY(0) rotate(-8deg); } to { transform: translateY(-8px) rotate(8deg); } }
   /* the story book */
@@ -227,7 +231,7 @@
   .bk section { padding: 10px 12px; margin: 0 0 8px; border-radius: 14px; background: rgba(0, 0, 0, .18); } .bk section.off { opacity: .45; } .bk h3 { margin: 0 0 2px; font-size: 15px; } .bk small { display: block; font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: #c9f2d2; } .bk p { margin: 4px 0 0; font-size: 13px; line-height: 1.35; } .bk p.q { font-style: italic; color: #e6f7df; }
   .card .place { margin: 0 0 6px; font-size: 12px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: #c9f2d2; } .card .beat { margin: -4px 0 10px; font-size: 14px; font-style: italic; color: #e6f7df; }
   /* the place's own things stand on the board's frame while a level is played */
-  #gDecor { position: absolute; left: 5%; right: 5%; height: 54px; display: flex; justify-content: space-between; align-items: flex-end; pointer-events: none; } #gDecor img { width: 54px; height: 54px; position: relative; } #gDecor img.s { width: 42px; height: 42px; } #gDecor img.far { position: absolute; left: 50%; bottom: -4px; width: var(--far, 110px); height: var(--far, 110px); transform: translateX(-50%); opacity: .4; }
+  #gDecor { position: absolute; left: 5%; right: 5%; height: 54px; display: flex; justify-content: space-between; align-items: flex-end; pointer-events: none; } #gDecor img { width: 54px; height: 54px; position: relative; } #gDecor img.s { width: 42px; height: 42px; } #gDecor img.far { position: absolute; left: 50%; bottom: -4px; width: var(--far, 110px); height: var(--far, 110px); transform: translateX(-50%); opacity: .4; } #gDecor img.far.vil { width: calc(var(--far, 110px) * 1.5); height: auto; max-width: 92%; opacity: .95; }
   .card .chip { display: inline-block; margin: 0 0 8px; padding: 4px 12px; border-radius: 999px; font-size: 13px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; background: #b3122f; border: 2px solid #ff8a9a; }
   .card.hard2 .chip { background: #5f14a8; border-color: #d6a0ff; }
   .node .stars { position: absolute; bottom: calc(-42px * var(--ms)); font-size: calc(32px * var(--ms)); letter-spacing: -2px; color: #ffe27a; text-shadow: 0 2px 0 #2a7a3e; }
@@ -525,7 +529,7 @@
 </section>
 
 <section class="screen" id="game" hidden>
-  <div id="gWeather" hidden></div><div id="gMordo" hidden></div>
+  <div id="gWeather" hidden></div><div id="gGround" hidden></div><div id="gMordo" hidden></div>
   <div class="hud">
     <button class="back" id="btnBack"><i class="ico" data-ico="back"></i><span class="lbl"> Map</span></button>
     <button class="back pause" id="btnPause" title="Pause"><i class="ico" data-ico="pause"></i></button>
@@ -1258,6 +1262,10 @@ function buildMap() {
     if (D3 && c * 10 <= cur && !(save.feathers || {})[c]) { const fi = c * 10 + (c * 7) % 9, fp = pts[Math.min(N - 1, fi)], fs = (c % 2 ? 1 : -1); h += `<div class="mprop feather" data-c="${c}" style="left:${Math.round(Math.max(W * .06, Math.min(W * .94, fp[0] + fs * (big ? 150 : 96))))}px;top:${fp[1] - 20}px;width:${big ? 52 : 40}px"><img src="${D3.sprite("feather", 96)}" alt=""></div>`; }
     if (won) { for (let f = 0; f < 8; f++) { const p = pts[c * 10 + Math.floor(f * 1.25)]; h += `<u class="firefly" style="left:${Math.round(p[0] + (f % 2 ? 55 : -55) + (f % 3) * 18)}px;top:${p[1] - 70 + (f % 4) * 45}px;--dl:-${f * .6}s"></u>`; }
       if (D3) for (let f = 0; f < 14; f++) { const p = pts[c * 10 + Math.floor(f * 10 / 14)], side = f % 2 ? 1 : -1, x = Math.max(W * .04, Math.min(W * .96, p[0] + side * (36 + R() * 90))), y = p[1] - 60 + R() * 180, sz = Math.round((40 + R() * 22) * (big ? 1.3 : 1)); h += `<div class="mprop won flower" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px;--dl:-${(R() * 3).toFixed(1)}s"><img src="${D3.sprite(["flower", "tulip", "clover", "sprout"][f % 4], 64)}" alt=""></div>`; } }
+    if (D3) { const SMALL = ["rock", "bush", "mushroom", "flower", "sprout", D3.EMO[C.props[0]] || "bush", D3.EMO[C.props[2]] || "flower"];   // little things right beside the rail, so the track runs through a place, not over a lawn
+      for (let k = 0; k < 14; k++) { const i = c * 10 + Math.floor(k * 10 / 14), p = pts[Math.min(N - 1, i)], side = k % 2 ? 1 : -1, x = Math.max(W * .03, Math.min(W * .97, p[0] + side * (30 + R() * (big ? 70 : 46)))), y = p[1] - 50 + R() * 140, sz = Math.round((26 + R() * 20) * (big ? 1.3 : 1));
+        h += `<div class="mprop small${i > cur ? " lock" : ""}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px"><img src="${D3.sprite(SMALL[k % SMALL.length], 64)}" alt=""></div>`; }
+      for (let k = 0; k < 3; k++) { const i = c * 10 + 2 + k * 3, p = pts[Math.min(N - 1, i)]; h += `<div class="mcloud" style="left:${Math.round(R() * W * .8)}px;top:${Math.round(p[1] - 80 - R() * 60)}px;width:${Math.round((110 + R() * 70) * (big ? 1.3 : 1))}px;--t:${(38 + R() * 30).toFixed(0)}s;--dl:-${(R() * 30).toFixed(0)}s"><img src="${D3.sprite("cloud", 192)}" alt=""></div>`; } }
     if (far) { late += h; h = h0; } else h = h0 + h; }
   // stations: one at the start and one every twenty-five levels, on the side the sign leaves free; the train waits just behind the current stop
   if (D3) { for (let k = 0; k <= STATIONS.length; k++) { const si = k ? k * STATION_EVERY - 1 : 0, p = pts[si], side = p[0] > W / 2 ? 1 : -1, stw = big ? 170 : 115, x = k ? Math.max(stw * .5, Math.min(W - stw * .5, p[0] + side * (big ? 165 : 105))) : Math.max(stw * .5, Math.min(W - stw * .5, p[0] + side * (big ? 90 : 60))), y = k ? p[1] + 22 : p[1] + (big ? 300 : 250);
@@ -1269,6 +1277,7 @@ function buildMap() {
   // stops
   pts.forEach((p, i) => { const st = save.stars[i] ? "done" : i === cur ? "now" : "lock", hd = hardOf(i), md = isMordo(i) && !save.stars[i], pl = (i === cur ? p[0] <= W / 2 : p[0] > W / 2) ? " l" : "";   // signs hang on the roomier side of the stop; at the current stop Pogo takes that side, so its sign hangs on the other
     h += `<div class="lv ${st}${hd ? " hard" + hd : ""}" data-i="${i}" style="left:${Math.round(p[0])}px;top:${p[1]}px"><b>${i + 1}</b>${save.stars[i] ? `<s>${"★".repeat(save.stars[i])}<i>${"★".repeat(3 - save.stars[i])}</i></s>` : ""}${md ? `<em>${MORDO}</em>` : ""}${i === cur ? `<i class="lvplate${pl} go">Play</i>` : (i + 1) % 20 === 0 ? `<i class="lvplate${pl} st"><small>Level ${i + 1}</small>${CHAPTERS[chapOf(i)].name}</i>` : ""}</div>`; });
+  if (D3) { const p = pts[cur]; for (let k = 0; k < 4; k++) h += `<div class="mprop flutter" style="left:${Math.round(p[0] + (k % 2 ? 1 : -1) * (60 + k * 26))}px;top:${p[1] - 40 - k * 30}px;width:${big ? 38 : 30}px;--dl:-${k * .7}s;--fx:${(k % 2 ? -1 : 1) * (30 + k * 8)}px"><img src="${D3.sprite("butterfly", 64)}" alt=""></div>`; }
   // Pogo beside the current stop, on the roomier side
   { const p = pts[cur], left = p[0] > W / 2; h += `<div class="pogoMap pogoBig${left ? " flip" : ""}" onclick="openPet()" style="left:${Math.round(p[0] + (left ? -65 : 65))}px;top:${p[1] + 3}px">${pogoSvg()}</div>`; }
   path.insertAdjacentHTML("beforeend", h);
@@ -1959,7 +1968,7 @@ function startLevel(i, snap) {
   G.t0 = performance.now(); if (!resumed) logEv("start"); if (i < 2) G.hintAt = performance.now() + 900;
   { const k = Math.min(NEWGEMS.length / 2, Math.floor((i + 1) / 25)); if (k > (save.gemSeen || 0) && !window.__fast) { save.gemSeen = k; persist(); } }
   particles.length = 0; fx.length = 0; floaters.length = 0; dying.length = 0;
-  tip(""); $("map").hidden = true; $("game").hidden = false; $("gPogo").innerHTML = pogoSvg("", true); layout(); hudInit(); gameDecor(i); gameWeather(i); SFX.go();
+  tip(""); $("map").hidden = true; $("game").hidden = false; $("gPogo").innerHTML = pogoSvg("", true); layout(); hudInit(); gameDecor(i); gameWeather(i); gameGround(i); SFX.go();
   if (window.__lowPower && !window.__lpTold) { window.__lpTold = 1; setTimeout(() => tip("Low Power Mode is on: iPhone holds games at 30 fps", 4800), 1300); }
   if (!resumed) snapshot();
   introDrop();
@@ -1967,11 +1976,12 @@ function startLevel(i, snap) {
 }
 // ---- pause / resume (input is blocked by G.paused; a cascade in flight simply finishes underneath)
 // the four things that belong to this chapter's place stand along the top of the board frame (still pictures: they cost nothing while playing)
-function gameWeather(i) { const el = $("gWeather"), ch = chapOf(i), w = WEATHER[ch]; $("game").classList.toggle("shore", ch >= 10); if (!el) return; if ($("game").firstElementChild !== el) $("game").prepend(el);   // first in the screen, so the bars and the board are drawn over it if (!w || window.__fast) { el.hidden = true; return; }
+function gameWeather(i) { const el = $("gWeather"), ch = chapOf(i), w = WEATHER[ch]; $("game").classList.toggle("shore", ch >= 10); if (!el) return; if ($("game").firstElementChild !== el) $("game").prepend(el); { const g = $("gGround"); if (g && g.previousElementSibling !== el) el.after(g); }   // first in the screen, so the bars and the board are drawn over it if (!w || window.__fast) { el.hidden = true; return; }
   if (el.className !== w) { el.className = w; let h = ""; for (let n = 0; n < (w === "fog" || w === "storm" ? 0 : 12); n++) h += `<u style="--x:${(n * 37) % 100}%;--y:${4 + (n * 23) % 40}%;--t:${(w === "night" || w === "glints" ? 1.6 : 6) + (n % 5) * .9}s;--d:-${(n * 1.3).toFixed(1)}s"></u>`; el.innerHTML = h; }
   el.hidden = false; }
+function gameGround(i) { const el = $("gGround"); if (!el) return; if (!D3 || window.__fast) { el.hidden = true; return; } const key = "g" + chapOf(i); if (el.dataset.k !== key) { el.dataset.k = key; const P = CHAPTERS[chapOf(i)].props, K = ["bush", D3.EMO[P[2]] || "flower", "mushroom", "flower", D3.EMO[P[3]] || "bush", "sprout", "bush"]; el.innerHTML = K.map((k, n) => `<img src="${D3.sprite(k, 64)}" style="--s:${[46, 34, 30, 36, 40, 28, 44][n]}px" alt="">`).join(""); } el.hidden = false; }
 function gameDecor(i) { const el = $("gDecor"); if (!el) return; const top = canvas.offsetTop - 64; if (!D3 || window.__fast || top < 0) { el.hidden = true; return; }
-  const key = "c" + chapOf(i); if (el.dataset.k !== key) { el.dataset.k = key; const P = CHAPTERS[chapOf(i)].props; el.innerHTML = `<img class="far" src="${D3.sprite(D3.EMO[P[0]] || "bush", 256)}" alt="">` + P.map((e, n) => `<img class="${n === 1 || n === 2 ? "s" : ""}" src="${D3.sprite(D3.EMO[e] || "bush", 96)}" alt="">`).join(""); }
+  const key = "c" + chapOf(i); if (el.dataset.k !== key) { el.dataset.k = key; const P = CHAPTERS[chapOf(i)].props; el.innerHTML = `<img class="far vil" src="${D3.village(chapOf(i), save.stars[chapOf(i) * 10 + 9] ? true : false, 480)}" alt="">` + P.map((e, n) => `<img class="${n === 1 || n === 2 ? "s" : ""}" src="${D3.sprite(D3.EMO[e] || "bush", 96)}" alt="">`).join(""); }
   el.style.setProperty("--far", Math.max(60, Math.min(120, canvas.offsetTop - 24)) + "px");
   el.style.top = top + "px"; el.hidden = false; }
 function pauseGame() { if (!G || G.over || G.paused) return; G.paused = true; G.sel = null; down = null; snapshot(); show("mPause"); }
