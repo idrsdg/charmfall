@@ -86,3 +86,5 @@ Taşlar kesik yüzeyli, mat 3B low-poly modeller. Yuva başına başlangıç ta�
 | Sarı | Güneş | Armut, Limon, Arı, Yıldız |
 
 Anlamları: Dünya ve güneş ormanın ışığının kaynağını, meyveler ormanın armağanlarını, hayvanlar geri dönen canlıları, ağaçlar ve yapraklar yeşilin geri gelişini anlatır.
+
+Güncel (2026-10-16 gece): her model kendi doğal renginde (elma kırmızı, yaprak yeşil, dünya mavi-yeşil vb.), kesik yüzeyli low-poly 3B. Yukarıdaki tablo hâlâ geçerli.
