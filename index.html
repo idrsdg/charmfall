@@ -2877,8 +2877,8 @@ function drawGemRaw(ctx, g, now) {
     ctx.save(); ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = 6; ctx.shadowOffsetY = 4; const w = s * 2.8; ctx.drawImage(img, -w / 2, -w / 2, w, w); ctx.restore(); }
   else {
   // dark base with a soft contact shadow, then the facets on top
-  ctx.shadowColor = "rgba(0,0,0,.6)"; ctx.shadowBlur = 5; ctx.shadowOffsetY = 5; ctx.save(); ctx.translate(0, CELL * .075); gemPath(ctx, C.shape, s); ctx.fillStyle = edge; ctx.fill(); ctx.lineWidth = Math.max(2.5, CELL * .06); ctx.strokeStyle = edge; ctx.stroke(); ctx.restore(); ctx.shadowColor = "transparent"; ctx.shadowOffsetY = 0;
-  gemPath(ctx, C.shape, s); ctx.fillStyle = edge; ctx.fill(); ctx.lineWidth = Math.max(2.5, CELL * .06); ctx.strokeStyle = edge; ctx.stroke();   // the gem sits on a thicker slab of its own dark edge
+  ctx.shadowColor = "rgba(0,0,0,.6)"; ctx.shadowBlur = 5; ctx.shadowOffsetY = 5; ctx.save(); ctx.translate(0, CELL * (JELLY ? .03 : .075)); gemPath(ctx, C.shape, s); ctx.fillStyle = JELLY ? mixc(C.d, C.c, .3) : edge; ctx.fill(); ctx.lineWidth = Math.max(2.5, CELL * .06); ctx.strokeStyle = edge; ctx.stroke(); ctx.restore(); ctx.shadowColor = "transparent"; ctx.shadowOffsetY = 0;
+  gemPath(ctx, C.shape, s); ctx.fillStyle = JELLY ? mixc(C.d, C.c, .3) : edge; ctx.fill(); if (!JELLY) { ctx.lineWidth = Math.max(2.5, CELL * .06); ctx.strokeStyle = edge; ctx.stroke(); }   // the gem sits on a thicker slab of its own dark edge (not in the soft look)
   { const bg = ctx.createRadialGradient(-s * .45, -s * .6, s * .1, 0, 0, s * 1.7); bg.addColorStop(0, mixc(C.c, C.l, .9)); bg.addColorStop(.45, C.c); bg.addColorStop(1, mixc(C.c, C.d, .85)); gemPath(ctx, C.shape, s); ctx.fillStyle = bg; ctx.fill(); }
   ctx.save(); gemPath(ctx, C.shape, s); ctx.clip(); ctx.globalAlpha = .38;
   if (JELLY) {   // 2026-10-16 carved charms (İdris chose "oyma tahta / taş rozet"): a matte painted face over fine wood grain, the drawn detail at full strength, a crisp carved bevel, no wet shine
@@ -2887,9 +2887,9 @@ function drawGemRaw(ctx, g, now) {
       ctx.lineWidth = Math.max(.6, s * .018); for (let k = 0; k < 13; k++) { const y0 = -s * 1.2 + k * s * .2 + rr() * s * .06, a = s * (.03 + rr() * .05), f = 2 + rr() * 3; ctx.strokeStyle = k % 2 ? "rgba(0,0,0,.13)" : "rgba(255,255,255,.08)"; ctx.beginPath(); for (let t = 0; t <= 24; t++) { const x = -s * 1.3 + t * s * .11, y = y0 + Math.sin(t / 24 * f * Math.PI + k) * a; if (t) ctx.lineTo(x, y); else ctx.moveTo(x, y); } ctx.stroke(); }   // wood grain
       for (let k = 0; k < 22; k++) { ctx.fillStyle = k % 2 ? "rgba(0,0,0,.12)" : "rgba(255,255,255,.1)"; ctx.beginPath(); ctx.arc((rr() * 2 - 1) * s, (rr() * 2 - 1) * s, s * (.01 + rr() * .02), 0, 6.2832); ctx.fill(); } }   // worn paint
     if (Q.art) { ctx.save(); Q.art(ctx, s, C); ctx.restore(); }
-    ctx.save(); ctx.translate(-s * .045, -s * .05); gemPath(ctx, C.shape, s); ctx.lineWidth = s * .14; ctx.strokeStyle = mixc(C.c, C.d, .82); ctx.globalAlpha = .75; ctx.stroke(); ctx.restore();   // the carved chamfer: shade on the lower right
-    ctx.save(); ctx.translate(s * .045, s * .05); gemPath(ctx, C.shape, s); ctx.lineWidth = s * .14; ctx.strokeStyle = mixc(C.c, "#ffffff", .5); ctx.globalAlpha = .55; ctx.stroke(); ctx.restore();   // and light on the upper left
-    ctx.save(); gemPath(ctx, C.shape, s * .86); ctx.lineWidth = Math.max(1, s * .03); ctx.strokeStyle = "rgba(0,0,0,.28)"; ctx.stroke(); ctx.restore(); }   // the edge where the bevel meets the face
+    { const sh = ctx.createRadialGradient(s * .55, s * .7, s * .1, s * .2, s * .3, s * 1.5); sh.addColorStop(0, "rgba(0,0,0,.34)"); sh.addColorStop(.6, "rgba(0,0,0,.08)"); sh.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = sh; ctx.fillRect(-s * 2, -s * 2, s * 4, s * 4);   // soft round volume: shade low right
+      const li = ctx.createRadialGradient(-s * .45, -s * .55, 0, -s * .3, -s * .35, s * 1.1); li.addColorStop(0, "rgba(255,255,255,.3)"); li.addColorStop(1, "rgba(255,255,255,0)"); ctx.fillStyle = li; ctx.fillRect(-s * 2, -s * 2, s * 4, s * 4); }   // and soft light high left, no hard edges
+  }
   else if (Q.art) { ctx.globalAlpha = 1; ctx.save(); Q.art(ctx, s, C); ctx.restore(); }
   else if (Q.mode === "fan") {
     const n = o.length; for (let i = 0; i < n; i++) { const p = o[i], q = o[(i + 1) % n]; poly([[Q.cx, Q.cy], p, q], shade(lit(p, q, Q.cx, Q.cy) * .9 + (i % 2 ? -.18 : .2))); }
@@ -2914,7 +2914,7 @@ function drawGemRaw(ctx, g, now) {
     const rm = ctx.createRadialGradient(s * .35, s * 1.05, 0, s * .35, s * 1.05, s * .9); rm.addColorStop(0, mixc(C.c, C.l, .7)); rm.addColorStop(1, "rgba(255,255,255,0)"); ctx.globalAlpha = .4; ctx.fillStyle = rm; ctx.fillRect(-s * 1.5, 0, s * 3, s * 1.5); ctx.globalAlpha = 1; }
   ctx.restore();
   // smooth outline and one four-point glint
-  gemPath(ctx, C.shape, s); ctx.lineWidth = Math.max(1.6, CELL * (JELLY ? .042 : .032)); ctx.strokeStyle = JELLY ? "#2a1a0e" : mixc(C.d, "#000000", .35); ctx.stroke();
+  gemPath(ctx, C.shape, s); ctx.lineWidth = Math.max(1.2, CELL * (JELLY ? .022 : .032)); ctx.strokeStyle = JELLY ? mixc(C.d, C.c, .35) : mixc(C.d, "#000000", .35); ctx.globalAlpha = JELLY ? .7 : 1; ctx.stroke(); ctx.globalAlpha = 1;   // a thin outline in the charm's own dark tone, not a black groove
   if (Q.over) { ctx.save(); ctx.shadowColor = "transparent"; Q.over(ctx, s, C); ctx.restore(); }
   if (!JELLY) { const gx = Q.glint ? Q.glint[0] * s : C.shape === "moon" ? -s * .62 : -s * .42, gy = Q.glint ? Q.glint[1] * s : C.shape === "moon" ? s * .05 : -s * .5, a = s * .3, b = s * .07; ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.beginPath(); ctx.moveTo(gx, gy - a); ctx.lineTo(gx + b, gy - b); ctx.lineTo(gx + a, gy); ctx.lineTo(gx + b, gy + b); ctx.lineTo(gx, gy + a); ctx.lineTo(gx - b, gy + b); ctx.lineTo(gx - a, gy); ctx.lineTo(gx - b, gy - b); ctx.closePath(); ctx.fill(); }
   }
