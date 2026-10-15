@@ -507,7 +507,8 @@
   .lvplate.st { pointer-events: auto; cursor: pointer; }
   .mprop.stn { pointer-events: auto; cursor: pointer; z-index: 2; } .mprop.stn .lvplate { left: 50%; right: auto; top: auto; bottom: calc(100% - 4px); transform: translateX(-50%); }
   .mprop.train { z-index: 2; }
-  #path .mprop:not(.vis) img, #path u.firefly:not(.vis) { animation-play-state: paused !important; }
+  #path .mprop:not(.vis) img, #path u.firefly:not(.vis), #path .mcloud:not(.vis) { animation-play-state: paused !important; }
+  html.pinching #path *, html.pinching #path *::before, html.pinching #path *::after { animation-play-state: paused !important; }   /* nothing moves while the map is being pinched */
   #map:not([hidden]) { animation: screenIn .28s ease-out both; } @keyframes screenIn { from { opacity: 0; } to { opacity: 1; } }
   .mprop.work { pointer-events: auto; cursor: pointer; z-index: 2; } .mprop.work::before { content: ""; position: absolute; left: 4%; right: 4%; bottom: -4%; height: 34%; border-radius: 50%; background: radial-gradient(ellipse, #b08a5a 0 55%, #8a6a40 56% 100%); box-shadow: 0 4px 0 rgba(0, 0, 0, .25); z-index: -1; } .mprop.work.lock::before { filter: grayscale(1) brightness(.6); } .mprop.work.ruin img { filter: grayscale(.9) brightness(.8); opacity: .85; } .mprop.work .lvplate { left: 50%; right: auto; top: auto; bottom: calc(100% - 6px); transform: translateX(-50%); animation: pulse 1.4s infinite; }
   /* a level just won: the grey over the freed stretch thins away and a little ash lifts off it */
@@ -1230,7 +1231,8 @@ let mapRaf = 0, lastCur = -1;
 // ---- the map. One winding path up the screen, scrolled natively; twenty chapter bands each with its own daylight colours; big glossy stops; a big Pogo at the
 // current one. Chapters ahead are the same world under a grey haze, never dark. Few, large pieces: the whole map is about 450 elements.
 // the map is seen from far: stops half as far apart, every piece half size
-const GAP = () => innerWidth <= 600 ? 172 : 240; let MAPW = 420, mapIO = null, mapTok = 0;   // stops 172 apart on a phone (2026-10-16: the map seen from further away)
+const GAP = () => innerWidth <= 600 ? 172 : 240; let MAPW = 420, mapIO = null, mapTok = 0, mapLate = null;
+{ let lq = 0; $("map").addEventListener("scroll", () => { if (lq) return; lq = requestAnimationFrame(() => { lq = 0; if (mapLate) mapLate(); }); }, { passive: true }); }   // far places' scenery comes in as the map scrolls near them   // stops 172 apart on a phone (2026-10-16: the map seen from further away)
 const CHAP_SKY = [["#8be0ff", "#d7f7a0"], ["#9fe8c8", "#eaf9b0"], ["#a9d9ff", "#d9f0ff"], ["#ffd9a8", "#ffefc2"], ["#b8f0b0", "#e0ffd0"], ["#ffc2d8", "#ffe4ee"], ["#ffe08a", "#fff5c8"], ["#c9c2ff", "#e8e4ff"], ["#b6ffd9", "#e4fff0"], ["#ffd2a0", "#ffe9c8"],
   ["#9fd8ff", "#dff3ff"], ["#ffe9a8", "#fff8d8"], ["#9fe8e0", "#e0fbf7"], ["#ffd6b0", "#fff0e0"], ["#c4f0a8", "#e8ffd4"], ["#d9c8ff", "#f0e8ff"], ["#ffcfcf", "#ffeaea"], ["#bfe6ff", "#e6f6ff"], ["#e0c8ff", "#f4ecff"], ["#ffe0a0", "#fff4d8"]];
 const CHAP_GROUNDC = ["#5fc96a", "#7fd45a", "#4fc4a4", "#a8c850", "#5cc460", "#60b878", "#c8d050", "#7a9ae8", "#5ac88a", "#8aa0e0", "#f0c870", "#9ad8c0", "#60c0e0", "#f0cc88", "#a0cc78", "#c0b8d8", "#8ad860", "#a89ae8", "#b070e8", "#9090e8"];
@@ -1280,7 +1282,7 @@ function buildMap() {
   const LIFE = ["deer", "fox", "rabbit", "hedgehog", "duck", "butterfly", "bird", "bird2"];
   // Only the place the player is in and its two neighbours are built at once. The scenery of the other seventeen places is added a moment
   // later, off screen, so coming back to the map does not wait for seven hundred pictures to be laid out.
-  let late = "";
+  const lateBy = {};
   for (let c = 0; c < CHAPTERS.length; c++) { const C = CHAPTERS[c], lock = c * 10 > cur, won = c * 10 + 9 < cur, h0 = h, far = Math.abs(c - chapOf(cur)) > 1; h = "";
     for (let k = 0; k < 20; k++) { const i = c * 10 + Math.floor(k * 9 / 20), p = pts[Math.min(N - 1, i)], side = (k >> 1) % 2 ? 1 : -1, lock = i > cur, life = won && k % 2 === 1, kind = life ? LIFE[(c + k) % LIFE.length] : D3 ? (D3.EMO[C.props[k % 4]] || "bush") : "bush", sz = Math.round((66 + R() * 40) * (big ? 1.35 : 1) * (life ? 1.5 : 1)), xo = (big ? 100 : 70) + R() * (big ? 260 : 150), x = Math.max(W * .04, Math.min(W * .96, p[0] + side * xo)), y = p[1] - 40 + R() * 150;
       if (D3) h += `<div class="mprop${lock ? " lock" : ""}${won ? (k % 2 === 1 ? " live" : " won") : ""}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px;--dl:-${(R() * 3).toFixed(1)}s"><img src="${D3.sprite(kind, 128)}" alt=""></div>`; }
@@ -1308,7 +1310,7 @@ function buildMap() {
         h += `<div class="critter c-${kind}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;--dl:-${(R() * 4).toFixed(1)}s;--fx:${((k % 2 ? 1 : -1) * (8 + R() * 10)).toFixed(0)}px"><img src="${D3.sprite(kind, 48)}" alt=""></div>`; }
       if (c * 10 <= cur + 10) for (let k = 0; k < 8; k++) { const i = c * 10 + k, p = pts[Math.min(N - 1, i)], x = Math.max(W * .03, Math.min(W * .97, p[0] + (k % 2 ? -1 : 1) * (20 + R() * W * .25))), y = p[1] - 30 + R() * 110; h += `<u class="fly" style="left:${Math.round(x)}px;top:${Math.round(y)}px;--dl:-${(R() * 3).toFixed(1)}s"></u>`; }
       for (let k = 0; k < 3; k++) { const i = c * 10 + 2 + k * 3, p = pts[Math.min(N - 1, i)]; h += `<div class="mcloud" style="left:${Math.round(R() * W * .8)}px;top:${Math.round(p[1] - 80 - R() * 60)}px;width:${Math.round((110 + R() * 70) * (big ? 1.3 : 1))}px;--t:${(38 + R() * 30).toFixed(0)}s;--dl:-${(R() * 30).toFixed(0)}s"><img src="${D3.sprite("cloud", 192)}" alt=""></div>`; } }
-    if (far) { late += h; h = h0; } else h = h0 + h; }
+    if (far) { lateBy[c] = h; h = h0; } else h = h0 + h; }
   // stations: one at the start and one every twenty-five levels, on the side the sign leaves free; the train waits just behind the current stop
   if (D3) { for (let k = 0; k <= STATIONS.length; k++) { const si = k ? k * STATION_EVERY - 1 : 0, p = pts[si], side = p[0] > W / 2 ? 1 : -1, stw = big ? 170 : 115, x = k ? Math.max(stw * .5, Math.min(W - stw * .5, p[0] + side * (big ? 165 : 105))) : Math.max(stw * .5, Math.min(W - stw * .5, p[0] + side * (big ? 90 : 60))), y = k ? p[1] + 22 : p[1] + (big ? 300 : 250);
       h += `<div class="mprop stn${si > cur ? " lock" : ""}" data-k="${k}" style="left:${Math.round(x)}px;top:${y}px;width:${stw}px"><img src="${D3.sprite("station", 192)}" alt=""><i class="lvplate st"><small>${k ? "Station " + k : "Start"}</small>${k ? STATIONS[k - 1].name : "Charmwood Station"}</i></div>`; }
@@ -1323,14 +1325,17 @@ function buildMap() {
   // Pogo beside the current stop, on the roomier side
   { const p = pts[cur], left = p[0] > W / 2; h += `<div class="pogoMap pogoBig${left ? " flip" : ""}" onclick="openPet()" style="left:${Math.round(p[0] + (left ? -65 : 65))}px;top:${p[1] + 3}px">${pogoSvg()}</div>`; }
   path.insertAdjacentHTML("beforeend", h);
-  { const tok = ++mapTok; if (late) setTimeout(() => { if (tok !== mapTok) return; const first = path.querySelector(".lv"); if (!first) return; first.insertAdjacentHTML("beforebegin", late);
-    if (mapIO) path.querySelectorAll(".mprop.live, .mprop.won, .mprop.mordo, u.firefly").forEach(n => mapIO.observe(n)); else path.querySelectorAll(".mprop, u.firefly").forEach(n => n.classList.add("vis")); }, window.__fast ? 0 : 120); }
+  // A far place's scenery is only put on the map when the player scrolls near it: the map holds a few hundred elements, not six thousand
+  { const tok = ++mapTok, ANIM = ".mprop.live, .mprop.won, .mprop.mordo, u.firefly, .mcloud, .mprop.flutter, .critter";
+    const addPlace = (c) => { if (tok !== mapTok || !lateBy[c]) return; const first = path.querySelector(".lv"); if (!first) return; const t = document.createElement("template"); t.innerHTML = lateBy[c]; delete lateBy[c]; const nodes = [...t.content.children]; first.before(t.content); if (mapIO) nodes.forEach(n => { if (n.matches(ANIM)) mapIO.observe(n); }); else nodes.forEach(n => n.classList.add("vis")); };
+    mapLate = () => { if (tok !== mapTok) return; const m = $("map"), z = mapZ || 1, top = m.scrollTop / z - 1400, bot = (m.scrollTop + m.clientHeight) / z + 1400; for (const c in lateBy) { const y = pts[Math.min(N - 1, +c * 10 + 5)][1]; if (y > top && y < bot) addPlace(c); } };
+    setTimeout(() => mapLate && mapLate(), window.__fast ? 0 : 120); }
   path.querySelectorAll(".lv.done, .lv.now").forEach(n => n.addEventListener("click", () => { lvFrom = n.getBoundingClientRect(); openLevel(+n.dataset.i); }));
   path.querySelectorAll(".lv .lvplate.st").forEach(n => n.addEventListener("click", (e) => { e.stopPropagation(); openSign(+n.parentNode.dataset.i); }));
   path.querySelectorAll(".mprop.stn").forEach(n => n.addEventListener("click", () => openStation(+n.dataset.k)));
   path.querySelectorAll(".mprop.work").forEach(n => n.addEventListener("click", () => openGarden()));
   // only what is on or near the screen moves: every hopping creature, swaying plant and firefly is paused until it scrolls into view
-  if (window.IntersectionObserver) { if (mapIO) mapIO.disconnect(); mapIO = new IntersectionObserver((es) => { for (const e of es) e.target.classList.toggle("vis", e.isIntersecting); }, { root: $("map"), rootMargin: "260px" }); path.querySelectorAll(".mprop.live, .mprop.won, .mprop.mordo, u.firefly").forEach(n => mapIO.observe(n)); }
+  if (window.IntersectionObserver) { if (mapIO) mapIO.disconnect(); mapIO = new IntersectionObserver((es) => { for (const e of es) e.target.classList.toggle("vis", e.isIntersecting); }, { root: $("map"), rootMargin: "260px" }); path.querySelectorAll(".mprop.live, .mprop.won, .mprop.mordo, u.firefly, .mcloud, .mprop.flutter").forEach(n => mapIO.observe(n)); }
   else path.querySelectorAll(".mprop, u.firefly").forEach(n => n.classList.add("vis"));
   // the current stop lands in the exact middle of the screen (the map's own offset inside the scroller is measured, not assumed)
   const off = path.getBoundingClientRect().top - $("map").getBoundingClientRect().top + $("map").scrollTop, yOf = (i) => Math.max(0, pts[i][1] + off - innerHeight / 2), target = yOf(cur), from = lastCur < 0 ? target + 260 : lastCur !== cur ? yOf(lastCur) : null; lastCur = cur;
@@ -1357,9 +1362,9 @@ let mapZ = 1; function setMapZoom(z, cx, cy) { const m = $("map"), p = $("path")
 // While the fingers move, the map is only scaled on the GPU (a transform: no layout, smooth at any frame rate); the real zoom, which lays the
 // whole map out again, is applied once when the fingers lift.
 { const m = $("map"), p = $("path"); let d0 = 0, z0 = 1, live = 1, cx = 0, cy = 0, wt = 0; const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
-  const begin = (x, y) => { const r = m.getBoundingClientRect(); cx = x - r.left; cy = y - r.top; z0 = mapZ; live = mapZ; p.style.willChange = "transform"; p.style.transformOrigin = `${(m.scrollLeft + cx) / mapZ}px ${(m.scrollTop + cy) / mapZ}px`; };
+  const begin = (x, y) => { document.documentElement.classList.add("pinching"); const r = m.getBoundingClientRect(); cx = x - r.left; cy = y - r.top; z0 = mapZ; live = mapZ; p.style.willChange = "transform"; p.style.transformOrigin = `${(m.scrollLeft + cx) / mapZ}px ${(m.scrollTop + cy) / mapZ}px`; };
   const show = (z) => { live = Math.max(1, Math.min(3.2, z)); p.style.transform = `scale(${(live / mapZ).toFixed(4)})`; };
-  const commit = () => { p.style.transform = ""; p.style.willChange = ""; if (Math.abs(live - mapZ) > .001) setMapZoom(live, cx, cy); };
+  const commit = () => { document.documentElement.classList.remove("pinching"); p.style.transform = ""; p.style.willChange = ""; if (Math.abs(live - mapZ) > .001) setMapZoom(live, cx, cy); };
   m.addEventListener("touchstart", (e) => { if (e.touches.length === 2) { d0 = dist(e.touches); begin((e.touches[0].clientX + e.touches[1].clientX) / 2, (e.touches[0].clientY + e.touches[1].clientY) / 2); } }, { passive: true });
   m.addEventListener("touchmove", (e) => { if (e.touches.length !== 2 || !d0) return; e.preventDefault(); show(z0 * dist(e.touches) / d0); }, { passive: false });
   m.addEventListener("touchend", (e) => { if (e.touches.length < 2 && d0) { d0 = 0; commit(); } });
