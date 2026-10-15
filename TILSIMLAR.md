@@ -71,3 +71,18 @@ Kod: `prism/index.html` içinde `COLORS` (başlangıç taşları), `NEWGEMS` (ge
 ## 2026-10-16: emoji çizimleri
 
 Taşlar artık telefonun kendi emoji çizimleriyle gösteriliyor (mat hale getirilmiş). Başlangıç: 🍎 elma, 🍊 portakal, 🍀 yonca, 🫐 yaban mersini, 🍇 üzüm, 🌻 ayçiçeği. Her 25 seviyede üç yeni taş: 🍄🍁🌵 (25), 🐳🍆🍋 (50), 🌹🥕🐸 (75), 💧🪻🐝 (100), 🐞🍑🌲 (125), 🐬🔮🍌 (150), 🍒🦊🥝 (175), 🦋🐙🐥 (200).
+
+## 2026-10-16: low-poly doğa modelleri (güncel)
+
+Taşlar kesik yüzeyli, mat 3B low-poly modeller. Yuva başına başlangıç taşı ve her 25 seviyede yerine gelenler:
+
+| Yuva | Başlangıç | Sonra gelenler |
+|---|---|---|
+| Kırmızı | Elma | Mantar, Çilek, Kiraz, Uğur böceği |
+| Turuncu | Portakal | Havuç, Akçaağaç yaprağı, Japon balığı, Palamut |
+| Yeşil | Yaprak | Çam, Kaktüs, Yonca, Çalı |
+| Mavi | Dünya | Su damlası, Balık, Kuş, Kelebek |
+| Mor | Üzüm | Erik, Patlıcan, Lale, Kelebek |
+| Sarı | Güneş | Armut, Limon, Arı, Yıldız |
+
+Anlamları: Dünya ve güneş ormanın ışığının kaynağını, meyveler ormanın armağanlarını, hayvanlar geri dönen canlıları, ağaçlar ve yapraklar yeşilin geri gelişini anlatır.
