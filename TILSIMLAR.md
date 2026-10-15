@@ -24,6 +24,8 @@ Görünüm: dolgun 3B, çizimler yüzeyde kabartma (2026-10-16, İdris'in seçim
 
 ## Başlangıç taşları (1-24. seviyeler)
 
+2026-10-16 itibarıyla şekiller: tombul çiçek, yuvarlak meyve, çam ağacı, su damlası, mantar, palamut. Hepsinin küçük sevimli bir yüzü var; aşağıdaki anlamlar aynı kalıyor.
+
 | Taş | Ne | Anlamı |
 |---|---|---|
 | Mantar | Benekli orman mantarı | Mantar Oyuğu'nun ışığı; şapkasının altında tılsım saklanır |

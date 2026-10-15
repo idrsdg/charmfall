@@ -706,12 +706,12 @@
 // ================================================================ config
 const COLS = 9, ROWS = 9, NCOL = 6;
 const COLORS = [   // the forest's own charms (2026-10-14): six colours, six silhouettes, each one a thing that grows in Charmwood
-  { name: "mushroom", c: "#f0483e", l: "#ffc2b8", d: "#9c1f1f", shape: "mushroom" },
-  { name: "acorn", c: "#d9732a", l: "#ffd2a8", d: "#7a3404", shape: "nut" },
-  { name: "leaf", c: "#4fcf5a", l: "#d2ffd0", d: "#1c7a2e", shape: "leaf" },
-  { name: "bluebell", c: "#4fa8ff", l: "#d6ecff", d: "#1a55b0", shape: "bell" },
-  { name: "berry", c: "#9150e8", l: "#e2d2ff", d: "#45189c", shape: "bramble" },
-  { name: "honey", c: "#ffd83a", l: "#fff8cc", d: "#b07a00", shape: "drop" }
+  { name: "mushroom", c: "#f0483e", l: "#ffc2b8", d: "#9c1f1f", shape: "bloom" },
+  { name: "acorn", c: "#d9732a", l: "#ffd2a8", d: "#7a3404", shape: "orb" },
+  { name: "leaf", c: "#4fcf5a", l: "#d2ffd0", d: "#1c7a2e", shape: "pine" },
+  { name: "bluebell", c: "#4fa8ff", l: "#d6ecff", d: "#1a55b0", shape: "tear" },
+  { name: "berry", c: "#9150e8", l: "#e2d2ff", d: "#45189c", shape: "mush" },
+  { name: "honey", c: "#ffd83a", l: "#fff8cc", d: "#b07a00", shape: "nutty" }
 ];
 // every 25 levels a charm nobody has seen yet joins the board and takes over one colour slot from then on (the shape and the colour are new, the count of colours is not)
 const NEWGEMS = [   // since 2026-10-16 three arrive together every 25 levels (24 charms for 8 stations); each takes a colour slot of the board
@@ -1760,18 +1760,18 @@ const D3 = (() => {
   }
   // fully 3D charms: the outline (and stems/leaves drawn outside it) becomes a height field: a soft inflated dome that rounds off at the edge,
   // with the drawn detail raised out of the surface. Rendered once per charm and size from a slightly tilted view, lit like the rest of the game.
-  const puffs = new Map();
+  const puffs = new Map(), THIN = new Set(["thunder", "feather", "halfmoon", "crystal", "carrot", "snowflake", "maple", "starfruit"]);
   function puff(C, px) {
     const key = C.shape + C.c + ":" + px; if (puffs.has(key)) return puffs.get(key);
     const Q = SHAPES[C.shape] || SHAPES.puff, N = 224, u = N / 3.2, mk = (draw) => { const c = document.createElement("canvas"); c.width = c.height = N; const x = c.getContext("2d", { willReadFrequently: true }); x.translate(N / 2, N / 2); draw(x); return c; };
-    const mask = mk(x => { x.fillStyle = "#fff"; gemPath(x, C.shape, u); x.fill(); if (Q.over) { x.save(); Q.over(x, u, C); x.restore(); } }), md = mask.getContext("2d").getImageData(0, 0, N, N).data;
+    const mask = mk(x => { x.fillStyle = "#fff"; gemPath(x, C.shape, u); x.fill(); if (Q.over && !Q.clean) { x.save(); Q.over(x, u, C); x.restore(); } }), md = mask.getContext("2d").getImageData(0, 0, N, N).data;
     let h = new Float32Array(N * N); for (let i = 0; i < N * N; i++) h[i] = md[i * 4 + 3] > 40 ? 1 : 0; const inside = h.slice();
     const blur = (a, r) => { const b = new Float32Array(N * N); for (let y = 0; y < N; y++) { let acc = 0; for (let x = -r; x <= r; x++) acc += a[y * N + Math.max(0, Math.min(N - 1, x))]; for (let x = 0; x < N; x++) { b[y * N + x] = acc / (2 * r + 1); acc += a[y * N + Math.min(N - 1, x + r + 1)] - a[y * N + Math.max(0, x - r)]; } } const c2 = new Float32Array(N * N); for (let x = 0; x < N; x++) { let acc = 0; for (let y = -r; y <= r; y++) acc += b[Math.max(0, Math.min(N - 1, y)) * N + x]; for (let y = 0; y < N; y++) { c2[y * N + x] = acc / (2 * r + 1); acc += b[Math.min(N - 1, y + r + 1) * N + x] - b[Math.max(0, y - r) * N + x]; } } return c2; };
     for (let k = 0; k < 3; k++) h = blur(h, 12); for (let i = 0; i < N * N; i++) h[i] = inside[i] ? Math.sqrt(Math.max(0, (h[i] - .5) * 2)) : 0;   // an inflated dome that meets the ground exactly at the outline, no cliff
-    const col = mk(x => { const g = x.createLinearGradient(0, -u * 1.4, 0, u * 1.4); g.addColorStop(0, mixc(C.c, C.l, .28)); g.addColorStop(1, mixc(C.c, C.d, .2)); x.fillStyle = g; x.fillRect(-N, -N, 2 * N, 2 * N); if (Q.art) { x.save(); Q.art(x, u, C); x.restore(); } if (Q.over) { x.save(); Q.over(x, u, C); x.restore(); } });
+    const col = mk(x => { const g = x.createLinearGradient(0, -u * 1.4, 0, u * 1.4); g.addColorStop(0, mixc(C.c, C.l, .28)); g.addColorStop(1, mixc(C.c, C.d, .2)); x.fillStyle = g; x.fillRect(-N, -N, 2 * N, 2 * N); if (Q.clean) { x.save(); Q.clean(x, u, C); x.restore(); } else { if (Q.art) { x.save(); Q.art(x, u, C); x.restore(); } if (!THIN.has(C.shape)) { x.save(); SHAPES.face(x, u, C, .2, .72); x.restore(); } } });   // the six home charms have their own clean face; the arriving charms keep their detail and get the same sweet face
     const cd = col.getContext("2d").getImageData(0, 0, N, N).data, base = new Float32Array(N * N); let mean = 0, cnt = 0; for (let i = 0; i < N * N; i++) { const l = (cd[i * 4] * .3 + cd[i * 4 + 1] * .59 + cd[i * 4 + 2] * .11) / 255; base[i] = l; if (inside[i]) { mean += l; cnt++; } } mean /= cnt || 1;
     const det = blur(base.map((l, i) => inside[i] ? l - mean : 0), 2), edge = blur(inside, 2);   // the drawn detail, raised where it is lighter
-    const geo = new T.PlaneGeometry(3.2, 3.2, N - 1, N - 1), pos = geo.attributes.position; for (let v = 0; v < pos.count; v++) { const ix = v % N, iy = Math.floor(v / N), i = iy * N + ix; pos.setZ(v, inside[i] ? h[i] * 1.05 + det[i] * .46 * Math.min(1, h[i] * 3) : 0); } geo.computeVertexNormals();
+    const geo = new T.PlaneGeometry(3.2, 3.2, N - 1, N - 1), pos = geo.attributes.position; for (let v = 0; v < pos.count; v++) { const ix = v % N, iy = Math.floor(v / N), i = iy * N + ix; pos.setZ(v, inside[i] ? h[i] * 1.1 + det[i] * .3 * Math.min(1, h[i] * 3) : 0); } geo.computeVertexNormals();
     const tex = new T.CanvasTexture(col); if (T.sRGBEncoding) tex.encoding = T.sRGBEncoding; tex.anisotropy = 4; const am = new T.CanvasTexture(mask); am.minFilter = am.magFilter = T.LinearFilter;
     const matl = new T.MeshStandardMaterial({ map: tex, alphaMap: am, alphaTest: .5, roughness: .36, metalness: .04 });
     const scene = new T.Scene(); scene.add(new T.HemisphereLight(0xffffff, 0x3a3050, .7)); const sun = new T.DirectionalLight(0xfff4e6, 1.4); sun.position.set(-3, 3.5, 2.6); scene.add(sun); const rim = new T.DirectionalLight(0xffffff, .55); rim.position.set(3, -1.5, 2); scene.add(rim);   // a lower sun, so every raised detail casts its own shading
@@ -2827,6 +2827,26 @@ const SHAPES = (() => {
   Object.assign(S.rose, { art: (x, s, C) => { x.strokeStyle = mixc(C.d, "#000000", .1); x.lineWidth = Math.max(1.2, s * .09); x.lineCap = "round"; for (const [r, a0] of [[.82, .3], [.56, 2.2], [.3, 4.1]]) { x.beginPath(); x.arc(0, 0, r * s, a0, a0 + 4.3); x.stroke(); } x.fillStyle = mixc(C.c, C.l, .5); dot(x, s, 0, 0, .1); } });
   Object.assign(S.crystal, { art: (x, s, C) => ln(x, s, [[0, -1.3, 0, 1.3], [-.72, -.5, .72, -.5], [-.52, .9, 0, -.5, .52, .9]], .06, "rgba(255,255,255,.75)") });
   Object.assign(S.sun, { art: (x, s, C) => { x.fillStyle = mixc(C.c, C.l, .7); dot(x, s, 0, 0, .66); x.strokeStyle = mixc(C.d, C.c, .2); x.lineWidth = Math.max(1.2, s * .08); x.beginPath(); x.arc(0, 0, .66 * s, 0, 6.2832); x.stroke(); x.fillStyle = mixc(C.d, "#000000", .2); dot(x, s, -.22, -.1, .07); dot(x, s, .22, -.1, .07); x.lineCap = "round"; x.beginPath(); x.arc(0, .08 * s, .26 * s, .35, P - .35); x.stroke(); } });
+  // 2026-10-16 (İdris: "şekilleri değiştir tamamen"): six clean, bold silhouettes for the home charms; their volume and light carry the detail
+  S.bloom = { o: ring(60, (a) => .8 + .46 * Math.pow(Math.abs(Math.cos(2.5 * (a + P / 2))), .7)), mode: "table", k: .5, cx: 0, cy: 0, soft: .5, clean: (x, s, C) => { x.fillStyle = mixc(C.c, "#fff3c0", .55); x.beginPath(); x.arc(0, 0, s * .34, 0, 6.2832); x.fill(); } };
+  S.orb = { o: ring(40, () => 1.12), mode: "table", k: .5, cx: 0, cy: 0, soft: .5, clean: (x, s, C) => { x.strokeStyle = mixc(C.c, C.d, .4); x.lineWidth = s * .12; x.beginPath(); x.arc(0, 0, s * .62, 0, 6.2832); x.stroke(); } };
+  S.pine = { o: [[0, -1.38], [.6, -.6], [.36, -.58], [.92, .2], [.56, .22], [1.12, .98], [.24, .98], [.24, 1.34], [-.24, 1.34], [-.24, .98], [-1.12, .98], [-.56, .22], [-.92, .2], [-.36, -.58], [-.6, -.6]], mode: "table", k: .5, cx: 0, cy: 0, soft: .32 };
+  S.tear = { o: ring(48, (a) => { const t = a + P / 2; return 1.0 + .38 * Math.cos(t) * -1 + .1; }).map(q => [q[0] * .92, q[1] * 1.05 + .1]), mode: "table", k: .5, cx: 0, cy: .2, soft: .5 };
+  // a small sweet face: two shiny eyes, a smile, pink cheeks (y = where the eyes sit)
+  const face = (x, s, C, y, k) => { k = k || 1; x.fillStyle = "#2a1a22"; for (const e of [-1, 1]) { x.beginPath(); x.ellipse(e * s * .3 * k, y * s, s * .1 * k, s * .14 * k, 0, 0, 6.2832); x.fill(); } x.fillStyle = "#ffffff"; for (const e of [-1, 1]) { x.beginPath(); x.arc(e * s * .3 * k - s * .03, y * s - s * .05, s * .04 * k, 0, 6.2832); x.fill(); }
+    x.strokeStyle = "#2a1a22"; x.lineWidth = s * .06 * k; x.lineCap = "round"; x.beginPath(); x.arc(0, y * s + s * .1 * k, s * .14 * k, .25, P - .25); x.stroke(); x.fillStyle = "rgba(255,120,140,.55)"; for (const e of [-1, 1]) { x.beginPath(); x.ellipse(e * s * .55 * k, y * s + s * .16 * k, s * .13 * k, s * .08 * k, 0, 0, 6.2832); x.fill(); } };
+  S.bloom.clean = (x, s, C) => { x.fillStyle = mixc(C.c, "#fff3c0", .6); x.beginPath(); x.arc(0, 0, s * .52, 0, 6.2832); x.fill(); face(x, s, C, -.05, .85); };
+  S.orb = { o: ring(44, (a) => 1.1 + .08 * Math.cos(2 * a)).map(q => [q[0], q[1] + .08]).concat([]), mode: "table", k: .5, cx: 0, cy: 0, soft: .5, clean: (x, s, C) => { face(x, s, C, .02); x.fillStyle = "#5a9a3a"; x.beginPath(); x.ellipse(s * .28, -s * 1.0, s * .3, s * .13, -.5, 0, 6.2832); x.fill(); } };
+  S.pine.clean = (x, s, C) => face(x, s, C, .35, .8);
+  S.tear.o = Array.from({ length: 48 }, (_, i) => { const t = i / 48 * 2 * P; return [1.12 * Math.sin(t) * Math.sin(t / 2), -1.32 * Math.cos(t) + .12]; });   // a real drop: round below, a point on top
+  S.tear.clean = (x, s, C) => face(x, s, C, .38);
+  S.face = face;
+  S.mush = { o: Array.from({ length: 25 }, (_, i) => { const a = P + i / 24 * P; return [Math.cos(a) * 1.3, Math.sin(a) * 1.05 + .05]; }).concat([[.52, .1], [.46, 1.25], [-.46, 1.25], [-.52, .1]]), mode: "table", k: .5, cx: 0, cy: 0, soft: .5,
+    clean: (x, s, C) => { x.fillStyle = "#f6ead2"; x.fillRect(-s * .5, s * .08, s, s * 1.3); x.fillStyle = "rgba(255,255,255,.75)"; for (const [a, b, r] of [[-.7, -.5, .17], [.1, -.75, .2], [.75, -.4, .14]]) { x.beginPath(); x.arc(a * s, b * s, r * s, 0, 6.2832); x.fill(); } face(x, s, C, .5, .7); } };
+  S.nutty = { o: Array.from({ length: 17 }, (_, i) => { const a = P + i / 16 * P; return [Math.cos(a) * 1.18, Math.sin(a) * .62 - .38]; }).concat(Array.from({ length: 17 }, (_, i) => { const t = i / 16; return [Math.cos(t * P) * 1.0 * (1 - .15 * t), -.38 + Math.sin(t * P) * 1.65]; }).slice(0)), mode: "table", k: .5, cx: 0, cy: .1, soft: .5,
+    clean: (x, s, C) => { x.fillStyle = mixc(C.c, C.d, .55); x.fillRect(-s * 1.4, -s * 1.2, s * 2.8, s * .82); x.strokeStyle = mixc(C.c, C.d, .75); x.lineWidth = s * .05; for (let k = -3; k <= 3; k++) { x.beginPath(); x.moveTo(k * s * .32 - s * .3, -s * 1.0); x.lineTo(k * s * .32 + s * .3, -s * .42); x.stroke(); } face(x, s, C, .3, .85); } };
+  S.heart = { o: Array.from({ length: 56 }, (_, i) => { const t = i / 56 * 2 * P; return [Math.pow(Math.sin(t), 3) * 1.2, -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) / 13.5 + .05]; }), mode: "table", k: .5, cx: 0, cy: 0, soft: .45 };
+  S.star5 = { o: ring(10, (a, i) => i % 2 ? .62 : 1.3), mode: "table", k: .5, cx: 0, cy: .05, soft: .6 };
   // 2026-10-16: eight more charms, so three can arrive every 25 levels
   S.tulip = { o: [[0, -.55], [.35, -1.2], [.55, -.7], [.95, -1.05], [.95, .1], [.7, .8], [.3, 1.15], [-.3, 1.15], [-.7, .8], [-.95, .1], [-.95, -1.05], [-.55, -.7], [-.35, -1.2]], mode: "table", k: .5, cx: 0, cy: .1, soft: .35,
     art: (x, s, C) => { x.strokeStyle = mixc(C.d, "#000000", .1); x.globalAlpha = .55; x.lineWidth = s * .06; x.lineCap = "round"; for (const k of [-1, 1]) { x.beginPath(); x.moveTo(0, s * 1.05); x.quadraticCurveTo(k * s * .15, s * .2, k * s * .48, -s * .72); x.stroke(); } x.globalAlpha = 1; } };
