@@ -741,6 +741,15 @@ const SLOT = [[350, .5, .66], [28, .72, .64], [52, .68, .74], [150, .34, .56], [
   [[4, .72, .55], [28, .9, .56], [110, .5, .45], [200, .7, .55], [275, .48, .55], [50, .9, .58]].forEach(([h, s2, l], j) => { SLOT[j] = { c: rgb(h, s2, l), l: rgb(h, s2 * .7, Math.min(.92, l + .18)), d: rgb(h, Math.min(.5, s2), l * .48) }; }); }
 COLORS.forEach((C, j) => Object.assign(C, SLOT[j]));   // 2026-10-16 İdris chose natural/earth tones: terracotta mushroom, amber acorn, moss leaf, night-blue bell, plum berry, mustard honey   // 2026-10-16 satin set, in the order of the home charms: rose mushroom, apricot acorn, teal-mint leaf, periwinkle bell, orchid berry, mustard honey
 const palForRaw = (i) => { const pal = COLORS.slice(), k = Math.min(NEWGEMS.length / 3, Math.floor((i + 1) / 25)); for (let j = 0; j < k * 3; j++) pal[j % 6] = NEWGEMS[j]; return pal; };
+// 2026-10-16: the charms are the phone's own emoji art (drawn by professional artists, detailed and three-dimensional on iPhone), one per colour slot
+const EMOJI_HOME = ["🍎", "🍊", "🍀", "🫐", "🍇", "🌻"], EMOJI_NEW = [["🍄", "🌹", "🐞", "🍒"], ["🍁", "🥕", "🍑", "🦊"], ["🌵", "🐸", "🌲", "🥝"], ["🐳", "💧", "🐬", "🦋"], ["🍆", "🪻", "🔮", "🐙"], ["🍋", "🐝", "🍌", "🐥"]];
+COLORS.forEach((C, j) => C.emoji = EMOJI_HOME[j]); NEWGEMS.forEach((C, j) => C.emoji = EMOJI_NEW[j % 6][Math.floor(j / 6)]);
+const emojiArt = new Map();
+function emojiCanvas(C, px) { const key = C.emoji + px; if (emojiArt.has(key)) return emojiArt.get(key); const c = document.createElement("canvas"); c.width = c.height = px; const x = c.getContext("2d"); x.textAlign = "center"; x.textBaseline = "middle"; x.font = `${Math.round(px * .74)}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`; x.fillText(C.emoji, px / 2, px * .54);
+  try { const im = x.getImageData(0, 0, px, px), d = im.data; for (let i = 0; i < d.length; i += 4) { if (!d[i + 3]) continue; const r = d[i], g = d[i + 1], b = d[i + 2], mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
+      if (l > 150 && mx - mn < 120) { const k = Math.min(1, (l - 150) / 105) * .75, avg = (r + g + b) / 3; d[i] = r - (r - Math.min(r, avg * .82)) * k; d[i + 1] = g - (g - Math.min(g, avg * .82)) * k; d[i + 2] = b - (b - Math.min(b, avg * .82)) * k; } }   // matte: the bright glossy highlights are pressed down
+    x.putImageData(im, 0, 0); } catch (e) {}
+  emojiArt.set(key, c); return c; }
 const palFor = (i) => palForRaw(i).map((C, j) => Object.assign({}, C, SLOT[j]));
 let PAL = COLORS;
 const rnd = (n) => Math.floor(Math.random() * n);
@@ -2930,7 +2939,7 @@ function drawGem(g, px, py, scale, now, sy = 1, rot = 0) {
     ctx.beginPath(); ctx.arc(px, py, s * (.24 + .05 * pulse), 0, 6.2832); ctx.fillStyle = "#fffbe0"; ctx.fill();
   }
 }
-const JELLY = window.__gemStyle !== "art", GS = window.__gemStyle || "3d";   // 2026-10-16: İdris "3b modellere geç": every charm is a 3D piece   // soft (current), flat, gem, sticker, cel: candidate looks shown side by side before one is chosen
+const JELLY = window.__gemStyle !== "art", GS = window.__gemStyle || "emoji";   // 2026-10-16: İdris "3b modellere geç": every charm is a 3D piece   // soft (current), flat, gem, sticker, cel: candidate looks shown side by side before one is chosen
 function drawGemRaw(ctx, g, now) {
   const C = PAL[g.color]; ctx.save();
   if (g.kind === "ing") { // a seed on its way to the soil: a pale halo so it is never lost among the charms, a brown seed, two green leaves
@@ -2949,7 +2958,7 @@ function drawGemRaw(ctx, g, now) {
   const lit = (p, q, cx, cy) => { let nx = q[1] - p[1], ny = p[0] - q[0]; const L = Math.hypot(nx, ny) || 1, mx = (p[0] + q[0]) / 2 - cx, my = (p[1] + q[1]) / 2 - cy; nx /= L; ny /= L; if (nx * mx + ny * my < 0) { nx = -nx; ny = -ny; } return -(nx * .45 + ny * .89); };
   ctx.lineJoin = "round";
   if (g.kind === "gem") { const R = s * (g.special === "wrap" ? 1.5 : 1.22), hg = ctx.createRadialGradient(0, 0, s * .3, 0, 0, R); hg.addColorStop(0, g.special === "wrap" ? "rgba(255,226,120,.6)" : "rgba(255,236,170,.26)"); hg.addColorStop(1, "rgba(255,236,170,0)"); ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(0, 0, R, 0, 6.2832); ctx.fill(); }   // the charms are the forest's light
-  const C3 = g.kind === "gem" && (GS === "3d" || GS === "solid") && typeof D3 !== "undefined" && D3 && D3.solid ? (window.__gemStyle === "solid" ? D3.solid : D3.puff)(C, Math.max(64, Math.round(s * 2.9 * DPR))) : null;   // the charm as a 3D model, made once
+  const C3 = g.kind === "gem" && GS === "emoji" && C.emoji ? emojiCanvas(C, Math.max(64, Math.round(s * 2.9 * DPR))) : g.kind === "gem" && (GS === "3d" || GS === "solid") && typeof D3 !== "undefined" && D3 && D3.solid ? (window.__gemStyle === "solid" ? D3.solid : D3.puff)(C, Math.max(64, Math.round(s * 2.9 * DPR))) : null;   // the charm as a 3D model, made once
   if (C3) { let img = C3;
     if (g.special === "h" || g.special === "v") {   // a striped charm: the stripes are painted only where the charm itself is, so they follow its own outline and never spill over
       const m = document.createElement("canvas"); m.width = C3.width; m.height = C3.height; const x = m.getContext("2d"), W = m.width; x.drawImage(C3, 0, 0); x.globalCompositeOperation = "source-atop";

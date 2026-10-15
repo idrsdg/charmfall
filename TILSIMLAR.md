@@ -67,3 +67,7 @@ Görünüm: dolgun 3B, çizimler yüzeyde kabartma (2026-10-16, İdris'in seçim
 Not: 200. seviye oyunun son seviyesi olduğu için 200'de gelen üç taş yalnız o seviyede görünür.
 
 Kod: `prism/index.html` içinde `COLORS` (başlangıç taşları), `NEWGEMS` (gelen taşlar, üçerli gruplar halinde), `SLOT` (renk yuvaları), `SHAPES` (çizimler).
+
+## 2026-10-16: emoji çizimleri
+
+Taşlar artık telefonun kendi emoji çizimleriyle gösteriliyor (mat hale getirilmiş). Başlangıç: 🍎 elma, 🍊 portakal, 🍀 yonca, 🫐 yaban mersini, 🍇 üzüm, 🌻 ayçiçeği. Her 25 seviyede üç yeni taş: 🍄🍁🌵 (25), 🐳🍆🍋 (50), 🌹🥕🐸 (75), 💧🪻🐝 (100), 🐞🍑🌲 (125), 🐬🔮🍌 (150), 🍒🦊🥝 (175), 🦋🐙🐥 (200).
