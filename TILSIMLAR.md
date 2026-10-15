@@ -24,7 +24,7 @@ Görünüm: dolgun 3B, çizimler yüzeyde kabartma (2026-10-16, İdris'in seçim
 
 ## Başlangıç taşları (1-24. seviyeler)
 
-2026-10-16 itibarıyla şekiller: tombul çiçek, yuvarlak meyve, çam ağacı, su damlası, mantar, palamut. Hepsinin küçük sevimli bir yüzü var; aşağıdaki anlamlar aynı kalıyor.
+2026-10-16 itibarıyla şekiller: elma, salyangoz kabuğu, yaprak, benekli kuş yumurtası, böğürtlen, papatya. Görünüm: mat kil, 3B. Aşağıdaki anlamlar yuvalara göre aynı kalıyor (1. yuva eski mantar, 2. palamut, 3. yaprak, 4. çan çiçeği, 5. böğürtlen, 6. bal).
 
 | Taş | Ne | Anlamı |
 |---|---|---|
