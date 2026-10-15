@@ -737,7 +737,7 @@ const NEWGEMS = [   // since 2026-10-16 three arrive together every 25 levels (2
   for (const C of NEWGEMS) soft(C); }
 const SLOT = [[350, .5, .66], [28, .72, .64], [52, .68, .74], [150, .34, .56], [212, .5, .66], [272, .4, .72]].map(([h, s2, l]) => { const C = { c: "#888888" }; return C; });
 { const toHex = (r, g, b) => "#" + [r, g, b].map(v => Math.round(Math.max(0, Math.min(1, v)) * 255).toString(16).padStart(2, "0")).join(""), rgb = (h, s2, l) => { const c = (1 - Math.abs(2 * l - 1)) * s2, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2; const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x]; return toHex(r + m, g + m, b + m); };
-  [[345, .72, .62], [24, .88, .62], [165, .55, .48], [228, .66, .64], [285, .52, .63], [44, .84, .57]].forEach(([h, s2, l], j) => { SLOT[j] = { c: rgb(h, s2, l), l: rgb(h, s2 * .7, Math.min(.92, l + .18)), d: rgb(h, Math.min(.5, s2), l * .48) }; }); }
+  [[354, .7, .52], [24, .86, .55], [128, .48, .42], [212, .68, .5], [282, .5, .5], [46, .88, .55]].forEach(([h, s2, l], j) => { SLOT[j] = { c: rgb(h, s2, l), l: rgb(h, s2 * .7, Math.min(.92, l + .18)), d: rgb(h, Math.min(.5, s2), l * .48) }; }); }
 COLORS.forEach((C, j) => Object.assign(C, SLOT[j]));   // 2026-10-16 satin set, in the order of the home charms: rose mushroom, apricot acorn, teal-mint leaf, periwinkle bell, orchid berry, mustard honey
 const palForRaw = (i) => { const pal = COLORS.slice(), k = Math.min(NEWGEMS.length / 3, Math.floor((i + 1) / 25)); for (let j = 0; j < k * 3; j++) pal[j % 6] = NEWGEMS[j]; return pal; };
 const palFor = (i) => palForRaw(i).map((C, j) => Object.assign({}, C, SLOT[j]));
@@ -2881,15 +2881,15 @@ function drawGemRaw(ctx, g, now) {
   gemPath(ctx, C.shape, s); ctx.fillStyle = edge; ctx.fill(); ctx.lineWidth = Math.max(2.5, CELL * .06); ctx.strokeStyle = edge; ctx.stroke();   // the gem sits on a thicker slab of its own dark edge
   { const bg = ctx.createRadialGradient(-s * .45, -s * .6, s * .1, 0, 0, s * 1.7); bg.addColorStop(0, mixc(C.c, C.l, .9)); bg.addColorStop(.45, C.c); bg.addColorStop(1, mixc(C.c, C.d, .85)); gemPath(ctx, C.shape, s); ctx.fillStyle = bg; ctx.fill(); }
   ctx.save(); gemPath(ctx, C.shape, s); ctx.clip(); ctx.globalAlpha = .38;
-  if (JELLY) {   // 2026-10-16 satin charms: a full in-between colour, the drawn detail at full strength over a fine grain, a deep inner shadow, a light rim, a soft satin sheen and one crisp sparkle
-    ctx.globalAlpha = 1; const jb = ctx.createRadialGradient(-s * .38, -s * .5, s * .02, s * .08, s * .12, s * 1.5); jb.addColorStop(0, mixc(C.c, C.l, .55)); jb.addColorStop(.3, mixc(C.c, C.l, .14)); jb.addColorStop(.72, C.c); jb.addColorStop(1, mixc(C.c, C.d, .78)); ctx.fillStyle = jb; ctx.fillRect(-s * 2, -s * 2, s * 4, s * 4);
-    { let sd = 0; for (const ch of C.shape) sd = (sd * 31 + ch.charCodeAt(0)) | 0; const rr = () => { sd = (sd * 1103515245 + 12345) | 0; return ((sd >>> 8) & 65535) / 65535; };   // a fine grain, the same on every copy of a charm
-      for (let k = 0; k < 46; k++) { const x = (rr() * 2 - 1) * s, y = (rr() * 2 - 1) * s, r = s * (.012 + rr() * .028); ctx.fillStyle = k % 3 ? "rgba(255,255,255,.13)" : "rgba(0,0,0,.1)"; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill(); } }
-    if (Q.art) { ctx.save(); ctx.globalAlpha = .92; Q.art(ctx, s, C); ctx.restore(); }
-    ctx.save(); ctx.translate(s * .05, -s * .13); gemPath(ctx, C.shape, s); ctx.lineWidth = s * .38; ctx.strokeStyle = mixc(C.c, C.d, .7); ctx.globalAlpha = .5; ctx.stroke(); ctx.restore();
-    ctx.save(); ctx.translate(-s * .03, s * .07); gemPath(ctx, C.shape, s); ctx.lineWidth = s * .1; ctx.strokeStyle = mixc(C.c, C.l, .75); ctx.globalAlpha = .55; ctx.stroke(); ctx.restore();
-    const hl = ctx.createLinearGradient(0, -s, 0, -s * .05); hl.addColorStop(0, "rgba(255,255,255,.42)"); hl.addColorStop(1, "rgba(255,255,255,0)"); ctx.fillStyle = hl; ctx.beginPath(); ctx.ellipse(-s * .2, -s * .5, s * .6, s * .3, -.35, 0, 6.2832); ctx.fill();
-    ctx.fillStyle = "rgba(255,255,255,.18)"; ctx.beginPath(); ctx.ellipse(s * .38, s * .42, s * .2, s * .09, -.5, 0, 6.2832); ctx.fill(); }
+  if (JELLY) {   // 2026-10-16 carved charms (İdris chose "oyma tahta / taş rozet"): a matte painted face over fine wood grain, the drawn detail at full strength, a crisp carved bevel, no wet shine
+    ctx.globalAlpha = 1; const pf = ctx.createLinearGradient(0, -s * 1.2, 0, s * 1.2); pf.addColorStop(0, mixc(C.c, C.l, .18)); pf.addColorStop(.55, C.c); pf.addColorStop(1, mixc(C.c, C.d, .45)); ctx.fillStyle = pf; ctx.fillRect(-s * 2, -s * 2, s * 4, s * 4);
+    { let sd = 7; for (const ch of C.shape) sd = (sd * 31 + ch.charCodeAt(0)) | 0; const rr = () => { sd = (sd * 1103515245 + 12345) | 0; return ((sd >>> 8) & 65535) / 65535; };
+      ctx.lineWidth = Math.max(.6, s * .018); for (let k = 0; k < 13; k++) { const y0 = -s * 1.2 + k * s * .2 + rr() * s * .06, a = s * (.03 + rr() * .05), f = 2 + rr() * 3; ctx.strokeStyle = k % 2 ? "rgba(0,0,0,.13)" : "rgba(255,255,255,.08)"; ctx.beginPath(); for (let t = 0; t <= 24; t++) { const x = -s * 1.3 + t * s * .11, y = y0 + Math.sin(t / 24 * f * Math.PI + k) * a; if (t) ctx.lineTo(x, y); else ctx.moveTo(x, y); } ctx.stroke(); }   // wood grain
+      for (let k = 0; k < 22; k++) { ctx.fillStyle = k % 2 ? "rgba(0,0,0,.12)" : "rgba(255,255,255,.1)"; ctx.beginPath(); ctx.arc((rr() * 2 - 1) * s, (rr() * 2 - 1) * s, s * (.01 + rr() * .02), 0, 6.2832); ctx.fill(); } }   // worn paint
+    if (Q.art) { ctx.save(); Q.art(ctx, s, C); ctx.restore(); }
+    ctx.save(); ctx.translate(-s * .045, -s * .05); gemPath(ctx, C.shape, s); ctx.lineWidth = s * .14; ctx.strokeStyle = mixc(C.c, C.d, .82); ctx.globalAlpha = .75; ctx.stroke(); ctx.restore();   // the carved chamfer: shade on the lower right
+    ctx.save(); ctx.translate(s * .045, s * .05); gemPath(ctx, C.shape, s); ctx.lineWidth = s * .14; ctx.strokeStyle = mixc(C.c, "#ffffff", .5); ctx.globalAlpha = .55; ctx.stroke(); ctx.restore();   // and light on the upper left
+    ctx.save(); gemPath(ctx, C.shape, s * .86); ctx.lineWidth = Math.max(1, s * .03); ctx.strokeStyle = "rgba(0,0,0,.28)"; ctx.stroke(); ctx.restore(); }   // the edge where the bevel meets the face
   else if (Q.art) { ctx.globalAlpha = 1; ctx.save(); Q.art(ctx, s, C); ctx.restore(); }
   else if (Q.mode === "fan") {
     const n = o.length; for (let i = 0; i < n; i++) { const p = o[i], q = o[(i + 1) % n]; poly([[Q.cx, Q.cy], p, q], shade(lit(p, q, Q.cx, Q.cy) * .9 + (i % 2 ? -.18 : .2))); }
@@ -2914,9 +2914,9 @@ function drawGemRaw(ctx, g, now) {
     const rm = ctx.createRadialGradient(s * .35, s * 1.05, 0, s * .35, s * 1.05, s * .9); rm.addColorStop(0, mixc(C.c, C.l, .7)); rm.addColorStop(1, "rgba(255,255,255,0)"); ctx.globalAlpha = .4; ctx.fillStyle = rm; ctx.fillRect(-s * 1.5, 0, s * 3, s * 1.5); ctx.globalAlpha = 1; }
   ctx.restore();
   // smooth outline and one four-point glint
-  gemPath(ctx, C.shape, s); ctx.lineWidth = Math.max(1.6, CELL * .032); ctx.strokeStyle = mixc(C.d, "#000000", .35); ctx.stroke();
+  gemPath(ctx, C.shape, s); ctx.lineWidth = Math.max(1.6, CELL * (JELLY ? .042 : .032)); ctx.strokeStyle = JELLY ? "#2a1a0e" : mixc(C.d, "#000000", .35); ctx.stroke();
   if (Q.over) { ctx.save(); ctx.shadowColor = "transparent"; Q.over(ctx, s, C); ctx.restore(); }
-  { const gx = Q.glint ? Q.glint[0] * s : C.shape === "moon" ? -s * .62 : -s * .42, gy = Q.glint ? Q.glint[1] * s : C.shape === "moon" ? s * .05 : -s * .5, a = s * .3, b = s * .07; ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.beginPath(); ctx.moveTo(gx, gy - a); ctx.lineTo(gx + b, gy - b); ctx.lineTo(gx + a, gy); ctx.lineTo(gx + b, gy + b); ctx.lineTo(gx, gy + a); ctx.lineTo(gx - b, gy + b); ctx.lineTo(gx - a, gy); ctx.lineTo(gx - b, gy - b); ctx.closePath(); ctx.fill(); }
+  if (!JELLY) { const gx = Q.glint ? Q.glint[0] * s : C.shape === "moon" ? -s * .62 : -s * .42, gy = Q.glint ? Q.glint[1] * s : C.shape === "moon" ? s * .05 : -s * .5, a = s * .3, b = s * .07; ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.beginPath(); ctx.moveTo(gx, gy - a); ctx.lineTo(gx + b, gy - b); ctx.lineTo(gx + a, gy); ctx.lineTo(gx + b, gy + b); ctx.lineTo(gx, gy + a); ctx.lineTo(gx - b, gy + b); ctx.lineTo(gx - a, gy); ctx.lineTo(gx - b, gy - b); ctx.closePath(); ctx.fill(); }
   }
   if (!C3 && (g.special === "h" || g.special === "v")) { ctx.save(); gemPath(ctx, C.shape, s); ctx.clip(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 3.5; for (let i = -2; i <= 2; i++) { ctx.beginPath(); if (g.special === "h") { ctx.moveTo(-s * 1.4, i * s * .42); ctx.lineTo(s * 1.4, i * s * .42); } else { ctx.moveTo(i * s * .42, -s * 1.4); ctx.lineTo(i * s * .42, s * 1.4); } ctx.stroke(); } ctx.restore(); }
   if (g.special === "wrap") { ctx.strokeStyle = "#fff"; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(-s * 1.05, -s * 1.05, s * 2.1, s * 2.1, s * .25); ctx.stroke(); ctx.shadowColor = "transparent"; ctx.strokeStyle = C.d; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(-s * .78, -s * .78, s * 1.56, s * 1.56, s * .18); ctx.stroke(); }

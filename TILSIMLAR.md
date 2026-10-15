@@ -13,12 +13,14 @@ Hikâyedeki genel anlam: tılsımlar ormanın ışığıdır. Saksağan Mordo on
 
 | Yuva | Renk | Ton |
 |---|---|---|
-| 1 | Gül | yumuşak pembe-kırmızı |
-| 2 | Kayısı | açık turuncu |
-| 3 | Nane | yeşil ile turkuaz arası |
-| 4 | Lavanta mavisi | mor ile mavi arası |
-| 5 | Orkide | lila |
-| 6 | Hardal | koyu sarı |
+| 1 | Kırmızı | dolgun kırmızı |
+| 2 | Turuncu | dolgun turuncu |
+| 3 | Yeşil | orman yeşili |
+| 4 | Mavi | dolgun mavi |
+| 5 | Mor | dolgun mor |
+| 6 | Sarı | altın sarısı |
+
+Görünüm: oyma, boyalı ahşap rozet. Mat yüzey, ahşap damarı, oyma kenar.
 
 ## Başlangıç taşları (1-24. seviyeler)
 
