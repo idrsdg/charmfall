@@ -11,16 +11,16 @@ Hikâyedeki genel anlam: tılsımlar ormanın ışığıdır. Saksağan Mordo on
 
 ## Renk yuvaları
 
-| Yuva | Renk | Ton |
-|---|---|---|
-| 1 | Kırmızı | dolgun kırmızı |
-| 2 | Turuncu | dolgun turuncu |
-| 3 | Yeşil | orman yeşili |
-| 4 | Mavi | dolgun mavi |
-| 5 | Mor | dolgun mor |
-| 6 | Sarı | altın sarısı |
+| Yuva | Renk |
+|---|---|
+| 1 | Kiremit |
+| 2 | Kehribar |
+| 3 | Yosun yeşili |
+| 4 | Gece mavisi |
+| 5 | Erik moru |
+| 6 | Hardal |
 
-Görünüm: oyma, boyalı ahşap rozet. Mat yüzey, ahşap damarı, oyma kenar.
+Görünüm: dolgun 3B, çizimler yüzeyde kabartma (2026-10-16, İdris'in seçimi: doğal/toprak renkler, orman nesneleri).
 
 ## Başlangıç taşları (1-24. seviyeler)
 
