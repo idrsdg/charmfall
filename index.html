@@ -1354,12 +1354,18 @@ function openBook() {
 }
 $("btnBook").addEventListener("click", openBook); $("bkClose").addEventListener("click", () => hide("mBook")); $("mBook").addEventListener("click", (e) => { if (e.target === $("mBook")) hide("mBook"); });
 let mapZ = 1; function setMapZoom(z, cx, cy) { const m = $("map"), p = $("path"); z = Math.max(1, Math.min(3.2, z)); const k = z / mapZ; if (Math.abs(k - 1) < .001) return; const sl = m.scrollLeft, st = m.scrollTop; mapZ = z; p.style.zoom = z === 1 ? "" : z; m.scrollLeft = (sl + cx) * k - cx; m.scrollTop = (st + cy) * k - cy; document.documentElement.classList.toggle("mapZoom", z >= 1.9); }
-{ const m = $("map"); let d0 = 0, z0 = 1; const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
-  m.addEventListener("touchstart", (e) => { if (e.touches.length === 2) { d0 = dist(e.touches); z0 = mapZ; } }, { passive: true });
-  m.addEventListener("touchmove", (e) => { if (e.touches.length !== 2 || !d0) return; e.preventDefault(); const r = m.getBoundingClientRect(); setMapZoom(z0 * dist(e.touches) / d0, (e.touches[0].clientX + e.touches[1].clientX) / 2 - r.left, (e.touches[0].clientY + e.touches[1].clientY) / 2 - r.top); }, { passive: false });
-  m.addEventListener("touchend", (e) => { if (e.touches.length < 2) d0 = 0; });
+// While the fingers move, the map is only scaled on the GPU (a transform: no layout, smooth at any frame rate); the real zoom, which lays the
+// whole map out again, is applied once when the fingers lift.
+{ const m = $("map"), p = $("path"); let d0 = 0, z0 = 1, live = 1, cx = 0, cy = 0, wt = 0; const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  const begin = (x, y) => { const r = m.getBoundingClientRect(); cx = x - r.left; cy = y - r.top; z0 = mapZ; live = mapZ; p.style.willChange = "transform"; p.style.transformOrigin = `${(m.scrollLeft + cx) / mapZ}px ${(m.scrollTop + cy) / mapZ}px`; };
+  const show = (z) => { live = Math.max(1, Math.min(3.2, z)); p.style.transform = `scale(${(live / mapZ).toFixed(4)})`; };
+  const commit = () => { p.style.transform = ""; p.style.willChange = ""; if (Math.abs(live - mapZ) > .001) setMapZoom(live, cx, cy); };
+  m.addEventListener("touchstart", (e) => { if (e.touches.length === 2) { d0 = dist(e.touches); begin((e.touches[0].clientX + e.touches[1].clientX) / 2, (e.touches[0].clientY + e.touches[1].clientY) / 2); } }, { passive: true });
+  m.addEventListener("touchmove", (e) => { if (e.touches.length !== 2 || !d0) return; e.preventDefault(); show(z0 * dist(e.touches) / d0); }, { passive: false });
+  m.addEventListener("touchend", (e) => { if (e.touches.length < 2 && d0) { d0 = 0; commit(); } });
+  m.addEventListener("touchcancel", () => { if (d0) { d0 = 0; commit(); } });
   m.addEventListener("gesturestart", (e) => e.preventDefault()); m.addEventListener("gesturechange", (e) => e.preventDefault());
-  m.addEventListener("wheel", (e) => { if (!e.ctrlKey) return; e.preventDefault(); const r = m.getBoundingClientRect(); setMapZoom(mapZ * Math.exp(-e.deltaY * .01), e.clientX - r.left, e.clientY - r.top); }, { passive: false }); }
+  m.addEventListener("wheel", (e) => { if (!e.ctrlKey) return; e.preventDefault(); if (!wt) begin(e.clientX, e.clientY); show(live * Math.exp(-e.deltaY * .01)); clearTimeout(wt); wt = setTimeout(() => { wt = 0; commit(); }, 160); }, { passive: false }); }
 { let rt = 0; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { if (!$("map").hidden) { lastCur = -1; buildMap(); } }, 250); }); }
 const goalShow = (v) => G && G.L.goal === "score" ? String(Math.ceil(v / STAR)) : fmt(v);
 function goalText(L) { return L.goal === "score" ? `Earn ${L.target / STAR} star${L.target / STAR === 1 ? "" : "s"}` : L.goal === "jelly" ? "Clear all the ash" : L.goal === "ingredients" ? `Bring ${L.need} seeds down to the soil` : "Cut back all the brambles"; }
