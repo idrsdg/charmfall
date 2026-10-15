@@ -1808,22 +1808,24 @@ const D3 = (() => {
   const facets = new Map();
   function facet(slot, v, C, px) {
     const key = slot + ":" + v + ":" + C.c + ":" + px; if (facets.has(key)) return facets.get(key);
-    const L = (pts, seg) => new T.LatheGeometry(pts.map(([x, y]) => new T.Vector2(x, y)), seg); let geo, rx = 1.05, ry = 0;
-    if (slot === 0) geo = L([[0, -1.05], [.98, -.12], [1.02, 0], [1.02, .08], [.62, .52], [0, .52]], 12 + v * 2);   // round brilliant
-    else if (slot === 1) geo = L([[0, -1.25], [.72, -.72], [.78, -.2], [.78, .2], [.72, .72], [0, 1.25]], 6 + (v % 2) * 2), rx = .35, ry = .5;   // hexagonal crystal
-    else if (slot === 2) { geo = L([[0, -.62], [.55, -.62], [.92, -.35], [1.0, 0], [.92, .35], [.55, .62], [0, .62]], 8 + v * 2); geo.rotateY(Math.PI / (8 + v * 2)); geo.scale(1.1, 1, .8); rx = .75; ry = .25; }   // step cut
-    else if (slot === 3) geo = v % 2 ? new T.DodecahedronGeometry(1.05, 0) : new T.IcosahedronGeometry(1.08, 0), rx = .5, ry = .35 + v * .3;
-    else if (slot === 4) { geo = L([[0, -1.3], [.75, -.15], [.8, 0], [.75, .15], [0, 1.3]], 8 + v * 2); rx = .35; ry = .4 + v * .2; }   // long diamond
-    else { geo = L([[0, -.42], [1.05, -.12], [1.1, 0], [1.05, .1], [.6, .4], [0, .4]], 3 + (v ? 2 : 0)); rx = .8; ry = .3; }   // trillion
+    // every other ring of facets is turned half a step, the way a brilliant is cut: the facets become stars and kites instead of plain bands
+    let TW = false; const L = (pts, seg) => { const g = new T.LatheGeometry(pts.map(([x, y]) => new T.Vector2(x, y)), seg), pos = g.attributes.position, n = pts.length; for (let i = 0; i <= seg; i++) for (let j = 1; j < n - 1; j++) { if (!TW || j % 2 === 0) continue; const k = i * n + j, x = pos.getX(k), z = pos.getZ(k), a = Math.PI / seg, c = Math.cos(a), s2 = Math.sin(a); pos.setXYZ(k, x * c - z * s2, pos.getY(k), x * s2 + z * c); } return g; };
+    let geo, rx = 1.05, ry = 0;
+    if (slot === 0) geo = L([[0, -1.05], [.32, -.82], [.66, -.48], [.98, -.1], [1.02, 0], [1.02, .08], [.9, .26], [.74, .42], [.58, .52], [0, .52]], 16 + v * 2), rx = 1.3, ry = .15;   // round brilliant
+    else if (slot === 1) geo = L([[0, -1.3], [.3, -1.1], [.6, -.85], [.78, -.55], [.8, -.18], [.8, .18], [.78, .55], [.6, .85], [.3, 1.1], [0, 1.3]], 6 + (v % 2) * 2), rx = .35, ry = .5;   // hexagonal crystal
+    else if (slot === 2) { geo = L([[0, -.62], [.38, -.62], [.66, -.52], [.86, -.36], [.98, -.14], [1.0, 0], [.98, .14], [.86, .36], [.66, .52], [.42, .62], [0, .62]], 12 + v * 2); geo.rotateY(Math.PI / (8 + v * 2)); geo.scale(1.1, 1, .8); rx = 1.2; ry = .2; }   // step cut
+    else if (slot === 3) geo = v % 2 ? new T.DodecahedronGeometry(1.05, 1) : new T.IcosahedronGeometry(1.08, 1), rx = .5, ry = .35 + v * .3;
+    else if (slot === 4) { geo = L([[0, -1.3], [.28, -1.0], [.52, -.62], [.72, -.25], [.8, 0], [.72, .25], [.52, .62], [.28, 1.0], [0, 1.3]], 10 + v * 2); rx = .35; ry = .4 + v * .2; }   // long diamond
+    else { geo = L([[0, -.42], [.5, -.34], [.85, -.22], [1.05, -.1], [1.1, 0], [1.05, .1], [.85, .26], [.6, .38], [0, .42]], 3 + (v ? 2 : 0)); rx = .8; ry = .3; }   // trillion
     geo = geo.toNonIndexed(); geo.computeVertexNormals();
     const lin = (h) => { const c = new T.Color(h); return c.convertSRGBToLinear ? c.convertSRGBToLinear() : c; };
     const matl = new T.MeshStandardMaterial({ color: lin(C.c), flatShading: true, roughness: .82, metalness: 0, emissive: lin(C.d), emissiveIntensity: .06 });
     const scene = new T.Scene(); scene.add(new T.AmbientLight(0xffffff, .14)); for (const [x, y, z, k] of [[-3, 4, 4, 2.1], [3.5, 1.5, 3, .7], [0, -3, 3, .35], [2, 3, -3, .9], [-3, -1, 2, .4]]) { const d = new T.DirectionalLight(0xffffff, k); d.position.set(x, y, z); scene.add(d); }   // light from many sides: every facet catches its own tone
     const m = new T.Mesh(geo, matl); m.rotation.set(rx, ry, 0); scene.add(m);
-    const edges = new T.LineSegments(new T.EdgesGeometry(geo, 8), new T.LineBasicMaterial({ color: lin(mixc(C.c, "#ffffff", .55)), transparent: true, opacity: .7 })); edges.rotation.copy(m.rotation); scene.add(edges);   // crisp facet edges
+    const edges = new T.LineSegments(new T.EdgesGeometry(geo, 4), new T.LineBasicMaterial({ color: lin(mixc(C.c, "#ffffff", .7)), transparent: true, opacity: .85 })); edges.rotation.copy(m.rotation); scene.add(edges);   // crisp facet edges
     const box = new T.Box3().setFromObject(m), sz = box.getSize(new T.Vector3()), fit = 2.1 / Math.max(sz.x, sz.y, Math.sqrt(sz.x * sz.y) * 1.12);   // every cut fills about the same area m.scale.setScalar(fit); edges.scale.setScalar(fit);
     const cam = new T.PerspectiveCamera(26, 1, .1, 30); cam.position.set(0, 0, 6.2); cam.lookAt(0, 0, 0);
-    const P2 = Math.min(1024, px * 2); R.setSize(P2, P2, false); R.render(scene, cam); const cv = document.createElement("canvas"); cv.width = cv.height = px; const cx2 = cv.getContext("2d"); cx2.imageSmoothingQuality = "high"; cx2.drawImage(R.domElement, 0, 0, P2, P2, 0, 0, px, px); R.setSize(RW, RH, false);
+    const P2 = Math.min(720, Math.round(px * 1.4)); R.setSize(P2, P2, false); R.render(scene, cam); const cv = document.createElement("canvas"); cv.width = cv.height = px; const cx2 = cv.getContext("2d"); cx2.imageSmoothingQuality = "high"; cx2.drawImage(R.domElement, 0, 0, P2, P2, 0, 0, px, px); R.setSize(RW, RH, false);
     geo.dispose(); matl.dispose(); facets.set(key, cv); return cv;
   }
   return { show, sprite, village, EMO, charm, solid, puff, facet };
@@ -3039,7 +3041,7 @@ function drawGemRaw(ctx, g, now) {
   // smooth outline and one four-point glint
   gemPath(ctx, C.shape, s); ctx.lineWidth = GS === "sticker" ? CELL * .07 : GS === "cel" ? CELL * .05 : GS === "flat" ? 0.01 : Math.max(1.2, CELL * (JELLY ? .022 : .032)); ctx.strokeStyle = GS === "sticker" ? "#ffffff" : GS === "cel" ? "#1e1424" : JELLY ? mixc(C.d, C.c, .35) : mixc(C.d, "#000000", .35); ctx.globalAlpha = GS === "flat" ? 0 : JELLY ? (GS === "soft" ? .7 : 1) : 1; ctx.stroke(); ctx.globalAlpha = 1;   // a thin outline in the charm's own dark tone, not a black groove
   if (Q.over) { ctx.save(); ctx.shadowColor = "transparent"; Q.over(ctx, s, C); ctx.restore(); }
-  if (!JELLY || GS === "gem") { const gx = Q.glint ? Q.glint[0] * s : C.shape === "moon" ? -s * .62 : -s * .42, gy = Q.glint ? Q.glint[1] * s : C.shape === "moon" ? s * .05 : -s * .5, a = s * .3, b = s * .07; ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.beginPath(); ctx.moveTo(gx, gy - a); ctx.lineTo(gx + b, gy - b); ctx.lineTo(gx + a, gy); ctx.lineTo(gx + b, gy + b); ctx.lineTo(gx, gy + a); ctx.lineTo(gx - b, gy + b); ctx.lineTo(gx - a, gy); ctx.lineTo(gx - b, gy - b); ctx.closePath(); ctx.fill(); }
+  if (!JELLY || GS === "gem" || GS === "facet") { const gx = Q.glint ? Q.glint[0] * s : C.shape === "moon" ? -s * .62 : -s * .42, gy = Q.glint ? Q.glint[1] * s : C.shape === "moon" ? s * .05 : -s * .5, a = s * .3, b = s * .07; ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.beginPath(); ctx.moveTo(gx, gy - a); ctx.lineTo(gx + b, gy - b); ctx.lineTo(gx + a, gy); ctx.lineTo(gx + b, gy + b); ctx.lineTo(gx, gy + a); ctx.lineTo(gx - b, gy + b); ctx.lineTo(gx - a, gy); ctx.lineTo(gx - b, gy - b); ctx.closePath(); ctx.fill(); }
   }
   if (!C3 && (g.special === "h" || g.special === "v")) { ctx.save(); gemPath(ctx, C.shape, s); ctx.clip(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 3.5; for (let i = -2; i <= 2; i++) { ctx.beginPath(); if (g.special === "h") { ctx.moveTo(-s * 1.4, i * s * .42); ctx.lineTo(s * 1.4, i * s * .42); } else { ctx.moveTo(i * s * .42, -s * 1.4); ctx.lineTo(i * s * .42, s * 1.4); } ctx.stroke(); } ctx.restore(); }
   if (g.special === "wrap") { ctx.strokeStyle = "#fff"; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(-s * 1.05, -s * 1.05, s * 2.1, s * 2.1, s * .25); ctx.stroke(); ctx.shadowColor = "transparent"; ctx.strokeStyle = C.d; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(-s * .78, -s * .78, s * 1.56, s * 1.56, s * .18); ctx.stroke(); }
