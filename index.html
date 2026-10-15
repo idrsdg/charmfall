@@ -1758,7 +1758,29 @@ const D3 = (() => {
     R.setSize(px, px, false); R.render(scene, cam); const cv = document.createElement("canvas"); cv.width = cv.height = px; cv.getContext("2d").drawImage(R.domElement, 0, 0); R.setSize(RW, RH, false);
     geo.dispose(); tex.dispose(); face.dispose(); side.dispose(); solids.set(key, cv); return cv;
   }
-  return { show, sprite, village, EMO, charm, solid };
+  // fully 3D charms: the outline (and stems/leaves drawn outside it) becomes a height field: a soft inflated dome that rounds off at the edge,
+  // with the drawn detail raised out of the surface. Rendered once per charm and size from a slightly tilted view, lit like the rest of the game.
+  const puffs = new Map();
+  function puff(C, px) {
+    const key = C.shape + C.c + ":" + px; if (puffs.has(key)) return puffs.get(key);
+    const Q = SHAPES[C.shape] || SHAPES.puff, N = 224, u = N / 3.2, mk = (draw) => { const c = document.createElement("canvas"); c.width = c.height = N; const x = c.getContext("2d", { willReadFrequently: true }); x.translate(N / 2, N / 2); draw(x); return c; };
+    const mask = mk(x => { x.fillStyle = "#fff"; gemPath(x, C.shape, u); x.fill(); if (Q.over) { x.save(); Q.over(x, u, C); x.restore(); } }), md = mask.getContext("2d").getImageData(0, 0, N, N).data;
+    let h = new Float32Array(N * N); for (let i = 0; i < N * N; i++) h[i] = md[i * 4 + 3] > 40 ? 1 : 0; const inside = h.slice();
+    const blur = (a, r) => { const b = new Float32Array(N * N); for (let y = 0; y < N; y++) { let acc = 0; for (let x = -r; x <= r; x++) acc += a[y * N + Math.max(0, Math.min(N - 1, x))]; for (let x = 0; x < N; x++) { b[y * N + x] = acc / (2 * r + 1); acc += a[y * N + Math.min(N - 1, x + r + 1)] - a[y * N + Math.max(0, x - r)]; } } const c2 = new Float32Array(N * N); for (let x = 0; x < N; x++) { let acc = 0; for (let y = -r; y <= r; y++) acc += b[Math.max(0, Math.min(N - 1, y)) * N + x]; for (let y = 0; y < N; y++) { c2[y * N + x] = acc / (2 * r + 1); acc += b[Math.min(N - 1, y + r + 1) * N + x] - b[Math.max(0, y - r) * N + x]; } } return c2; };
+    for (let k = 0; k < 3; k++) h = blur(h, 12); for (let i = 0; i < N * N; i++) h[i] = inside[i] ? Math.sqrt(Math.max(0, (h[i] - .5) * 2)) : 0;   // an inflated dome that meets the ground exactly at the outline, no cliff
+    const col = mk(x => { const g = x.createLinearGradient(0, -u * 1.4, 0, u * 1.4); g.addColorStop(0, mixc(C.c, C.l, .28)); g.addColorStop(1, mixc(C.c, C.d, .2)); x.fillStyle = g; x.fillRect(-N, -N, 2 * N, 2 * N); if (Q.art) { x.save(); Q.art(x, u, C); x.restore(); } if (Q.over) { x.save(); Q.over(x, u, C); x.restore(); } });
+    const cd = col.getContext("2d").getImageData(0, 0, N, N).data, base = new Float32Array(N * N); let mean = 0, cnt = 0; for (let i = 0; i < N * N; i++) { const l = (cd[i * 4] * .3 + cd[i * 4 + 1] * .59 + cd[i * 4 + 2] * .11) / 255; base[i] = l; if (inside[i]) { mean += l; cnt++; } } mean /= cnt || 1;
+    const det = blur(base.map((l, i) => inside[i] ? l - mean : 0), 2), edge = blur(inside, 2);   // the drawn detail, raised where it is lighter
+    const geo = new T.PlaneGeometry(3.2, 3.2, N - 1, N - 1), pos = geo.attributes.position; for (let v = 0; v < pos.count; v++) { const ix = v % N, iy = Math.floor(v / N), i = iy * N + ix; pos.setZ(v, inside[i] ? h[i] * .85 + det[i] * .42 * Math.min(1, h[i] * 3) : 0); } geo.computeVertexNormals();
+    const tex = new T.CanvasTexture(col); if (T.sRGBEncoding) tex.encoding = T.sRGBEncoding; tex.anisotropy = 4; const am = new T.CanvasTexture(mask); am.minFilter = am.magFilter = T.LinearFilter;
+    const matl = new T.MeshStandardMaterial({ map: tex, alphaMap: am, alphaTest: .5, roughness: .36, metalness: .04 });
+    const scene = new T.Scene(); scene.add(new T.HemisphereLight(0xffffff, 0x3a3050, .7)); const sun = new T.DirectionalLight(0xfff4e6, 1.4); sun.position.set(-3, 3.5, 2.6); scene.add(sun); const rim = new T.DirectionalLight(0xffffff, .55); rim.position.set(3, -1.5, 2); scene.add(rim);   // a lower sun, so every raised detail casts its own shading
+    const m = new T.Mesh(geo, matl); m.rotation.set(-.42, .26, 0); scene.add(m);
+    const cam = new T.PerspectiveCamera(26, 1, .1, 30); cam.position.set(0, 0, 7.4); cam.lookAt(0, 0, 0);
+    const P2 = Math.min(1024, px * 2); R.setSize(P2, P2, false); R.render(scene, cam); const cv = document.createElement("canvas"); cv.width = cv.height = px; const cx2 = cv.getContext("2d"); cx2.imageSmoothingQuality = "high"; cx2.drawImage(R.domElement, 0, 0, P2, P2, 0, 0, px, px); R.setSize(RW, RH, false);   // drawn at twice the size and scaled down: smooth edges
+    geo.dispose(); tex.dispose(); am.dispose(); matl.dispose(); puffs.set(key, cv); return cv;
+  }
+  return { show, sprite, village, EMO, charm, solid, puff };
 })();
 // the lawn and the sky take the chapter's colours; the far shore is sand and sea
 const CHAP_GROUND = [0x3fc85f, 0x7fe04f, 0x2fd0a0, 0x9ad04a, 0x3fc050, 0x30b070, 0xc8e040, 0x4a7af0, 0x30c080, 0x5a8ae0, 0xffd27a, 0x8fe0c8, 0x50c8f0, 0xffe08a, 0x9ad07a, 0xc0b8d0, 0x7fe04f, 0x9a8af0, 0xb060ff, 0x7070ff];
@@ -2888,7 +2910,7 @@ function drawGemRaw(ctx, g, now) {
   const lit = (p, q, cx, cy) => { let nx = q[1] - p[1], ny = p[0] - q[0]; const L = Math.hypot(nx, ny) || 1, mx = (p[0] + q[0]) / 2 - cx, my = (p[1] + q[1]) / 2 - cy; nx /= L; ny /= L; if (nx * mx + ny * my < 0) { nx = -nx; ny = -ny; } return -(nx * .45 + ny * .89); };
   ctx.lineJoin = "round";
   if (g.kind === "gem") { const R = s * (g.special === "wrap" ? 1.5 : 1.22), hg = ctx.createRadialGradient(0, 0, s * .3, 0, 0, R); hg.addColorStop(0, g.special === "wrap" ? "rgba(255,226,120,.6)" : "rgba(255,236,170,.26)"); hg.addColorStop(1, "rgba(255,236,170,0)"); ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(0, 0, R, 0, 6.2832); ctx.fill(); }   // the charms are the forest's light
-  const C3 = g.kind === "gem" && GS === "3d" && typeof D3 !== "undefined" && D3 && D3.solid ? D3.solid(C, Math.max(64, Math.round(s * 2.9 * DPR))) : null;   // the charm as a 3D model, made once
+  const C3 = g.kind === "gem" && (GS === "3d" || GS === "solid") && typeof D3 !== "undefined" && D3 && D3.solid ? (window.__gemStyle === "solid" ? D3.solid : D3.puff)(C, Math.max(64, Math.round(s * 2.9 * DPR))) : null;   // the charm as a 3D model, made once
   if (C3) { let img = C3;
     if (g.special === "h" || g.special === "v") {   // a striped charm: the stripes are painted only where the charm itself is, so they follow its own outline and never spill over
       const m = document.createElement("canvas"); m.width = C3.width; m.height = C3.height; const x = m.getContext("2d"), W = m.width; x.drawImage(C3, 0, 0); x.globalCompositeOperation = "source-atop";
