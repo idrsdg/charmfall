@@ -2784,6 +2784,7 @@ function drawGem(g, px, py, scale, now, sy = 1, rot = 0) {
     ctx.beginPath(); ctx.arc(px, py, s * (.24 + .05 * pulse), 0, 6.2832); ctx.fillStyle = "#fffbe0"; ctx.fill();
   }
 }
+const JELLY = window.__gemStyle !== "art";
 function drawGemRaw(ctx, g, now) {
   const C = PAL[g.color]; ctx.save();
   if (g.kind === "ing") { // a seed on its way to the soil: a pale halo so it is never lost among the charms, a brown seed, two green leaves
@@ -2815,7 +2816,14 @@ function drawGemRaw(ctx, g, now) {
   gemPath(ctx, C.shape, s); ctx.fillStyle = edge; ctx.fill(); ctx.lineWidth = Math.max(2.5, CELL * .06); ctx.strokeStyle = edge; ctx.stroke();   // the gem sits on a thicker slab of its own dark edge
   { const bg = ctx.createRadialGradient(-s * .45, -s * .6, s * .1, 0, 0, s * 1.7); bg.addColorStop(0, mixc(C.c, C.l, .9)); bg.addColorStop(.45, C.c); bg.addColorStop(1, mixc(C.c, C.d, .85)); gemPath(ctx, C.shape, s); ctx.fillStyle = bg; ctx.fill(); }
   ctx.save(); gemPath(ctx, C.shape, s); ctx.clip(); ctx.globalAlpha = .38;
-  if (Q.art) { ctx.globalAlpha = 1; ctx.save(); Q.art(ctx, s, C); ctx.restore(); }
+  if (JELLY) {   // 2026-10-16 "jelly" look: a smooth glossy body, the drawn details only as a faint emboss, a soft inner shadow, one big highlight
+    ctx.globalAlpha = 1; const jb = ctx.createRadialGradient(-s * .35, -s * .45, s * .05, s * .1, s * .15, s * 1.45); jb.addColorStop(0, mixc(C.c, C.l, .75)); jb.addColorStop(.35, mixc(C.c, C.l, .2)); jb.addColorStop(.75, C.c); jb.addColorStop(1, mixc(C.c, C.d, .7)); ctx.fillStyle = jb; ctx.fillRect(-s * 2, -s * 2, s * 4, s * 4);
+    if (Q.art) { ctx.save(); ctx.globalAlpha = .22; Q.art(ctx, s, C); ctx.restore(); }
+    ctx.save(); ctx.translate(s * .06, -s * .1); gemPath(ctx, C.shape, s); ctx.lineWidth = s * .34; ctx.strokeStyle = mixc(C.c, C.d, .6); ctx.globalAlpha = .45; ctx.filter = "none"; ctx.stroke(); ctx.restore();
+    ctx.save(); ctx.translate(-s * .04, s * .06); gemPath(ctx, C.shape, s * .97); ctx.lineWidth = s * .12; ctx.strokeStyle = mixc(C.c, C.l, .6); ctx.globalAlpha = .35; ctx.stroke(); ctx.restore();
+    const hl = ctx.createLinearGradient(0, -s, 0, -s * .1); hl.addColorStop(0, "rgba(255,255,255,.85)"); hl.addColorStop(1, "rgba(255,255,255,.05)"); ctx.fillStyle = hl; ctx.beginPath(); ctx.ellipse(-s * .22, -s * .52, s * .55, s * .28, -.35, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,.7)"; ctx.beginPath(); ctx.ellipse(s * .42, s * .45, s * .1, s * .06, -.4, 0, 6.2832); ctx.fill(); }
+  else if (Q.art) { ctx.globalAlpha = 1; ctx.save(); Q.art(ctx, s, C); ctx.restore(); }
   else if (Q.mode === "fan") {
     const n = o.length; for (let i = 0; i < n; i++) { const p = o[i], q = o[(i + 1) % n]; poly([[Q.cx, Q.cy], p, q], shade(lit(p, q, Q.cx, Q.cy) * .9 + (i % 2 ? -.18 : .2))); }
     ctx.strokeStyle = "rgba(255,255,255,.45)"; ctx.lineWidth = 1; ctx.beginPath(); for (let i = 0; i < n; i += 2) { ctx.moveTo(Q.cx * s, Q.cy * s); ctx.lineTo(o[i][0] * s, o[i][1] * s); } ctx.stroke();
@@ -2835,13 +2843,13 @@ function drawGemRaw(ctx, g, now) {
   }
   ctx.globalAlpha = 1;
   // soft gloss across the upper half, a lighter rim along the bottom
-  { const gl = ctx.createLinearGradient(0, -s * 1.25, 0, s * .15); gl.addColorStop(0, Q.art ? "rgba(255,255,255,.3)" : "rgba(255,255,255,.55)"); gl.addColorStop(1, "rgba(255,255,255,0)"); ctx.fillStyle = gl; ctx.beginPath(); ctx.ellipse(-s * .1, -s * .62, s * 1.05, s * .62, -.25, 0, 6.2832); ctx.fill();
+  if (!JELLY) { const gl = ctx.createLinearGradient(0, -s * 1.25, 0, s * .15); gl.addColorStop(0, Q.art ? "rgba(255,255,255,.3)" : "rgba(255,255,255,.55)"); gl.addColorStop(1, "rgba(255,255,255,0)"); ctx.fillStyle = gl; ctx.beginPath(); ctx.ellipse(-s * .1, -s * .62, s * 1.05, s * .62, -.25, 0, 6.2832); ctx.fill();
     const rm = ctx.createRadialGradient(s * .35, s * 1.05, 0, s * .35, s * 1.05, s * .9); rm.addColorStop(0, mixc(C.c, C.l, .7)); rm.addColorStop(1, "rgba(255,255,255,0)"); ctx.globalAlpha = .4; ctx.fillStyle = rm; ctx.fillRect(-s * 1.5, 0, s * 3, s * 1.5); ctx.globalAlpha = 1; }
   ctx.restore();
   // smooth outline and one four-point glint
   gemPath(ctx, C.shape, s); ctx.lineWidth = Math.max(1.6, CELL * .032); ctx.strokeStyle = mixc(C.d, "#000000", .35); ctx.stroke();
   if (Q.over) { ctx.save(); ctx.shadowColor = "transparent"; Q.over(ctx, s, C); ctx.restore(); }
-  { const gx = Q.glint ? Q.glint[0] * s : C.shape === "moon" ? -s * .62 : -s * .42, gy = Q.glint ? Q.glint[1] * s : C.shape === "moon" ? s * .05 : -s * .5, a = s * .3, b = s * .07; ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.beginPath(); ctx.moveTo(gx, gy - a); ctx.lineTo(gx + b, gy - b); ctx.lineTo(gx + a, gy); ctx.lineTo(gx + b, gy + b); ctx.lineTo(gx, gy + a); ctx.lineTo(gx - b, gy + b); ctx.lineTo(gx - a, gy); ctx.lineTo(gx - b, gy - b); ctx.closePath(); ctx.fill(); }
+  if (!JELLY) { const gx = Q.glint ? Q.glint[0] * s : C.shape === "moon" ? -s * .62 : -s * .42, gy = Q.glint ? Q.glint[1] * s : C.shape === "moon" ? s * .05 : -s * .5, a = s * .3, b = s * .07; ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.beginPath(); ctx.moveTo(gx, gy - a); ctx.lineTo(gx + b, gy - b); ctx.lineTo(gx + a, gy); ctx.lineTo(gx + b, gy + b); ctx.lineTo(gx, gy + a); ctx.lineTo(gx - b, gy + b); ctx.lineTo(gx - a, gy); ctx.lineTo(gx - b, gy - b); ctx.closePath(); ctx.fill(); }
   }
   if (!C3 && (g.special === "h" || g.special === "v")) { ctx.save(); gemPath(ctx, C.shape, s); ctx.clip(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 3.5; for (let i = -2; i <= 2; i++) { ctx.beginPath(); if (g.special === "h") { ctx.moveTo(-s * 1.4, i * s * .42); ctx.lineTo(s * 1.4, i * s * .42); } else { ctx.moveTo(i * s * .42, -s * 1.4); ctx.lineTo(i * s * .42, s * 1.4); } ctx.stroke(); } ctx.restore(); }
   if (g.special === "wrap") { ctx.strokeStyle = "#fff"; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(-s * 1.05, -s * 1.05, s * 2.1, s * 2.1, s * .25); ctx.stroke(); ctx.shadowColor = "transparent"; ctx.strokeStyle = C.d; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(-s * .78, -s * .78, s * 1.56, s * 1.56, s * .18); ctx.stroke(); }
