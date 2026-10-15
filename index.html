@@ -1738,7 +1738,27 @@ const D3 = (() => {
     const cam = new T.PerspectiveCamera(30, 1, .1, 20); cam.position.set(.35, .9, 3.2); cam.lookAt(0, 0, 0);
     R.setSize(px, px, false); R.render(scene, cam); const cv = document.createElement("canvas"); cv.width = cv.height = px; cv.getContext("2d").drawImage(R.domElement, 0, 0); R.setSize(RW, RH, false); charms.set(key, cv); return cv;
   }
-  return { show, sprite, village, EMO, charm };
+  // every charm as a 3D piece: its own outline, smoothed, extruded with a deep rounded bevel; its drawn detail painted on the face. Made once per charm and size.
+  const solids = new Map();
+  function solid(C, px) {
+    const key = C.shape + C.c + ":" + px; if (solids.has(key)) return solids.get(key);
+    const Q = SHAPES[C.shape] || SHAPES.puff; let pts = Q.o.map(p => [p[0], -p[1]]);
+    for (let it = 0; it < 3; it++) { const k = .25 * (Q.soft ?? .5) + .05, out = []; for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; out.push([a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k], [a[0] + (b[0] - a[0]) * (1 - k), a[1] + (b[1] - a[1]) * (1 - k)]); } pts = out; }
+    const sh = new T.Shape(); pts.forEach((p, i) => i ? sh.lineTo(p[0], p[1]) : sh.moveTo(p[0], p[1])); sh.closePath();
+    const geo = new T.ExtrudeGeometry(sh, { depth: .28, bevelEnabled: true, bevelThickness: .26, bevelSize: .2, bevelSegments: 8, curveSegments: 12 }); geo.translate(0, 0, -.14); geo.computeVertexNormals();
+    const tc = document.createElement("canvas"); tc.width = tc.height = 512; const x = tc.getContext("2d"), u = 512 / 3.2; x.translate(256, 256);
+    const g0 = x.createLinearGradient(0, -u * 1.4, 0, u * 1.4); g0.addColorStop(0, mixc(C.c, C.l, .3)); g0.addColorStop(1, mixc(C.c, C.d, .25)); x.fillStyle = g0; x.fillRect(-256, -256, 512, 512);
+    if (Q.art) { x.save(); Q.art(x, u, C); x.restore(); }
+    const tex = new T.CanvasTexture(tc); if (T.sRGBEncoding) tex.encoding = T.sRGBEncoding; tex.repeat.set(1 / 3.2, 1 / 3.2); tex.offset.set(.5, .5); tex.anisotropy = 4;
+    const lin = (h) => { const c = new T.Color(h); return c.convertSRGBToLinear ? c.convertSRGBToLinear() : c; };
+    const face = new T.MeshStandardMaterial({ map: tex, roughness: .42, metalness: .04 }), side = new T.MeshStandardMaterial({ color: lin(mixc(C.c, C.d, .35)), roughness: .45, metalness: .04 });
+    const scene = new T.Scene(); scene.add(new T.HemisphereLight(0xffffff, 0x3a3050, .75)); const sun = new T.DirectionalLight(0xfff4e6, 1.15); sun.position.set(-2.5, 3.5, 4); scene.add(sun); const rim = new T.DirectionalLight(0xffffff, .45); rim.position.set(3, -1, 2); scene.add(rim);
+    const m = new T.Mesh(geo, [face, side]); m.rotation.set(-.32, .22, 0); scene.add(m);
+    const cam = new T.PerspectiveCamera(26, 1, .1, 30); cam.position.set(0, 0, 7.6); cam.lookAt(0, 0, 0);
+    R.setSize(px, px, false); R.render(scene, cam); const cv = document.createElement("canvas"); cv.width = cv.height = px; cv.getContext("2d").drawImage(R.domElement, 0, 0); R.setSize(RW, RH, false);
+    geo.dispose(); tex.dispose(); face.dispose(); side.dispose(); solids.set(key, cv); return cv;
+  }
+  return { show, sprite, village, EMO, charm, solid };
 })();
 // the lawn and the sky take the chapter's colours; the far shore is sand and sea
 const CHAP_GROUND = [0x3fc85f, 0x7fe04f, 0x2fd0a0, 0x9ad04a, 0x3fc050, 0x30b070, 0xc8e040, 0x4a7af0, 0x30c080, 0x5a8ae0, 0xffd27a, 0x8fe0c8, 0x50c8f0, 0xffe08a, 0x9ad07a, 0xc0b8d0, 0x7fe04f, 0x9a8af0, 0xb060ff, 0x7070ff];
@@ -2849,7 +2869,7 @@ function drawGem(g, px, py, scale, now, sy = 1, rot = 0) {
     ctx.beginPath(); ctx.arc(px, py, s * (.24 + .05 * pulse), 0, 6.2832); ctx.fillStyle = "#fffbe0"; ctx.fill();
   }
 }
-const JELLY = window.__gemStyle !== "art";
+const JELLY = window.__gemStyle !== "art", GS = window.__gemStyle || "3d";   // 2026-10-16: İdris "3b modellere geç": every charm is a 3D piece   // soft (current), flat, gem, sticker, cel: candidate looks shown side by side before one is chosen
 function drawGemRaw(ctx, g, now) {
   const C = PAL[g.color]; ctx.save();
   if (g.kind === "ing") { // a seed on its way to the soil: a pale halo so it is never lost among the charms, a brown seed, two green leaves
@@ -2868,20 +2888,30 @@ function drawGemRaw(ctx, g, now) {
   const lit = (p, q, cx, cy) => { let nx = q[1] - p[1], ny = p[0] - q[0]; const L = Math.hypot(nx, ny) || 1, mx = (p[0] + q[0]) / 2 - cx, my = (p[1] + q[1]) / 2 - cy; nx /= L; ny /= L; if (nx * mx + ny * my < 0) { nx = -nx; ny = -ny; } return -(nx * .45 + ny * .89); };
   ctx.lineJoin = "round";
   if (g.kind === "gem") { const R = s * (g.special === "wrap" ? 1.5 : 1.22), hg = ctx.createRadialGradient(0, 0, s * .3, 0, 0, R); hg.addColorStop(0, g.special === "wrap" ? "rgba(255,226,120,.6)" : "rgba(255,236,170,.26)"); hg.addColorStop(1, "rgba(255,236,170,0)"); ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(0, 0, R, 0, 6.2832); ctx.fill(); }   // the charms are the forest's light
-  const C3 = g.kind === "gem" && window.__charm3d === true && typeof D3 !== "undefined" && D3 && D3.charm ? D3.charm(C, Math.max(48, Math.round(s * 2.8 * DPR))) : null;   // the charm as a 3D model, made once
+  const C3 = g.kind === "gem" && GS === "3d" && typeof D3 !== "undefined" && D3 && D3.solid ? D3.solid(C, Math.max(64, Math.round(s * 2.9 * DPR))) : null;   // the charm as a 3D model, made once
   if (C3) { let img = C3;
     if (g.special === "h" || g.special === "v") {   // a striped charm: the stripes are painted only where the charm itself is, so they follow its own outline and never spill over
       const m = document.createElement("canvas"); m.width = C3.width; m.height = C3.height; const x = m.getContext("2d"), W = m.width; x.drawImage(C3, 0, 0); x.globalCompositeOperation = "source-atop";
       for (let i = -3; i <= 3; i++) { const o = W / 2 + i * W * .13; x.fillStyle = "rgba(255,255,255,.82)"; if (g.special === "h") x.fillRect(0, o - W * .028, W, W * .056); else x.fillRect(o - W * .028, 0, W * .056, W); x.fillStyle = "rgba(0,0,0,.12)"; if (g.special === "h") x.fillRect(0, o + W * .028, W, W * .012); else x.fillRect(o + W * .028, 0, W * .012, W); }
       img = m; }
-    ctx.save(); ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = 6; ctx.shadowOffsetY = 4; const w = s * 2.8; ctx.drawImage(img, -w / 2, -w / 2, w, w); ctx.restore(); }
+    ctx.save(); ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = 6; ctx.shadowOffsetY = 4; const w = s * 2.9; ctx.drawImage(img, -w / 2, -w / 2, w, w); ctx.restore(); }
   else {
   // dark base with a soft contact shadow, then the facets on top
   ctx.shadowColor = "rgba(0,0,0,.6)"; ctx.shadowBlur = 5; ctx.shadowOffsetY = 5; ctx.save(); ctx.translate(0, CELL * (JELLY ? .03 : .075)); gemPath(ctx, C.shape, s); ctx.fillStyle = JELLY ? mixc(C.d, C.c, .3) : edge; ctx.fill(); ctx.lineWidth = Math.max(2.5, CELL * .06); ctx.strokeStyle = edge; ctx.stroke(); ctx.restore(); ctx.shadowColor = "transparent"; ctx.shadowOffsetY = 0;
   gemPath(ctx, C.shape, s); ctx.fillStyle = JELLY ? mixc(C.d, C.c, .3) : edge; ctx.fill(); if (!JELLY) { ctx.lineWidth = Math.max(2.5, CELL * .06); ctx.strokeStyle = edge; ctx.stroke(); }   // the gem sits on a thicker slab of its own dark edge (not in the soft look)
   { const bg = ctx.createRadialGradient(-s * .45, -s * .6, s * .1, 0, 0, s * 1.7); bg.addColorStop(0, mixc(C.c, C.l, .9)); bg.addColorStop(.45, C.c); bg.addColorStop(1, mixc(C.c, C.d, .85)); gemPath(ctx, C.shape, s); ctx.fillStyle = bg; ctx.fill(); }
   ctx.save(); gemPath(ctx, C.shape, s); ctx.clip(); ctx.globalAlpha = .38;
-  if (JELLY) {   // 2026-10-16 carved charms (İdris chose "oyma tahta / taş rozet"): a matte painted face over fine wood grain, the drawn detail at full strength, a crisp carved bevel, no wet shine
+  if (JELLY && GS === "flat") {   // flat: one clean colour, the detail in a lighter tone, nothing else
+    ctx.globalAlpha = 1; ctx.fillStyle = C.c; ctx.fillRect(-s * 2, -s * 2, s * 4, s * 4); if (Q.art) { ctx.save(); ctx.globalAlpha = .55; Q.art(ctx, s, C); ctx.restore(); } }
+  else if (JELLY && GS === "gem") {   // gem: cut facets fanning from the centre, each lit by its angle
+    ctx.globalAlpha = 1; const oo = Q.o, n = oo.length, cx = Q.cx || 0, cy = Q.cy || 0; for (let i = 0; i < n; i++) { const p = oo[i], q = oo[(i + 1) % n]; poly([[cx, cy], p, q], shade(lit(p, q, cx, cy) * 1.1 + (i % 2 ? -.22 : .22))); }
+    const T = oo.map(p => [cx + (p[0] - cx) * .52, cy + (p[1] - cy) * .52]); ctx.beginPath(); T.forEach((p, i) => i ? ctx.lineTo(p[0] * s, p[1] * s) : ctx.moveTo(p[0] * s, p[1] * s)); ctx.closePath(); const tg = ctx.createLinearGradient(-s * .5, -s * .6, s * .5, s * .6); tg.addColorStop(0, mixc(C.c, C.l, .8)); tg.addColorStop(1, mixc(C.c, C.d, .3)); ctx.fillStyle = tg; ctx.fill(); ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 1.2; ctx.stroke(); }
+  else if (JELLY && GS === "sticker") {   // sticker: flat colour with a soft top light, the detail in white
+    ctx.globalAlpha = 1; const sg = ctx.createLinearGradient(0, -s, 0, s); sg.addColorStop(0, mixc(C.c, C.l, .25)); sg.addColorStop(1, C.c); ctx.fillStyle = sg; ctx.fillRect(-s * 2, -s * 2, s * 4, s * 4); if (Q.art) { ctx.save(); Q.art(ctx, s, C); ctx.restore(); } }
+  else if (JELLY && GS === "cel") {   // cel: two flat tones split by a hard shadow, cartoon style
+    ctx.globalAlpha = 1; ctx.fillStyle = C.c; ctx.fillRect(-s * 2, -s * 2, s * 4, s * 4); if (Q.art) { ctx.save(); Q.art(ctx, s, C); ctx.restore(); }
+    ctx.fillStyle = mixc(C.c, C.d, .55); ctx.globalAlpha = .55; ctx.beginPath(); ctx.ellipse(s * .55, s * .6, s * 1.15, s * 1.0, -.6, 0, 6.2832); ctx.fill(); ctx.globalAlpha = 1; ctx.fillStyle = "rgba(255,255,255,.75)"; ctx.beginPath(); ctx.ellipse(-s * .4, -s * .5, s * .22, s * .12, -.6, 0, 6.2832); ctx.fill(); }
+  else if (JELLY) {   // 2026-10-16 carved charms (İdris chose "oyma tahta / taş rozet"): a matte painted face over fine wood grain, the drawn detail at full strength, a crisp carved bevel, no wet shine
     ctx.globalAlpha = 1; const pf = ctx.createLinearGradient(0, -s * 1.2, 0, s * 1.2); pf.addColorStop(0, mixc(C.c, C.l, .18)); pf.addColorStop(.55, C.c); pf.addColorStop(1, mixc(C.c, C.d, .45)); ctx.fillStyle = pf; ctx.fillRect(-s * 2, -s * 2, s * 4, s * 4);
     { let sd = 7; for (const ch of C.shape) sd = (sd * 31 + ch.charCodeAt(0)) | 0; const rr = () => { sd = (sd * 1103515245 + 12345) | 0; return ((sd >>> 8) & 65535) / 65535; };
       ctx.lineWidth = Math.max(.6, s * .018); for (let k = 0; k < 13; k++) { const y0 = -s * 1.2 + k * s * .2 + rr() * s * .06, a = s * (.03 + rr() * .05), f = 2 + rr() * 3; ctx.strokeStyle = k % 2 ? "rgba(0,0,0,.13)" : "rgba(255,255,255,.08)"; ctx.beginPath(); for (let t = 0; t <= 24; t++) { const x = -s * 1.3 + t * s * .11, y = y0 + Math.sin(t / 24 * f * Math.PI + k) * a; if (t) ctx.lineTo(x, y); else ctx.moveTo(x, y); } ctx.stroke(); }   // wood grain
@@ -2914,9 +2944,9 @@ function drawGemRaw(ctx, g, now) {
     const rm = ctx.createRadialGradient(s * .35, s * 1.05, 0, s * .35, s * 1.05, s * .9); rm.addColorStop(0, mixc(C.c, C.l, .7)); rm.addColorStop(1, "rgba(255,255,255,0)"); ctx.globalAlpha = .4; ctx.fillStyle = rm; ctx.fillRect(-s * 1.5, 0, s * 3, s * 1.5); ctx.globalAlpha = 1; }
   ctx.restore();
   // smooth outline and one four-point glint
-  gemPath(ctx, C.shape, s); ctx.lineWidth = Math.max(1.2, CELL * (JELLY ? .022 : .032)); ctx.strokeStyle = JELLY ? mixc(C.d, C.c, .35) : mixc(C.d, "#000000", .35); ctx.globalAlpha = JELLY ? .7 : 1; ctx.stroke(); ctx.globalAlpha = 1;   // a thin outline in the charm's own dark tone, not a black groove
+  gemPath(ctx, C.shape, s); ctx.lineWidth = GS === "sticker" ? CELL * .07 : GS === "cel" ? CELL * .05 : GS === "flat" ? 0.01 : Math.max(1.2, CELL * (JELLY ? .022 : .032)); ctx.strokeStyle = GS === "sticker" ? "#ffffff" : GS === "cel" ? "#1e1424" : JELLY ? mixc(C.d, C.c, .35) : mixc(C.d, "#000000", .35); ctx.globalAlpha = GS === "flat" ? 0 : JELLY ? (GS === "soft" ? .7 : 1) : 1; ctx.stroke(); ctx.globalAlpha = 1;   // a thin outline in the charm's own dark tone, not a black groove
   if (Q.over) { ctx.save(); ctx.shadowColor = "transparent"; Q.over(ctx, s, C); ctx.restore(); }
-  if (!JELLY) { const gx = Q.glint ? Q.glint[0] * s : C.shape === "moon" ? -s * .62 : -s * .42, gy = Q.glint ? Q.glint[1] * s : C.shape === "moon" ? s * .05 : -s * .5, a = s * .3, b = s * .07; ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.beginPath(); ctx.moveTo(gx, gy - a); ctx.lineTo(gx + b, gy - b); ctx.lineTo(gx + a, gy); ctx.lineTo(gx + b, gy + b); ctx.lineTo(gx, gy + a); ctx.lineTo(gx - b, gy + b); ctx.lineTo(gx - a, gy); ctx.lineTo(gx - b, gy - b); ctx.closePath(); ctx.fill(); }
+  if (!JELLY || GS === "gem") { const gx = Q.glint ? Q.glint[0] * s : C.shape === "moon" ? -s * .62 : -s * .42, gy = Q.glint ? Q.glint[1] * s : C.shape === "moon" ? s * .05 : -s * .5, a = s * .3, b = s * .07; ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.beginPath(); ctx.moveTo(gx, gy - a); ctx.lineTo(gx + b, gy - b); ctx.lineTo(gx + a, gy); ctx.lineTo(gx + b, gy + b); ctx.lineTo(gx, gy + a); ctx.lineTo(gx - b, gy + b); ctx.lineTo(gx - a, gy); ctx.lineTo(gx - b, gy - b); ctx.closePath(); ctx.fill(); }
   }
   if (!C3 && (g.special === "h" || g.special === "v")) { ctx.save(); gemPath(ctx, C.shape, s); ctx.clip(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 3.5; for (let i = -2; i <= 2; i++) { ctx.beginPath(); if (g.special === "h") { ctx.moveTo(-s * 1.4, i * s * .42); ctx.lineTo(s * 1.4, i * s * .42); } else { ctx.moveTo(i * s * .42, -s * 1.4); ctx.lineTo(i * s * .42, s * 1.4); } ctx.stroke(); } ctx.restore(); }
   if (g.special === "wrap") { ctx.strokeStyle = "#fff"; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.roundRect(-s * 1.05, -s * 1.05, s * 2.1, s * 2.1, s * .25); ctx.stroke(); ctx.shadowColor = "transparent"; ctx.strokeStyle = C.d; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(-s * .78, -s * .78, s * 1.56, s * 1.56, s * .18); ctx.stroke(); }
