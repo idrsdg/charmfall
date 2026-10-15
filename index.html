@@ -738,12 +738,12 @@ const NEWGEMS = [   // since 2026-10-16 three arrive together every 25 levels (2
   for (const C of NEWGEMS) soft(C); }
 const SLOT = [[350, .5, .66], [28, .72, .64], [52, .68, .74], [150, .34, .56], [212, .5, .66], [272, .4, .72]].map(([h, s2, l]) => { const C = { c: "#888888" }; return C; });
 { const toHex = (r, g, b) => "#" + [r, g, b].map(v => Math.round(Math.max(0, Math.min(1, v)) * 255).toString(16).padStart(2, "0")).join(""), rgb = (h, s2, l) => { const c = (1 - Math.abs(2 * l - 1)) * s2, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2; const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x]; return toHex(r + m, g + m, b + m); };
-  [[4, .72, .55], [28, .9, .56], [110, .5, .45], [200, .7, .55], [275, .48, .55], [50, .9, .58]].forEach(([h, s2, l], j) => { SLOT[j] = { c: rgb(h, s2, l), l: rgb(h, s2 * .7, Math.min(.92, l + .18)), d: rgb(h, Math.min(.5, s2), l * .48) }; }); }
+  [[352, .72, .52], [26, .82, .55], [145, .55, .45], [215, .7, .56], [280, .52, .56], [46, .82, .55]].forEach(([h, s2, l], j) => { SLOT[j] = { c: rgb(h, s2, l), l: rgb(h, s2 * .7, Math.min(.92, l + .18)), d: rgb(h, Math.min(.5, s2), l * .48) }; }); }
 COLORS.forEach((C, j) => Object.assign(C, SLOT[j]));   // 2026-10-16 İdris chose natural/earth tones: terracotta mushroom, amber acorn, moss leaf, night-blue bell, plum berry, mustard honey   // 2026-10-16 satin set, in the order of the home charms: rose mushroom, apricot acorn, teal-mint leaf, periwinkle bell, orchid berry, mustard honey
 const palForRaw = (i) => { const pal = COLORS.slice(), k = Math.min(NEWGEMS.length / 3, Math.floor((i + 1) / 25)); for (let j = 0; j < k * 3; j++) pal[j % 6] = NEWGEMS[j]; return pal; };
 // 2026-10-16: the charms are the phone's own emoji art (drawn by professional artists, detailed and three-dimensional on iPhone), one per colour slot
 const EMOJI_HOME = ["🍎", "🍊", "🍀", "🫐", "🍇", "🌻"], EMOJI_NEW = [["🍄", "🌹", "🐞", "🍒"], ["🍁", "🥕", "🍑", "🦊"], ["🌵", "🐸", "🌲", "🥝"], ["🐳", "💧", "🐬", "🦋"], ["🍆", "🪻", "🔮", "🐙"], ["🍋", "🐝", "🍌", "🐥"]];
-COLORS.forEach((C, j) => C.emoji = EMOJI_HOME[j]); NEWGEMS.forEach((C, j) => C.emoji = EMOJI_NEW[j % 6][Math.floor(j / 6)]);
+COLORS.forEach((C, j) => C.emoji = EMOJI_HOME[j]); NEWGEMS.forEach((C, j) => { C.emoji = EMOJI_NEW[j % 6][Math.floor(j / 6)]; C.v = 1 + Math.floor(j / 6); });
 const emojiArt = new Map();
 function emojiCanvas(C, px) { const key = C.emoji + px; if (emojiArt.has(key)) return emojiArt.get(key); const c = document.createElement("canvas"); c.width = c.height = px; const x = c.getContext("2d"); x.textAlign = "center"; x.textBaseline = "middle"; x.font = `${Math.round(px * .74)}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`; x.fillText(C.emoji, px / 2, px * .54);
   try { const im = x.getImageData(0, 0, px, px), d = im.data; for (let i = 0; i < d.length; i += 4) { if (!d[i + 3]) continue; const r = d[i], g = d[i + 1], b = d[i + 2], mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
@@ -1803,7 +1803,30 @@ const D3 = (() => {
     const P2 = Math.min(1024, px * 2); R.setSize(P2, P2, false); R.render(scene, cam); const cv = document.createElement("canvas"); cv.width = cv.height = px; const cx2 = cv.getContext("2d"); cx2.imageSmoothingQuality = "high"; cx2.drawImage(R.domElement, 0, 0, P2, P2, 0, 0, px, px); R.setSize(RW, RH, false);   // drawn at twice the size and scaled down: smooth edges
     geo.dispose(); tex.dispose(); am.dispose(); matl.dispose(); puffs.set(key, cv); return cv;
   }
-  return { show, sprite, village, EMO, charm, solid, puff };
+  // 2026-10-16 (İdris: "kesikin ve 3 boyutlu geometrik şekilli ve detaylı"): cut gems with flat, sharp facets and crisp edges. One cut per colour slot;
+  // the charms that arrive every 25 levels keep the slot's cut but with more facets and other proportions.
+  const facets = new Map();
+  function facet(slot, v, C, px) {
+    const key = slot + ":" + v + ":" + C.c + ":" + px; if (facets.has(key)) return facets.get(key);
+    const L = (pts, seg) => new T.LatheGeometry(pts.map(([x, y]) => new T.Vector2(x, y)), seg); let geo, rx = 1.05, ry = 0;
+    if (slot === 0) geo = L([[0, -1.05], [.98, -.12], [1.02, 0], [1.02, .08], [.62, .52], [0, .52]], 12 + v * 2);   // round brilliant
+    else if (slot === 1) geo = L([[0, -1.25], [.72, -.72], [.78, -.2], [.78, .2], [.72, .72], [0, 1.25]], 6 + (v % 2) * 2), rx = .35, ry = .5;   // hexagonal crystal
+    else if (slot === 2) { geo = L([[0, -.62], [.55, -.62], [.92, -.35], [1.0, 0], [.92, .35], [.55, .62], [0, .62]], 8 + v * 2); geo.rotateY(Math.PI / (8 + v * 2)); geo.scale(1.1, 1, .8); rx = .75; ry = .25; }   // step cut
+    else if (slot === 3) geo = v % 2 ? new T.DodecahedronGeometry(1.05, 0) : new T.IcosahedronGeometry(1.08, 0), rx = .5, ry = .35 + v * .3;
+    else if (slot === 4) { geo = L([[0, -1.3], [.75, -.15], [.8, 0], [.75, .15], [0, 1.3]], 8 + v * 2); rx = .35; ry = .4 + v * .2; }   // long diamond
+    else { geo = L([[0, -.42], [1.05, -.12], [1.1, 0], [1.05, .1], [.6, .4], [0, .4]], 3 + (v ? 2 : 0)); rx = .8; ry = .3; }   // trillion
+    geo = geo.toNonIndexed(); geo.computeVertexNormals();
+    const lin = (h) => { const c = new T.Color(h); return c.convertSRGBToLinear ? c.convertSRGBToLinear() : c; };
+    const matl = new T.MeshStandardMaterial({ color: lin(C.c), flatShading: true, roughness: .82, metalness: 0, emissive: lin(C.d), emissiveIntensity: .06 });
+    const scene = new T.Scene(); scene.add(new T.AmbientLight(0xffffff, .14)); for (const [x, y, z, k] of [[-3, 4, 4, 2.1], [3.5, 1.5, 3, .7], [0, -3, 3, .35], [2, 3, -3, .9], [-3, -1, 2, .4]]) { const d = new T.DirectionalLight(0xffffff, k); d.position.set(x, y, z); scene.add(d); }   // light from many sides: every facet catches its own tone
+    const m = new T.Mesh(geo, matl); m.rotation.set(rx, ry, 0); scene.add(m);
+    const edges = new T.LineSegments(new T.EdgesGeometry(geo, 8), new T.LineBasicMaterial({ color: lin(mixc(C.c, "#ffffff", .55)), transparent: true, opacity: .7 })); edges.rotation.copy(m.rotation); scene.add(edges);   // crisp facet edges
+    const box = new T.Box3().setFromObject(m), sz = box.getSize(new T.Vector3()), fit = 2.1 / Math.max(sz.x, sz.y, Math.sqrt(sz.x * sz.y) * 1.12);   // every cut fills about the same area m.scale.setScalar(fit); edges.scale.setScalar(fit);
+    const cam = new T.PerspectiveCamera(26, 1, .1, 30); cam.position.set(0, 0, 6.2); cam.lookAt(0, 0, 0);
+    const P2 = Math.min(1024, px * 2); R.setSize(P2, P2, false); R.render(scene, cam); const cv = document.createElement("canvas"); cv.width = cv.height = px; const cx2 = cv.getContext("2d"); cx2.imageSmoothingQuality = "high"; cx2.drawImage(R.domElement, 0, 0, P2, P2, 0, 0, px, px); R.setSize(RW, RH, false);
+    geo.dispose(); matl.dispose(); facets.set(key, cv); return cv;
+  }
+  return { show, sprite, village, EMO, charm, solid, puff, facet };
 })();
 // the lawn and the sky take the chapter's colours; the far shore is sand and sea
 const CHAP_GROUND = [0x3fc85f, 0x7fe04f, 0x2fd0a0, 0x9ad04a, 0x3fc050, 0x30b070, 0xc8e040, 0x4a7af0, 0x30c080, 0x5a8ae0, 0xffd27a, 0x8fe0c8, 0x50c8f0, 0xffe08a, 0x9ad07a, 0xc0b8d0, 0x7fe04f, 0x9a8af0, 0xb060ff, 0x7070ff];
@@ -2939,7 +2962,7 @@ function drawGem(g, px, py, scale, now, sy = 1, rot = 0) {
     ctx.beginPath(); ctx.arc(px, py, s * (.24 + .05 * pulse), 0, 6.2832); ctx.fillStyle = "#fffbe0"; ctx.fill();
   }
 }
-const JELLY = window.__gemStyle !== "art", GS = window.__gemStyle || "emoji";   // 2026-10-16: İdris "3b modellere geç": every charm is a 3D piece   // soft (current), flat, gem, sticker, cel: candidate looks shown side by side before one is chosen
+const JELLY = window.__gemStyle !== "art", GS = window.__gemStyle || "facet";   // 2026-10-16: İdris "3b modellere geç": every charm is a 3D piece   // soft (current), flat, gem, sticker, cel: candidate looks shown side by side before one is chosen
 function drawGemRaw(ctx, g, now) {
   const C = PAL[g.color]; ctx.save();
   if (g.kind === "ing") { // a seed on its way to the soil: a pale halo so it is never lost among the charms, a brown seed, two green leaves
@@ -2958,7 +2981,7 @@ function drawGemRaw(ctx, g, now) {
   const lit = (p, q, cx, cy) => { let nx = q[1] - p[1], ny = p[0] - q[0]; const L = Math.hypot(nx, ny) || 1, mx = (p[0] + q[0]) / 2 - cx, my = (p[1] + q[1]) / 2 - cy; nx /= L; ny /= L; if (nx * mx + ny * my < 0) { nx = -nx; ny = -ny; } return -(nx * .45 + ny * .89); };
   ctx.lineJoin = "round";
   if (g.kind === "gem") { const R = s * (g.special === "wrap" ? 1.5 : 1.22), hg = ctx.createRadialGradient(0, 0, s * .3, 0, 0, R); hg.addColorStop(0, g.special === "wrap" ? "rgba(255,226,120,.6)" : "rgba(255,236,170,.26)"); hg.addColorStop(1, "rgba(255,236,170,0)"); ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(0, 0, R, 0, 6.2832); ctx.fill(); }   // the charms are the forest's light
-  const C3 = g.kind === "gem" && GS === "emoji" && C.emoji ? emojiCanvas(C, Math.max(64, Math.round(s * 2.9 * DPR))) : g.kind === "gem" && (GS === "3d" || GS === "solid") && typeof D3 !== "undefined" && D3 && D3.solid ? (window.__gemStyle === "solid" ? D3.solid : D3.puff)(C, Math.max(64, Math.round(s * 2.9 * DPR))) : null;   // the charm as a 3D model, made once
+  const C3 = g.kind === "gem" && GS === "facet" && typeof D3 !== "undefined" && D3 && D3.facet ? D3.facet(g.color, C.v || 0, C, Math.max(64, Math.round(s * 2.9 * DPR))) : g.kind === "gem" && GS === "emoji" && C.emoji ? emojiCanvas(C, Math.max(64, Math.round(s * 2.9 * DPR))) : g.kind === "gem" && (GS === "3d" || GS === "solid") && typeof D3 !== "undefined" && D3 && D3.solid ? (window.__gemStyle === "solid" ? D3.solid : D3.puff)(C, Math.max(64, Math.round(s * 2.9 * DPR))) : null;   // the charm as a 3D model, made once
   if (C3) { let img = C3;
     if (g.special === "h" || g.special === "v") {   // a striped charm: the stripes are painted only where the charm itself is, so they follow its own outline and never spill over
       const m = document.createElement("canvas"); m.width = C3.width; m.height = C3.height; const x = m.getContext("2d"), W = m.width; x.drawImage(C3, 0, 0); x.globalCompositeOperation = "source-atop";
