@@ -2397,7 +2397,7 @@ function shuffle(silent) {
 }
 
 // ---------------------------------------------------------------- resolving a move
-const SWAP_MS = 290;
+const SWAP_MS = 320;
 async function trySwap(r1, c1, r2, c2) {
   if (!G || G.busy || G.over || G.paused) return false;
   const a = cell(r1, c1), b = cell(r2, c2); if (!a || !b || Math.abs(r1 - r2) + Math.abs(c1 - c2) !== 1) return false;
@@ -2552,7 +2552,7 @@ async function blast(clear, spawn = [], opts = {}) {
     for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) if (G.block[r + dr] && G.block[r + dr][c + dc] && !clear.has((r + dr) * COLS + c + dc)) hitBlock(r + dr, c + dc, false, g.color);
     if (keep.has(k)) continue;
     // a short ripple runs along the match instead of everything popping on the same frame
-    const C = PAL[g.color], dl = Math.min(popped, 6) * step + (flyDl && flyDl.get(k) || 0); dying.push({ g, t: now + dl }); { const bc = C ? (typeof D3 !== "undefined" && D3 && D3.lpColor ? D3.lpColor(g.color, C) : C.c) : "#fff", n = (g.special ? 14 : 8) + Math.min(8, (G.combo - 1) * 2); burst(c + .5, r + .5, bc, n, C ? C.shape : "tri", dl); if (!window.__lowFx) { fx.push({ k: "star", x: c + .5, y: r + .5, color: bc, t: now + dl + 40, life: 420, size: .55 + Math.min(.4, G.combo * .08) }); fx.push({ k: "ring", x: c + .5, y: r + .5, color: bc, r1: .55 + Math.min(.5, G.combo * .1), t: now + dl, life: 360, w: 5 }); } } if (g.special) ring(c + .5, r + .5, C ? C.l : "#fff", 1.3); G.grid[r][c] = null; popped++;
+    const C = PAL[g.color], dl = Math.min(popped, 6) * step + (flyDl && flyDl.get(k) || 0); dying.push({ g, t: now + dl }); { const bc = C ? (typeof D3 !== "undefined" && D3 && D3.lpColor ? D3.lpColor(g.color, C) : C.c) : "#fff", n = (g.special ? 14 : 8) + Math.min(8, (G.combo - 1) * 2); burst(c + .5, r + .5, bc, n, C ? C.shape : "tri", dl); if (!window.__lowFx) { fx.push({ k: "star", x: c + .5, y: r + .5, color: bc, t: now + dl + 40, life: 420, size: .55 + Math.min(.4, G.combo * .08) }); fx.push({ k: "ring", x: c + .5, y: r + .5, color: bc, r1: .55 + Math.min(.5, G.combo * .1), t: now + dl, life: 360, w: 5 }); if (popped % 3 === 0) fx.push({ k: "bloom", x: c + .5, y: r + .5, color: bc, t: now + dl + 30, life: 620 }); } } if (g.special) ring(c + .5, r + .5, C ? C.l : "#fff", 1.3); G.grid[r][c] = null; popped++;
     if (detonated.has(k)) addScore(r, c, 200 * G.combo); else if (!opts.silent) G.score += 20 * Math.max(1, G.combo);
   }
   for (const s of spawn) { let g = cell(s.r, s.c); if (g && g.kind === "gem") { g.special = s.sp; g.color = s.color; } else { g = G.grid[s.r][s.c] = mkGem(s.color, s.r, s.c, s.sp); } g.sx = 1.6; g.pop = performance.now(); if (s.sp === "bomb") save.stats.bombs++; if (s.sp === "fly" && !save.seenFly && !window.__fast) { save.seenFly = 1; tip("Firefly! A 2×2 square makes one. It flies to what you need.", 3800); } sparkle(s.c + .5, s.r + .5, PAL[s.color].c); ring(s.c + .5, s.r + .5, "#fff", 1.3, 500, 9); burst(s.c + .5, s.r + .5, "#fff", 6, "round"); }
@@ -2561,6 +2561,10 @@ async function blast(clear, spawn = [], opts = {}) {
     if (!G.over && !G.inFrenzy) G.frenzy = Math.min(100, G.frenzy + popped * 2 + (G.combo > 1 ? 3 : 0));
   }
   if (G.combo > save.stats.maxCombo) save.stats.maxCombo = G.combo;
+  if (!window.__fast && G.combo >= 2) { const rr = Math.floor(Math.random() * ROWS), cc = Math.floor(Math.random() * COLS), n0 = performance.now();
+    fx.push({ k: "whirl", x: cc + .5, y: rr + .8, t: n0, life: 1100 });
+    if (G.combo >= 3) fx.push({ k: "spirit", x: cc + .5, y: rr + .5, t: n0 + 120, life: 1500 });
+    if (G.combo >= 4) { fx.push({ k: "rainbow", t: n0, life: 1600 }); for (let k = 0; k < 3; k++) fx.push({ k: "comet", x: -1, y: Math.random() * 4, x2: COLS + 1, y2: 3 + Math.random() * 5, color: ["#ffe04a", "#ff8adb", "#7fdcff"][k], t: n0 + k * 160, life: 900 }); } }
   if (G.combo === 3) { toast("Bloom!"); pogoReact(); } else if (G.combo === 4) toast("Glow!"); else if (G.combo >= 5) toast("Wildwood!");   // Charmwood's own words for a chain if (detonated.size) G.shake = performance.now();
   updateHud();
   await sleep(detonated.size ? 300 : 230);
@@ -3301,6 +3305,23 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
       ctx.fillStyle = f.color; ctx.beginPath(); for (let j = 0; j < 8; j++) { const a = j * Math.PI / 4 + .39, rad = j % 2 ? rr : R * .6; ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad); } ctx.closePath(); ctx.fill();
     } else if (f.k === "nope") {
       ctx.globalAlpha = 1 - t; ctx.strokeStyle = "#ff2d55"; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(OX + f.c * CELL + 3, OY + f.r * CELL + 3, CELL - 6, CELL - 6, 8); ctx.stroke();
+    } else if (f.k === "bloom") {   // a flower opens out of a popped charm, spins and fades
+      const e = easeOut(Math.min(1, t * 1.4)), x = OX + f.x * CELL, y = OY + f.y * CELL, R = CELL * (.25 + .75 * e); ctx.translate(x, y); ctx.rotate(t * 2.5); ctx.globalAlpha = 1 - t * t;
+      for (let k = 0; k < 6; k++) { ctx.rotate(Math.PI / 3); ctx.fillStyle = k % 2 ? f.color : "#fff7e0"; ctx.beginPath(); ctx.ellipse(R * .55, 0, R * .42, R * .2, 0, 0, 6.2832); ctx.fill(); }
+      ctx.fillStyle = "#ffd23f"; ctx.beginPath(); ctx.arc(0, 0, R * .2, 0, 6.2832); ctx.fill();
+    } else if (f.k === "whirl") {   // a little whirlwind of leaves spiralling up from a chain
+      const x = OX + f.x * CELL, y = OY + f.y * CELL; for (let k = 0; k < 9; k++) { const a = t * 9 + k * .7, rr = CELL * (.2 + t * 1.6) * (.4 + (k % 3) * .3), yy = -t * CELL * 2.6 - k * CELL * .08; ctx.save(); ctx.translate(x + Math.cos(a) * rr, y + yy + Math.sin(a) * rr * .35); ctx.rotate(a); ctx.globalAlpha = (1 - t) * .95; ctx.fillStyle = ["#5fbf4a", "#f0a030", "#e05a3a", "#a8d84a"][k % 4]; ctx.beginPath(); ctx.ellipse(0, 0, CELL * .14, CELL * .07, 0, 0, 6.2832); ctx.fill(); ctx.restore(); }
+    } else if (f.k === "spirit") {   // a small forest spirit with two eyes floats up out of a big match and waves goodbye
+      const x = OX + f.x * CELL + Math.sin(t * 9) * CELL * .15, y = OY + f.y * CELL - easeOut(t) * CELL * 2.2, r = CELL * .3 * Math.min(1, t * 5); ctx.globalAlpha = Math.min(1, (1 - t) * 2.2);
+      const sg = ctx.createRadialGradient(x, y, 0, x, y, r * 2); sg.addColorStop(0, "rgba(255,255,240,.95)"); sg.addColorStop(1, "rgba(255,255,240,0)"); ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(x, y, r * 2, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = "#fffdf2"; ctx.beginPath(); ctx.arc(x, y, r, Math.PI, 0); ctx.lineTo(x + r, y + r * .9); for (let k = 0; k < 4; k++) ctx.quadraticCurveTo(x + r - (k + .5) * r * .5, y + r * (k % 2 ? .9 : 1.3), x + r - (k + 1) * r * .5, y + r * .9); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#2a2240"; for (const sx of [-1, 1]) { ctx.beginPath(); ctx.ellipse(x + sx * r * .35, y - r * .1, r * .12, r * .18 * (Math.sin(t * 20) > .9 ? .2 : 1), 0, 0, 6.2832); ctx.fill(); }
+    } else if (f.k === "rainbow") {   // a rainbow arcs over the board on a big chain
+      const e = easeOut(Math.min(1, t * 2)), cx = OX + COLS * CELL / 2, cy = OY + COLS * CELL * .95, R = COLS * CELL * .62; ctx.globalAlpha = (1 - t) * .55; ctx.lineWidth = CELL * .22;
+      ["#ff5a5a", "#ffa63a", "#ffe04a", "#6ad860", "#4ab0ff", "#a070ff"].forEach((c, k) => { ctx.strokeStyle = c; ctx.beginPath(); ctx.arc(cx, cy, R - k * CELL * .2, Math.PI, Math.PI + Math.PI * e); ctx.stroke(); });
+    } else if (f.k === "comet") {   // a shooting star with a sparkling tail
+      const e = ease(Math.min(1, t * 1.2)), x = OX + (f.x + (f.x2 - f.x) * e) * CELL, y = OY + (f.y + (f.y2 - f.y) * e) * CELL; ctx.globalCompositeOperation = "lighter";
+      for (let k = 0; k < 10; k++) { const q = Math.max(0, e - k * .035), qx = OX + (f.x + (f.x2 - f.x) * q) * CELL, qy = OY + (f.y + (f.y2 - f.y) * q) * CELL; ctx.globalAlpha = (1 - k / 10) * (1 - t) ; ctx.fillStyle = k ? f.color : "#fff"; ctx.beginPath(); ctx.arc(qx, qy, CELL * (.16 - k * .012), 0, 6.2832); ctx.fill(); }
     } else if (f.k === "flash") {
       ctx.globalAlpha = f.a * (1 - t); ctx.fillStyle = f.color; ctx.fillRect(-20, -20, W + 40, W + 40);
     }
