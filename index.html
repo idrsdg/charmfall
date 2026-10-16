@@ -2564,7 +2564,7 @@ async function blast(clear, spawn = [], opts = {}) {
   if (!window.__fast && G.combo >= 2) { const rr = Math.floor(Math.random() * ROWS), cc = Math.floor(Math.random() * COLS), n0 = performance.now();
     fx.push({ k: "whirl", x: cc + .5, y: rr + .8, t: n0, life: 1100 });
     if (G.combo >= 3) fx.push({ k: "spirit", x: cc + .5, y: rr + .5, t: n0 + 120, life: 1500 });
-    if (G.combo >= 4) { fx.push({ k: "rainbow", t: n0, life: 1600 }); for (let k = 0; k < 3; k++) fx.push({ k: "comet", x: -1, y: Math.random() * 4, x2: COLS + 1, y2: 3 + Math.random() * 5, color: ["#ffe04a", "#ff8adb", "#7fdcff"][k], t: n0 + k * 160, life: 900 }); } }
+    if (G.combo >= 4) { for (let k = 0; k < 3; k++) fx.push({ k: "comet", x: -1, y: Math.random() * 4, x2: COLS + 1, y2: 3 + Math.random() * 5, color: ["#ffe04a", "#ff8adb", "#7fdcff"][k], t: n0 + k * 160, life: 900 }); } }
   if (G.combo === 3) { toast("Bloom!"); pogoReact(); } else if (G.combo === 4) toast("Glow!"); else if (G.combo >= 5) toast("Wildwood!");   // Charmwood's own words for a chain if (detonated.size) G.shake = performance.now();
   updateHud();
   await sleep(detonated.size ? 300 : 230);
