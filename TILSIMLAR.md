@@ -103,3 +103,18 @@ Güncel (2026-10-16 gece): her model kendi doğal renginde (elma kırmızı, yap
 | 6 | Sarı | Hilal | Yıldız | Küçük Güneş | Bal Arısı | Bal Peteği |
 
 Sütunlar `C.v` değeridir (0-4); her 25 seviyede üç yuva bir sonraki sütuna geçer.
+
+## 2026-10-19 (akşam): dolgun çizgi film taşları (güncel)
+
+İdris ışıltılı seti "asla beğenmedim" dedi; "daha büyük, daha dolgun, renk kontrastı yüksek" istedi. Üç aday çizildi (A kalın koyu çerçeveli çizgi film, B çerçevesiz parlak, C beyaz çerçeveli çıkartma); A seçildi. Kod: `BL`, `BLHUE`, `BL_LBL`, `BLA`, `boldArt` (`GS = "bold"`, `window.__bold` ile B/C denenebilir).
+
+| Yuva | Renk | v0 | v1 | v2 | v3 | v4 |
+|---|---|---|---|---|---|---|
+| 1 | Kırmızı | Çilek | Uğur böceği | Elma | Benekli mantar | Domates |
+| 2 | Turuncu | Portakal | Tilki | Balkabağı | Japon balığı | Palamut |
+| 3 | Sarı | Güneş | Civciv | Limon | Yıldız | Arı |
+| 4 | Yeşil | Yaprak | Kurbağa | Kaplumbağa | Yonca | Armut |
+| 5 | Mavi | Damla | Mavi kuş | Balina | Yaban mersini | Balık |
+| 6 | Mor | Erik | Kelebek | Patlıcan | Menekşe | Salyangoz |
+
+Not: yuva sırası değişti (3. yuva artık sarı, 4. yeşil, 5. mavi, 6. mor).
