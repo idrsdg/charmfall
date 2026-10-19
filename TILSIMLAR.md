@@ -88,3 +88,18 @@ Taşlar kesik yüzeyli, mat 3B low-poly modeller. Yuva başına başlangıç ta�
 Anlamları: Dünya ve güneş ormanın ışığının kaynağını, meyveler ormanın armağanlarını, hayvanlar geri dönen canlıları, ağaçlar ve yapraklar yeşilin geri gelişini anlatır.
 
 Güncel (2026-10-16 gece): her model kendi doğal renginde (elma kırmızı, yaprak yeşil, dünya mavi-yeşil vb.), kesik yüzeyli low-poly 3B. Yukarıdaki tablo hâlâ geçerli.
+
+## 2026-10-19: gece ormanının ışıltısı (güncel)
+
+İdris "tamamen farklı bir konsept, renkleri, görünümü ve şekilleri sen seç" dedi. Yeni görünüm: koyu tahtada parlayan, düz 2B çizilmiş gece doğası. Her yuvanın tek bir ışıltılı rengi var, şekiller yuvaya göre değişiyor. Kod: `GL`, `GLHUE`, `GL_LBL`, `GLA`, `glowArt` (`GS = "glow"`).
+
+| Yuva | Renk | Başlangıç | 25-49 | 50-74 | 75-99 ... | Son |
+|---|---|---|---|---|---|---|
+| 1 | Pembe | Işıltılı Mantar | Ay Denizanası | Gece Lotusu | Mercan Dalı | Kiraz Çiçeği |
+| 2 | Turuncu | Kor Meşe Yaprağı | Tilki Ruhu | Koi Balığı | Fener Palamut | Balkabağı |
+| 3 | Yeşil | Ateş Böceği | Filiz | Gölet Kurbağası | Çöl Kaktüsü | Çam Ağacı |
+| 4 | Mavi | Çiy Damlası | Kar Tanesi | Gök Balinası | Deniz Kabuğu | Dalga |
+| 5 | Mor | Ay Güvesi | Ametist | Çan Çiçeği | Gece Baykuşu | Yaban Eriği |
+| 6 | Sarı | Hilal | Yıldız | Küçük Güneş | Bal Arısı | Bal Peteği |
+
+Sütunlar `C.v` değeridir (0-4); her 25 seviyede üç yuva bir sonraki sütuna geçer.
