@@ -118,3 +118,22 @@ Sütunlar `C.v` değeridir (0-4); her 25 seviyede üç yuva bir sonraki sütuna 
 | 6 | Mor | Erik | Kelebek | Patlıcan | Menekşe | Salyangoz |
 
 Not: yuva sırası değişti (3. yuva artık sarı, 4. yeşil, 5. mavi, 6. mor).
+
+## 2026-10-24: üçüncü bölüm, 201-300. seviyeler (kuzey)
+
+İdris 200 seviyeyi bitirdi ve "yine her 25 levelde 2 taş değişsin" dedi. 225, 250, 275 ve 300. seviyelerde ikişer yeni taş gelir (kod: `NEW3`, `BL` dizilerinin son sütunları).
+
+| Seviye | Yuva | Taş |
+|---|---|---|
+| 225 | Kırmızı | Kiraz |
+| 225 | Turuncu | Havuç |
+| 250 | Sarı | Ayçiçeği |
+| 250 | Yeşil | Kaktüs |
+| 275 | Mavi | Yağmur Bulutu |
+| 275 | Mor | Üzüm |
+| 300 | Kırmızı | Karpuz |
+| 300 | Turuncu | Akçaağaç Yaprağı |
+
+Hikâye: Taç Tepe aydınlanınca kuzeyde son bir gri şerit görünür. Yaşlı kuzgun Corvin (Mordo ile Gritt'in dedesi) kulesini sıcak tutmak için kuzeyin ışığını almıştır. On yer: Akçaağaç İskelesi, Kar Yemişi Ormanı, Donmuş Şelale, Kutup Işığı Gölü, Çiçekli Vadi, Kızıl Kanyon, Yağmur Ormanı Boğazı, Bulut Çayırı, Gün Batımı Zirveleri, Corvin'in Kulesi. Dört yeni durak: Kar Durağı, Kutup Işığı İskelesi, Kanyon Geçidi, Kule.
+
+Oyun içi taşlar aynı gün biraz daha mat yapıldı. Renkler birbirinden daha ayrı seçildi ve yüzeye hafif kesikler eklendi.
