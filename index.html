@@ -232,7 +232,11 @@
   #path u.pebble { position: absolute; width: 7px; height: 5px; scale: var(--s); border-radius: 50%; pointer-events: none; z-index: 0; background: rgba(240, 236, 220, .7); box-shadow: 0 1px 0 rgba(0, 0, 0, .2), 8px 3px 0 -1px rgba(240, 236, 220, .55); }
   .mprop.small { z-index: 0; } .mprop.pond { z-index: 0; transform: translate(-50%, -60%); }
   #path .mprop, #path .mvillage, #path .pogoMap, #path .gate, #path .mcloud { scale: .8; }   /* everything on the map a fifth smaller: the forest seen from higher up */
-  #path .lv { box-shadow: 0 5px 0 rgba(0, 0, 0, .28), 0 10px 0 -2px rgba(0, 0, 0, .12), 0 14px 18px rgba(0, 0, 0, .3); }   /* stops stand up off the ground */
+  #path .lv { box-shadow: 0 5px 0 rgba(0, 0, 0, .28), 0 10px 0 -2px rgba(0, 0, 0, .12), 0 14px 18px rgba(0, 0, 0, .3), 0 0 0 7px rgba(255, 255, 255, .5); outline: 3px solid rgba(25, 12, 50, .85); z-index: 3; }   /* stops stand up off the ground; 2026-10-24: a white ring and a dark edge so every stop is easy to see */
+  #path .path svg, #path > svg { z-index: 2; }
+  /* 2026-10-24 İdris: "raylar ve leveller çok belirgin olsun": all scenery sits under the track and the stops */
+  #path .mprop:not(.stn):not(.work):not(.feather), #path .critter, #path .mcloud, #path .mvillage, #path u { z-index: 0 !important; }
+  #path .lv.lock { filter: none; }
   #map::after { content: ""; position: fixed; left: 0; right: 0; top: 0; height: 38vh; pointer-events: none; z-index: 5; background: linear-gradient(rgba(214, 238, 255, .55), rgba(214, 238, 255, 0)); }   /* haze over what is far away: depth */
   .mcloud { position: absolute; z-index: 4; pointer-events: none; opacity: .85; animation: cloudDrift var(--t) var(--dl) ease-in-out infinite alternate; } .mcloud img { display: block; width: 100%; } @keyframes cloudDrift { to { transform: translateX(120px); } }
   .mprop.flutter { z-index: 4; } .mprop.flutter img { animation: flutter 3.2s var(--dl) ease-in-out infinite; } @keyframes flutter { 0%, 100% { translate: 0 0; rotate: -8deg; } 25% { translate: var(--fx) -18px; rotate: 10deg; } 50% { translate: calc(var(--fx) * .4) -34px; rotate: -6deg; } 75% { translate: calc(var(--fx) * -.5) -12px; rotate: 8deg; } }
@@ -537,8 +541,8 @@
   @keyframes aniStrip { to { transform: translateX(-100%); } }
   #path .ani:is(.m-walk, .m-hop, .m-side, .m-swim, .m-perch) > i { animation: aniWander var(--wd, 10s) linear var(--dl, 0s) infinite; }
   @keyframes aniWander { 0% { translate: calc(var(--wx) * -1) 0; scale: 1 1; } 47% { translate: var(--wx) 0; scale: 1 1; } 50% { translate: var(--wx) 0; scale: -1 1; } 97% { translate: calc(var(--wx) * -1) 0; scale: -1 1; } 100% { translate: calc(var(--wx) * -1) 0; scale: 1 1; } }
-  #path .ani:is(.m-fly, .m-hover) > i { animation: aniHover 3.4s ease-in-out var(--dl, 0s) infinite alternate; }
-  @keyframes aniHover { from { translate: -8px 4px; } to { translate: 8px -12px; } }
+  #path .ani:is(.m-fly, .m-hover) > i { animation: aniHover 5s ease-in-out var(--dl, 0s) infinite alternate; }
+  @keyframes aniHover { from { translate: -3px 2px; } to { translate: 3px -5px; } }
   #path .ani.m-flutter > i { animation: flutter 4.4s var(--dl, 0s) ease-in-out infinite; }
   #path .mprop.mordo.ani:not(.go) img { animation: none; } #path .mprop.mordo.ani.arrive > i { animation: mordoArrive 1.1s .5s cubic-bezier(.3, 1.3, .5, 1) both, aniHover 3.4s 1.6s ease-in-out infinite alternate; }
   #path .ani:not(.vis) > i, #path .ani:not(.vis) > i > img { animation-play-state: paused !important; }
@@ -1310,7 +1314,7 @@ $("map").addEventListener("scroll", () => { $("bg").style.setProperty("--py", (-
   el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end); el.addEventListener("pointerleave", end); }
 // 2026-10-24: a living creature on the map. It shows its picture at once; when it comes near the screen its motion strip is made and played in
 // place (steps), while the wrapper carries it smoothly over the ground: walkers walk to and fro and turn, fliers hover, butterflies flutter.
-const ANI_SPEED = { walk: .38, hop: .45, side: .3, swim: .12, perch: .06 };
+const ANI_SPEED = { walk: .3, hop: .32, side: .22, swim: .1, perch: .04 };
 function aniHtml(cls, kind, x, y, w, R, extra) {
   const mo = D3 && D3.motion(kind), lock = / lock\b/.test(cls), st = `left:${Math.round(x)}px;top:${Math.round(y)}px;width:${Math.round(w)}px`, src = D3.sprite(kind, 192);
   if (!mo || lock) return `<div class="${cls}" style="${st}${extra || ""}"><img src="${src}" alt=""></div>`;
@@ -1328,15 +1332,24 @@ function buildMap() {
   const pts = LEVELS.map((_, i) => [W / 2 + Math.sin((i - cur) * .52) * SW * .28 + Math.sin((i - cur) * .19) * SW * .06, H - B - i * G_]);
   let d = "M" + pts[0][0].toFixed(1) + " " + pts[0][1].toFixed(1); const segs = []; for (let i = 0; i < N - 1; i++) { const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(N - 1, i + 2)], c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6], c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6]; segs.push([p1, c1, c2, p2]); d += ` C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`; }
   const sw = big ? 18 : 13;
-  svg.innerHTML = `<path d="${d}" fill="none" stroke="rgba(40,20,80,.22)" stroke-width="${sw + 3}" stroke-linecap="round" transform="translate(0 4)"/><path d="${d}" fill="none" stroke="#cfc3ab" stroke-width="${sw}" stroke-linecap="round"/><path id="pathDone" d="${d}" fill="none" stroke="#ffd23f" stroke-width="${sw}" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#6b4a2b" stroke-width="${(sw * .82).toFixed(1)}" stroke-dasharray="${big ? 4 : 3} ${big ? 11 : 9}"/><path id="railL" fill="none" stroke="#8e8aa6" stroke-width="${big ? 3.5 : 2.6}"/><path id="railR" fill="none" stroke="#8e8aa6" stroke-width="${big ? 3.5 : 2.6}"/>`;
-  let railLen = 0;
+  svg.innerHTML = `<path d="${d}" fill="none" stroke="rgba(20,10,40,.45)" stroke-width="${sw + 8}" stroke-linecap="round" transform="translate(0 4)"/><path d="${d}" fill="none" stroke="#4a3626" stroke-width="${sw + 5}" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#e2d6bc" stroke-width="${sw}" stroke-linecap="round"/><path id="pathDone" d="${d}" fill="none" stroke="#ffd23f" stroke-width="${sw}" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#6b4a2b" stroke-width="${(sw * .82).toFixed(1)}" stroke-dasharray="${big ? 4 : 3} ${big ? 11 : 9}"/><path id="railL" fill="none" stroke="#3c3850" stroke-width="${big ? 4.5 : 3.4}"/><path id="railR" fill="none" stroke="#3c3850" stroke-width="${big ? 4.5 : 3.4}"/>`;
+  let railLen = 0; const railS = [];   // [y, x] samples along the track, sorted by y
   { const pd = svg.querySelector("#pathDone"), L = pd.getTotalLength(), done = cur * L / (N - 1); railLen = L; pd.setAttribute("stroke-dasharray", `${done.toFixed(1)} ${(L - done + 10).toFixed(1)}`);
     // two rails: each cubic of the spline sampled in a dozen steps and pushed out along its normal, one way and the other (no path-length queries: those cost seconds on a path this long)
     const ro = sw * .27, K = 14; let a = "", b = "", first = true;
     for (const [p1, c1, c2, p2] of segs) for (let s = 0; s < K; s++) { const u = s / K, v = 1 - u, x = v * v * v * p1[0] + 3 * v * v * u * c1[0] + 3 * v * u * u * c2[0] + u * u * u * p2[0], y = v * v * v * p1[1] + 3 * v * v * u * c1[1] + 3 * v * u * u * c2[1] + u * u * u * p2[1];
       let dx = 3 * v * v * (c1[0] - p1[0]) + 6 * v * u * (c2[0] - c1[0]) + 3 * u * u * (p2[0] - c2[0]), dy = 3 * v * v * (c1[1] - p1[1]) + 6 * v * u * (c2[1] - c1[1]) + 3 * u * u * (p2[1] - c2[1]); const m = Math.hypot(dx, dy) || 1; dx /= m; dy /= m; const nx = -dy * ro, ny = dx * ro;
-      a += (first ? "M" : "L") + (x + nx).toFixed(1) + " " + (y + ny).toFixed(1); b += (first ? "M" : "L") + (x - nx).toFixed(1) + " " + (y - ny).toFixed(1); first = false; }
-    svg.querySelector("#railL").setAttribute("d", a); svg.querySelector("#railR").setAttribute("d", b); }
+      railS.push([y, x]); a += (first ? "M" : "L") + (x + nx).toFixed(1) + " " + (y + ny).toFixed(1); b += (first ? "M" : "L") + (x - nx).toFixed(1) + " " + (y - ny).toFixed(1); first = false; }
+    svg.querySelector("#railL").setAttribute("d", a); svg.querySelector("#railR").setAttribute("d", b); railS.sort((p, q) => p[0] - q[0]); }
+  // clearRail(nodes): the track and its stops are kept free: a picture whose footprint comes within CLR px of the rail is moved out sideways
+  const CLR = big ? 78 : 52, railRange = (y0, y1) => { let lo = 0, hi = railS.length; while (lo < hi) { const m = lo + hi >> 1; if (railS[m][0] < y0) lo = m + 1; else hi = m; } let a = Infinity, b = -Infinity; for (let i = Math.max(0, lo - 1); i < railS.length && railS[i][0] <= y1 + 20; i++) { const x = railS[i][1]; if (x < a) a = x; if (x > b) b = x; } return [a, b]; };
+  const clearRail = (nodes) => { for (const el of nodes) { if (!el.style || el.matches(".lv, .mtrain, .pogoMap, .gate")) continue; const L = parseFloat(el.style.left), T = parseFloat(el.style.top); if (isNaN(L) || isNaN(T)) continue;
+      const cs = el.style, w0 = parseFloat(cs.width) || (el.matches(".mvillage") ? (big ? 180 : 85) : el.matches("u.firefly") ? 30 : 14), sc = el.matches(".critter") ? 1 : .8, w = w0 * sc, wx = parseFloat(cs.getPropertyValue("--wx")) || 0, drift = el.matches(".mcloud") ? 120 : 0;
+      const ctr = el.matches(".mvillage"), top = ctr ? T - w * .4 : el.tagName === "U" ? T - 8 : T - w, bot = ctr ? T + w * .4 : el.tagName === "U" ? T + 8 : T; const [ra, rb] = railRange(top, bot); if (ra === Infinity) continue;
+      const a = L - w / 2 - wx, b = L + w / 2 + wx + drift; if (b < ra - CLR || a > rb + CLR) continue;
+      let side = (a + b) / 2 < (ra + rb) / 2 ? -1 : 1, nl = side < 0 ? L - (b - (ra - CLR)) : L + (rb + CLR - a);
+      if (nl - w / 2 - wx < 0 || nl + w / 2 + wx + drift > W) { side = -side; nl = side < 0 ? L - (b - (ra - CLR)) : L + (rb + CLR - a); }
+      if (nl - w / 2 - wx < 0 || nl + w / 2 + wx + drift > W) el.remove(); else el.style.left = Math.round(nl) + "px"; } };
   let h = "";
   // chapter bands: sky to ground, in the chapter's own colours; ahead of the player the band is hazed and desaturated
   // the light reaches exactly the current stop: the band of the chapter the player is in is cut just above it, bright below and hazed above
@@ -1377,7 +1390,7 @@ function buildMap() {
       for (let k = 0; k < 4; k++) { const i = c * 10 + k * 2 + 1, p = pts[Math.min(N - 1, i)], x = Math.max(W * .04, Math.min(W * .96, p[0] + (k % 2 ? 1 : -1) * (60 + R() * W * .3))), y = p[1] - 40 + R() * 120;
         for (let q = 0; q < 3; q++) h += `<div class="mprop small${i > cur ? " lock" : ""}" style="left:${Math.round(x + (q - 1) * 14)}px;top:${Math.round(y + (q % 2) * 8)}px;width:${Math.round((18 + R() * 8) * (big ? 1.3 : 1))}px"><img src="${D3.sprite(["flower", "tulip", "flower"][q], 64)}" alt=""></div>`; }
       { const vi = c * 10 + 6, vp = pts[vi], vs = vp[0] > W / 2 ? -1 : 1, vx = Math.max(W * .1, Math.min(W * .9, vp[0] + vs * Math.max(W * .5, 140))); h += `<div class="mprop small${vi > cur ? " lock" : ""}" style="left:${Math.round(vx - vs * 70)}px;top:${vp[1] + 70}px;width:${big ? 70 : 52}px"><img src="${D3.sprite("fence", 96)}" alt=""></div><div class="mprop small${vi > cur ? " lock" : ""}" style="left:${Math.round(vx + vs * 60)}px;top:${vp[1] + 60}px;width:${big ? 46 : 34}px"><img src="${D3.sprite("well", 96)}" alt=""></div>`; }
-      if (c * 10 <= cur + 10) for (let k = 0; k < 10; k++) { const i = c * 10 + k, p = pts[Math.min(N - 1, i)], kind = ["bird", "rabbit", "butterfly", "bird2", "rabbit", "butterfly", "bird", "duck", "rabbit", "butterfly"][k], x = Math.max(W * .03, Math.min(W * .97, p[0] + (k % 2 ? 1 : -1) * (40 + R() * W * .32))), y = p[1] - 50 + R() * 130;
+      if (c * 10 <= cur + 10) for (let k = 0; k < 10; k++) { const i = c * 10 + k, p = pts[Math.min(N - 1, i)], kind = ["bird", "rabbit", "fox", "bird2", "rabbit", "butterfly", "hedgehog", "duck", "rabbit", "deer"][k], x = Math.max(W * .03, Math.min(W * .97, p[0] + (k % 2 ? 1 : -1) * (120 + R() * W * .32))), y = p[1] - 50 + R() * 130;
         h += aniHtml(`critter c-${kind}`, kind, x, y, (big ? 110 : 80) * (.85 + R() * .3), R, `;--fx:${((k % 2 ? 1 : -1) * (30 + R() * 30)).toFixed(0)}px`); }
       if (c * 10 <= cur + 10) for (let k = 0; k < 8; k++) { const i = c * 10 + k, p = pts[Math.min(N - 1, i)], x = Math.max(W * .03, Math.min(W * .97, p[0] + (k % 2 ? -1 : 1) * (20 + R() * W * .25))), y = p[1] - 30 + R() * 110; h += `<u class="fly" style="left:${Math.round(x)}px;top:${Math.round(y)}px;--dl:-${(R() * 3).toFixed(1)}s"></u>`; }
       for (let k = 0; k < 3; k++) { const i = c * 10 + 2 + k * 3, p = pts[Math.min(N - 1, i)]; h += `<div class="mcloud" style="left:${Math.round(R() * W * .8)}px;top:${Math.round(p[1] - 80 - R() * 60)}px;width:${Math.round((110 + R() * 70) * (big ? 1.3 : 1))}px;--t:${(38 + R() * 30).toFixed(0)}s;--dl:-${(R() * 30).toFixed(0)}s"><img src="${D3.sprite("cloud", 192)}" alt=""></div>`; } }
@@ -1394,14 +1407,14 @@ function buildMap() {
   // stops
   pts.forEach((p, i) => { const st = save.stars[i] ? "done" : i === cur ? "now" : "lock", hd = hardOf(i), md = isMordo(i) && !save.stars[i], pl = (i === cur ? p[0] <= W / 2 : p[0] > W / 2) ? " l" : "";   // signs hang on the roomier side of the stop; at the current stop Pogo takes that side, so its sign hangs on the other
     h += `<div class="lv ${st}${hd ? " hard" + hd : ""}" data-i="${i}" style="left:${Math.round(p[0])}px;top:${p[1]}px"><b>${i + 1}</b>${save.stars[i] ? `<s>${"★".repeat(save.stars[i])}<i>${"★".repeat(3 - save.stars[i])}</i></s>` : ""}${md ? `<em>${MORDO}</em>` : ""}${i === cur ? `<i class="lvplate${pl} go">Play</i>` : (i + 1) % 20 === 0 ? `<i class="lvplate${pl} st"><small>Level ${i + 1}</small>${CHAPTERS[chapOf(i)].name}</i>` : ""}</div>`; });
-  if (D3) { const p = pts[cur]; for (let k = 0; k < 4; k++) h += aniHtml("mprop flutter", "butterfly", p[0] + (k % 2 ? 1 : -1) * (60 + k * 26), p[1] - 40 - k * 30, big ? 64 : 50, R, `;--fx:${(k % 2 ? -1 : 1) * (30 + k * 8)}px`); }
+  // (2026-10-24 İdris: the butterflies round the current stop were too busy and too close to the rails; they are gone)
   // Pogo beside the current stop, on the roomier side
   { const p = pts[cur], left = p[0] > W / 2; h += `<div class="pogoMap pogoBig${left ? " flip" : ""}" onclick="openPet()" style="left:${Math.round(p[0] + (left ? -65 : 65))}px;top:${p[1] + 3}px">${pogoSvg()}</div>`; }
-  path.insertAdjacentHTML("beforeend", h);
+  path.insertAdjacentHTML("beforeend", h); clearRail([...path.children]);
   path.querySelectorAll(".mtrain").forEach(el => { const a = +el.dataset.a, b = +el.dataset.b; if (a !== b && el.animate) el.animate([{ offsetDistance: a + "px" }, { offsetDistance: b + "px" }], { duration: 2600, delay: 450, easing: "cubic-bezier(.45,0,.2,1)", fill: "backwards" }); });
   // A far place's scenery is only put on the map when the player scrolls near it: the map holds a few hundred elements, not six thousand
   { const tok = ++mapTok, ANIM = ".mprop.live, .mprop.won, .mprop.mordo, u.firefly, .mcloud, .mprop.flutter, .critter, .ani";
-    const addPlace = (c) => { if (tok !== mapTok || !lateBy[c]) return; const first = path.querySelector(".lv"); if (!first) return; const t = document.createElement("template"); t.innerHTML = lateBy[c]; delete lateBy[c]; const nodes = [...t.content.children]; first.before(t.content); if (mapIO) nodes.forEach(n => { if (n.matches(ANIM)) mapIO.observe(n); }); else nodes.forEach(n => { n.classList.add("vis"); if (n.classList.contains("ani")) aniWake(n); }); };
+    const addPlace = (c) => { if (tok !== mapTok || !lateBy[c]) return; const first = path.querySelector(".lv"); if (!first) return; const t = document.createElement("template"); t.innerHTML = lateBy[c]; delete lateBy[c]; const nodes = [...t.content.children]; first.before(t.content); clearRail(nodes); if (mapIO) nodes.forEach(n => { if (n.matches(ANIM)) mapIO.observe(n); }); else nodes.forEach(n => { n.classList.add("vis"); if (n.classList.contains("ani")) aniWake(n); }); };
     mapLate = () => { if (tok !== mapTok) return; const m = $("map"), z = mapZ || 1, top = m.scrollTop / z - 1400, bot = (m.scrollTop + m.clientHeight) / z + 1400; for (const c in lateBy) { const y = pts[Math.min(N - 1, +c * 10 + 5)][1]; if (y > top && y < bot) addPlace(c); } };
     setTimeout(() => mapLate && mapLate(), window.__fast ? 0 : 120); }
   path.querySelectorAll(".lv.done, .lv.now").forEach(n => n.addEventListener("click", () => { lvFrom = n.getBoundingClientRect(); openLevel(+n.dataset.i); }));
@@ -1960,24 +1973,24 @@ const D3 = (() => {
       hedgehog: { b: Q({ fur: 0xa88a64, belly: 0xe8d4b4, dark: 0x3a2a1c, face: 0xd8bc94, len: .14, r: .15, leg: .04, lr: .025, nl: .01, na: .2, hr: .085, sl: 1.1, sr: .3, ear: "small", tail: "puff", tr: .1, spines: 1, stride: .6, steps: 2, bh: .85 }), p: walk, d: .8, m: "walk" },
       bear: { b: Q({ fur: 0x7a4a28, belly: 0x9a6a40, dark: 0x3a2414, len: .36, r: .21, leg: .2, lr: .06, nl: .04, nr: .7, na: .5, hr: .14, sl: .6, sr: .45, muz: 0xc89a68, ear: "round", tail: "puff", tr: .18, stride: .4 }), p: walk, d: 1.4, m: "walk" },
       sheep: { b: Q({ fur: 0xf6f2e6, belly: 0xece6d6, dark: 0x2e2622, face: 0x3a302a, len: .26, r: .17, leg: .16, lr: .025, nl: .03, na: .4, hr: .09, sl: .7, sr: .42, ear: "flop", tail: "puff", tr: .2, wool: 1, sock: 1, hoof: 1, iris: 0x8a6a20, stride: .45 }), p: walk, d: 1.2, m: "walk" },
-      bird: { b: B({ body: 0x3f7ee8, belly: 0xf4e2c4, wing: 0x2c5fb8, tip: 0x1c3a78, cheek: 0xffffff }), p: perch, d: 1.8, m: "perch" },
-      bird2: { b: B({ body: 0xe8607a, belly: 0xfce4d8, wing: 0xb84058, tip: 0x6a2030 }), p: perch, d: 1.7, m: "perch" },
-      bird3: { b: B({ body: 0xf2c43a, belly: 0xfff4d0, wing: 0xc89a1a, tip: 0x5a4010, bar: 0xffffff }), p: perch, d: 1.6, m: "perch" },
-      parrot: { b: B({ s: 1.2, body: 0x22a84a, belly: 0x5ad06a, head: 0xe83a3a, wing: 0x1f8a3a, tip: 0x2f6ae8, bar: 0xffd23a, beak: 0xf4ecd8, beak2: 0x2a2a2a, hook: 1, tl: 2.2, tc: 0x2f6ae8, face: 0xfff6ea, iris: 0xf0d040 }), p: perch, d: 2.0, m: "perch" },
+      bird: { b: B({ body: 0x3f7ee8, belly: 0xf4e2c4, wing: 0x2c5fb8, tip: 0x1c3a78, cheek: 0xffffff }), p: perch, d: 3.4, m: "perch" },
+      bird2: { b: B({ body: 0xe8607a, belly: 0xfce4d8, wing: 0xb84058, tip: 0x6a2030 }), p: perch, d: 3.2, m: "perch" },
+      bird3: { b: B({ body: 0xf2c43a, belly: 0xfff4d0, wing: 0xc89a1a, tip: 0x5a4010, bar: 0xffffff }), p: perch, d: 3.0, m: "perch" },
+      parrot: { b: B({ s: 1.2, body: 0x22a84a, belly: 0x5ad06a, head: 0xe83a3a, wing: 0x1f8a3a, tip: 0x2f6ae8, bar: 0xffd23a, beak: 0xf4ecd8, beak2: 0x2a2a2a, hook: 1, tl: 2.2, tc: 0x2f6ae8, face: 0xfff6ea, iris: 0xf0d040 }), p: perch, d: 3.6, m: "perch" },
       owl: { b: B({ s: 1.6, pitch: .08, owl: 1, hs: .78, neck: 1.0, eye: .26, iris: 0xffb020, body: 0x8a6a48, belly: 0xe2ccaa, face: 0xf2e4ca, wing: 0x6a4e32, tip: 0x4a3420, beak: 0x3a3028, beak2: 0x2a2018, hook: 1, bl: .45, tufts: 1, lh: .04, leg: 0xb89a6a, tl: .6 }), p: owl, d: 2.6, m: "still" },
       duck: { b: B({ s: 1.25, swim: 1, pitch: 1.35, body: 0xf6f0e4, belly: 0xfffaf0, wing: 0xe8e0d0, tip: 0xc8c0b0, beak: 0xffa31a, beak2: 0xe88a10, flat: 1, bl: .9, neck: 1.25, tu: -.6, tl: .7 }), p: swim, d: 2.2, m: "swim" },
       penguin: { b: B({ s: 1.5, pitch: .06, body: 0x1e2230, belly: 0xf8f8f4, wing: 0x1e2230, tip: 0x1e2230, beak: 0x1e2230, beak2: 0xff9a1a, cheek: 0xffc84a, lh: .03, leg: 0xff9a1a, wl: 1.4, cw: .6, tl: .4 }), p: waddle, d: 1.1, m: "walk" },
-      eagle: { b: B({ s: 1.5, fly: 1, air: 1, body: 0x5a3a1e, belly: 0x6a4626, head: 0xfaf6ee, wing: 0x4a2e16, tip: 0x22160c, beak: 0xffc020, beak2: 0xe8a010, hook: 1, wl: 3.2, cw: 1.2, tc: 0xfaf6ee, iris: 0xe8b020, flaps: 1 }), p: fly, d: 1.6, m: "fly" },
-      magpie: { b: B({ s: 1.6, fly: 1, air: 1, body: 0x15131e, belly: 0xf4f2fa, wing: 0x23407a, tip: 0x0e0c16, beak: 0x2a2a30, beak2: 0x1a1a20, bar: 0xf4f2fa, tl: 2.1, tc: 0x1a3a6a, iris: 0x2a1a10, flaps: 2 }), p: fly, d: 1.3, m: "fly" },
-      gritt: { b: B({ s: 1.6, fly: 1, air: 1, body: 0x6a7080, belly: 0xe8ecf4, wing: 0x1fb5a5, tip: 0x147a70, beak: 0xffc020, crest: 0xffd200, tl: 1.6, iris: 0x2a1a10, flaps: 2 }), p: fly, d: 1.2, m: "fly" },
-      corvin: { b: B({ s: 1.8, fly: 1, air: 1, body: 0x22263e, belly: 0x3a4060, wing: 0x1a1e34, tip: 0xdceeff, beak: 0x30323a, beak2: 0x202228, crest: 0xe8f4ff, hook: 1, tl: 1.8, tc: 0xdceeff, iris: 0x80d0ff, flaps: 2 }), p: fly, d: 1.4, m: "fly" },
-      butterfly: { b: (g) => butterfly(g, { a: 0xff7ac0, b: 0xffb347 }), p: bfly, d: .9, m: "flutter" },
-      bee: { b: bee, p: buzz, d: 1.2, m: "hover" },
-      bat: { b: bat, p: flap, d: 1.0, m: "hover" },
+      eagle: { b: B({ s: 1.5, fly: 1, air: 1, body: 0x5a3a1e, belly: 0x6a4626, head: 0xfaf6ee, wing: 0x4a2e16, tip: 0x22160c, beak: 0xffc020, beak2: 0xe8a010, hook: 1, wl: 3.2, cw: 1.2, tc: 0xfaf6ee, iris: 0xe8b020, flaps: 1 }), p: fly, d: 2.2, m: "fly" },
+      magpie: { b: B({ s: 1.6, fly: 1, air: 1, body: 0x15131e, belly: 0xf4f2fa, wing: 0x23407a, tip: 0x0e0c16, beak: 0x2a2a30, beak2: 0x1a1a20, bar: 0xf4f2fa, tl: 2.1, tc: 0x1a3a6a, iris: 0x2a1a10, flaps: 2 }), p: fly, d: 1.9, m: "fly" },
+      gritt: { b: B({ s: 1.6, fly: 1, air: 1, body: 0x6a7080, belly: 0xe8ecf4, wing: 0x1fb5a5, tip: 0x147a70, beak: 0xffc020, crest: 0xffd200, tl: 1.6, iris: 0x2a1a10, flaps: 2 }), p: fly, d: 1.8, m: "fly" },
+      corvin: { b: B({ s: 1.8, fly: 1, air: 1, body: 0x22263e, belly: 0x3a4060, wing: 0x1a1e34, tip: 0xdceeff, beak: 0x30323a, beak2: 0x202228, crest: 0xe8f4ff, hook: 1, tl: 1.8, tc: 0xdceeff, iris: 0x80d0ff, flaps: 2 }), p: fly, d: 2.0, m: "fly" },
+      butterfly: { b: (g) => butterfly(g, { a: 0xff7ac0, b: 0xffb347 }), p: bfly, d: 2.6, m: "hover" },
+      bee: { b: bee, p: buzz, d: 2.0, m: "hover" },
+      bat: { b: bat, p: flap, d: 1.6, m: "hover" },
       frog: { b: frog, p: croak, d: 2.4, m: "still" },
       crab: { b: crab, p: scuttle, d: 1.0, m: "side" },
       flock: { b: (g) => { const P = { kids: [] }; for (const [x, y, z, k] of [[-.3, .1, .1, .7], [.34, .28, -.05, .62], [.02, .48, -.3, .56]]) { const h = pv(g, x, y, z); h.scale.setScalar(k); P.kids.push(bird(h, { s: 1.4, fly: 1, air: 1, body: 0x6a7080, belly: 0xe8ecf4, wing: 0x8a93a8, tip: 0x4a5060, beak: 0xffc020, flaps: 2 })); } return P; },
-        p: (P, u) => P.kids.forEach((K, i) => fly(K, (u + i * .29) % 1)), d: 1.2, m: "fly" },
+        p: (P, u) => P.kids.forEach((K, i) => fly(K, (u + i * .29) % 1)), d: 1.8, m: "fly" },
     };
     // the map shows the model a little from the side, the way it is walking
     const VIEW = { walk: .95, hop: .95, perch: .7, swim: .9, side: .25, still: .2, fly: 1.15, hover: .3, flutter: .4 };
