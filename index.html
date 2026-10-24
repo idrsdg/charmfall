@@ -528,8 +528,21 @@
   .pogoMap.pogoBig { width: 105px; margin: -88px 0 0 -52px; z-index: 3; }   /* no drop-shadow filter: his canvas changes every frame and the filter was redone each time; he has his own ground shadow */
   @media (max-width: 600px) { .pogoMap.pogoBig { width: 90px; margin: -75px 0 0 -45px; } }
   #map u.firefly { width: 30px; height: 30px; margin: -15px 0 0 -15px; }
-  /* battery (2026-10-23): decoration no longer moves on its own; only the current level's marker still pulses */
-  .bg::before, .bg::after, .lv em, .garden span.live, .garden u, u.firefly, .mcloud, .mprop.flutter img { animation: none !important; }
+  /* battery (2026-10-23): the app background stays still. 2026-10-24 İdris wants the map alive again: clouds, fireflies and butterflies move (only while on screen) */
+  .bg::before, .bg::after { animation: none !important; }
+  /* 2026-10-24: living creatures play a strip of their own motion (steps) and wander over the ground (smooth) */
+  .ani > i { display: block; position: relative; overflow: hidden; aspect-ratio: 1; }
+  .ani > i > img { display: block; width: 100%; height: 100%; }
+  #path .ani.go > i > img { width: 2400%; max-width: none; animation: aniStrip var(--fd, 1s) steps(24) var(--dl, 0s) infinite; }
+  @keyframes aniStrip { to { transform: translateX(-100%); } }
+  #path .ani:is(.m-walk, .m-hop, .m-side, .m-swim, .m-perch) > i { animation: aniWander var(--wd, 10s) linear var(--dl, 0s) infinite; }
+  @keyframes aniWander { 0% { translate: calc(var(--wx) * -1) 0; scale: 1 1; } 47% { translate: var(--wx) 0; scale: 1 1; } 50% { translate: var(--wx) 0; scale: -1 1; } 97% { translate: calc(var(--wx) * -1) 0; scale: -1 1; } 100% { translate: calc(var(--wx) * -1) 0; scale: 1 1; } }
+  #path .ani:is(.m-fly, .m-hover) > i { animation: aniHover 3.4s ease-in-out var(--dl, 0s) infinite alternate; }
+  @keyframes aniHover { from { translate: -8px 4px; } to { translate: 8px -12px; } }
+  #path .ani.m-flutter > i { animation: flutter 4.4s var(--dl, 0s) ease-in-out infinite; }
+  #path .mprop.mordo.ani:not(.go) img { animation: none; } #path .mprop.mordo.ani.arrive > i { animation: mordoArrive 1.1s .5s cubic-bezier(.3, 1.3, .5, 1) both, aniHover 3.4s 1.6s ease-in-out infinite alternate; }
+  #path .ani:not(.vis) > i, #path .ani:not(.vis) > i > img { animation-play-state: paused !important; }
+  .critter.ani { z-index: 3; }
   .bg i, .bg svg, #gWeather u, #gWeather.storm::after { display: none !important; }
   #gWeather.fog::before, #gWeather.fog::after { animation: none !important; }
 </style>
@@ -1004,7 +1017,7 @@ const P3 = (() => {
   let last = 0, fpsN = 0, fpsT = 0;
   function frame(now) {
     requestAnimationFrame(frame); if (document.hidden) return;
-    if (now - last < 30 && !document.documentElement.classList.contains("petting")) return;   // battery (2026-10-23): Pogo is drawn at 30 fps, except while he is being stroked
+    if (now - last < 12 && !document.documentElement.classList.contains("petting")) return;   // 2026-10-24: back to the display's rate (smooth), still never faster than ~80 fps
     const dt = Math.min(.05, (now - last) / 1000); last = now;
     fpsN++; if (now - fpsT >= 1000) { window.__fps = fpsN; fpsN = 0; fpsT = now; }
     const p3t = performance.now();
@@ -1295,6 +1308,16 @@ $("map").addEventListener("scroll", () => { $("bg").style.setProperty("--py", (-
   el.addEventListener("pointermove", (e) => { if (!drag) return; const dy = e.clientY - drag.y, dx = e.clientX - drag.x; drag.moved = Math.max(drag.moved, Math.abs(dy), Math.abs(dx)); if (drag.moved > 6) { el.scrollTop = drag.st - dy; el.scrollLeft = drag.sl - dx; el.classList.add("dragging"); } });
   const end = () => { if (!drag) return; const moved = drag.moved; drag = null; setTimeout(() => el.classList.remove("dragging"), 0); if (moved > 6) el.addEventListener("click", (e) => { e.stopPropagation(); e.preventDefault(); }, { capture: true, once: true }); };
   el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end); el.addEventListener("pointerleave", end); }
+// 2026-10-24: a living creature on the map. It shows its picture at once; when it comes near the screen its motion strip is made and played in
+// place (steps), while the wrapper carries it smoothly over the ground: walkers walk to and fro and turn, fliers hover, butterflies flutter.
+const ANI_SPEED = { walk: .38, hop: .45, side: .3, swim: .12, perch: .06 };
+function aniHtml(cls, kind, x, y, w, R, extra) {
+  const mo = D3 && D3.motion(kind), lock = / lock\b/.test(cls), st = `left:${Math.round(x)}px;top:${Math.round(y)}px;width:${Math.round(w)}px`, src = D3.sprite(kind, 192);
+  if (!mo || lock) return `<div class="${cls}" style="${st}${extra || ""}"><img src="${src}" alt=""></div>`;
+  const sp = ANI_SPEED[mo.m], wx = sp ? Math.round(w * (mo.m === "perch" ? .14 : .5) * (.8 + R() * .5)) : 0, wd = sp ? (4 * wx / (w * sp)).toFixed(1) : 0;
+  return `<div class="${cls} ani m-${mo.m}" style="${st};--fd:${mo.d}s;--dl:-${(R() * 12).toFixed(1)}s;--wx:${wx}px;--wd:${wd}s${extra || ""}"><i><img data-sk="${kind}" src="${src}" alt=""></i></div>`;
+}
+function aniWake(el) { const im = el.querySelector("img[data-sk]"); if (!im || !D3) return; const k = im.dataset.sk; im.removeAttribute("data-sk"); D3.strip(k, 176, (url) => { if (!url || !el.isConnected) return; im.onload = () => el.classList.add("go"); im.src = url; }); }
 function buildMap() {
   if (typeof mapZ !== "undefined" && mapZ !== 1) { mapZ = 1; $("path").style.zoom = ""; document.documentElement.classList.remove("mapZoom"); }
   const bm0 = performance.now(); tickLives(); $("lives").textContent = livesTxt(); $("starsTotal").textContent = Math.max(0, starsFree()); $("carrots").textContent = save.carrots || 0;
@@ -1330,14 +1353,14 @@ function buildMap() {
   const lateBy = {};
   for (let c = 0; c < CHAPTERS.length; c++) { const C = CHAPTERS[c], lock = c * 10 > cur, won = c * 10 + 9 < cur, h0 = h, far = Math.abs(c - chapOf(cur)) > 1; h = "";
     for (let k = 0; k < 20; k++) { const i = c * 10 + Math.floor(k * 9 / 20), p = pts[Math.min(N - 1, i)], side = (k >> 1) % 2 ? 1 : -1, lock = i > cur, life = won && k % 2 === 1, kind = life ? LIFE[(c + k) % LIFE.length] : D3 ? (D3.EMO[C.props[k % 4]] || "bush") : "bush", sz = Math.round((66 + R() * 40) * (big ? 1.35 : 1) * (life ? 2.4 : TALL.test(kind) ? 2.4 : 1)), xo = (big ? 100 : 70) + R() * (big ? 260 : 150), x = Math.max(W * .04, Math.min(W * .96, p[0] + side * xo)), y = p[1] - 40 + R() * 150;
-      if (D3) h += `<div class="mprop${lock ? " lock" : ""}${won ? (k % 2 === 1 ? " live" : " won") : ""}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px;--dl:-${(R() * 3).toFixed(1)}s"><img src="${D3.sprite(kind, sz > 150 ? 256 : 128)}" alt=""></div>`; }
+      if (D3) h += life && D3.motion(kind) ? aniHtml("mprop", kind, x, y, sz, R) : `<div class="mprop${lock ? " lock" : ""}${won ? (k % 2 === 1 ? " live" : " won") : ""}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px;--dl:-${(R() * 3).toFixed(1)}s"><img src="${D3.sprite(kind, sz > 150 ? 256 : 128)}" alt=""></div>`; }
     if (D3) for (let k = 0; k < 10; k++) { const i = c * 10 + k, p = pts[Math.min(N - 1, i)], side = k % 2 ? 1 : -1, lock = i > cur, kind = D3.EMO[C.props[(k + 1) % 4]] || "bush", sz = Math.round((70 + R() * 50) * (big ? 1.35 : 1) * (TALL.test(kind) ? 2.4 : 1)), x = Math.max(W * .03, Math.min(W * .97, p[0] + side * ((big ? 380 : 240) + R() * W * .22))), y = p[1] - 70 + R() * 170;
       h += `<div class="mprop${lock ? " lock" : won ? " won" : ""}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px;--dl:-${(R() * 3).toFixed(1)}s"><img src="${D3.sprite(kind, sz > 150 ? 256 : 128)}" alt=""></div>`; }
     // the rails run between tall trees, as a real line runs through a wood: two rows of the place's own tree a little way off each side of the track
     if (D3) { const TK = CHAP_TREE[c] || "pine"; for (let k = 0; k < 16; k++) { const i = c * 10 + Math.floor(k * 10 / 16), p = pts[Math.min(N - 1, i)], side = k % 2 ? 1 : -1, x = Math.max(W * .02, Math.min(W * .98, p[0] + side * ((big ? 160 : 104) + R() * (big ? 70 : 46)))), y = p[1] - G_ * .3 + R() * G_ * .6, sz = Math.round((big ? 250 : 168) * (.8 + R() * .4)), kind = k % 5 === 4 ? (TK === "pine" || TK === "snowpine" ? "round" : "pine") : TK;
       h += `<div class="mprop tall${i > cur ? " lock" : ""}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px"><img src="${D3.sprite(kind, 256)}" alt=""></div>`; } }
     if (D3) { const i = c * 10 + 6, p = pts[i], side = p[0] > W / 2 ? -1 : 1, vw = big ? 180 : 85, x = Math.max(vw * .4, Math.min(W - vw * .4, p[0] + side * Math.max(W * .5, vw * .5 + 95))); h += `<div class="mvillage${i > cur ? " lock" : ""}" style="left:${Math.round(x)}px;top:${p[1] + 5}px"><img src="${D3.village(c, won, 480)}" alt=""></div>`;
-      const R0 = RESIDENT[c], rx = Math.max(W * .05, Math.min(W * .95, x + (x > W / 2 ? -1 : 1) * (big ? 130 : 78))); h += `<div class="mprop resident${i > cur ? " lock" : won ? " live" : ""}" style="left:${Math.round(rx)}px;top:${p[1] + 40}px;width:${big ? 130 : 96}px;--dl:-${c * .3}s"><img src="${D3.sprite(R0[0], 192)}" alt=""></div>`; }
+      const R0 = RESIDENT[c], rx = Math.max(W * .05, Math.min(W * .95, x + (x > W / 2 ? -1 : 1) * (big ? 130 : 78))); h += aniHtml(`mprop resident${i > cur ? " lock" : ""}`, R0[0], rx, p[1] + 40, big ? 150 : 110, R); }
     if (c > 0) { const gp = pts[c * 10], gs = gp[0] > W / 2 ? -1 : 1; h += `<div class="gate${c * 10 > cur ? " lock" : ""}" style="left:${Math.round(Math.max(W * .1, Math.min(W * .9, gp[0] + gs * (big ? 200 : 130))))}px;top:${Math.round(gp[1] + G_ * .45)}px">${CHAPTERS[c].name}</div>`; }
     if (D3 && c * 10 <= cur && !(save.feathers || {})[c]) { const fi = c * 10 + (c * 7) % 9, fp = pts[Math.min(N - 1, fi)], fs = (c % 2 ? 1 : -1); h += `<div class="mprop feather" data-c="${c}" style="left:${Math.round(Math.max(W * .06, Math.min(W * .94, fp[0] + fs * (big ? 150 : 96))))}px;top:${fp[1] - 20}px;width:${big ? 52 : 40}px"><img src="${D3.sprite("feather", 96)}" alt=""></div>`; }
     if (won) { for (let f = 0; f < 8; f++) { const p = pts[c * 10 + Math.floor(f * 1.25)]; h += `<u class="firefly" style="left:${Math.round(p[0] + (f % 2 ? 55 : -55) + (f % 3) * 18)}px;top:${p[1] - 70 + (f % 4) * 45}px;--dl:-${f * .6}s"></u>`; }
@@ -1347,7 +1370,7 @@ function buildMap() {
         h += `<div class="mprop small${i > cur ? " lock" : ""}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px"><img src="${D3.sprite(SMALL[k % SMALL.length], 64)}" alt=""></div>`; }
       for (const k of [1, 6]) { const i = c * 10 + k, p = pts[Math.min(N - 1, i)], side = (c + k) % 2 ? 1 : -1, pw = Math.round((120 + R() * 50) * (big ? 1.3 : 1)), x = Math.max(pw * .6, Math.min(W - pw * .6, p[0] + side * ((big ? 230 : 150) + R() * 60))), y = p[1] + 30 + R() * 40, lk = i > cur ? " lock" : "";
         h += `<div class="mprop pond${lk}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${pw}px"><img src="${D3.sprite("pond", 192, true)}" alt=""></div>`;
-        for (let q = 0; q < 4; q++) { const kind = ["reed", "flower", "reed", "frog"][q], a = q * 1.6 + R(), rx = x + Math.cos(a) * pw * .5, ry = y - pw * .18 + Math.sin(a) * pw * .16; h += `<div class="mprop small${lk}" style="left:${Math.round(rx)}px;top:${Math.round(ry)}px;width:${Math.round(pw * (kind === "reed" ? .32 : .22))}px"><img src="${D3.sprite(kind, 64)}" alt=""></div>`; } }
+        for (let q = 0; q < 4; q++) { const kind = ["reed", "flower", "reed", "frog"][q], a = q * 1.6 + R(), rx = x + Math.cos(a) * pw * .5, ry = y - pw * .18 + Math.sin(a) * pw * .16; h += kind === "frog" ? aniHtml(`mprop small${lk}`, "frog", rx, ry, pw * .3, R) : `<div class="mprop small${lk}" style="left:${Math.round(rx)}px;top:${Math.round(ry)}px;width:${Math.round(pw * (kind === "reed" ? .32 : .22))}px"><img src="${D3.sprite(kind, 64)}" alt=""></div>`; } }
       for (let k = 0; k < 12; k++) { const i = c * 10 + Math.floor(k * 10 / 12), p = pts[Math.min(N - 1, i)], side = k % 2 ? -1 : 1, x = Math.max(W * .03, Math.min(W * .97, p[0] + side * ((big ? 120 : 80) + R() * W * .3))), y = p[1] - 60 + R() * 160, kind = ["flower", "tulip", "log", "rock", "clover", "bush", "mushroom", "sprout", "flower", "acorn", "leaf", "flower"][k], sz = Math.round((22 + R() * 18) * (big ? 1.3 : 1));
         h += `<div class="mprop small${i > cur ? " lock" : ""}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px"><img src="${D3.sprite(kind, 64)}" alt=""></div>`; }
       for (let k = 0; k < 18; k++) { const i = c * 10 + Math.floor(k * 10 / 18), p = pts[Math.min(N - 1, i)], x = Math.round(R() * W), y = Math.round(p[1] - 60 + R() * 150); h += `<u class="${k % 4 === 3 ? "pebble" : "tuft"}" style="left:${x}px;top:${y}px;--s:${(.7 + R() * .7).toFixed(2)}"></u>`; }
@@ -1355,7 +1378,7 @@ function buildMap() {
         for (let q = 0; q < 3; q++) h += `<div class="mprop small${i > cur ? " lock" : ""}" style="left:${Math.round(x + (q - 1) * 14)}px;top:${Math.round(y + (q % 2) * 8)}px;width:${Math.round((18 + R() * 8) * (big ? 1.3 : 1))}px"><img src="${D3.sprite(["flower", "tulip", "flower"][q], 64)}" alt=""></div>`; }
       { const vi = c * 10 + 6, vp = pts[vi], vs = vp[0] > W / 2 ? -1 : 1, vx = Math.max(W * .1, Math.min(W * .9, vp[0] + vs * Math.max(W * .5, 140))); h += `<div class="mprop small${vi > cur ? " lock" : ""}" style="left:${Math.round(vx - vs * 70)}px;top:${vp[1] + 70}px;width:${big ? 70 : 52}px"><img src="${D3.sprite("fence", 96)}" alt=""></div><div class="mprop small${vi > cur ? " lock" : ""}" style="left:${Math.round(vx + vs * 60)}px;top:${vp[1] + 60}px;width:${big ? 46 : 34}px"><img src="${D3.sprite("well", 96)}" alt=""></div>`; }
       if (c * 10 <= cur + 10) for (let k = 0; k < 10; k++) { const i = c * 10 + k, p = pts[Math.min(N - 1, i)], kind = ["bird", "rabbit", "butterfly", "bird2", "rabbit", "butterfly", "bird", "duck", "rabbit", "butterfly"][k], x = Math.max(W * .03, Math.min(W * .97, p[0] + (k % 2 ? 1 : -1) * (40 + R() * W * .32))), y = p[1] - 50 + R() * 130;
-        h += `<div class="critter c-${kind}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${Math.round((big ? 110 : 74) * (.85 + R() * .3))}px;--dl:-${(R() * 4).toFixed(1)}s;--fx:${((k % 2 ? 1 : -1) * (8 + R() * 10)).toFixed(0)}px"><img src="${D3.sprite(kind, 160)}" alt=""></div>`; }
+        h += aniHtml(`critter c-${kind}`, kind, x, y, (big ? 110 : 80) * (.85 + R() * .3), R, `;--fx:${((k % 2 ? 1 : -1) * (30 + R() * 30)).toFixed(0)}px`); }
       if (c * 10 <= cur + 10) for (let k = 0; k < 8; k++) { const i = c * 10 + k, p = pts[Math.min(N - 1, i)], x = Math.max(W * .03, Math.min(W * .97, p[0] + (k % 2 ? -1 : 1) * (20 + R() * W * .25))), y = p[1] - 30 + R() * 110; h += `<u class="fly" style="left:${Math.round(x)}px;top:${Math.round(y)}px;--dl:-${(R() * 3).toFixed(1)}s"></u>`; }
       for (let k = 0; k < 3; k++) { const i = c * 10 + 2 + k * 3, p = pts[Math.min(N - 1, i)]; h += `<div class="mcloud" style="left:${Math.round(R() * W * .8)}px;top:${Math.round(p[1] - 80 - R() * 60)}px;width:${Math.round((110 + R() * 70) * (big ? 1.3 : 1))}px;--t:${(38 + R() * 30).toFixed(0)}s;--dl:-${(R() * 30).toFixed(0)}s"><img src="${D3.sprite("cloud", 192)}" alt=""></div>`; } }
     if (far) { lateBy[c] = h; h = h0; } else h = h0 + h; }
@@ -1367,18 +1390,18 @@ function buildMap() {
       ["train", "wagon", "wagon"].forEach((k, n) => { const b = to[n], a = moved ? b - per : b; h += `<div class="mtrain${left ? " flip" : ""}" data-a="${a.toFixed(1)}" data-b="${b.toFixed(1)}" style="width:${tw}px;offset-path:path('${d}');offset-distance:${b.toFixed(1)}px"><img src="${D3.sprite(k, 192)}" alt=""></div>`; }); }
     for (let k = 1; k <= GARDEN.length; k++) { const si = k * STATION_EVERY - 1, p = pts[si], side = p[0] > W / 2 ? -1 : 1, ww = big ? 170 : 124, x = Math.max(ww * .5, Math.min(W - ww * .5, p[0] + side * (big ? 185 : 122))), reached = si <= cur, built = gardenN() >= k;
       h += `<div class="mprop work${!reached ? " lock" : built ? " won" : " ruin"}" style="left:${Math.round(x)}px;top:${p[1] + 46}px;width:${ww}px;--dl:-${k * .4}s"><img src="${D3.sprite(GARDEN[k - 1][6], 160)}" alt="">${reached && !built ? `<i class="lvplate st">★ Restore</i>` : ""}</div>`; }
-    if (!allDone()) { const mi = Math.min(N - 1, cur + 2), mp = pts[mi], ms = mp[0] > W / 2 ? -1 : 1; h += `<div class="mprop mordo${lastCur >= 0 && cur > lastCur && !window.__fast ? " arrive" : ""}" style="left:${Math.round(mp[0] + ms * (big ? 120 : 80))}px;top:${mp[1] - 6}px;width:${big ? 150 : 110}px"><img src="${D3.sprite(bossOf(Math.floor(mi / 10) * 10).kind, 192)}" alt=""></div>`; } }
+    if (!allDone()) { const mi = Math.min(N - 1, cur + 2), mp = pts[mi], ms = mp[0] > W / 2 ? -1 : 1; h += aniHtml(`mprop mordo${lastCur >= 0 && cur > lastCur && !window.__fast ? " arrive" : ""}`, bossOf(Math.floor(mi / 10) * 10).kind, mp[0] + ms * (big ? 120 : 80), mp[1] - 6, big ? 160 : 120, R); } }
   // stops
   pts.forEach((p, i) => { const st = save.stars[i] ? "done" : i === cur ? "now" : "lock", hd = hardOf(i), md = isMordo(i) && !save.stars[i], pl = (i === cur ? p[0] <= W / 2 : p[0] > W / 2) ? " l" : "";   // signs hang on the roomier side of the stop; at the current stop Pogo takes that side, so its sign hangs on the other
     h += `<div class="lv ${st}${hd ? " hard" + hd : ""}" data-i="${i}" style="left:${Math.round(p[0])}px;top:${p[1]}px"><b>${i + 1}</b>${save.stars[i] ? `<s>${"★".repeat(save.stars[i])}<i>${"★".repeat(3 - save.stars[i])}</i></s>` : ""}${md ? `<em>${MORDO}</em>` : ""}${i === cur ? `<i class="lvplate${pl} go">Play</i>` : (i + 1) % 20 === 0 ? `<i class="lvplate${pl} st"><small>Level ${i + 1}</small>${CHAPTERS[chapOf(i)].name}</i>` : ""}</div>`; });
-  if (D3) { const p = pts[cur]; for (let k = 0; k < 4; k++) h += `<div class="mprop flutter" style="left:${Math.round(p[0] + (k % 2 ? 1 : -1) * (60 + k * 26))}px;top:${p[1] - 40 - k * 30}px;width:${big ? 38 : 30}px;--dl:-${k * .7}s;--fx:${(k % 2 ? -1 : 1) * (30 + k * 8)}px"><img src="${D3.sprite("butterfly", 64)}" alt=""></div>`; }
+  if (D3) { const p = pts[cur]; for (let k = 0; k < 4; k++) h += aniHtml("mprop flutter", "butterfly", p[0] + (k % 2 ? 1 : -1) * (60 + k * 26), p[1] - 40 - k * 30, big ? 64 : 50, R, `;--fx:${(k % 2 ? -1 : 1) * (30 + k * 8)}px`); }
   // Pogo beside the current stop, on the roomier side
   { const p = pts[cur], left = p[0] > W / 2; h += `<div class="pogoMap pogoBig${left ? " flip" : ""}" onclick="openPet()" style="left:${Math.round(p[0] + (left ? -65 : 65))}px;top:${p[1] + 3}px">${pogoSvg()}</div>`; }
   path.insertAdjacentHTML("beforeend", h);
   path.querySelectorAll(".mtrain").forEach(el => { const a = +el.dataset.a, b = +el.dataset.b; if (a !== b && el.animate) el.animate([{ offsetDistance: a + "px" }, { offsetDistance: b + "px" }], { duration: 2600, delay: 450, easing: "cubic-bezier(.45,0,.2,1)", fill: "backwards" }); });
   // A far place's scenery is only put on the map when the player scrolls near it: the map holds a few hundred elements, not six thousand
-  { const tok = ++mapTok, ANIM = ".mprop.live, .mprop.won, .mprop.mordo, u.firefly, .mcloud, .mprop.flutter, .critter";
-    const addPlace = (c) => { if (tok !== mapTok || !lateBy[c]) return; const first = path.querySelector(".lv"); if (!first) return; const t = document.createElement("template"); t.innerHTML = lateBy[c]; delete lateBy[c]; const nodes = [...t.content.children]; first.before(t.content); if (mapIO) nodes.forEach(n => { if (n.matches(ANIM)) mapIO.observe(n); }); else nodes.forEach(n => n.classList.add("vis")); };
+  { const tok = ++mapTok, ANIM = ".mprop.live, .mprop.won, .mprop.mordo, u.firefly, .mcloud, .mprop.flutter, .critter, .ani";
+    const addPlace = (c) => { if (tok !== mapTok || !lateBy[c]) return; const first = path.querySelector(".lv"); if (!first) return; const t = document.createElement("template"); t.innerHTML = lateBy[c]; delete lateBy[c]; const nodes = [...t.content.children]; first.before(t.content); if (mapIO) nodes.forEach(n => { if (n.matches(ANIM)) mapIO.observe(n); }); else nodes.forEach(n => { n.classList.add("vis"); if (n.classList.contains("ani")) aniWake(n); }); };
     mapLate = () => { if (tok !== mapTok) return; const m = $("map"), z = mapZ || 1, top = m.scrollTop / z - 1400, bot = (m.scrollTop + m.clientHeight) / z + 1400; for (const c in lateBy) { const y = pts[Math.min(N - 1, +c * 10 + 5)][1]; if (y > top && y < bot) addPlace(c); } };
     setTimeout(() => mapLate && mapLate(), window.__fast ? 0 : 120); }
   path.querySelectorAll(".lv.done, .lv.now").forEach(n => n.addEventListener("click", () => { lvFrom = n.getBoundingClientRect(); openLevel(+n.dataset.i); }));
@@ -1386,8 +1409,8 @@ function buildMap() {
   path.querySelectorAll(".mprop.stn").forEach(n => n.addEventListener("click", () => openStation(+n.dataset.k)));
   path.querySelectorAll(".mprop.work").forEach(n => n.addEventListener("click", () => openGarden()));
   // only what is on or near the screen moves: every hopping creature, swaying plant and firefly is paused until it scrolls into view
-  if (window.IntersectionObserver) { if (mapIO) mapIO.disconnect(); mapIO = new IntersectionObserver((es) => { for (const e of es) e.target.classList.toggle("vis", e.isIntersecting); }, { root: $("map"), rootMargin: "260px" }); path.querySelectorAll(".mprop.live, .mprop.won, .mprop.mordo, u.firefly, .mcloud, .mprop.flutter").forEach(n => mapIO.observe(n)); }
-  else path.querySelectorAll(".mprop, u.firefly").forEach(n => n.classList.add("vis"));
+  if (window.IntersectionObserver) { if (mapIO) mapIO.disconnect(); mapIO = new IntersectionObserver((es) => { for (const e of es) { e.target.classList.toggle("vis", e.isIntersecting); if (e.isIntersecting && e.target.classList.contains("ani")) aniWake(e.target); } }, { root: $("map"), rootMargin: "400px" }); path.querySelectorAll(".mprop.live, .mprop.won, .mprop.mordo, u.firefly, .mcloud, .mprop.flutter, .ani").forEach(n => mapIO.observe(n)); }
+  else path.querySelectorAll(".mprop, u.firefly, .ani").forEach(n => { n.classList.add("vis"); if (n.classList.contains("ani")) aniWake(n); });
   // the current stop lands in the exact middle of the screen (the map's own offset inside the scroller is measured, not assumed)
   const off = path.getBoundingClientRect().top - $("map").getBoundingClientRect().top + $("map").scrollTop, yOf = (i) => Math.max(0, pts[i][1] + off - innerHeight / 2), target = yOf(cur), from = lastCur < 0 ? target + 260 : lastCur !== cur ? yOf(lastCur) : null; lastCur = cur;
   $("map").scrollLeft = pts[cur][0] - VW / 2;
@@ -1738,6 +1761,258 @@ const D3 = (() => {
       prop("pine", -3.0, 1.6, .9); prop("round", 2.9, -1.6, .8); prop("tree", -2.0, 2.6, .7); prop("bird", -1.2, -1.0, .6, .6); prop("bird3", 1.5, -.9, .6, -1); prop("bird2", 2.6, .4, .55, 2);
       if (past) { prop("bunting", 0, .9, 1.2); prop("balloon", -2.2, -.3, .9); prop("balloon", 2.3, 1.4, .8); prop("villager", -.6, 1.7, .8, .4); prop("villager2", .5, 1.9, .8, -.3); prop("villager3", 1.6, .2, .75, -1.2); prop("villager", -1.9, .2, .7, 1); prop("star", 0, -.4, .8); prop("deer", -2.6, -1.4, .7, .8); prop("butterfly", .9, 2.3, .8); } }
   };
+  // ---- 2026-10-24 İdris: "canlılarda hiçbir detay yok, asla akıcı animasyonlar değiller". The creatures are rebuilt as jointed models with real
+  // eyes, fur, feathers, paws and claws, and each has its own motion loop (walk, hop, flap, waddle, scuttle...). The map plays a strip of
+  // rendered frames of that loop while CSS carries it smoothly over the ground; the 3D scenes pose the model live.
+  const RIG = (() => {
+    const PI = Math.PI, TAU = PI * 2, S = GEO.sphS, CN = GEO.cone, CY = GEO.cyl;
+    const capG = new Map(), cap = (r, l) => { const k = r.toFixed(3) + ":" + l.toFixed(3); let q = capG.get(k); if (!q) capG.set(k, q = new T.CapsuleGeometry(r, Math.max(.002, l), 6, 16)); return q; };
+    // fur: a fine stroke texture used as a bump map, so a coat reads as hair and not as plastic
+    const furTex = (() => { const c = document.createElement("canvas"); c.width = c.height = 128; const x = c.getContext("2d"); x.fillStyle = "#808080"; x.fillRect(0, 0, 128, 128);
+      for (let i = 0; i < 2600; i++) { const px = Math.random() * 128, py = Math.random() * 128, l = 1.2 + Math.random() * 2.6, a = Math.random() * PI, v = 70 + Math.random() * 120 | 0; x.strokeStyle = `rgb(${v},${v},${v})`; x.lineWidth = .7 + Math.random() * .6; x.beginPath(); x.moveTo(px, py); x.lineTo(px + Math.cos(a) * l, py + Math.sin(a) * l); x.stroke(); }
+      const t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(5, 5); return t; })();
+    const MS = new Map(), mm = (k, f) => { let m = MS.get(k); if (!m) MS.set(k, m = f()); return m; };
+    const fur = (c, b) => mm("f" + c + ":" + (b || 1), () => new T.MeshStandardMaterial({ color: c, roughness: .9, metalness: 0, bumpMap: furTex, bumpScale: .12 * (b || 1) }));
+    const sm = (c, r, o) => mm("s" + c + ":" + r + JSON.stringify(o || {}), () => new T.MeshStandardMaterial(Object.assign({ color: c, roughness: r === undefined ? .45 : r, metalness: 0 }, o)));
+    const mk = (geo, m, par, x, y, z, sx, sy, sz, rx, ry, rz) => { const o = new T.Mesh(geo, m); o.castShadow = o.receiveShadow = true; o.position.set(x || 0, y || 0, z || 0); const a = sx === undefined ? 1 : sx; o.scale.set(a, sy === undefined ? a : sy, sz === undefined ? a : sz); o.rotation.set(rx || 0, ry || 0, rz || 0); par.add(o); return o; };
+    const pv = (par, x, y, z, rx, ry, rz) => { const g = new T.Group(); g.position.set(x || 0, y || 0, z || 0); g.rotation.set(rx || 0, ry || 0, rz || 0); par.add(g); return g; };
+    const hang = (par, r, l, m) => mk(cap(r, l - 2 * r), m, par, 0, -l / 2, 0);   // a limb hanging down from its joint
+    const up = (par, r, l, m) => mk(cap(r, l - 2 * r), m, par, 0, l / 2, 0);   // a limb standing up from its joint
+    // an eye: white, coloured iris, pupil, and a bright catch-light; it looks along its own +z
+    const eye = (par, x, y, z, r, iris, ry, slit) => { const e = pv(par, x, y, z, 0, ry || 0, 0); mk(S, sm(0xf6f2e8, .25), e, 0, 0, 0, r); mk(S, sm(iris, .2), e, 0, 0, r * .5, r * .78, r * .78, r * .55);
+      mk(S, sm(0x050407, .12), e, 0, 0, r * .82, slit ? r * .5 : r * .4, slit ? r * .2 : r * .4, r * .26); mk(S, glow(0xffffff), e, r * .28, r * .3, r * .93, r * .17); mk(S, glow(0xffffff), e, -r * .2, -r * .25, r * .9, r * .08); return e; };
+    const blink = (P, u, at) => { const k = Math.abs(u - (at || .86)) < .03 ? .12 : 1; for (const e of P.eyes) e.scale.y = k; };
+    const bump = (u, a, b) => u < a || u > b ? 0 : Math.sin((u - a) / (b - a) * PI);   // 0 outside [a, b], a smooth hump inside
+    const ease = (t) => t * t * (3 - 2 * t);
+
+    // ---------------- four-legged animals
+    function quad(g, o) {
+      const F = fur(o.fur), Bl = fur(o.belly), Dk = fur(o.dark), Nz = sm(0x17110e, .28), P = { legs: [], tail: [], ears: [], eyes: [], o };
+      const root = P.root = pv(g), L = o.len, R = o.r, lr = o.lr, by = o.leg + R * .85; P.by = by;
+      const body = P.body = pv(root, 0, by, 0);
+      mk(cap(R, L), F, body, 0, 0, 0, 1, 1, o.bh || 1, PI / 2);
+      if (!o.wool) mk(S, Bl, body, 0, -R * .4, L * .05, R * .76, R * .56, L * .5 + R * .4);
+      mk(S, Bl, body, 0, -R * .02, L * .5 + R * .42, R * .74, R * .84, R * .52);   // chest
+      mk(S, F, body, 0, R * .08, -L * .5 - R * .05, R * .98, R * .94, R * .82);   // haunch
+      mk(S, F, body, 0, R * .3, L * .38, R * .8, R * .7, R * .7);   // shoulders
+      if (o.wool) for (let i = 0; i < 34; i++) { const a = (i * 2.399) % TAU, zz = ((i * .618) % 1 - .5) * (L + R * 1.2), yy = Math.cos(a) * R * .95, xx = Math.sin(a) * R * 1.05; if (yy < -R * .5) continue; mk(S, F, body, xx, yy, zz, R * (.36 + (i % 3) * .05)); }
+      if (o.spines) { const sp = [sm(0x3a2a1c, .7), sm(0x6a4a30, .7), sm(0xe8d8b8, .6)], q = new T.Quaternion(), Y = new T.Vector3(0, 1, 0);
+        for (let i = 0; i < 120; i++) { const a = i * 2.399, h = 1 - (i + .5) / 120 * 1.15, rr = Math.sqrt(Math.max(0, 1 - h * h)), d = new T.Vector3(Math.cos(a) * rr, h, Math.sin(a) * rr - .25).normalize(); if (d.z > .55 || d.y < -.25) continue;
+          const m = mk(CN, sp[i % 3], body, d.x * R * 1.05, d.y * R * 1.0, d.z * (L * .5 + R) * .95, R * .07, R * .5, R * .07); q.setFromUnitVectors(Y, d); m.quaternion.copy(q); } }
+      for (const [sx, sz, ph] of [[-1, 1, 0], [1, 1, .5], [-1, -1, .5], [1, -1, 0]]) {
+        const hip = pv(body, sx * R * .56, -R * .25, sz * L * .48), span = by - R * .25, t = span * .55, s = span * .52;
+        mk(S, F, hip, 0, -t * .18, 0, lr * 1.7, t * .42, lr * 1.9);
+        hang(hip, lr, t, F);
+        const knee = pv(hip, 0, -t + lr, 0); hang(knee, lr * .78, s, o.sock ? Dk : F);
+        mk(S, o.hoof ? Nz : Dk, knee, 0, -s + lr * .4, lr * .38, lr * 1.08, lr * .62, lr * 1.5);
+        if (!o.hoof) for (let k = -1; k <= 1; k++) mk(S, Dk, knee, k * lr * .45, -s + lr * .32, lr * 1.25, lr * .32, lr * .3, lr * .36);   // toes
+        P.legs.push({ hip, knee, ph, f: sz > 0 });
+      }
+      const na = o.na === undefined ? .9 : o.na, nr = R * (o.nr || .55);
+      const neck = P.neck = pv(body, 0, R * .3, L * .5 + R * .2, na); P.na = na;
+      up(neck, nr, o.nl + nr, F); mk(S, Bl, neck, 0, o.nl * .45, nr * .55, nr * .75, o.nl * .55, nr * .55);
+      const head = P.head = pv(neck, 0, o.nl + nr * .6, 0, -na), hr = o.hr, HF = o.face ? fur(o.face) : F;
+      mk(S, HF, head, 0, 0, 0, hr, hr * .9, hr * 1.02);
+      mk(S, o.cheek ? fur(o.cheek) : HF, head, 0, -hr * .25, hr * .5, hr * .72, hr * .58, hr * .68);
+      const sa = o.sa === undefined ? .14 : o.sa, sl = hr * o.sl, sr = hr * o.sr;
+      mk(cap(sr, Math.max(.002, sl - sr)), o.muz ? fur(o.muz) : HF, head, 0, -hr * .26 - Math.sin(sa) * sl * .5, hr * .42 + Math.cos(sa) * sl * .5, 1, 1, .85, PI / 2 + sa);
+      const nx = hr * .42 + Math.cos(sa) * sl + sr * .3, ny = -hr * .26 - Math.sin(sa) * sl;
+      mk(S, Nz, head, 0, ny + sr * .25, nx, sr * .62, sr * .45, sr * .45);
+      mk(S, glow(0xffffff), head, sr * .2, ny + sr * .5, nx + sr * .3, sr * .1);
+      mk(cap(sr * .1, sr * 1.2), sm(0x2a1a14, .5), head, 0, ny - sr * .55, nx - sr * .7, 1, 1, 1, 0, 0, PI / 2);   // mouth line
+      if (o.whisk) for (const k of [-1, 1]) for (let w = 0; w < 3; w++) mk(CY, sm(0xf4ece0, .4), head, k * sr * 1.4, ny + w * sr * .18, nx - sr * .9, .004, sr * 2.4, .004, 0, 0, k * (1.35 + w * .14));
+      for (const k of [-1, 1]) P.eyes.push(eye(head, k * hr * .47, hr * .2, hr * .7, hr * .19, o.iris || 0x3a2210, k * .5));
+      for (const k of [-1, 1]) mk(S, HF, head, k * hr * .47, hr * .38, hr * .72, hr * .22, hr * .07, hr * .15, 0, 0, -k * .2);   // brow
+      for (const k of [-1, 1]) { const ear = pv(head, k * hr * (o.ear === "long" ? .3 : .52), hr * .66, -hr * .12, 0, 0, -k * (o.et === undefined ? .3 : o.et)); P.ears.push(ear);
+        if (o.ear === "point") { mk(CN, F, ear, 0, hr * .36, 0, hr * .32, hr * .78, hr * .16); mk(CN, fur(0xf6ead8), ear, 0, hr * .3, hr * .07, hr * .2, hr * .52, hr * .06); mk(CN, Dk, ear, 0, hr * .66, 0, hr * .14, hr * .22, hr * .1); }
+        else if (o.ear === "long") { up(ear, hr * .2, hr * 1.5, F); mk(cap(hr * .12, hr * 1.0), sm(0xf0a8b4, .6), ear, 0, hr * .78, hr * .08, 1, 1, .35); }
+        else if (o.ear === "round") { mk(S, F, ear, 0, hr * .12, 0, hr * .28, hr * .26, hr * .14); mk(S, Dk, ear, 0, hr * .11, hr * .07, hr * .17, hr * .15, hr * .06); }
+        else if (o.ear === "leaf") { mk(S, F, ear, 0, hr * .36, 0, hr * .19, hr * .44, hr * .08); mk(S, fur(0xf2e2c8), ear, 0, hr * .34, hr * .05, hr * .12, hr * .32, hr * .04); }
+        else if (o.ear === "flop") { mk(S, HF, ear, 0, hr * .1, 0, hr * .14, hr * .36, hr * .08, 0, 0, k * 1.2); }
+        else mk(S, F, ear, 0, hr * .1, 0, hr * .14, hr * .14, hr * .08); }
+      if (o.antler) for (const k of [-1, 1]) { const A = sm(0xd9c6a0, .65), a = pv(head, k * hr * .28, hr * .72, -hr * .05, -.25, 0, -k * .45); up(a, hr * .07, hr * 1.5, A);
+        [[.45, .9, .5], [.8, .7, -.4], [1.15, .55, .6], [1.35, .45, -.3]].forEach(([y, l, rz]) => { const b = pv(a, 0, hr * y, 0, rz > 0 ? .5 : -.3, 0, k * rz); up(b, hr * .05, hr * l, A); }); }
+      if (o.spots) for (let i = 0; i < 9; i++) mk(S, fur(0xfdf3e0), body, ((i * 7) % 5 - 2) * R * .22, R * .82, (i / 8 - .5) * L * .9, R * .1, R * .05, R * .1);
+      // tail
+      const tb = pv(body, 0, R * .3, -L * .5 - R * .82, -(o.ta === undefined ? 2.2 : o.ta)); let tp = tb;
+      if (o.tail === "bushy") { for (let i = 0; i < 4; i++) { const r = R * (.34 + i * .07) * (o.tw || 1), seg = pv(tp, 0, i ? R * .5 : 0, 0, i ? .18 : 0); mk(S, i === 3 && o.tip ? fur(o.tip) : F, seg, 0, R * .32, 0, r, R * .48, r); P.tail.push(seg); tp = seg; } }
+      else if (o.tail === "long") { for (let i = 0; i < 4; i++) { const seg = pv(tp, 0, i ? R * .3 : 0, 0, i ? .2 : 0); up(seg, R * .09, R * .4, F); P.tail.push(seg); tp = seg; } }
+      else { const seg = pv(tb, 0, 0, 0); mk(S, o.tip ? fur(o.tip) : F, seg, 0, R * .18, 0, R * (o.tr || .26)); P.tail.push(seg); }
+      return P;
+    }
+    // walking: diagonal legs move together, the body rises twice a stride and rolls a little, the head nods, the tail swings, ears twitch, eyes blink
+    function walk(P, u) { const o = P.o, w = u * TAU * (o.steps || 1), A = o.stride || .5;
+      for (const l of P.legs) { const a = w + l.ph * TAU, s = Math.sin(a), c = Math.cos(a); l.hip.rotation.x = s * A; l.knee.rotation.x = Math.max(0, -c) * A * 1.5 * (l.f ? 1 : .8); }
+      P.body.position.y = P.by + Math.cos(2 * w) * P.o.r * .05; P.body.rotation.z = Math.sin(w) * .04; P.body.rotation.x = Math.sin(2 * w) * .02;
+      P.neck.rotation.x = P.na + Math.sin(2 * w + .8) * .06; P.head.rotation.y = Math.sin(u * TAU) * .22; P.head.rotation.z = Math.sin(u * TAU) * .05;
+      P.tail.forEach((t, i) => { t.rotation.z = Math.sin(w * (o.tf || 1) - i * .7) * (o.tail === "bushy" ? .22 : .5); });
+      P.ears.forEach((e, i) => { e.rotation.x = -bump(u, .55 + i * .05, .68 + i * .05) * .5; }); blink(P, u); }
+    // a hop: crouch, push off with the long hind legs, fly with the ears streaming back, land soft and settle
+    function hop(P, u) { const o = P.o, air = bump(u, .22, .7), crouch = bump(u, 0, .26) + bump(u, .66, .9) * .8, push = bump(u, .16, .42);
+      P.root.position.y = air * o.r * 1.5; P.body.position.y = P.by - crouch * o.r * .25; P.body.rotation.x = -.32 + air * .2 - push * .25;
+      for (const l of P.legs) { if (l.f) { l.hip.rotation.x = -air * .9 + crouch * .2; l.knee.rotation.x = air * .4; } else { l.hip.rotation.x = push * 1.1 + air * .5 - crouch * .5; l.knee.rotation.x = crouch * .9 + air * .2; } }
+      P.neck.rotation.x = P.na - .2 + air * .2; P.head.rotation.y = Math.sin(u * TAU) * .15;
+      P.ears.forEach((e, i) => { e.rotation.x = -air * .7 + bump(u, .72, .95) * .35 - bump(u, .05 + i * .03, .15 + i * .03) * .3; });
+      P.tail.forEach(t => { t.rotation.x = air * .4; }); blink(P, u, .92); }
+
+    // ---------------- birds
+    function bird(g, o) {
+      const s = o.s || 1, Bd = fur(o.body, .5), Be = fur(o.belly === undefined ? o.body : o.belly, .5), Wg = fur(o.wing === undefined ? o.body : o.wing, .4), Wt = fur(o.tip === undefined ? (o.wing === undefined ? o.body : o.wing) : o.tip, .4), Bk = sm(o.beak === undefined ? 0xf0a020 : o.beak, .35), P = { wings: [], eyes: [], legs: [], o, s };
+      const root = P.root = pv(g, 0, o.air ? .75 : 0, 0), br = .17 * s, lh = o.fly || o.swim ? 0 : (o.lh || .12) * s, pitch = o.pitch === undefined ? .95 : o.pitch; P.pitch = pitch;
+      const body = P.body = pv(root, 0, lh + br * 1.05, 0, pitch); P.by = lh + br * 1.05;
+      mk(S, Bd, body, 0, 0, 0, br, br * 1.45, br * .98); mk(S, Bd, body, 0, -br * .9, -br * .12, br * .62, br * .8, br * .5);   // body and the narrowing rump
+      mk(S, Be, body, 0, -br * .1, br * .42, br * .82, br * 1.12, br * .7);   // breast
+      if (o.bib) mk(S, fur(o.bib, .4), body, 0, br * .55, br * .62, br * .5, br * .4, br * .34);
+      // head on the top of the body, kept level whatever the body's pitch
+      const head = P.head = pv(body, 0, br * (o.neck || 1.12), br * .22, -pitch), hr = br * (o.hs || .68), HC = o.head === undefined ? Bd : fur(o.head, .4);
+      mk(S, HC, head, 0, 0, 0, hr, hr * .96, hr);
+      if (o.face) mk(S, fur(o.face, .3), head, 0, -hr * .05, hr * .5, hr * .82, hr * .82, hr * .55);
+      if (o.cheek) for (const k of [-1, 1]) mk(S, fur(o.cheek, .3), head, k * hr * .55, -hr * .2, hr * .45, hr * .3, hr * .26, hr * .2);
+      const bl = hr * (o.bl || .9), bw = hr * (o.bw || .32);
+      if (o.flat) { mk(S, Bk, head, 0, -hr * .2, hr * .9 + bl * .4, bw * 1.5, bw * .45, bl * .55); }
+      else { mk(CN, Bk, head, 0, -hr * .02, hr * .88 + bl / 2, bw, bl, bw * .8, PI / 2 + (o.hook ? .35 : .08)); mk(CN, sm(o.beak2 === undefined ? 0xc87a10 : o.beak2, .4), head, 0, -hr * .2, hr * .82 + bl * .38, bw * .8, bl * .75, bw * .6, PI / 2 + .25); }
+      for (const k of [-1, 1]) P.eyes.push(eye(head, k * hr * (o.owl ? .38 : .6), hr * (o.owl ? .1 : .18), hr * (o.owl ? .78 : .55), hr * (o.eye || .2), o.iris === undefined ? 0x2a1a0a : o.iris, k * (o.owl ? .18 : .95)));
+      if (o.crest) for (let i = 0; i < 3; i++) mk(CN, fur(o.crest, .3), head, (i - 1) * hr * .22, hr * .95, -hr * .2, hr * .1, hr * .55, hr * .08, -.5, 0, (i - 1) * -.4);
+      if (o.tufts) for (const k of [-1, 1]) mk(CN, HC, head, k * hr * .55, hr * .85, -hr * .05, hr * .14, hr * .5, hr * .08, -.2, 0, -k * .35);
+      // wings: coverts, secondaries and four long primaries, built to lie along the body and to open out sideways for flight
+      for (const k of [-1, 1]) { const wl = br * (o.wl || 1.9), cw = br * (o.cw || .9), th = br * .07, w = pv(body, k * br * .84, br * .3, -br * .05); P.wings.push({ g: w, k, wl, cw });
+        mk(S, Wg, w, 0, -wl * .26, th, cw * .72, wl * .32, th);
+        mk(S, Wg, w, -k * cw * .14, -wl * .48, 0, cw * .66, wl * .4, th * .85);
+        for (let i = 0; i < 4; i++) mk(S, i > 1 ? Wt : Wg, w, -k * cw * (.4 - i * .16), -wl * (.6 + i * .08), -th * (i + 1) * .3, cw * .26, wl * (.36 + i * .03), th * .55, 0, 0, k * (.14 - i * .07));
+        if (o.bar) mk(S, fur(o.bar, .3), w, 0, -wl * .4, th * 1.6, cw * .5, wl * .05, th * .4); }
+      { const tl = br * (o.tl || 1.2), t = P.tail = pv(body, 0, -br * 1.1, -br * .25, o.tu === undefined ? -.25 : o.tu); for (let i = -2; i <= 2; i++) mk(S, i === 0 && o.tc !== undefined ? fur(o.tc, .3) : Wt, t, i * br * .09, -tl * .5, 0, br * .14, tl * .55, br * .04, 0, 0, i * .16); }
+      if (lh) for (const k of [-1, 1]) { const L = pv(root, k * br * .32, lh + br * .25, br * .05), LC = sm(o.leg === undefined ? 0xd08a3a : o.leg, .5); hang(L, br * .06, lh + br * .25, LC);
+        for (let i = -1; i <= 1; i++) mk(CN, LC, L, i * br * .1, -lh - br * .22, br * .12, br * .035, br * .3, br * .03, PI / 2, i * .5, 0); P.legs.push(L); }
+      if (o.swim) mk(S, sm(0x6ab8e8, .15, { transparent: true, opacity: .35 }), root, 0, .01, 0, br * 2.2, br * .06, br * 2.4);   // a ripple ring under a swimmer
+      return P;
+    }
+    const wingFold = (W, lift) => W.g.rotation.set(0, W.k * 1.45, W.k * (.1 + (lift || 0)));
+    const wingOpen = (W, flap, sweep) => W.g.rotation.set(0, W.k * (sweep || .1), W.k * (PI / 2 + flap));
+    // a small bird on the ground: two little hops, two pecks, a tail flick, a wing shuffle and a blink
+    function perch(P, u) { const s = P.s, hp = bump(u, 0, .12) + bump(u, .14, .26);
+      P.root.position.y = (P.o.air ? .75 : 0) + hp * .06 * s; P.legs.forEach(L => { L.rotation.x = -hp * .5; });
+      const pk = Math.max(bump(u, .34, .44), bump(u, .47, .57)); P.body.rotation.x = P.pitch + pk * .35 + bump(u, 0, .26) * -.1; P.head.rotation.x = -P.pitch - pk * .2 + bump(u, .62, .8) * -.15; P.head.rotation.y = Math.sin(u * TAU) * .5 + bump(u, .8, .95) * -.4;
+      P.tail.rotation.x = (P.o.tu === undefined ? -.25 : P.o.tu) - bump(u, .6, .7) * .45 + hp * .2; P.body.scale.set(1, 1 + Math.sin(u * TAU * 2) * .015, 1);
+      for (const W of P.wings) wingFold(W, bump(u, .72, .84) * .5 + hp * .15); blink(P, u, .9); }
+    // flying: deep down-strokes, the body lifting on each, legs tucked, tail spread
+    function fly(P, u) { const n = P.o.flaps || 2, w = u * TAU * n, f = Math.sin(w), s = P.s;
+      for (const W of P.wings) wingOpen(W, f * .95 + .2, .1 + Math.cos(w) * .12);
+      P.root.position.y = (P.o.air ? .75 : 0) - f * .05 * s + Math.sin(u * TAU) * .03 * s; P.body.rotation.x = 1.25 + Math.cos(w) * .06; P.head.rotation.x = -1.25 + Math.sin(u * TAU) * .08; P.head.rotation.y = Math.sin(u * TAU) * .2;
+      P.tail.rotation.x = .1 + Math.cos(w) * .08; blink(P, u, .5); }
+    function owl(P, u) { P.head.rotation.y = Math.sin(u * TAU) * .9 * ease(Math.min(1, Math.abs(Math.sin(u * TAU)) * 1.6)); P.head.rotation.z = Math.sin(u * TAU * 2) * .08; P.head.rotation.x = -P.pitch + bump(u, .4, .6) * .15;
+      P.body.scale.set(1 + bump(u, .7, .8) * .05, 1 + Math.sin(u * TAU) * .015, 1 + bump(u, .7, .8) * .05); for (const W of P.wings) wingFold(W, bump(u, .68, .82) * .35); blink(P, u, .25); blink2(P, u); }
+    const blink2 = (P, u) => { if (Math.abs(u - .75) < .03) for (const e of P.eyes) e.scale.y = .12; };
+    function waddle(P, u) { const w = u * TAU * 2, s = P.s; P.root.rotation.z = Math.sin(w) * .14; P.root.position.y = Math.abs(Math.sin(w)) * .025 * s; P.legs.forEach((L, i) => { L.rotation.x = Math.sin(w + i * PI) * .45; });
+      for (const W of P.wings) W.g.rotation.set(0, W.k * 1.3, W.k * (.25 + Math.max(0, Math.sin(w + (W.k > 0 ? 0 : PI))) * .5)); P.head.rotation.x = -P.pitch + Math.sin(w * 2) * .05; P.head.rotation.y = Math.sin(u * TAU) * .3; blink(P, u, .4); }
+    function swim(P, u) { const w = u * TAU, dip = bump(u, .32, .58); P.root.position.y = Math.sin(w * 2) * .012; P.root.rotation.x = Math.sin(w * 2) * .03;
+      P.body.rotation.x = P.pitch + dip * .25; P.head.rotation.x = -P.pitch + dip * .9; P.head.rotation.y = Math.sin(w) * .4 * (1 - dip);
+      P.tail.rotation.z = Math.sin(w * 6) * .25 * bump(u, .7, .9); for (const W of P.wings) wingFold(W, bump(u, .78, .9) * .35); blink(P, u, .2); }
+
+    // ---------------- small things
+    function butterfly(g, o) { const P = { o, wings: [], eyes: [] }, root = P.root = pv(g, 0, .78, 0, .55), Bd = sm(0x2a1f2a, .7), A = sm(o.a, .55), Bc = sm(o.b, .55), E = sm(0x1a1018, .6), Wt = sm(0xffffff, .5);
+      mk(cap(.025, .2), Bd, root, 0, 0, -.02, 1, 1, 1, PI / 2); mk(S, Bd, root, 0, 0, .12, .035); for (const k of [-1, 1]) { const a = pv(root, k * .015, .02, .14, -.6, 0, -k * .35); up(a, .005, .14, Bd); mk(S, Bd, a, 0, .14, 0, .015); P.eyes.push(mk(S, sm(0x101010, .2), root, k * .02, .01, .14, .012)); }
+      for (const k of [-1, 1]) { const w = pv(root, k * .02, 0, 0); P.wings.push({ g: w, k });
+        mk(S, E, w, k * .2, .003, .06, .2, .008, .15, 0, k * -.35); mk(S, A, w, k * .19, .006, .06, .175, .008, .125, 0, k * -.35);   // forewing: dark rim, colour
+        mk(S, E, w, k * .15, .001, -.1, .14, .008, .12, 0, k * .4); mk(S, Bc, w, k * .145, .004, -.1, .12, .008, .1, 0, k * .4);   // hindwing
+        mk(S, Wt, w, k * .3, .01, .12, .025, .006, .02); mk(S, Wt, w, k * .26, .01, .15, .018, .006, .015); mk(S, E, w, k * .15, .009, -.11, .035, .006, .035); mk(S, sm(0xffe060, .5), w, k * .15, .011, -.11, .018, .006, .018); }
+      return P; }
+    function bfly(P, u) { const w = u * TAU * 4, f = .5 + .5 * Math.sin(w); for (const W of P.wings) W.g.rotation.z = W.k * (.1 + f * 1.25); P.root.position.y = .78 - f * .03 + Math.sin(u * TAU) * .04; P.root.rotation.y = Math.sin(u * TAU) * .3; }
+    function bee(g) { const P = { wings: [], eyes: [] }, root = P.root = pv(g, 0, .8, 0, .15), Y = fur(0xf6c21a, .6), K = fur(0x1e1712, .6), Wc = sm(0xdff2ff, .1, { transparent: true, opacity: .5 });
+      mk(S, Y, root, 0, 0, -.1, .085, .08, .12); for (const z of [-.06, -.12, -.18]) mk(S, K, root, 0, 0, z, .088, .083, .018); mk(CN, K, root, 0, 0, -.235, .015, .05, .015, -PI / 2);
+      mk(S, fur(0xc89a3a, .8), root, 0, .005, .04, .07); mk(S, K, root, 0, 0, .11, .055); for (const k of [-1, 1]) { P.eyes.push(eye(root, k * .035, .02, .14, .022, 0x101010, k * .6)); const a = pv(root, k * .02, .04, .14, -.7, 0, -k * .3); up(a, .005, .07, K); mk(S, K, a, 0, .07, 0, .01);
+        for (let i = 0; i < 3; i++) { const l = pv(root, k * .05, -.04, .06 - i * .05, 0, 0, k * .6); hang(l, .006, .07, K); } const w = pv(root, k * .03, .07, .04); P.wings.push({ g: w, k }); mk(S, Wc, w, k * .1, 0, -.02, .1, .005, .045, 0, k * -.3); mk(S, Wc, w, k * .07, -.005, -.07, .065, .004, .03, 0, k * -.5); }
+      return P; }
+    function buzz(P, u) { const w = u * TAU * 8; for (const W of P.wings) W.g.rotation.z = W.k * (.15 + (.5 + .5 * Math.sin(w)) * .9); P.root.position.y = .8 + Math.sin(u * TAU) * .04; P.root.rotation.z = Math.sin(u * TAU * 2) * .08; P.root.rotation.y = Math.sin(u * TAU) * .25; blink(P, u, .7); }
+    function bat(g) { const P = { wings: [], eyes: [], o: {} }, root = P.root = pv(g, 0, .85, 0), F = fur(0x4a3550, .8), Mb = sm(0x2e2236, .7, { side: T.DoubleSide }), Bn = sm(0x1e1624, .5);
+      mk(S, F, root, 0, 0, 0, .1, .12, .09); const head = P.head = pv(root, 0, .13, .02); mk(S, F, head, 0, 0, 0, .075); mk(S, fur(0x6a5070, .6), head, 0, -.02, .05, .04, .03, .035);
+      for (const k of [-1, 1]) { mk(CN, F, head, k * .045, .08, -.01, .035, .1, .02, 0, 0, -k * .3); mk(CN, sm(0xc88aa0, .6), head, k * .045, .075, .002, .02, .07, .008, 0, 0, -k * .3); P.eyes.push(eye(head, k * .03, .015, .06, .016, 0x200810, k * .3)); mk(CN, sm(0xffffff, .3), head, k * .012, -.045, .065, .006, .02, .006, PI); }
+      for (const k of [-1, 1]) { const w = pv(root, k * .07, .03, 0); P.wings.push({ g: w, k }); const arm = pv(w, 0, 0, 0, 0, 0, k * -.2); mk(cap(.012, .16), Bn, arm, k * .08, 0, 0, 1, 1, 1, 0, 0, PI / 2);
+        for (let i = 0; i < 3; i++) { const a = -.5 + i * .55; mk(cap(.007, .2), Bn, arm, k * (.16 + Math.cos(a) * .1), Math.sin(a) * .1, 0, 1, 1, 1, 0, 0, k * (PI / 2 + a)); mk(S, Mb, arm, k * (.14 + Math.cos(a - .27) * .11), Math.sin(a - .27) * .11 - .015, 0, .1, .07, .006, 0, 0, k * (a - .27)); } }
+      return P; }
+    function flap(P, u) { const w = u * TAU * 3, f = Math.sin(w); for (const W of P.wings) W.g.rotation.set(.2, 0, W.k * f * .8); P.root.position.y = .85 - f * .04 + Math.sin(u * TAU) * .03; P.head.rotation.y = Math.sin(u * TAU) * .3; blink(P, u, .6); }
+    function frog(g) { const P = { eyes: [], legs: [], o: {} }, root = P.root = pv(g), G = sm(0x4fb84a, .32), Bl = sm(0xe8f0b0, .4), D = sm(0x2f7a32, .35);
+      const body = P.body = pv(root, 0, .14, 0, -.45); mk(S, G, body, 0, 0, 0, .19, .15, .2); mk(S, Bl, body, 0, -.05, .06, .15, .1, .15); for (let i = 0; i < 7; i++) mk(S, D, body, ((i * 5) % 7 - 3) * .04, .12, ((i * 3) % 5 - 2) * .05, .03, .012, .03);
+      const head = P.head = pv(body, 0, .06, .16, .45); mk(S, G, head, 0, 0, 0, .15, .09, .12); P.throat = mk(S, Bl, head, 0, -.06, .03, .11, .05, .09);
+      mk(cap(.008, .18), sm(0x1e4a20, .5), head, 0, -.025, .1, 1, 1, 1, 0, 0, PI / 2);
+      for (const k of [-1, 1]) { mk(S, G, head, k * .075, .07, .02, .055); P.eyes.push(eye(head, k * .075, .085, .04, .042, 0xd8a020, k * .5, 1));
+        const fl = pv(body, k * .1, -.05, .12, .5, 0, k * .1); hang(fl, .022, .12, G); for (let i = -1; i <= 1; i++) mk(S, G, fl, i * .02 * k, -.12, .02, .014, .008, .02);
+        const hip = pv(body, k * .15, -.04, -.12, .4); mk(S, G, hip, k * .02, -.02, .04, .07, .06, .11); const kn = pv(hip, k * .04, -.05, .1, -2.4); mk(cap(.025, .12), G, kn, 0, -.06, 0); const ft = pv(kn, 0, -.12, 0, 2.2); mk(S, D, ft, 0, 0, .05, .04, .01, .08); P.legs.push({ hip, kn, ft, k }); }
+      return P; }
+    function croak(P, u) { const air = bump(u, .7, .92); P.root.position.y = air * .12; P.throat.scale.set(.11 + bump(u, .1, .3) * .05 + bump(u, .35, .55) * .05, .05 + bump(u, .1, .3) * .05 + bump(u, .35, .55) * .05, .09);
+      P.body.rotation.x = -.45 + air * .3; P.body.scale.set(1, 1 + Math.sin(u * TAU * 3) * .02, 1); for (const L of P.legs) { L.hip.rotation.x = .4 - air * 1.2; L.kn.rotation.x = -2.4 + air * 1.8; } blink(P, u, .45); }
+    function crab(g) { const P = { legs: [], claws: [], eyes: [], o: {} }, root = P.root = pv(g), C = sm(0xe8532a, .5), Cl = sm(0xff8a5a, .5), Dk = sm(0xb83a1a, .5);
+      const body = P.body = pv(root, 0, .14, 0); mk(S, C, body, 0, 0, 0, .22, .09, .17); mk(S, Cl, body, 0, .045, .02, .17, .05, .12); for (let i = 0; i < 6; i++) mk(S, Dk, body, ((i % 3) - 1) * .08, .07, (i < 3 ? .04 : -.05), .018);
+      for (const k of [-1, 1]) { const st = pv(body, k * .05, .06, .12, -.2); up(st, .012, .1, C); P.eyes.push(eye(st, 0, .1, 0, .026, 0x101010, 0));
+        for (let i = 0; i < 3; i++) { const l = pv(body, k * .18, -.01, .06 - i * .07, 0, k * (-.2 + i * .25), k * 1.1); hang(l, .016, .12, C); const kn = pv(l, 0, -.11, 0, 0, 0, k * -1.5); hang(kn, .012, .12, Dk); P.legs.push({ l, kn, k, i }); }
+        const a = pv(body, k * .17, .01, .12, 0, k * -.5, k * .9); hang(a, .025, .1, C); const fa = pv(a, 0, -.09, 0, 0, 0, k * -1.6); hang(fa, .022, .09, C);
+        const cl = pv(fa, 0, -.1, 0); mk(S, Cl, cl, 0, -.03, 0, .055, .07, .04); mk(CN, Dk, cl, -k * .02, -.11, 0, .02, .07, .02, 0, 0, PI); const mv = pv(cl, k * .025, -.06, 0); mk(CN, Dk, mv, 0, -.04, 0, .016, .06, .016, 0, 0, PI); P.claws.push({ mv, k, a }); }
+      return P; }
+    function scuttle(P, u) { const w = u * TAU * 2; P.body.position.y = .14 + Math.abs(Math.sin(w * 2)) * .012; P.body.rotation.z = Math.sin(w) * .06;
+      for (const L of P.legs) { const a = w + L.i * 2.1 + (L.k > 0 ? PI : 0); L.l.rotation.x = Math.sin(a) * .35; L.kn.rotation.z = L.k * (-1.5 + Math.max(0, Math.cos(a)) * .4); }
+      for (const C of P.claws) { C.mv.rotation.z = C.k * (.1 + .5 * Math.max(0, Math.sin(u * TAU * 3 + (C.k > 0 ? 0 : 1.5)))); C.a.rotation.x = Math.sin(u * TAU) * .2; } blink(P, u, .55); }
+
+    // ---------------- the cast
+    const Q = (o) => (g) => quad(g, o), B = (o) => (g) => bird(g, o);
+    const A = {
+      fox: { b: Q({ fur: 0xd8622a, belly: 0xfbf1e2, dark: 0x2a1a14, cheek: 0xfbf1e2, len: .3, r: .12, leg: .17, lr: .03, nl: .06, hr: .1, sl: 1.05, sr: .32, muz: 0xfbf1e2, ear: "point", tail: "bushy", tip: 0xfdf6ec, tw: 1.1, ta: 2.0, sock: 1, whisk: 1, stride: .55 }), p: walk, d: .9, m: "walk" },
+      deer: { b: Q({ fur: 0xa8703c, belly: 0xefdcbc, dark: 0x5a3a1e, len: .42, r: .15, leg: .5, lr: .028, nl: .26, nr: .45, na: .45, hr: .1, sl: 1.2, sr: .36, muz: 0x6a4428, ear: "leaf", et: 1.0, antler: 1, tail: "puff", tip: 0xfdfaf2, tr: .2, ta: 2.6, hoof: 1, stride: .42 }), p: walk, d: 1.15, m: "walk" },
+      rabbit: { b: Q({ fur: 0xc9b094, belly: 0xf6eee4, dark: 0x8a6e54, len: .1, r: .13, leg: .07, lr: .03, nl: .02, na: .7, hr: .1, sl: .55, sr: .4, muz: 0xf6eee4, ear: "long", et: .12, tail: "puff", tip: 0xffffff, tr: .32, ta: 2.4, whisk: 1 }), p: hop, d: 1.0, m: "hop" },
+      hedgehog: { b: Q({ fur: 0xa88a64, belly: 0xe8d4b4, dark: 0x3a2a1c, face: 0xd8bc94, len: .14, r: .15, leg: .04, lr: .025, nl: .01, na: .2, hr: .085, sl: 1.1, sr: .3, ear: "small", tail: "puff", tr: .1, spines: 1, stride: .6, steps: 2, bh: .85 }), p: walk, d: .8, m: "walk" },
+      bear: { b: Q({ fur: 0x7a4a28, belly: 0x9a6a40, dark: 0x3a2414, len: .36, r: .21, leg: .2, lr: .06, nl: .04, nr: .7, na: .5, hr: .14, sl: .6, sr: .45, muz: 0xc89a68, ear: "round", tail: "puff", tr: .18, stride: .4 }), p: walk, d: 1.4, m: "walk" },
+      sheep: { b: Q({ fur: 0xf6f2e6, belly: 0xece6d6, dark: 0x2e2622, face: 0x3a302a, len: .26, r: .17, leg: .16, lr: .025, nl: .03, na: .4, hr: .09, sl: .7, sr: .42, ear: "flop", tail: "puff", tr: .2, wool: 1, sock: 1, hoof: 1, iris: 0x8a6a20, stride: .45 }), p: walk, d: 1.2, m: "walk" },
+      bird: { b: B({ body: 0x3f7ee8, belly: 0xf4e2c4, wing: 0x2c5fb8, tip: 0x1c3a78, cheek: 0xffffff }), p: perch, d: 1.8, m: "perch" },
+      bird2: { b: B({ body: 0xe8607a, belly: 0xfce4d8, wing: 0xb84058, tip: 0x6a2030 }), p: perch, d: 1.7, m: "perch" },
+      bird3: { b: B({ body: 0xf2c43a, belly: 0xfff4d0, wing: 0xc89a1a, tip: 0x5a4010, bar: 0xffffff }), p: perch, d: 1.6, m: "perch" },
+      parrot: { b: B({ s: 1.2, body: 0x22a84a, belly: 0x5ad06a, head: 0xe83a3a, wing: 0x1f8a3a, tip: 0x2f6ae8, bar: 0xffd23a, beak: 0xf4ecd8, beak2: 0x2a2a2a, hook: 1, tl: 2.2, tc: 0x2f6ae8, face: 0xfff6ea, iris: 0xf0d040 }), p: perch, d: 2.0, m: "perch" },
+      owl: { b: B({ s: 1.6, pitch: .08, owl: 1, hs: .78, neck: 1.0, eye: .26, iris: 0xffb020, body: 0x8a6a48, belly: 0xe2ccaa, face: 0xf2e4ca, wing: 0x6a4e32, tip: 0x4a3420, beak: 0x3a3028, beak2: 0x2a2018, hook: 1, bl: .45, tufts: 1, lh: .04, leg: 0xb89a6a, tl: .6 }), p: owl, d: 2.6, m: "still" },
+      duck: { b: B({ s: 1.25, swim: 1, pitch: 1.35, body: 0xf6f0e4, belly: 0xfffaf0, wing: 0xe8e0d0, tip: 0xc8c0b0, beak: 0xffa31a, beak2: 0xe88a10, flat: 1, bl: .9, neck: 1.25, tu: -.6, tl: .7 }), p: swim, d: 2.2, m: "swim" },
+      penguin: { b: B({ s: 1.5, pitch: .06, body: 0x1e2230, belly: 0xf8f8f4, wing: 0x1e2230, tip: 0x1e2230, beak: 0x1e2230, beak2: 0xff9a1a, cheek: 0xffc84a, lh: .03, leg: 0xff9a1a, wl: 1.4, cw: .6, tl: .4 }), p: waddle, d: 1.1, m: "walk" },
+      eagle: { b: B({ s: 1.5, fly: 1, air: 1, body: 0x5a3a1e, belly: 0x6a4626, head: 0xfaf6ee, wing: 0x4a2e16, tip: 0x22160c, beak: 0xffc020, beak2: 0xe8a010, hook: 1, wl: 3.2, cw: 1.2, tc: 0xfaf6ee, iris: 0xe8b020, flaps: 1 }), p: fly, d: 1.6, m: "fly" },
+      magpie: { b: B({ s: 1.6, fly: 1, air: 1, body: 0x15131e, belly: 0xf4f2fa, wing: 0x23407a, tip: 0x0e0c16, beak: 0x2a2a30, beak2: 0x1a1a20, bar: 0xf4f2fa, tl: 2.1, tc: 0x1a3a6a, iris: 0x2a1a10, flaps: 2 }), p: fly, d: 1.3, m: "fly" },
+      gritt: { b: B({ s: 1.6, fly: 1, air: 1, body: 0x6a7080, belly: 0xe8ecf4, wing: 0x1fb5a5, tip: 0x147a70, beak: 0xffc020, crest: 0xffd200, tl: 1.6, iris: 0x2a1a10, flaps: 2 }), p: fly, d: 1.2, m: "fly" },
+      corvin: { b: B({ s: 1.8, fly: 1, air: 1, body: 0x22263e, belly: 0x3a4060, wing: 0x1a1e34, tip: 0xdceeff, beak: 0x30323a, beak2: 0x202228, crest: 0xe8f4ff, hook: 1, tl: 1.8, tc: 0xdceeff, iris: 0x80d0ff, flaps: 2 }), p: fly, d: 1.4, m: "fly" },
+      butterfly: { b: (g) => butterfly(g, { a: 0xff7ac0, b: 0xffb347 }), p: bfly, d: .9, m: "flutter" },
+      bee: { b: bee, p: buzz, d: 1.2, m: "hover" },
+      bat: { b: bat, p: flap, d: 1.0, m: "hover" },
+      frog: { b: frog, p: croak, d: 2.4, m: "still" },
+      crab: { b: crab, p: scuttle, d: 1.0, m: "side" },
+      flock: { b: (g) => { const P = { kids: [] }; for (const [x, y, z, k] of [[-.3, .1, .1, .7], [.34, .28, -.05, .62], [.02, .48, -.3, .56]]) { const h = pv(g, x, y, z); h.scale.setScalar(k); P.kids.push(bird(h, { s: 1.4, fly: 1, air: 1, body: 0x6a7080, belly: 0xe8ecf4, wing: 0x8a93a8, tip: 0x4a5060, beak: 0xffc020, flaps: 2 })); } return P; },
+        p: (P, u) => P.kids.forEach((K, i) => fly(K, (u + i * .29) % 1)), d: 1.2, m: "fly" },
+    };
+    // the map shows the model a little from the side, the way it is walking
+    const VIEW = { walk: .95, hop: .95, perch: .7, swim: .9, side: .25, still: .2, fly: 1.15, hover: .3, flutter: .4 };
+    return { A, VIEW };
+  })();
+  // the creatures take the place of their old builds everywhere (map, story book, garden and 3D scenes); the scenes pose them live
+  for (const k in RIG.A) { const R0 = RIG.A[k]; BUILD[k] = (g) => { const h = grp(g), P = R0.b(h); R0.p(P, .1); h.userData.rig = { P, k }; }; }
+  // A strip of FR rendered frames of one creature's loop, one square frame after another. The strip is made once per creature, when it is
+  // first needed on screen, and handed out as a blob address; the map plays it with steps() so it costs nothing while it runs.
+  const FR = 24, strips = new Map(), stripQ = [];
+  let stripBusy = false;
+  function stripMake(kind, px) {
+    const R0 = RIG.A[kind], scene = new T.Scene(); scene.add(new T.HemisphereLight(0xfff6e8, 0x5a4a7a, .75));
+    const key = new T.DirectionalLight(0xfff0d8, 1.05); key.position.set(1.5, 4, 2.5); key.castShadow = true; key.shadow.mapSize.set(512, 512); Object.assign(key.shadow.camera, { left: -1.2, right: 1.2, top: 1.2, bottom: -1.2, near: .5, far: 10 }); key.shadow.bias = -.002; key.shadow.radius = 4; scene.add(key);
+    const rim = new T.DirectionalLight(0xd8e8ff, .5); rim.position.set(-2.5, 1.5, -2); scene.add(rim);
+    const g = grp(scene), P = R0.b(g); g.rotation.y = RIG.VIEW[R0.m] || .5; if (R0.m === "fly") g.rotation.x = .8; if (R0.m === "flutter") g.rotation.x = .25;   // fliers are seen a little from above, so the wings show
+    const box = new T.Box3(), tmp = new T.Box3(); for (let f = 0; f < FR; f++) { R0.p(P, f / FR); g.updateMatrixWorld(true); tmp.setFromObject(g); box.union(tmp); }
+    const sz = box.getSize(new T.Vector3()), ctr = box.getCenter(new T.Vector3()), fit = 1.45 / (Math.max(sz.x, sz.y, sz.z) || 1), air = /fly|hover|flutter/.test(R0.m);
+    g.scale.setScalar(fit); g.position.set(-ctr.x * fit, air ? -ctr.y * fit + .62 : -box.min.y * fit, -ctr.z * fit);
+    if (!air) { const sh = new T.Mesh(new T.PlaneGeometry(4, 4), new T.ShadowMaterial({ opacity: .3 })); sh.rotation.x = -Math.PI / 2; sh.receiveShadow = true; scene.add(sh); }
+    const cam = new T.PerspectiveCamera(30, 1, .1, 20); cam.position.set(.35, 1.15, 3.2); cam.lookAt(0, .64, 0);
+    const cv = document.createElement("canvas"); cv.width = px * FR; cv.height = px; const x = cv.getContext("2d");
+    R.shadowMap.enabled = true; R.shadowMap.type = T.PCFSoftShadowMap; R.setSize(px, px, false);
+    for (let f = 0; f < FR; f++) { R0.p(P, f / FR); R.render(scene, cam); x.drawImage(R.domElement, f * px, 0); }
+    R.setSize(RW, RH, false); R.shadowMap.enabled = false; return cv;
+  }
+  function stripPump() {
+    if (stripBusy || !stripQ.length) return; stripBusy = true;
+    setTimeout(() => { const [kind, px, k] = stripQ.shift(); let cv = null; try { cv = stripMake(kind, px); } catch (e) { console.warn(e); }
+      const done = (url) => { const cbs = strips.get(k); strips.set(k, url); if (Array.isArray(cbs)) cbs.forEach(f => { try { f(url); } catch (e) {} }); stripBusy = false; stripPump(); };
+      if (!cv) done(null); else if (cv.toBlob) cv.toBlob(b => done(b ? URL.createObjectURL(b) : cv.toDataURL())); else done(cv.toDataURL()); }, window.__fast ? 0 : 16);
+  }
+  // strip(kind, px, cb): cb gets the strip's address (or null if the creature has no loop), now or once it is made
+  function strip(kind, px, cb) { if (!RIG.A[kind]) { cb(null); return; } const k = kind + ":" + px, s = strips.get(k); if (s === undefined) { strips.set(k, [cb]); stripQ.push([kind, px, k]); stripPump(); } else if (Array.isArray(s)) s.push(cb); else cb(s); }
+  const motionOf = (kind) => RIG.A[kind] ? { m: RIG.A[kind].m, d: RIG.A[kind].d } : null;
   const EMO = { "🌱": "sprout", "🥕": "carrot", "🌼": "flower", "🪵": "log", "🍀": "clover", "🌾": "reed", "🦋": "flower", "🪷": "lily", "🐸": "frog", "🌿": "bush", "🪻": "tulip", "🍄": "mushroom", "🌰": "acorn", "🐌": "rock", "🍂": "leaf", "🌳": "round", "🦉": "owl", "🍃": "bush", "🫐": "bush", "🦔": "hedgehog", "🌹": "tulip", "🎐": "wind", "🌻": "flower", "🪁": "star", "🏮": "lantern", "🌙": "moon", "🪨": "rock", "⭐": "star", "🌲": "pine", "🪶": "feather", "🕸️": "bush", "💎": "crystal", "🪺": "nest", "🌷": "tulip", "🏡": "house", "⛲": "fountain", "🎡": "wheel", "🌈": "rainbow", "⚓": "anchor", "🐚": "shell", "🪸": "coral", "⛵": "boat", "🗼": "lighthouse", "🌊": "pond", "🦀": "crab", "💧": "pond", "🌴": "tree", "🏖️": "sand", "🦆": "duck", "🌫️": "cloud", "🦅": "eagle", "🌬️": "wind", "🍎": "apple", "🍐": "apple", "🐝": "bee", "🪜": "ladder", "⛈️": "cloud", "⚡": "bolt", "🔮": "crystal", "🕯️": "candle", "🦇": "bat", "🍁": "maple", "🦊": "fox", "❄️": "snowpine", "☃️": "snowman", "🐧": "penguin", "🧊": "crystal", "🦌": "deer", "🌌": "star", "🌸": "blossom", "🌵": "cactus", "☀️": "sun", "🦜": "parrot", "☁️": "cloud", "🎈": "balloon", "🐑": "sheep", "🏔️": "mountain", "🐻": "bear" };
   const scenes = new Map();
   function build(spec) {
@@ -1776,12 +2051,12 @@ const D3 = (() => {
   }
   let last = 0;
   function frame(now) {
-    requestAnimationFrame(frame); if (document.hidden || now - last < 30) return;   // battery (2026-10-23): map scenes are drawn at 30 fps
+    requestAnimationFrame(frame); if (document.hidden) return;   // 2026-10-24 İdris wants smooth motion: scenes run at the display's rate again (they only draw while on screen)
     const dt = Math.min(.05, (now - last) / 1000); last = now;
     for (const [cv, S] of scenes) {
       if (!cv.isConnected) { scenes.delete(cv); continue; } if (!cv.offsetParent || document.documentElement.classList.contains("petting")) continue;
       const t = (now - S.t0) / 1000; S.cam.position.set(Math.sin(t * .22) * 1.1, 2.7, 7.4); S.cam.lookAt(0, .55, 0);
-      S.scene.traverse(o => { if (o.userData && o.userData.spin !== undefined) o.rotation.z += dt * o.userData.spin; const u = o.userData; if (u && u.t0 !== undefined && o.isGroup && o.parent === S.scene) { const age = (now - u.t0) / 1000, k = u.st === "new" ? Math.min(1, age / .7) : 1, pop = u.st === "new" ? 1 + Math.sin(Math.min(1, age / .7) * Math.PI) * .25 : 1, s = o.userData.s0 || (o.userData.s0 = o.scale.x); o.scale.setScalar(s * k * pop); if (u.bob) o.position.y = Math.sin(t * 1.6 + u.k) * .06; } });
+      S.scene.traverse(o => { if (o.userData && o.userData.spin !== undefined) o.rotation.z += dt * o.userData.spin; const u = o.userData; if (u && u.rig) { const R0 = RIG.A[u.rig.k]; R0.p(u.rig.P, (t / R0.d) % 1); } if (u && u.t0 !== undefined && o.isGroup && o.parent === S.scene) { const age = (now - u.t0) / 1000, k = u.st === "new" ? Math.min(1, age / .7) : 1, pop = u.st === "new" ? 1 + Math.sin(Math.min(1, age / .7) * Math.PI) * .25 : 1, s = o.userData.s0 || (o.userData.s0 = o.scale.x); o.scale.setScalar(s * k * pop); if (u.bob) o.position.y = Math.sin(t * 1.6 + u.k) * .06; } });
       R.render(S.scene, S.cam); S.x.clearRect(0, 0, cv.width, cv.height); S.x.drawImage(R.domElement, 0, 0, cv.width, cv.height);
     }
   }
@@ -1983,7 +2258,7 @@ const D3 = (() => {
     g.traverse(o => { if (o.geometry) o.geometry.dispose(); }); lps.set(key, cv); return cv;
   }
   const lpColor = (slot, C) => { const name = LP[slot % 6][Math.min(4, C.v || 0)]; return LPNAT_HEX[name] || C.c; };
-  return { show, sprite, village, EMO, charm, solid, puff, facet, lowpoly, lpColor };
+  return { show, sprite, village, EMO, charm, solid, puff, facet, lowpoly, lpColor, strip, motion: motionOf };
 })();
 // the lawn and the sky take the chapter's colours; the far shore is sand and sea
 const CHAP_GROUND = CHAP_GROUNDC.map(h => parseInt(h.slice(1), 16));
@@ -3445,8 +3720,9 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
   requestAnimationFrame(render); if (!G) { lastTs = ts; return; }
   // the frame's own timestamp drives every animation, so motion advances by exactly one display interval per frame
   if (G.hold) { const pn = performance.now(); if (pn > G.hold + 60) G.hold = 0; else if (pn > G.hold) return; }
-  // battery (2026-10-23): once nothing has moved or been touched for a second, the board is redrawn about 15 times a second instead of every frame
-  if (G.busy) wakeT = pf0; else if (pf0 - wakeT > 1000 && !particles.length && !fx.length && !dying.length && !floaters.length && !G.shake && pf0 - lastDraw < 64) return;
+  // 2026-10-24 İdris: "oyun içi animasyonlar çok durgun ve akıcı değil". The board runs at the display's full rate again; only when it has not
+  // been touched for twenty seconds does it drop to about 30 frames a second (battery, 2026-10-23)
+  if (G.busy) wakeT = pf0; else if (pf0 - wakeT > 20000 && !particles.length && !fx.length && !dying.length && !floaters.length && !G.shake && pf0 - lastDraw < 30) return;
   lastDraw = pf0;
   const now = ts, dt = Math.min(.05, Math.max(0, (ts - lastTs) / 1000)); lastTs = ts;
   hudTick(dt);
@@ -3472,8 +3748,10 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
   if (hinting) { if (!G.hint) G.hint = findMove(); if (G.hint) { h0 = G.hint[0]; h1 = G.hint[1]; hk = Math.min(1, (now - G.hintAt) / 350); ctx.globalAlpha = hk * .9; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = Math.max(2, CELL * .05); ctx.lineCap = "round"; const m = CELL * .04, a = CELL * .22; ctx.beginPath(); for (const h of [h0, h1]) { const x0 = h[1] * CELL + m, y0 = h[0] * CELL + m, x1 = (h[1] + 1) * CELL - m, y1 = (h[0] + 1) * CELL - m; ctx.moveTo(x0, y0 + a); ctx.lineTo(x0, y0); ctx.lineTo(x0 + a, y0); ctx.moveTo(x1 - a, y0); ctx.lineTo(x1, y0); ctx.lineTo(x1, y0 + a); ctx.moveTo(x1, y1 - a); ctx.lineTo(x1, y1); ctx.lineTo(x1 - a, y1); ctx.moveTo(x0 + a, y1); ctx.lineTo(x0, y1); ctx.lineTo(x0, y1 - a); } ctx.stroke(); ctx.globalAlpha = 1; } }   // 2026-10-20 İdris: the hint looked like a special charm's glow. Now it is white corner marks and the two charms nudge toward each other, nothing glows
   // gems
   let n = 0; for (let r = 0; r < ROWS; r++) { const row = G.grid[r]; for (let c = 0; c < COLS; c++) { const g = row[c]; if (g) LIST[n++] = g; } } LIST.length = n;
-  // (idle sparkles on resting charms were removed on 2026-10-23: they kept the board redrawing every frame and drained the battery)
-  const shd = shadowSprite(), shw = shd.width / DPR;
+  // 2026-10-24: resting charms are alive: each breathes on its own slow beat, a band of light runs across the board every few seconds, and
+  // now and then one charm catches the light and twinkles
+  const shd = shadowSprite(), shw = shd.width / DPR, calm = !G.busy && !G.over, wave = ((now % 5200) / 5200) * (COLS + ROWS + 8) - 4;
+  if (calm && now - (G.twT || 0) > 260 && n) { G.twT = now; const g = LIST[rnd(n)]; if (g && !g.dur) (G.tw || (G.tw = [])).push({ g, t: now }); }
   for (let i = 0; i < n; i++) {
     const g = LIST[i]; let ox = 0, oy = 0, rot = 0, lift = 0, vel = 0, sc = 1, sy = 1, al = 1;
     if (g.dur) { wakeT = pf0;
@@ -3502,12 +3780,16 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
     if (sel && sel[0] === g.r && sel[1] === g.c && !g.dur) { sc *= 1 + .14 * selK; lift = (.6 + .3 * Math.sin(now / 150)) * selK; oy -= (.05 + .03 * Math.sin(now / 150)) * selK; }
     if (g.land) { const t = (now - g.land) / 260; if (t >= 1) g.land = 0; else { const k = Math.sin(t * Math.PI) * (1 - t * .5); sy = 1 - .24 * k; sc *= 1 + .1 * k; } }
     if (vel > .01) sy *= 1 + Math.min(.2, vel * 1.4);   // stretch while falling fast
+    if (g.dur && g.ek === "fall" && vel > .01) rot += Math.sin(now / 70 + g.c * 1.7) * Math.min(.09, vel * .6);   // a little sway on the way down
+    if (g.dur && g.ek !== "fall") { const t = clamp01((now - g.t0) / g.dur), s2 = Math.sin(t * Math.PI); rot += ((g.c - g.fx) - (g.r - g.fy) * .6) * s2 * .22; }   // leans into the swap
+    let br = 1; if (calm && !g.dur && !g.born && !g.pop && !g.land && !g.wob && al === 1) { const b = Math.sin(now / 780 + g.c * .9 + g.r * 1.3); br = 1 + .028 * b; oy -= .018 * (b + 1); }
     const px = (g.x + ox + .5) * CELL, py = (g.y + oy + .5) * CELL + (1 - sy) * CELL * .22;
     // contact shadow (grows + softens when the gem lifts)
     if (sc === 1 && !lift && al === 1) { const rs = SPR.shadowRest; ctx.globalAlpha = 1; ctx.drawImage(rs, Math.round(px * DPR - rs.width / 2) / DPR, Math.round((py + CELL * .12) * DPR - rs.height / 2) / DPR, rs.width / DPR, rs.height / DPR); }
     else { const sw = shw * (.72 + lift * .25) * sc; ctx.globalAlpha = (.9 - lift * .4) * al; ctx.drawImage(shd, 0, shd.height * .225, shd.width, shd.height * .55, px - sw / 2, py + CELL * (.12 + lift * .1) - sw * .275, sw, sw * .55); }
     if (vel > .06 && !g.intro) { ctx.globalAlpha = Math.min(.28, vel * 2) * al; drawGem(g, px, py - vel * CELL * 1.5, sc, now, sy * 1.08, rot); }   // short trail
-    ctx.globalAlpha = al; drawGem(g, px, py - lift * CELL * .08, sc, now, sy, rot);
+    ctx.globalAlpha = al; drawGem(g, px, py - lift * CELL * .08, sc * br, now, sy * (2 - br), rot);
+    if (calm && !g.dur) { const d = Math.abs(g.c + g.r - wave); if (d < 1.6) { const k = 1 - d / 1.6; ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = k * k * .5; drawGem(g, px, py - lift * CELL * .08, sc * br, now, sy * (2 - br), rot); ctx.globalCompositeOperation = "source-over"; } }
     if (g.fuse) {
       const bd = badge(g.fuse); let bs = sc; if (g.fuseT) { const t = (now - g.fuseT) / 340; if (t >= 1) g.fuseT = 0; else if (t > 0) bs *= 1 + .5 * Math.sin(t * Math.PI); }
       const bw = bd.width / DPR * bs; ctx.drawImage(bd, px + CELL * .25 * sc - bw / 2, py + CELL * .24 * sc - bw / 2, bw, bw);
@@ -3515,6 +3797,11 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
     }
   }
   ctx.globalAlpha = 1;
+  if (G.tw && G.tw.length) { ctx.globalCompositeOperation = "lighter"; ctx.fillStyle = "#fff";
+    for (let i = G.tw.length - 1; i >= 0; i--) { const w = G.tw[i], t = (now - w.t) / 640; if (t >= 1 || w.g.dur || !G.grid[w.g.r] || G.grid[w.g.r][w.g.c] !== w.g) { G.tw.splice(i, 1); continue; }
+      const e = Math.sin(t * Math.PI), x = (w.g.c + .3) * CELL, y = (w.g.r + .28) * CELL, R1 = CELL * .26 * e, r1 = R1 * .13; ctx.globalAlpha = e * .95; ctx.save(); ctx.translate(x, y); ctx.rotate(t * 1.2);
+      ctx.beginPath(); for (let j = 0; j < 8; j++) { const a = j * Math.PI / 4, rr = j % 2 ? r1 : R1; ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.closePath(); ctx.fill(); ctx.restore(); }
+    ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1; }
   // dying gems: a quick eased swell with a white flash, then they spin down to nothing
   for (let i = dying.length - 1; i >= 0; i--) {
     const d = dying[i], t = (now - d.t) / 340; if (t >= 1) { dying.splice(i, 1); continue; }
