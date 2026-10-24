@@ -3748,10 +3748,9 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
   if (hinting) { if (!G.hint) G.hint = findMove(); if (G.hint) { h0 = G.hint[0]; h1 = G.hint[1]; hk = Math.min(1, (now - G.hintAt) / 350); ctx.globalAlpha = hk * .9; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = Math.max(2, CELL * .05); ctx.lineCap = "round"; const m = CELL * .04, a = CELL * .22; ctx.beginPath(); for (const h of [h0, h1]) { const x0 = h[1] * CELL + m, y0 = h[0] * CELL + m, x1 = (h[1] + 1) * CELL - m, y1 = (h[0] + 1) * CELL - m; ctx.moveTo(x0, y0 + a); ctx.lineTo(x0, y0); ctx.lineTo(x0 + a, y0); ctx.moveTo(x1 - a, y0); ctx.lineTo(x1, y0); ctx.lineTo(x1, y0 + a); ctx.moveTo(x1, y1 - a); ctx.lineTo(x1, y1); ctx.lineTo(x1 - a, y1); ctx.moveTo(x0 + a, y1); ctx.lineTo(x0, y1); ctx.lineTo(x0, y1 - a); } ctx.stroke(); ctx.globalAlpha = 1; } }   // 2026-10-20 İdris: the hint looked like a special charm's glow. Now it is white corner marks and the two charms nudge toward each other, nothing glows
   // gems
   let n = 0; for (let r = 0; r < ROWS; r++) { const row = G.grid[r]; for (let c = 0; c < COLS; c++) { const g = row[c]; if (g) LIST[n++] = g; } } LIST.length = n;
-  // 2026-10-24: resting charms are alive: each breathes on its own slow beat, a band of light runs across the board every few seconds, and
-  // now and then one charm catches the light and twinkles
-  const shd = shadowSprite(), shw = shd.width / DPR, calm = !G.busy && !G.over, wave = ((now % 5200) / 5200) * (COLS + ROWS + 8) - 4;
-  if (calm && now - (G.twT || 0) > 260 && n) { G.twT = now; const g = LIST[rnd(n)]; if (g && !g.dur) (G.tw || (G.tw = [])).push({ g, t: now }); }
+  // 2026-10-24: now and then one resting charm catches the light and twinkles (the charms themselves do not move: İdris found that confusing)
+  const shd = shadowSprite(), shw = shd.width / DPR, calm = !G.busy && !G.over;
+  if (calm && now - (G.twT || 0) > 1100 && n) { G.twT = now; const g = LIST[rnd(n)]; if (g && !g.dur) (G.tw || (G.tw = [])).push({ g, t: now }); }
   for (let i = 0; i < n; i++) {
     const g = LIST[i]; let ox = 0, oy = 0, rot = 0, lift = 0, vel = 0, sc = 1, sy = 1, al = 1;
     if (g.dur) { wakeT = pf0;
@@ -3782,14 +3781,13 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
     if (vel > .01) sy *= 1 + Math.min(.2, vel * 1.4);   // stretch while falling fast
     if (g.dur && g.ek === "fall" && vel > .01) rot += Math.sin(now / 70 + g.c * 1.7) * Math.min(.09, vel * .6);   // a little sway on the way down
     if (g.dur && g.ek !== "fall") { const t = clamp01((now - g.t0) / g.dur), s2 = Math.sin(t * Math.PI); rot += ((g.c - g.fx) - (g.r - g.fy) * .6) * s2 * .22; }   // leans into the swap
-    let br = 1; if (calm && !g.dur && !g.born && !g.pop && !g.land && !g.wob && al === 1) { const b = Math.sin(now / 780 + g.c * .9 + g.r * 1.3); br = 1 + .028 * b; oy -= .018 * (b + 1); }
+    const br = 1;   // 2026-10-24 İdris: resting charms breathing on their own was confusing; they keep still again
     const px = (g.x + ox + .5) * CELL, py = (g.y + oy + .5) * CELL + (1 - sy) * CELL * .22;
     // contact shadow (grows + softens when the gem lifts)
     if (sc === 1 && !lift && al === 1) { const rs = SPR.shadowRest; ctx.globalAlpha = 1; ctx.drawImage(rs, Math.round(px * DPR - rs.width / 2) / DPR, Math.round((py + CELL * .12) * DPR - rs.height / 2) / DPR, rs.width / DPR, rs.height / DPR); }
     else { const sw = shw * (.72 + lift * .25) * sc; ctx.globalAlpha = (.9 - lift * .4) * al; ctx.drawImage(shd, 0, shd.height * .225, shd.width, shd.height * .55, px - sw / 2, py + CELL * (.12 + lift * .1) - sw * .275, sw, sw * .55); }
     if (vel > .06 && !g.intro) { ctx.globalAlpha = Math.min(.28, vel * 2) * al; drawGem(g, px, py - vel * CELL * 1.5, sc, now, sy * 1.08, rot); }   // short trail
     ctx.globalAlpha = al; drawGem(g, px, py - lift * CELL * .08, sc * br, now, sy * (2 - br), rot);
-    if (calm && !g.dur) { const d = Math.abs(g.c + g.r - wave); if (d < 1.6) { const k = 1 - d / 1.6; ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = k * k * .5; drawGem(g, px, py - lift * CELL * .08, sc * br, now, sy * (2 - br), rot); ctx.globalCompositeOperation = "source-over"; } }
     if (g.fuse) {
       const bd = badge(g.fuse); let bs = sc; if (g.fuseT) { const t = (now - g.fuseT) / 340; if (t >= 1) g.fuseT = 0; else if (t > 0) bs *= 1 + .5 * Math.sin(t * Math.PI); }
       const bw = bd.width / DPR * bs; ctx.drawImage(bd, px + CELL * .25 * sc - bw / 2, py + CELL * .24 * sc - bw / 2, bw, bw);
