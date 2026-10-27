@@ -235,6 +235,9 @@
   #path u.pebble { position: absolute; width: 7px; height: 5px; scale: var(--s); border-radius: 50%; pointer-events: none; z-index: 0; background: rgba(240, 236, 220, .7); box-shadow: 0 1px 0 rgba(0, 0, 0, .2), 8px 3px 0 -1px rgba(240, 236, 220, .55); }
   .mprop.small { z-index: 0; } .mprop.pond { z-index: 0; transform: translate(-50%, -60%); }
   #path .mprop, #path .mvillage, #path .pogoMap, #path .gate, #path .mcloud { scale: .8; }   /* everything on the map a fifth smaller: the forest seen from higher up */
+  /* 2026-10-27 İdris: "canlıları, ağaçları, kuşları, böcekleri küçült ama tren ve rayları asla": all scenery smaller again, the train, the rails, the stops and the stations keep their size; the train rides above everything */
+  #path .mprop:not(.stn), #path .mvillage, #path .mcloud { scale: .55; } #path .critter, #path u.firefly { scale: .6; }
+  #path .mtrain { z-index: 3; } #path .lv { z-index: 4; } #path .pogoMap { scale: .6; }   /* the train above all scenery; only the stops (its own platforms) sit over it */
   #path .lv { box-shadow: 0 5px 0 rgba(0, 0, 0, .28), 0 10px 0 -2px rgba(0, 0, 0, .12), 0 14px 18px rgba(0, 0, 0, .3), 0 0 0 7px rgba(255, 255, 255, .5); outline: 3px solid rgba(25, 12, 50, .85); z-index: 3; }   /* stops stand up off the ground; 2026-10-24: a white ring and a dark edge so every stop is easy to see */
   #path .path svg, #path > svg { z-index: 2; }
   /* 2026-10-24 İdris: "raylar ve leveller çok belirgin olsun": all scenery sits under the track and the stops */
@@ -817,7 +820,7 @@ const slotsFor = (k) => { if (!k) return SLOT; const toHex = (r, g, b) => "#" + 
   const [sk, lk] = STAGE_SL[k] || [1, 1]; return [[4, .72, .55], [28, .9, .56], [110, .5, .45], [200, .7, .55], [275, .48, .55], [50, .9, .58]].map(([h, s2, l]) => { h += STAGE_HUE[k] || 0; s2 = Math.min(.95, s2 * sk); l = Math.min(.7, l * lk); return { c: rgb(h, s2, l), l: rgb(h, s2 * .7, Math.min(.92, l + .18)), d: rgb(h, Math.min(.5, s2), l * .48) }; }); };
 const palFor = (i) => { const S0 = PASTEL; return palForRaw(i).map((C, j) => Object.assign({}, C, S0[j])); };   // each 25-level stage has its own tones
 // 2026-10-27 İdris: "daha pastel renkler": the six slot hues are soft pastels, still far apart in hue and lightness so no two are mistaken
-const BLHUE_P = ["#ff8f9e", "#ffb26b", "#ffe17a", "#8ad9a0", "#8cb8ff", "#c7a0ff"];
+const BLHUE_P = ["#ff5c8a", "#ff9636", "#ffd319", "#3ddc84", "#38a8ff", "#b36bff"];   // 2026-10-27 İdris: "daha kontrast ve parlak pastel": bright candy tones, far apart in hue
 const PASTEL = BLHUE_P.map(h => ({ c: h, l: mixc0(h, "#ffffff", .55), d: mixc0(h, "#3a2448", .55) }));
 function mixc0(a, b, t) { const f = (h) => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), A = f(a), B = f(b); return "#" + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, "0")).join(""); }
 COLORS.forEach((C, j) => Object.assign(C, PASTEL[j]));
@@ -1393,9 +1396,9 @@ function buildMap() {
       railS.push([y, x]); a += (first ? "M" : "L") + (x + nx).toFixed(1) + " " + (y + ny).toFixed(1); b += (first ? "M" : "L") + (x - nx).toFixed(1) + " " + (y - ny).toFixed(1); first = false; }
     svg.querySelector("#railL").setAttribute("d", a); svg.querySelector("#railR").setAttribute("d", b); railS.sort((p, q) => p[0] - q[0]); }
   // clearRail(nodes): the track and its stops are kept free: a picture whose footprint comes within CLR px of the rail is moved out sideways
-  const CLR = big ? 78 : 52, railRange = (y0, y1) => { let lo = 0, hi = railS.length; while (lo < hi) { const m = lo + hi >> 1; if (railS[m][0] < y0) lo = m + 1; else hi = m; } let a = Infinity, b = -Infinity; for (let i = Math.max(0, lo - 1); i < railS.length && railS[i][0] <= y1 + 20; i++) { const x = railS[i][1]; if (x < a) a = x; if (x > b) b = x; } return [a, b]; };
+  const CLR = big ? 120 : 82, railRange = (y0, y1) => { let lo = 0, hi = railS.length; while (lo < hi) { const m = lo + hi >> 1; if (railS[m][0] < y0) lo = m + 1; else hi = m; } let a = Infinity, b = -Infinity; for (let i = Math.max(0, lo - 1); i < railS.length && railS[i][0] <= y1 + 20; i++) { const x = railS[i][1]; if (x < a) a = x; if (x > b) b = x; } return [a, b]; };
   const clearRail = (nodes) => { for (const el of nodes) { if (!el.style || el.matches(".lv, .mtrain, .pogoMap, .gate")) continue; const L = parseFloat(el.style.left), T = parseFloat(el.style.top); if (isNaN(L) || isNaN(T)) continue;
-      const cs = el.style, w0 = parseFloat(cs.width) || (el.matches(".mvillage") ? (big ? 180 : 85) : el.matches("u.firefly") ? 30 : 14), sc = el.matches(".critter") ? 1 : .8, w = w0 * sc, wx = parseFloat(cs.getPropertyValue("--wx")) || 0, drift = el.matches(".mcloud") ? 120 : 0;
+      const cs = el.style, w0 = parseFloat(cs.width) || (el.matches(".mvillage") ? (big ? 180 : 85) : el.matches("u.firefly") ? 30 : 14), sc = el.matches(".critter, u.firefly") ? .6 : el.matches(".stn") ? .8 : .55, w = w0 * sc, wx = parseFloat(cs.getPropertyValue("--wx")) || 0, drift = el.matches(".mcloud") ? 120 : 0;
       const ctr = el.matches(".mvillage"), top = ctr ? T - w * .4 : el.tagName === "U" ? T - 8 : T - w, bot = ctr ? T + w * .4 : el.tagName === "U" ? T + 8 : T; const [ra, rb] = railRange(top, bot); if (ra === Infinity) continue;
       const a = L - w / 2 - wx, b = L + w / 2 + wx + drift; if (b < ra - CLR || a > rb + CLR) continue;
       let side = (a + b) / 2 < (ra + rb) / 2 ? -1 : 1, nl = side < 0 ? L - (b - (ra - CLR)) : L + (rb + CLR - a);
@@ -3687,9 +3690,9 @@ function realArt(slot, v, px) {
   const A = BLA[name], hue = BLHUE_P[slot % 6], cv = document.createElement("canvas"); cv.width = cv.height = px; const x = cv.getContext("2d"), k = px * .86 / 100;
   x.translate(px / 2, px / 2 - px * .025); x.scale(k, k); x.translate(-50, -50); x.lineJoin = "round"; x.lineCap = "round";
   const parts = A.b.map(glowPart), body = new Path2D(); for (const p of parts) body.addPath(p);
-  const deep = mixc(hue, "#3a2448", .62), ink = mixc(hue, "#3a2448", .7), TH = 7;   // TH: how thick the piece is, in the art's own units
+  const deep = mixc(hue, "#2a0e4a", .5), ink = mixc(hue, "#2a0e4a", .66), TH = 7;   // TH: how thick the piece is, in the art's own units
   const shade = (path, base, cx, cy, R) => {   // a soft clay solid: a broad pale light from the upper left, the colour in the middle, a tinted (never black) shadow toward the far edge
-    const g = x.createRadialGradient(cx - R * .36, cy - R * .44, R * .02, cx - R * .08, cy - R * .06, R * 1.15); g.addColorStop(0, mixc(base, "#ffffff", .62)); g.addColorStop(.28, mixc(base, "#ffffff", .2)); g.addColorStop(.58, base); g.addColorStop(.86, mixc(base, deep, .38)); g.addColorStop(1, mixc(base, deep, .62));
+    const g = x.createRadialGradient(cx - R * .36, cy - R * .44, R * .02, cx - R * .08, cy - R * .06, R * 1.15); g.addColorStop(0, mixc(base, "#ffffff", .55)); g.addColorStop(.24, mixc(base, "#ffffff", .12)); g.addColorStop(.5, base); g.addColorStop(.84, mixc(base, deep, .3)); g.addColorStop(1, mixc(base, deep, .55));
     x.fillStyle = g; x.fill(path);
     x.save(); x.clip(path); const rb = x.createRadialGradient(cx + R * .5, cy + R * .78, R * .1, cx + R * .5, cy + R * .78, R * .75); rb.addColorStop(0, "rgba(255,255,255,.3)"); rb.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = rb; x.fillRect(-10, -10, 120, 120); x.restore(); };
   // the piece stands on the board: a soft contact shadow, then its side wall (the outline pushed down layer by layer, darker toward the bottom)
@@ -3698,7 +3701,7 @@ function realArt(slot, v, px) {
   x.save(); x.strokeStyle = ink; x.lineWidth = 2.6; for (const p of parts) x.stroke(p); x.restore();
   for (const p of parts) shade(p, hue, 50, 50, 48);
   x.save(); x.clip(body);   // a soft occlusion along the rim, a bevel (light top edge, shaded bottom edge), then one broad sheen
-  x.strokeStyle = mixc(hue, deep, .5); x.globalAlpha = .35; x.lineWidth = 7; x.filter = "blur(2px)"; for (const p of parts) x.stroke(p); x.filter = "none"; x.globalAlpha = 1;
+  x.strokeStyle = mixc(hue, deep, .5); x.globalAlpha = .22; x.lineWidth = 7; x.filter = "blur(2px)"; for (const p of parts) x.stroke(p); x.filter = "none"; x.globalAlpha = 1;
   x.save(); x.translate(1.6, 2.6); x.strokeStyle = "rgba(255,255,255,.6)"; x.lineWidth = 3; x.filter = "blur(1px)"; for (const p of parts) x.stroke(p); x.restore(); x.filter = "none";   // the outline moved down-right shows only along the lit upper-left rim
   // cut facets, a little: the body is split into planes around an off-centre point, each plane a touch lighter or darker as it faces the light, with fine bright edges
   if (0) { const fx = 46, fy = 44, N = 10, pts = Array.from({ length: N }, (_, i) => { const a = i * 6.2832 / N + .2; return [50 + Math.cos(a) * 70, 52 + Math.sin(a) * 70]; });
