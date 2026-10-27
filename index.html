@@ -820,7 +820,7 @@ const slotsFor = (k) => { if (!k) return SLOT; const toHex = (r, g, b) => "#" + 
   const [sk, lk] = STAGE_SL[k] || [1, 1]; return [[4, .72, .55], [28, .9, .56], [110, .5, .45], [200, .7, .55], [275, .48, .55], [50, .9, .58]].map(([h, s2, l]) => { h += STAGE_HUE[k] || 0; s2 = Math.min(.95, s2 * sk); l = Math.min(.7, l * lk); return { c: rgb(h, s2, l), l: rgb(h, s2 * .7, Math.min(.92, l + .18)), d: rgb(h, Math.min(.5, s2), l * .48) }; }); };
 const palFor = (i) => { const S0 = PASTEL; return palForRaw(i).map((C, j) => Object.assign({}, C, S0[j])); };   // each 25-level stage has its own tones
 // 2026-10-27 İdris: "daha pastel renkler": the six slot hues are soft pastels, still far apart in hue and lightness so no two are mistaken
-const BLHUE_P = ["#ff5c8a", "#ff9636", "#ffd319", "#3ddc84", "#38a8ff", "#b36bff"];   // 2026-10-27 İdris: "daha kontrast ve parlak pastel": bright candy tones, far apart in hue
+const BLHUE_P = ["#ff2e6e", "#ff7a00", "#ffcc00", "#14c95a", "#1e8fff", "#9b3dff"];   // 2026-10-27 İdris: "daha kontrast ve parlak pastel": bright candy tones, far apart in hue
 const PASTEL = BLHUE_P.map(h => ({ c: h, l: mixc0(h, "#ffffff", .55), d: mixc0(h, "#3a2448", .55) }));
 function mixc0(a, b, t) { const f = (h) => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), A = f(a), B = f(b); return "#" + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, "0")).join(""); }
 COLORS.forEach((C, j) => Object.assign(C, PASTEL[j]));
@@ -3692,9 +3692,9 @@ function realArt(slot, v, px) {
   const parts = A.b.map(glowPart), body = new Path2D(); for (const p of parts) body.addPath(p);
   const deep = mixc(hue, "#2a0e4a", .5), ink = mixc(hue, "#2a0e4a", .66), TH = 7;   // TH: how thick the piece is, in the art's own units
   const shade = (path, base, cx, cy, R) => {   // a soft clay solid: a broad pale light from the upper left, the colour in the middle, a tinted (never black) shadow toward the far edge
-    const g = x.createRadialGradient(cx - R * .36, cy - R * .44, R * .02, cx - R * .08, cy - R * .06, R * 1.15); g.addColorStop(0, mixc(base, "#ffffff", .55)); g.addColorStop(.24, mixc(base, "#ffffff", .12)); g.addColorStop(.5, base); g.addColorStop(.84, mixc(base, deep, .3)); g.addColorStop(1, mixc(base, deep, .55));
+    const g = x.createRadialGradient(cx - R * .36, cy - R * .44, R * .02, cx - R * .08, cy - R * .06, R * 1.15); g.addColorStop(0, mixc(base, "#ffffff", .4)); g.addColorStop(.2, mixc(base, "#ffffff", .05)); g.addColorStop(.42, base); g.addColorStop(.84, mixc(base, deep, .3)); g.addColorStop(1, mixc(base, deep, .55));
     x.fillStyle = g; x.fill(path);
-    x.save(); x.clip(path); const rb = x.createRadialGradient(cx + R * .5, cy + R * .78, R * .1, cx + R * .5, cy + R * .78, R * .75); rb.addColorStop(0, "rgba(255,255,255,.3)"); rb.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = rb; x.fillRect(-10, -10, 120, 120); x.restore(); };
+    x.save(); x.clip(path); const rb = x.createRadialGradient(cx + R * .5, cy + R * .78, R * .1, cx + R * .5, cy + R * .78, R * .75); rb.addColorStop(0, "rgba(255,255,255,.15)"); rb.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = rb; x.fillRect(-10, -10, 120, 120); x.restore(); };
   // the piece stands on the board: a soft contact shadow, then its side wall (the outline pushed down layer by layer, darker toward the bottom)
   x.save(); x.filter = "blur(3px)"; x.fillStyle = "rgba(40,20,60,.28)"; x.translate(2, TH + 3); x.fill(body); x.restore();
   for (let t = TH; t >= 1; t--) { x.save(); x.translate(0, t); x.fillStyle = mixc(hue, deep, .32 + .3 * t / TH); x.fill(body); x.strokeStyle = ink; x.lineWidth = t === TH ? 2.6 : 0; if (t === TH) for (const p of parts) x.stroke(p); x.restore(); }
@@ -3709,7 +3709,7 @@ function realArt(slot, v, px) {
     x.beginPath(); for (let i = 0; i < 8; i++) { const a = i * .7854 + .39; x.lineTo(fx + Math.cos(a) * 15, fy + Math.sin(a) * 13); } x.closePath(); x.fillStyle = "rgba(255,255,255,.1)"; x.fill();
     x.strokeStyle = "rgba(255,255,255,.2)"; x.lineWidth = .9; for (const p of pts) { x.beginPath(); x.moveTo(fx, fy); x.lineTo(p[0], p[1]); x.stroke(); } x.stroke(); }
   // a matte finish: one soft sheen instead of a glossy spot
-  const sp = x.createRadialGradient(32, 26, 0, 32, 26, 30); sp.addColorStop(0, "rgba(255,255,255,.5)"); sp.addColorStop(.4, "rgba(255,255,255,.16)"); sp.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = sp; x.fillRect(0, 0, 100, 100);
+  const sp = x.createRadialGradient(32, 26, 0, 32, 26, 30); sp.addColorStop(0, "rgba(255,255,255,.38)"); sp.addColorStop(.4, "rgba(255,255,255,.08)"); sp.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = sp; x.fillRect(0, 0, 100, 100);
   x.fillStyle = "rgba(255,255,255,.7)"; x.filter = "blur(.8px)"; x.beginPath(); x.ellipse(29, 22, 7, 3.6, -.6, 0, 6.2832); x.fill(); x.filter = "none";
   x.restore();
   const dark = mixc(hue, "#3a2448", .72);
