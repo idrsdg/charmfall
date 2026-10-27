@@ -373,6 +373,14 @@
   /* 2026-10-27 İdris "durdurma tuşu hiç belli olmuyor": the board scene (#gTheme, positioned) was painted over the button's orange face; the button now sits above it, larger, with a white rim and a drop shadow */
   html.app #btnPause { position: relative; z-index: 3; width: 52px; height: 52px; border: 3px solid #fff; border-radius: 16px; background: linear-gradient(#ffb066, #ff6a00); box-shadow: 0 4px 0 #8a3600, 0 8px 14px rgba(0, 0, 0, .35); } html.app #btnPause .ico { width: 26px; height: 26px; vertical-align: middle; }
   html.app .bar { grid-column: 2 / 6; grid-row: 1; margin: 0; align-self: end; }
+  /* 2026-10-27 İdris "3 yıldız barı özensiz": a level bar in three equal parts, a round star badge at the end of each part, grey until it is earned, then gold */
+  html.app #game > .bar { height: 22px; overflow: visible; border: 3px solid #fff2c4; background: linear-gradient(#0f2e17, #1d4a28); box-shadow: inset 0 2px 4px rgba(0, 0, 0, .45), 0 3px 0 rgba(0, 0, 0, .25); margin-right: 12px; }
+  html.app #game > .bar i { border-radius: 999px; overflow: hidden; background: linear-gradient(180deg, #fff7a0 0%, #ffd23f 45%, #ff9a2a 100%); box-shadow: inset 0 -3px 0 rgba(160, 70, 0, .35), inset 0 2px 0 rgba(255, 255, 255, .6); }
+  html.app #game > .bar i { transform: none !important; right: auto; width: calc(var(--f, 0) * 100%); transition: width .6s cubic-bezier(.2, .8, .2, 1); will-change: auto; }
+  html.app #game > .bar s, html.app #game > .bar s.end { top: 50%; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #8a9a8e, #4e5e52); border: 2px solid #fff2c4; box-shadow: 0 2px 0 rgba(0, 0, 0, .35); scale: 1; z-index: 2; }
+  html.app #game > .bar s.end { left: 100%; right: auto; }
+  html.app #game > .bar s::after, html.app #game > .bar s.end::after { left: 0; right: 0; top: 50%; transform: translateY(-52%); text-align: center; font-size: 15px; color: #dfe6df; text-shadow: none; }
+  html.app #game > .bar s.hit { background: radial-gradient(circle at 35% 30%, #fff6a0, #ffb800 60%, #e07a00); scale: 1.12; } html.app #game > .bar s.hit::after { color: #fff; text-shadow: 0 1px 0 #a04a00; }
   html.app #gPogo { display: block; grid-column: 6; grid-row: 1 / span 2; justify-self: end; align-self: center; }
   html.app #gPogo .pogo { width: 62px; height: 62px; margin: 0; overflow: hidden; border-radius: 50%; background: radial-gradient(circle at 50% 30%, #ffb3ea, #c03cf2); border: 3px solid #ffe7a3; box-shadow: 0 3px 0 #123a1c; } html.app #gPogo .pogo .all { animation: none; } html.app #gPogo .pogo.happy { animation: bump .5s cubic-bezier(.2, 1.6, .4, 1) 2; }
   html.app .frz { grid-column: 2 / 6; grid-row: 2; margin: 9px 0 0; align-self: start; }
@@ -2846,7 +2854,7 @@ function hudInit() {
   $("goalBox").innerHTML = `<span style="font-size:22px">${icon}</span><div><small>${L.goal === "score" ? "stars to go" : L.goal === "ingredients" ? "seeds left" : L.goal === "jelly" ? "ash left" : "brambles left"}</small><b id="goalN"></b></div>`;
   HUD.goalN = $("goalN"); HUD.left = HUD.lS = HUD.lT = goalLeft(); HUD.goalN.textContent = goalShow(HUD.left);
   HUD.sS = HUD.sG = G.score; HUD.sT = shown(G.score); HUD.score.textContent = fmt(HUD.sT); HUD.mT = G.moves; HUD.moves.textContent = G.moves; $("lvNum").textContent = G.level + 1;
-  HUD.marks[0].style.left = st[0] / st[2] * 100 + "%"; HUD.marks[1].style.left = st[1] / st[2] * 100 + "%";
+  HUD.marks[0].style.left = "33.333%"; HUD.marks[1].style.left = "66.667%";   // 2026-10-27 İdris: every star takes an equal third of the bar
   updateHud();
 }
 function updateHud() {
@@ -2854,8 +2862,8 @@ function updateHud() {
   HUD.moves.style.color = G.moves <= 5 ? "#ff7a95" : ""; $("gPogo").classList.toggle("worry", G.moves <= 5 && !G.over);
   if (G.score !== HUD.sG) { if (G.score > HUD.sG) bump(HUD.score); HUD.sG = G.score; }
   const left = goalLeft(); if (left < HUD.left && G.L.goal !== "score") bump(HUD.goalN); HUD.left = left;
-  const st = HUD.st; HUD.bar.style.transform = `translateX(${(Math.min(1, G.score / st[2]) - 1) * 100}%)`;
-  HUD.marks[0].classList.toggle("hit", G.score >= st[0]); HUD.marks[1].classList.toggle("hit", G.score >= st[1]);
+  const st = HUD.st, sc = G.score, f = sc >= st[2] ? 1 : sc >= st[1] ? 2 / 3 + (sc - st[1]) / Math.max(1, st[2] - st[1]) / 3 : sc >= st[0] ? 1 / 3 + (sc - st[0]) / Math.max(1, st[1] - st[0]) / 3 : sc / Math.max(1, st[0]) / 3; HUD.bar.style.transform = `translateX(${(f - 1) * 100}%)`; HUD.bar.style.setProperty("--f", f.toFixed(4));
+  HUD.marks[0].classList.toggle("hit", G.score >= st[0]); HUD.marks[1].classList.toggle("hit", G.score >= st[1]); HUD.marks[2].classList.toggle("hit", G.score >= st[2]);
   HUD.frzFill.style.transform = `translateX(${Math.min(100, G.frenzy) - 100}%)`; HUD.frz.classList.toggle("full", G.frenzy >= 100);
   for (const k in HUD.boosts) { const el = HUD.boosts[k]; el.classList.toggle("empty", !save.boost[k] || (k === "undo" && !G.undo)); el.classList.toggle("on", G.boost === k); if (HUD.counts[k].textContent !== String(save.boost[k])) HUD.counts[k].textContent = save.boost[k]; }
 }
@@ -3963,7 +3971,7 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
         if (g.fresh) al = clamp01(g.y - g.top + 1.15);
       } else {
         const t = clamp01(el / g.dur), e = easeSwap(t), s = Math.sin(t * Math.PI); g.x = g.fx + (g.c - g.fx) * e; g.y = g.fy + (g.r - g.fy) * e;
-        lift = s * (g.lift ? .5 : .15); if (g.arc) { const k = s * .22 * g.arc; if (g.fx !== g.c) oy = k; else ox = k; } if (g.lift) sc *= 1 + .18 * s;
+        lift = s * (g.lift ? .3 : .1); if (0 && g.arc) { const k = s * .22 * g.arc; if (g.fx !== g.c) oy = k; else ox = k; } if (g.lift) sc *= 1 + .18 * s;
         if (t >= 1) { g.dur = 0; g.x = g.c; g.y = g.r; g.arc = 0; }
       }
     } else { g.x = g.c; g.y = g.r; }
@@ -3975,10 +3983,9 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
     if (g.fuse && g.fuse <= 3) rot += Math.sin(now / 55) * .06;
     if (h0 && ((h0[0] === g.r && h0[1] === g.c) || (h1[0] === g.r && h1[1] === g.c))) { const o = h0[0] === g.r && h0[1] === g.c ? h1 : h0, p = Math.max(0, Math.sin(now / 230)), n2 = p * p * .14 * hk; ox += (o[1] - g.c) * n2; oy += (o[0] - g.r) * n2; }
     if (sel && sel[0] === g.r && sel[1] === g.c && !g.dur) { sc *= 1 + .14 * selK; lift = (.6 + .3 * Math.sin(now / 150)) * selK; oy -= (.05 + .03 * Math.sin(now / 150)) * selK; }
-    if (g.land) { const t = (now - g.land) / 260; if (t >= 1) g.land = 0; else { const k = Math.sin(t * Math.PI) * (1 - t * .5); sy = 1 - .24 * k; sc *= 1 + .1 * k; } }
-    if (vel > .01) sy *= 1 + Math.min(.2, vel * 1.4);   // stretch while falling fast
-    if (g.dur && g.ek === "fall" && vel > .01) rot += Math.sin(now / 70 + g.c * 1.7) * Math.min(.09, vel * .6);   // a little sway on the way down
-    if (g.dur && g.ek !== "fall") { const t = clamp01((now - g.t0) / g.dur), s2 = Math.sin(t * Math.PI); rot += ((g.c - g.fx) - (g.r - g.fy) * .6) * s2 * .22; }   // leans into the swap
+    if (g.land) { const t = (now - g.land) / 260; if (t >= 1) g.land = 0; else { const k = Math.sin(t * Math.PI) * (1 - t * .5); sy = 1 - .08 * k; sc *= 1 + .03 * k; } }
+    // 2026-10-27 İdris "rahat bırak da aksınlar, kaysın": charms simply slide: no sway, no lean, only a hint of stretch while falling
+    if (vel > .01) sy *= 1 + Math.min(.05, vel * .4);
     const br = 1;   // 2026-10-24 İdris: resting charms breathing on their own was confusing; they keep still again
     const px = (g.x + ox + .5) * CELL, py = (g.y + oy + .5) * CELL + (1 - sy) * CELL * .22;
     // contact shadow (grows + softens when the gem lifts)
