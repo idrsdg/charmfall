@@ -1092,7 +1092,8 @@ const P3 = (() => {
       if (!cv.offsetParent) return;
       if (!st) { const d = Math.min(devicePixelRatio || 1, 2); cv.width = Math.round(cv.clientWidth * d); cv.height = Math.round(cv.clientHeight * d); st = { x: cv.getContext("2d"), c: Z(), es: { a: 0, v: 0, b: 0, w: 0 }, py: 0, px: 0, pr: 0, t0: now, ph: Math.random() * 3, mood: "", turn: cv.closest(".pogoMap.flip") ? .3 : cv.closest(".pogoMap") ? -.3 : 0, drawn: 0 }; slots.set(cv, st); }
       // while a level is on screen Pogo only moves when he reacts, and the map copy behind it rests; while the pet screen is up only that one Pogo is drawn
-      if (inGame && cv.closest("#map")) return; if (petting && !cv.closest("#mPet")) return; if (inGame && cv.classList.contains("face") && st.drawn && !cv.classList.contains("happy") && st.idle) return;
+      if (inGame && cv.closest("#map")) return; if (petting && !cv.closest("#mPet")) return;
+      if (!petting && cv.closest("#map") && !cv.classList.contains("happy") && now - (st.lt || 0) < 30) return; st.lt = now;   // 2026-10-27: Pogo resting on the map breathes at 30 frames a second; his 3D draw was a third of every map frame on the phone if (inGame && cv.classList.contains("face") && st.drawn && !cv.classList.contains("happy") && st.idle) return;
       draw(cv, st, now, dt); st.drawn = 1; st.idle = !cv.classList.contains("happy");
     });
     for (const cv of slots.keys()) if (!cv.isConnected) slots.delete(cv);
@@ -1362,7 +1363,7 @@ setTimeout(() => { for (let i = 0; i < 16; i++) { const C = COLORS[i % NCOL], o 
 const bg = $("bg"); for (let i = 0; i < 70; i++) { const s = document.createElement("i"); s.style.left = Math.random() * 100 + "%"; s.style.top = Math.random() * 100 + "%"; s.style.animationDelay = Math.random() * 3 + "s"; bg.appendChild(s); }
 function highest() { let h = 0; while (save.stars[h]) h++; return Math.min(h, LEVELS.length - 1); }
 const totalStars = () => Object.values(save.best).reduce((a, b) => a + starsOf(b), 0);
-let mapRaf = 0, lastCur = -1;
+let mapRaf = 0, lastCur = -1, mapSig = "";
 // ---- the map. One winding path up the screen, scrolled natively; twenty chapter bands each with its own daylight colours; big glossy stops; a big Pogo at the
 // current one. Chapters ahead are the same world under a grey haze, never dark. Few, large pieces: the whole map is about 450 elements.
 // the map is seen from far: stops half as far apart, every piece half size
@@ -1398,22 +1399,29 @@ function aniHtml(cls, kind, x, y, w, R, extra) {
 function aniWake(el) { const im = el.querySelector("img[data-sk]"); if (!im || !D3) return; const k = im.dataset.sk; im.removeAttribute("data-sk"); D3.strip(k, 176, (url) => { if (!url || !el.isConnected) return; im.onload = () => el.classList.add("go"); im.src = url; }); }
 function buildMap() {
   if (typeof mapZ !== "undefined" && mapZ !== 1) { mapZ = 1; $("path").style.zoom = ""; document.documentElement.classList.remove("mapZoom"); }
-  const bm0 = performance.now(); tickLives(); $("lives").textContent = livesTxt(); $("starsTotal").textContent = Math.max(0, starsFree()); $("carrots").textContent = save.carrots || 0;
+  const bm0 = performance.now(); tickLives(); $("lives").textContent = livesTxt();
+  // 2026-10-27 İdris "harita bazen kasıyor": coming back to the map after a loss or a quit used to lay all two thousand pieces out again (a tenth
+  // of a second on the phone). When nothing the map shows has changed, only the counters above are refreshed and the map stays as it was.
+  let sSum = 0; for (const k in save.stars) sSum += save.stars[k]; const mSig = [highest(), innerWidth, innerHeight, sSum, gardenN(), save.lang, allDone()].join(); $("starsTotal").textContent = Math.max(0, starsFree()); $("carrots").textContent = save.carrots || 0;
   $("btnDaily").classList.toggle("ready", !dailyState().claimed); $("achN").textContent = Object.keys(save.ach).length; $("gdN").textContent = gardenN(); $("albN").textContent = albumN(); const ss = seasonOf(); $("ssN").textContent = tierOf(ss); $("btnSeason").classList.toggle("ready", tierOf(ss) > ss.got); const rc = save.race; $("btnRace").innerHTML = ico(rc && huntWeek(rc.w) ? "hunt" : "race"); $("btnRace").classList.toggle("ready", !!rc && huntWeek(rc.w) && HUNT.filter(c => rc.wins >= c[0]).length > (rc.got || 0));
+  if (mSig === mapSig && lastCur === highest() && $("path").childElementCount > 50) { if (carrotNew) { carrotNew = 0; setTimeout(() => { pogoMood("happy", 2400); bump("carPill"); }, 700); } window.__buildMs = Math.round(performance.now() - bm0); return; }
+  mapSig = mSig;
   const path = $("path"), svg = $("pathSvg"), cur = highest(), G_ = GAP(), N = LEVELS.length, B = Math.max(300, innerHeight / 2 + 90), H = B + N * G_ + Math.max(240, innerHeight / 2 + 60), VW = $("map").clientWidth || 420; MAPW = Math.round(VW * (VW <= 600 ? 1.8 : 1.4)); const W = MAPW, big = VW > 600, SW = VW * (VW <= 600 ? 1.6 : 1.3);   // the land is 2.2 screens wide on a phone (twice the sideways pull it had); the rails keep their old swing (SW) down the middle of it   // wider than the screen, so the land can be panned sideways too   // room above and below so even the first and the last stop can sit mid-screen
   path.innerHTML = ""; path.appendChild(svg); path.style.height = H + "px"; path.style.width = W + "px"; $("map").style.setProperty("--mapbg", CHAP_GROUNDC[chapOf(cur)]); svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("preserveAspectRatio", "none");
   // stops: a gentle S up the page, swinging over 56% of the width, phased so the current stop sits exactly on the centre line; y in px from the top
   const pts = LEVELS.map((_, i) => [W / 2 + Math.sin((i - cur) * .52) * SW * .28 + Math.sin((i - cur) * .19) * SW * .06, H - B - i * G_]);
   let d = "M" + pts[0][0].toFixed(1) + " " + pts[0][1].toFixed(1); const segs = []; for (let i = 0; i < N - 1; i++) { const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(N - 1, i + 2)], c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6], c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6]; segs.push([p1, c1, c2, p2]); d += ` C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`; }
   const sw = big ? 18 : 13;
-  svg.innerHTML = `<path d="${d}" fill="none" stroke="rgba(20,10,40,.45)" stroke-width="${sw + 8}" stroke-linecap="round" transform="translate(0 4)"/><path d="${d}" fill="none" stroke="#4a3626" stroke-width="${sw + 5}" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#e2d6bc" stroke-width="${sw}" stroke-linecap="round"/><path id="pathDone" d="${d}" fill="none" stroke="#ffd23f" stroke-width="${sw}" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#6b4a2b" stroke-width="${(sw * .82).toFixed(1)}" stroke-dasharray="${big ? 4 : 3} ${big ? 11 : 9}"/><path id="railL" fill="none" stroke="#3c3850" stroke-width="${big ? 4.5 : 3.4}"/><path id="railR" fill="none" stroke="#3c3850" stroke-width="${big ? 4.5 : 3.4}"/>`;
+  // 2026-10-27: the track's long outline is written once and drawn five times through <use>; it was parsed five times on every visit
+  svg.innerHTML = `<defs><path id="trk" d="${d}"/></defs><use href="#trk" fill="none" stroke="rgba(20,10,40,.45)" stroke-width="${sw + 8}" stroke-linecap="round" transform="translate(0 4)"/><use href="#trk" fill="none" stroke="#4a3626" stroke-width="${sw + 5}" stroke-linecap="round"/><use href="#trk" fill="none" stroke="#e2d6bc" stroke-width="${sw}" stroke-linecap="round"/><use id="pathDone" href="#trk" fill="none" stroke="#ffd23f" stroke-width="${sw}" stroke-linecap="round"/><use href="#trk" fill="none" stroke="#6b4a2b" stroke-width="${(sw * .82).toFixed(1)}" stroke-dasharray="${big ? 4 : 3} ${big ? 11 : 9}"/><path id="railL" fill="none" stroke="#3c3850" stroke-width="${big ? 4.5 : 3.4}"/><path id="railR" fill="none" stroke="#3c3850" stroke-width="${big ? 4.5 : 3.4}"/>`;
   let railLen = 0; const railS = [];   // [y, x] samples along the track, sorted by y
-  { const pd = svg.querySelector("#pathDone"), L = pd.getTotalLength(), done = cur * L / (N - 1); railLen = L; pd.setAttribute("stroke-dasharray", `${done.toFixed(1)} ${(L - done + 10).toFixed(1)}`);
+  { const pd = svg.querySelector("#pathDone");
     // two rails: each cubic of the spline sampled in a dozen steps and pushed out along its normal, one way and the other (no path-length queries: those cost seconds on a path this long)
-    const ro = sw * .27, K = 14; let a = "", b = "", first = true;
-    for (const [p1, c1, c2, p2] of segs) for (let s = 0; s < K; s++) { const u = s / K, v = 1 - u, x = v * v * v * p1[0] + 3 * v * v * u * c1[0] + 3 * v * u * u * c2[0] + u * u * u * p2[0], y = v * v * v * p1[1] + 3 * v * v * u * c1[1] + 3 * v * u * u * c2[1] + u * u * u * p2[1];
+    const ro = sw * .27, K = 14; let a = "", b = "", first = true, L = 0, px = pts[0][0], py = pts[0][1], done = 0;   // the track's length is summed from the same samples (no getTotalLength)
+    for (let si = 0; si < segs.length; si++) { const [p1, c1, c2, p2] = segs[si]; if (si === cur) done = L; for (let s = 0; s <= K; s++) { if (s === K) { L += Math.hypot(p2[0] - px, p2[1] - py); px = p2[0]; py = p2[1]; continue; } const u = s / K, v = 1 - u, x = v * v * v * p1[0] + 3 * v * v * u * c1[0] + 3 * v * u * u * c2[0] + u * u * u * p2[0], y = v * v * v * p1[1] + 3 * v * v * u * c1[1] + 3 * v * u * u * c2[1] + u * u * u * p2[1];
       let dx = 3 * v * v * (c1[0] - p1[0]) + 6 * v * u * (c2[0] - c1[0]) + 3 * u * u * (p2[0] - c2[0]), dy = 3 * v * v * (c1[1] - p1[1]) + 6 * v * u * (c2[1] - c1[1]) + 3 * u * u * (p2[1] - c2[1]); const m = Math.hypot(dx, dy) || 1; dx /= m; dy /= m; const nx = -dy * ro, ny = dx * ro;
-      railS.push([y, x]); a += (first ? "M" : "L") + (x + nx).toFixed(1) + " " + (y + ny).toFixed(1); b += (first ? "M" : "L") + (x - nx).toFixed(1) + " " + (y - ny).toFixed(1); first = false; }
+      L += Math.hypot(x - px, y - py); px = x; py = y; railS.push([y, x]); a += (first ? "M" : "L") + (x + nx).toFixed(1) + " " + (y + ny).toFixed(1); b += (first ? "M" : "L") + (x - nx).toFixed(1) + " " + (y - ny).toFixed(1); first = false; } }
+    if (cur >= segs.length) done = L; railLen = L; pd.setAttribute("stroke-dasharray", `${done.toFixed(1)} ${(L - done + 10).toFixed(1)}`);
     svg.querySelector("#railL").setAttribute("d", a); svg.querySelector("#railR").setAttribute("d", b); railS.sort((p, q) => p[0] - q[0]); }
   // clearRail(nodes): the track and its stops are kept free: a picture whose footprint comes within CLR px of the rail is moved out sideways
   const CLR = big ? 120 : 82, railRange = (y0, y1) => { let lo = 0, hi = railS.length; while (lo < hi) { const m = lo + hi >> 1; if (railS[m][0] < y0) lo = m + 1; else hi = m; } let a = Infinity, b = -Infinity; for (let i = Math.max(0, lo - 1); i < railS.length && railS[i][0] <= y1 + 20; i++) { const x = railS[i][1]; if (x < a) a = x; if (x > b) b = x; } return [a, b]; };
@@ -1440,8 +1448,8 @@ function buildMap() {
   const LIFE = ["deer", "fox", "rabbit", "hedgehog", "duck", "butterfly", "bird", "bird2"];
   // Only the place the player is in and its two neighbours are built at once. The scenery of the other seventeen places is added a moment
   // later, off screen, so coming back to the map does not wait for seven hundred pictures to be laid out.
-  const lateBy = {};
-  for (let c = 0; c < CHAPTERS.length; c++) { const C = CHAPTERS[c], lock = c * 10 > cur, won = c * 10 + 9 < cur, h0 = h, far = Math.abs(c - chapOf(cur)) > 1; h = "";
+  const lateBy = {}, farC = new Set();
+  for (let c = 0; c < CHAPTERS.length; c++) { const C = CHAPTERS[c], lock = c * 10 > cur, won = c * 10 + 9 < cur, h0 = h, far = pts[Math.min(N - 1, c * 10 + 9)][1] - G_ > pts[cur][1] + 1000 || pts[Math.min(N - 1, c * 10)][1] + G_ < pts[cur][1] - 1000; h = "";   // 2026-10-27: only what lies within a screen or so of the current stop is laid out at once
     for (let k = 0; k < 20; k++) { const i = c * 10 + Math.floor(k * 9 / 20), p = pts[Math.min(N - 1, i)], side = (k >> 1) % 2 ? 1 : -1, lock = i > cur, life = won && k % 2 === 1, kind = life ? LIFE[(c + k) % LIFE.length] : D3 ? (D3.EMO[C.props[k % 4]] || "bush") : "bush", sz = Math.round((66 + R() * 40) * (big ? 1.35 : 1) * (life ? 2.4 : TALL.test(kind) ? 2.4 : 1)), xo = (big ? 100 : 70) + R() * (big ? 260 : 150), x = Math.max(W * .04, Math.min(W * .96, p[0] + side * xo)), y = p[1] - 40 + R() * 150;
       if (D3) h += `<div data-kind="${kind}" class="mprop${lock ? " lock" : ""}${won ? (k % 2 === 1 ? " live" : " won") : ""}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px;--dl:-${(R() * 3).toFixed(1)}s"><img src="${D3.sprite(kind, sz > 150 ? 256 : 128)}" alt=""></div>`; }
     if (D3) for (let k = 0; k < 10; k++) { const i = c * 10 + k, p = pts[Math.min(N - 1, i)], side = k % 2 ? 1 : -1, lock = i > cur, kind = D3.EMO[C.props[(k + 1) % 4]] || "bush", sz = Math.round((70 + R() * 50) * (big ? 1.35 : 1) * (TALL.test(kind) ? 2.4 : 1)), x = Math.max(W * .03, Math.min(W * .97, p[0] + side * ((big ? 380 : 240) + R() * W * .22))), y = p[1] - 70 + R() * 170;
@@ -1471,7 +1479,7 @@ function buildMap() {
         h += aniHtml(`critter c-${kind}`, kind, x, y, (big ? 110 : 80) * (.85 + R() * .3), R, `;--fx:${((k % 2 ? 1 : -1) * (30 + R() * 30)).toFixed(0)}px`); }
       if (c * 10 <= cur + 10) for (let k = 0; k < 8; k++) { const i = c * 10 + k, p = pts[Math.min(N - 1, i)], x = Math.max(W * .03, Math.min(W * .97, p[0] + (k % 2 ? -1 : 1) * (20 + R() * W * .25))), y = p[1] - 30 + R() * 110; h += `<u class="fly" style="left:${Math.round(x)}px;top:${Math.round(y)}px;--dl:-${(R() * 3).toFixed(1)}s"></u>`; }
       for (let k = 0; k < 3; k++) { const i = c * 10 + 2 + k * 3, p = pts[Math.min(N - 1, i)]; h += `<div class="mcloud" style="left:${Math.round(R() * W * .8)}px;top:${Math.round(p[1] - 80 - R() * 60)}px;width:${Math.round((110 + R() * 70) * (big ? 1.3 : 1))}px;--t:${(38 + R() * 30).toFixed(0)}s;--dl:-${(R() * 30).toFixed(0)}s"><img src="${D3.sprite("cloud", 192)}" alt=""></div>`; } }
-    if (far) { lateBy[c] = h; h = h0; } else h = h0 + h; }
+    if (far) { lateBy[c] = h; farC.add(c); h = h0; } else h = h0 + h; }
   // stations: one at the start and one every twenty-five levels, on the side the sign leaves free; the train waits just behind the current stop
   if (D3) { for (let k = 0; k <= STATIONS.length; k++) { const si = k ? k * STATION_EVERY - 1 : 0, p = pts[si], side = p[0] > W / 2 ? 1 : -1, stw = big ? 170 : 115, x = k ? Math.max(stw * .5, Math.min(W - stw * .5, p[0] + side * (big ? 165 : 105))) : Math.max(stw * .5, Math.min(W - stw * .5, p[0] + side * (big ? 90 : 60))), y = k ? p[1] + 22 : p[1] + (big ? 300 : 250);
       h += `<div class="mprop stn${si > cur ? " lock" : ""}" data-k="${k}" style="left:${Math.round(x)}px;top:${y}px;width:${stw}px"><img src="${D3.sprite("station", 192)}" alt=""><i class="lvplate st"><small>${k ? "Station " + k : "Start"}</small>${k ? STATIONS[k - 1].name : "Charmwood Station"}</i></div>`; }
@@ -1483,8 +1491,9 @@ function buildMap() {
       h += `<div class="mprop work${!reached ? " lock" : built ? " won" : " ruin"}" style="left:${Math.round(x)}px;top:${p[1] + 46}px;width:${ww}px;--dl:-${k * .4}s"><img src="${D3.sprite(GARDEN[k - 1][6], 160)}" alt="">${reached && !built ? `<i class="lvplate st">★ Restore</i>` : ""}</div>`; }
     if (!allDone()) { const mi = Math.min(N - 1, cur + 2), mp = pts[mi], ms = mp[0] > W / 2 ? -1 : 1; h += aniHtml(`mprop mordo${lastCur >= 0 && cur > lastCur && !window.__fast ? " arrive" : ""}`, bossOf(Math.floor(mi / 10) * 10).kind, mp[0] + ms * (big ? 120 : 80), mp[1] - 6, big ? 160 : 120, R); } }
   // stops
-  pts.forEach((p, i) => { const st = save.stars[i] ? "done" : i === cur ? "now" : "lock", hd = hardOf(i), md = isMordo(i) && !save.stars[i], pl = (i === cur ? p[0] <= W / 2 : p[0] > W / 2) ? " l" : "";   // signs hang on the roomier side of the stop; at the current stop Pogo takes that side, so its sign hangs on the other
-    h += `<div class="lv ${st}${hd ? " hard" + hd : ""}" data-i="${i}" style="left:${Math.round(p[0])}px;top:${p[1]}px"><b>${i + 1}</b>${save.stars[i] ? `<s>${"★".repeat(save.stars[i])}<i>${"★".repeat(3 - save.stars[i])}</i></s>` : ""}${md ? `<em>${MORDO}</em>` : ""}${i === cur ? `<i class="lvplate${pl} go">Play</i>` : (i + 1) % 20 === 0 ? `<i class="lvplate${pl} st"><small>Level ${i + 1}</small>${CHAPTERS[chapOf(i)].name}</i>` : ""}</div>`; });
+  // the stops of a far place come in with its scenery (four hundred stops were a third of everything laid out on each visit)
+  pts.forEach((p, i) => { const fc = Math.floor(i / 10), hs = h; h = ""; const st = save.stars[i] ? "done" : i === cur ? "now" : "lock", hd = hardOf(i), md = isMordo(i) && !save.stars[i], pl = (i === cur ? p[0] <= W / 2 : p[0] > W / 2) ? " l" : "";   // signs hang on the roomier side of the stop; at the current stop Pogo takes that side, so its sign hangs on the other
+    h += `<div class="lv ${st}${hd ? " hard" + hd : ""}" data-i="${i}" style="left:${Math.round(p[0])}px;top:${p[1]}px"><b>${i + 1}</b>${save.stars[i] ? `<s>${"★".repeat(save.stars[i])}<i>${"★".repeat(3 - save.stars[i])}</i></s>` : ""}${md ? `<em>${MORDO}</em>` : ""}${i === cur ? `<i class="lvplate${pl} go">Play</i>` : (i + 1) % 20 === 0 ? `<i class="lvplate${pl} st"><small>Level ${i + 1}</small>${CHAPTERS[chapOf(i)].name}</i>` : ""}</div>`; if (farC.has(fc) && i !== cur) { lateBy[fc] = (lateBy[fc] || "") + h; h = hs; } else h = hs + h; });
   // (2026-10-24 İdris: the butterflies round the current stop were too busy and too close to the rails; they are gone)
   // Pogo beside the current stop, on the roomier side
   { const p = pts[cur], left = p[0] > W / 2; h += `<div class="pogoMap pogoBig${left ? " flip" : ""}" onclick="openPet()" style="left:${Math.round(p[0] + (left ? -65 : 65))}px;top:${p[1] + 3}px">${pogoSvg()}</div>`; }
@@ -1493,10 +1502,8 @@ function buildMap() {
   // A far place's scenery is only put on the map when the player scrolls near it: the map holds a few hundred elements, not six thousand
   { const tok = ++mapTok, ANIM = ".mprop.live, .mprop.won, .mprop.mordo, u.firefly, .mcloud, .mprop.flutter, .critter, .ani";
     const addPlace = (c) => { if (tok !== mapTok || !lateBy[c]) return; const first = path.querySelector(".lv"); if (!first) return; const t = document.createElement("template"); t.innerHTML = lateBy[c]; delete lateBy[c]; const nodes = [...t.content.children]; first.before(t.content); clearRail(nodes); if (mapIO) nodes.forEach(n => { if (n.matches(ANIM)) mapIO.observe(n); }); else nodes.forEach(n => { n.classList.add("vis"); if (n.classList.contains("ani")) aniWake(n); }); };
-    mapLate = () => { if (tok !== mapTok) return; const m = $("map"), z = mapZ || 1, top = m.scrollTop / z - 1400, bot = (m.scrollTop + m.clientHeight) / z + 1400; for (const c in lateBy) { const y = pts[Math.min(N - 1, +c * 10 + 5)][1]; if (y > top && y < bot) addPlace(c); } };
+    mapLate = () => { if (tok !== mapTok) return; const m = $("map"), z = mapZ || 1, top = m.scrollTop / z - 1400, bot = (m.scrollTop + m.clientHeight) / z + 1400; for (const c in lateBy) { const y = pts[Math.min(N - 1, +c * 10 + 5)][1]; if (y > top && y < bot) { addPlace(c); requestAnimationFrame(() => mapLate && mapLate()); return; } } };   // one place per frame, never all at once
     setTimeout(() => mapLate && mapLate(), window.__fast ? 0 : 120); }
-  path.querySelectorAll(".lv.done, .lv.now").forEach(n => n.addEventListener("click", () => { lvFrom = n.getBoundingClientRect(); openLevel(+n.dataset.i); }));
-  path.querySelectorAll(".lv .lvplate.st").forEach(n => n.addEventListener("click", (e) => { e.stopPropagation(); openSign(+n.parentNode.dataset.i); }));
   path.querySelectorAll(".mprop.stn").forEach(n => n.addEventListener("click", () => openStation(+n.dataset.k)));
   path.querySelectorAll(".mprop.work").forEach(n => n.addEventListener("click", () => openGarden()));
   // only what is on or near the screen moves: every hopping creature, swaying plant and firefly is paused until it scrolls into view
@@ -1509,6 +1516,8 @@ function buildMap() {
   if (carrotNew) { carrotNew = 0; setTimeout(() => { pogoMood("happy", 2400); bump("carPill"); }, 700); }
   window.__buildMs = Math.round(performance.now() - bm0); window.__mapEls = path.querySelectorAll("*").length;
 }
+// stops and their signs answer through one listener, so stops added later (far places) work too
+$("path").addEventListener("click", (e) => { const pl = e.target.closest(".lv .lvplate.st"); if (pl) { openSign(+pl.parentNode.dataset.i); return; } const n = e.target.closest(".lv.done, .lv.now"); if (n) { lvFrom = n.getBoundingClientRect(); openLevel(+n.dataset.i); } });
 // Mordo's feathers: one hidden in every place the player has reached; tapping it keeps it in the story book (and gives a carrot)
 $("path").addEventListener("click", (e) => { const f = e.target.closest(".mprop.feather"); if (!f) return; const c = +f.dataset.c; save.feathers = save.feathers || {}; if (save.feathers[c]) return; save.feathers[c] = 1; save.carrots = (save.carrots || 0) + 4 * (1); persist(); SFX.reward(); buzz(20);
   f.style.transition = "transform .5s cubic-bezier(.3,1.5,.5,1), opacity .5s"; f.style.transform = "translate(-50%,-160%) scale(1.6)"; f.style.opacity = "0"; setTimeout(() => f.remove(), 520); tip("Mordo's feather found! " + Object.keys(save.feathers).length + "/20", 2600); if ($("carrots")) $("carrots").textContent = save.carrots; });
@@ -2098,6 +2107,12 @@ const D3 = (() => {
   for (const k in RIG.A) { const R0 = RIG.A[k]; BUILD[k] = (g) => { const h = grp(g), P = R0.b(h); R0.p(P, .1); h.userData.rig = { P, k }; }; }
   // A strip of FR rendered frames of one creature's loop, one square frame after another. The strip is made once per creature, when it is
   // first needed on screen, and handed out as a blob address; the map plays it with steps() so it costs nothing while it runs.
+  // 2026-10-27 İdris "oyun bazen kasıyor": every picture on the map was drawn again in 3D at each launch, two to three seconds on the phone before
+  // the map could appear. Each finished picture is now kept on the phone (IndexedDB) and read back at the next launch; any change to this
+  // script changes the version, so an update never shows an old picture.
+  const SPV = (() => { const t = (document.currentScript && document.currentScript.text) || ""; let h = 2166136261; for (let i = 0; i < t.length; i += 3) h = Math.imul(h ^ t.charCodeAt(i), 16777619); return (h >>> 0).toString(36) + t.length; })();
+  const sdb = new Promise(res => { try { const q = indexedDB.open("prismSpr", 1); q.onupgradeneeded = () => q.result.createObjectStore("s"); q.onsuccess = () => res(q.result); q.onerror = () => res(null); q.onblocked = () => res(null); } catch (e) { res(null); } });
+  const keep = (key, blob) => { sdb.then(db => { if (!db || !blob) return; try { db.transaction("s", "readwrite").objectStore("s").put({ v: SPV, b: blob }, key); } catch (e) {} }); };
   const FR = 24, strips = new Map(), stripQ = [];
   let stripBusy = false;
   const frOf = (kind) => Math.max(24, Math.min(48, Math.round(RIG.A[kind].d * 15)));
@@ -2121,11 +2136,11 @@ const D3 = (() => {
   function stripPump() {
     if (stripBusy || !stripQ.length) return; stripBusy = true;
     const [kind, px, k] = stripQ.shift(); let job = null; try { job = stripMake(kind, px); } catch (e) { console.warn(e); }
-    const done = (url) => { const cbs = strips.get(k); strips.set(k, url); if (Array.isArray(cbs)) cbs.forEach(f => { try { f(url); } catch (e) {} }); stripBusy = false; setTimeout(stripPump, window.__fast ? 0 : 60); };
+    const done = (url, blob) => { if (blob) keep("S" + k, blob); const cbs = strips.get(k); strips.set(k, url); if (Array.isArray(cbs)) cbs.forEach(f => { try { f(url); } catch (e) {} }); stripBusy = false; setTimeout(stripPump, window.__fast ? 0 : 60); };
     const tick = () => { if (!window.__fast && performance.now() - mapMoveT < 220) { setTimeout(tick, 120); return; }
       let fin = false; try { fin = !job || job.step(); } catch (e) { console.warn(e); job = null; fin = true; }
       if (!fin) { setTimeout(tick, window.__fast ? 0 : 24); return; } const cv = job && job.cv;
-      if (!cv) done(null); else if (cv.toBlob) cv.toBlob(b => done(b ? URL.createObjectURL(b) : cv.toDataURL())); else done(cv.toDataURL()); };
+      if (!cv) done(null); else if (cv.toBlob) cv.toBlob(b => done(b ? URL.createObjectURL(b) : cv.toDataURL(), b)); else done(cv.toDataURL()); };
     setTimeout(tick, window.__fast ? 0 : 16);
   }
   // strip(kind, px, cb): cb gets the strip's address (or null if the creature has no loop), now or once it is made
@@ -2145,6 +2160,9 @@ const D3 = (() => {
     scenes.set(cv, Object.assign(build(spec), { x: cv.getContext("2d"), t0: performance.now() })); return cv;
   }
   const sprites = new Map();
+  // warm(): the kept pictures are put back before the first map is laid out; old versions are thrown away. Never waits more than 1.2 s.
+  const warm = () => Promise.race([sdb.then(db => db && new Promise(res => { try { const tx = db.transaction("s", "readwrite"), rq = tx.objectStore("s").openCursor(); rq.onsuccess = () => { const c = rq.result; if (!c) return res(); const v = c.value, k = String(c.key);
+      if (v && v.v === SPV && v.b) { const u = URL.createObjectURL(v.b); if (k[0] === "S") strips.set(k.slice(1), u); else sprites.set(k.slice(1), u); } else c.delete(); c.continue(); }; rq.onerror = () => res(); } catch (e) { res(); } })), new Promise(r => setTimeout(r, 1200))]);
   // the village diorama, rendered once per chapter and state with real shadows, from a raised three-quarter view
   function village(ch, past, px) {
     const key = "v" + ch + ":" + (past ? 1 : 0) + ":" + px; if (sprites.has(key)) return sprites.get(key);
@@ -2152,7 +2170,7 @@ const D3 = (() => {
     const g = grp(scene); BUILD.village(g, past, ch);
     const cam = new T.PerspectiveCamera(28, 4 / 3, .1, 40); cam.position.set(3.2, 6.2, 8.4); cam.lookAt(0, .3, 0);
     R.shadowMap.enabled = true; R.shadowMap.type = T.PCFSoftShadowMap; R.setSize(px, Math.round(px * .75), false); R.render(scene, cam); const cv = document.createElement("canvas"); cv.width = px; cv.height = Math.round(px * .75); cv.getContext("2d").drawImage(R.domElement, 0, 0); R.setSize(RW, RH, false); R.shadowMap.enabled = false;
-    const url = cv.toDataURL(); sprites.set(key, url); if (cv.toBlob) cv.toBlob(b => { if (b) sprites.set(key, URL.createObjectURL(b)); }); return url;
+    const url = cv.toDataURL(); sprites.set(key, url); if (cv.toBlob) cv.toBlob(b => { if (b) { sprites.set(key, URL.createObjectURL(b)); keep("P" + key, b); } }); return url;
   }
   // A picture is handed out as a short blob address, not as a data URL: the map uses the same eighty pictures seven hundred times, and written
   // out as data URLs its markup was almost six megabytes that had to be parsed on every visit.
@@ -2165,7 +2183,7 @@ const D3 = (() => {
     const box = new T.Box3().setFromObject(g), sz = box.getSize(new T.Vector3()), ctr = box.getCenter(new T.Vector3()), fit = (top ? 2.1 : 1.3) / (Math.max(sz.x, sz.y, sz.z) || 1); g.scale.setScalar(fit); g.position.set(-ctr.x * fit, top ? -ctr.y * fit : -box.min.y * fit, -ctr.z * fit);
     const cam = new T.PerspectiveCamera(30, 1, .1, 20); if (top) { cam.position.set(0, 4.2, .9); cam.lookAt(0, 0, 0); } else { cam.position.set(.5, 1.0, 3.1); cam.lookAt(0, .62, 0); }
     R.setSize(px, px, false); R.render(scene, cam); const cv = document.createElement("canvas"); cv.width = cv.height = px; cv.getContext("2d").drawImage(R.domElement, 0, 0); R.setSize(RW, RH, false);
-    const url = cv.toDataURL(); sprites.set(key, url); if (cv.toBlob) cv.toBlob(b => { if (b) sprites.set(key, URL.createObjectURL(b)); }); return url;
+    const url = cv.toDataURL(); sprites.set(key, url); if (cv.toBlob) cv.toBlob(b => { if (b) { sprites.set(key, URL.createObjectURL(b)); keep("P" + key, b); } }); return url;
   }
   let last = 0;
   function frame(now) {
@@ -2376,7 +2394,7 @@ const D3 = (() => {
     g.traverse(o => { if (o.geometry) o.geometry.dispose(); }); lps.set(key, cv); return cv;
   }
   const lpColor = (slot, C) => { const name = LP[slot % 6][Math.min(4, C.v || 0)]; return LPNAT_HEX[name] || C.c; };
-  return { show, sprite, village, EMO, charm, solid, puff, facet, lowpoly, lpColor, strip, motion: motionOf };
+  return { show, sprite, village, EMO, charm, solid, puff, facet, lowpoly, lpColor, strip, warm, motion: motionOf };
 })();
 // the lawn and the sky take the chapter's colours; the far shore is sand and sea
 const CHAP_GROUND = CHAP_GROUNDC.map(h => parseInt(h.slice(1), 16));
@@ -4113,9 +4131,10 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
 requestAnimationFrame(render);
 
 // ---------------------------------------------------------------- boot + debug
-buildMap();
-if (!save.guideSeen && !window.__fast && !roomStart) openGuide(() => { if (!storyCheck()) stationCheck(); });
-else if (!storyCheck() && !stationCheck() && save.inProgress && LEVELS[save.inProgress.level]) openLevel(save.inProgress.level);
+// the pictures kept from the last launch are read back first, so the first map is laid out from them instead of being drawn again in 3D
+(D3 && D3.warm && !window.__fast ? D3.warm() : Promise.resolve()).then(() => { if (!$("map").hidden && $("path").childElementCount < 50) buildMap();
+  if (!save.guideSeen && !window.__fast && !roomStart) openGuide(() => { if (!storyCheck()) stationCheck(); });
+  else if (!storyCheck() && !stationCheck() && save.inProgress && LEVELS[save.inProgress.level]) openLevel(save.inProgress.level); });
 { const last = save.lastSeen || 0; if (last && Date.now() - last > 20 * 3600000 && !window.__fast) { const C = CHAPTERS[chapOf(highest())]; setTimeout(() => tip("Last time: " + C.name + " · " + C.title, 4800), 1600); } save.lastSeen = Date.now(); }
 checkAch();
 function bestMove() {
