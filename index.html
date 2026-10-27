@@ -243,7 +243,7 @@
   /* 2026-10-24 İdris: "raylar ve leveller çok belirgin olsun": all scenery sits under the track and the stops */
   #path .mprop:not(.stn):not(.work):not(.feather), #path .critter, #path .mcloud, #path .mvillage, #path u { z-index: 0 !important; }
   #path .lv.lock { filter: none; }
-  #map::after { content: ""; position: fixed; left: 0; right: 0; top: 0; height: 38vh; pointer-events: none; z-index: 5; background: linear-gradient(rgba(214, 238, 255, .55), rgba(214, 238, 255, 0)); }   /* haze over what is far away: depth */
+  #map::after { content: ""; position: fixed; left: 0; right: 0; top: 0; height: 38vh; pointer-events: none; z-index: 5; background: linear-gradient(rgba(8, 3, 14, .6), rgba(8, 3, 14, 0)); }   /* haze over what is far away: depth */
   .mcloud { position: absolute; z-index: 4; pointer-events: none; opacity: .85; animation: cloudDrift var(--t) var(--dl) ease-in-out infinite alternate; } .mcloud img { display: block; width: 100%; } @keyframes cloudDrift { to { transform: translateX(120px); } }
   .mprop.flutter { z-index: 4; } .mprop.flutter img { animation: flutter 3.2s var(--dl) ease-in-out infinite; } @keyframes flutter { 0%, 100% { translate: 0 0; rotate: -8deg; } 25% { translate: var(--fx) -18px; rotate: 10deg; } 50% { translate: calc(var(--fx) * .4) -34px; rotate: -6deg; } 75% { translate: calc(var(--fx) * -.5) -12px; rotate: 8deg; } }
   .gate { position: absolute; transform: translate(-50%, -50%); z-index: 1; pointer-events: none; padding: 5px 14px; border-radius: 999px; background: rgba(12, 42, 20, .72); border: 2px solid #ffe7a3; color: #ffe7a3; font-size: 12px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; } .gate.lock { opacity: .55; filter: grayscale(.7); }
@@ -378,6 +378,11 @@
   html.app .frz { grid-column: 2 / 6; grid-row: 2; margin: 9px 0 0; align-self: start; }
   html.app .hud .box { grid-row: 3; grid-column: span 2; min-width: 0; margin-top: 14px; padding: 7px 6px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
   html.app .hud .box b { font-size: 21px; white-space: nowrap; }
+  /* 2026-10-27 İdris "moves, hedef, level hiçbir şey yok": the board scene (#gTheme, positioned) was painted over the whole HUD; everything of the HUD now sits above it, and a fourth box shows the level */
+  html.app #game { grid-template-columns: repeat(12, 1fr); column-gap: 6px; }
+  html.app #btnPause { grid-column: 1 / 3; } html.app .bar, html.app .frz { grid-column: 3 / 11; } html.app #gPogo { grid-column: 11 / 13; }
+  html.app .hud .box { grid-column: span 3; position: relative; z-index: 3; padding: 7px 3px 8px; } html.app .bar, html.app .frz, html.app #gPogo { position: relative; z-index: 3; }
+  html.app .hud .box.goal { flex-direction: column; padding-left: 4px; padding-right: 4px; } html.app .hud .box.goal > span { position: absolute; left: 3px; bottom: 4px; font-size: 15px !important; line-height: 1; } html.app .hud .box.goal > div { display: flex; flex-direction: column; align-items: center; } html.app .hud .box.goal small { font-size: 9px; letter-spacing: .03em; line-height: 1.1; text-align: center; } html.app .hud .box b { font-size: 19px; }
   html.app .hud .goal { flex-direction: row; gap: 7px; }
   html.app .hud .goal b { font-size: 19px; }
   html.app #boardWrap { grid-column: 1 / -1; grid-row: 4; min-height: 0; padding: 14px 0 6px; margin: 0 -14px; }
@@ -490,7 +495,10 @@
   /* ---- map v3: bands, path, stops, props */
   .band { position: absolute; left: 0; right: 0; z-index: 0; background: linear-gradient(180deg, var(--s1) 0%, var(--s2) 13%, var(--g) 14%, color-mix(in srgb, var(--g) 72%, #2a6a3a) 100%); border-top: 3px solid rgba(255, 255, 255, .55); box-shadow: inset 0 -40px 60px rgba(0, 0, 0, .12); }
   .band::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, .25), rgba(255, 255, 255, 0) 60%); }
-  .band.lock { filter: saturate(.12) brightness(.5); } .band.lock { border-top: 0; } .band:not(.lock):not(.ground) { filter: saturate(1.25) brightness(1.04); }
+  .band.lock { filter: none; background: radial-gradient(ellipse 70% 40% at 50% 60%, rgba(120, 20, 40, .28), rgba(120, 20, 40, 0) 70%), linear-gradient(180deg, #120a1c 0%, #1d1029 40%, #0b0712 100%) !important; }
+  /* 2026-10-27 İdris: the levels not yet won are dark and frightening: the scenery there is only black shapes with a cold edge, under a red-tinged gloom */
+  #path u.dark { display: none; }
+  #path .dark, #path .mprop.lock:not(.stn), #path .mvillage.lock { filter: grayscale(1) brightness(.18) contrast(1.4) drop-shadow(0 0 3px rgba(150, 60, 200, .45)) !important; opacity: .95; } .band.lock { border-top: 0; } .band:not(.lock):not(.ground) { filter: saturate(1.25) brightness(1.04); }
   .band.ground { background: linear-gradient(180deg, var(--g) 0%, color-mix(in srgb, var(--g) 72%, #2a6a3a) 100%); border-top: 4px solid rgba(255, 255, 255, .9); box-shadow: 0 -2px 0 rgba(40, 20, 80, .6); }
   .dawn { position: absolute; left: -30px; right: -30px; height: 40px; z-index: 0; background: linear-gradient(180deg, rgba(80, 70, 110, 0), rgba(80, 70, 110, .35) 60%, rgba(255, 255, 255, .6) 100%); pointer-events: none; } .band.lock::after { background: repeating-linear-gradient(135deg, rgba(255, 255, 255, .06) 0 14px, rgba(255, 255, 255, 0) 14px 28px); }
   .path svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 1; }
@@ -604,6 +612,7 @@
     <button class="back" id="btnBack"><i class="ico" data-ico="back"></i><span class="lbl"> Map</span></button>
     <button class="back pause" id="btnPause" title="Pause"><i class="ico" data-ico="pause"></i></button>
     <button class="back snd" id="btnSound" title="Sound"><i class="ico" data-ico="sound"></i></button>
+    <div class="box lvl"><small>Level</small><b id="lvNum">1</b></div>
     <div class="box"><small>Moves</small><b id="moves">0</b></div>
     <div class="box goal" id="goalBox"></div>
     <div class="box score"><small>Score</small><b id="score">0</b></div>
@@ -1400,7 +1409,8 @@ function buildMap() {
     svg.querySelector("#railL").setAttribute("d", a); svg.querySelector("#railR").setAttribute("d", b); railS.sort((p, q) => p[0] - q[0]); }
   // clearRail(nodes): the track and its stops are kept free: a picture whose footprint comes within CLR px of the rail is moved out sideways
   const CLR = big ? 120 : 82, railRange = (y0, y1) => { let lo = 0, hi = railS.length; while (lo < hi) { const m = lo + hi >> 1; if (railS[m][0] < y0) lo = m + 1; else hi = m; } let a = Infinity, b = -Infinity; for (let i = Math.max(0, lo - 1); i < railS.length && railS[i][0] <= y1 + 20; i++) { const x = railS[i][1]; if (x < a) a = x; if (x > b) b = x; } return [a, b]; };
-  const clearRail = (nodes) => { for (const el of nodes) { if (!el.style || el.matches(".lv, .mtrain, .pogoMap, .gate")) continue; const L = parseFloat(el.style.left), T = parseFloat(el.style.top); if (isNaN(L) || isNaN(T)) continue;
+  const darkY = pts[cur][1] - G_ * .5;   // 2026-10-27: everything above the current stop stands in the dark
+  const clearRail = (nodes) => { for (const el of nodes) { if (!el.style || el.matches(".lv, .mtrain, .pogoMap, .gate")) continue; const L = parseFloat(el.style.left), T = parseFloat(el.style.top); if (isNaN(L) || isNaN(T)) continue; if (T < darkY && !el.matches(".band, .stn, .dawn")) el.classList.add("dark");
       const cs = el.style, w0 = parseFloat(cs.width) || (el.matches(".mvillage") ? (big ? 180 : 85) : el.matches("u.firefly") ? 30 : 14), sc = el.matches(".critter, u.firefly") ? .6 : el.matches(".stn") ? .8 : .55, w = w0 * sc, wx = parseFloat(cs.getPropertyValue("--wx")) || 0, drift = el.matches(".mcloud") ? 120 : 0;
       const ctr = el.matches(".mvillage"), top = ctr ? T - w * .4 : el.tagName === "U" ? T - 8 : T - w, bot = ctr ? T + w * .4 : el.tagName === "U" ? T + 8 : T; const [ra, rb] = railRange(top, bot); if (ra === Infinity) continue;
       const a = L - w / 2 - wx, b = L + w / 2 + wx + drift; if (b < ra - CLR || a > rb + CLR) continue;
@@ -1410,7 +1420,7 @@ function buildMap() {
   let h = "";
   // chapter bands: sky to ground, in the chapter's own colours; ahead of the player the band is hazed and desaturated
   // the light reaches exactly the current stop: the band of the chapter the player is in is cut just above it, bright below and hazed above
-  for (let c = 0; c < CHAPTERS.length; c++) { const top = c === CHAPTERS.length - 1 ? 0 : pts[Math.min(N - 1, c * 10 + 9)][1] - G_ * .55, bot = c === 0 ? H : pts[c * 10][1] + G_ * .45, vars = `--s1:${CHAP_SKY[c][0]};--s2:${CHAP_SKY[c][1]};--g:${CHAP_GROUNDC[c]}`;
+  for (let c = 0; c < CHAPTERS.length; c++) { const top = c === CHAPTERS.length - 1 ? 0 : pts[Math.min(N - 1, c * 10 + 9)][1] - G_ * .55, bot = c === 0 ? H : pts[c * 10][1] + G_ * .45, vars = `--s1:#a6e88a;--s2:#92dc78;--g:#86d66e`;   // 2026-10-27 İdris: the map keeps one look: what is won is always green and bright, what is ahead is dark
     if (c * 10 > cur) h += `<div class="band lock" style="top:${top}px;height:${bot - top}px;${vars}"></div>`;
     else if (c * 10 + 9 <= cur) h += `<div class="band" style="top:${top}px;height:${bot - top}px;${vars}"></div>`;
     else { const cut = pts[cur][1] - G_ * .5; h += `<div class="band lock" style="top:${top}px;height:${cut - top}px;${vars}"></div><div class="band ground" style="top:${cut}px;height:${bot - cut}px;${vars}"></div>`;
@@ -2835,7 +2845,7 @@ function hudInit() {
   const L = G.L, icon = L.goal === "score" ? "⭐" : ico({ jelly: "jelly", ingredients: "key", blockers: "ice" }[L.goal]), st = HUD.st = starTargets(L);
   $("goalBox").innerHTML = `<span style="font-size:22px">${icon}</span><div><small>${L.goal === "score" ? "stars to go" : L.goal === "ingredients" ? "seeds left" : L.goal === "jelly" ? "ash left" : "brambles left"}</small><b id="goalN"></b></div>`;
   HUD.goalN = $("goalN"); HUD.left = HUD.lS = HUD.lT = goalLeft(); HUD.goalN.textContent = goalShow(HUD.left);
-  HUD.sS = HUD.sG = G.score; HUD.sT = shown(G.score); HUD.score.textContent = fmt(HUD.sT); HUD.mT = G.moves; HUD.moves.textContent = G.moves;
+  HUD.sS = HUD.sG = G.score; HUD.sT = shown(G.score); HUD.score.textContent = fmt(HUD.sT); HUD.mT = G.moves; HUD.moves.textContent = G.moves; $("lvNum").textContent = G.level + 1;
   HUD.marks[0].style.left = st[0] / st[2] * 100 + "%"; HUD.marks[1].style.left = st[1] / st[2] * 100 + "%";
   updateHud();
 }
@@ -4141,7 +4151,7 @@ const TR = {
   "🔋 Low Power Mode is on. The phone shows games at 30 fps until it is turned off.": "🔋 Düşük Güç Modu açık. Telefon kapatılana kadar oyunları 30 fps gösterir.",
   "Play": "Oyna", "Start over": "Baştan başla", "▶ Continue": "▶ Devam et", "Continue": "Devam et", "▶ Resume": "▶ Devam", "Map": "Harita", " Map": " Harita", "Exit to map": "Haritaya dön", "Back to map": "Haritaya dön", "Paused": "Duraklatıldı",
   "Your board is saved. Come back any time.": "Tahtan kaydedildi. İstediğin zaman dön.", "🔊 Sound": "🔊 Ses", "🔊 Sound on": "🔊 Ses açık", "🔇 Sound off": "🔇 Ses kapalı", "🎮 All games": "🎮 Tüm oyunlar", "All games": "Tüm oyunlar", "Sound on": "Ses açık", "Sound off": "Ses kapalı", "Perfect!": "Mükemmel!", "👥 Play with friends": "👥 Arkadaşlarla oyna",
-  "Moves": "Hamle", "Goal": "Hedef", "Best": "En iyi", "Stars": "Yıldız", "Frenzy": "Çılgınlık", "Frenzy meter: pop gems to fill it": "Çılgınlık ölçeri: taş patlattıkça dolar", "Pause": "Duraklat", "Sound": "Ses", "Settings": "Ayarlar",
+  "Moves": "Hamle", "Level": "Seviye", "Goal": "Hedef", "Best": "En iyi", "Stars": "Yıldız", "Frenzy": "Çılgınlık", "Frenzy meter: pop gems to fill it": "Çılgınlık ölçeri: taş patlattıkça dolar", "Pause": "Duraklat", "Sound": "Ses", "Settings": "Ayarlar",
   "Level {1}": "Seviye {1}", "Level {1} complete": "Seviye {1} tamamlandı", "Level complete": "Seviye tamamlandı", "★ 1 star = 10 points": "★ 1 yıldız = 10 puan", "Stars earned ★ {1}": "Kazanılan yıldız ★ {1}",
   "Earn {1} star": "{1} yıldız kazan", "Earn {1} stars": "{1} yıldız kazan", "Clear all the ash": "Bütün külü temizle", "Bring {1} seeds down to the soil": "{1} tohumu toprağa indir", "Cut back all the brambles": "Bütün dikenleri temizle",
   "⭐ {1}": "⭐ {1}", "{1} moves left, ★ {2}": "{1} hamle kaldı, ★ {2}", "★ {1}": "★ {1}", "🔑 {1}": "🔑 {1}", "🟪 all": "🟪 hepsi", "🧊 all": "🧊 hepsi",
