@@ -564,31 +564,7 @@
   /* 2026-10-24: living creatures play a strip of their own motion (steps) and wander over the ground (smooth) */
   .ani > i { display: block; position: relative; overflow: hidden; aspect-ratio: 1; }
   .ani > i > img { display: block; width: 100%; height: 100%; }
-  #path .ani.go > i > img { width: calc(var(--fr, 24) * 100%); max-width: none; animation: aniStrip var(--fd, 1s) steps(24) var(--dl, 0s) infinite; will-change: transform; }
-  #path .ani.f25.go > i > img { animation-timing-function: steps(25); }
-  #path .ani.f26.go > i > img { animation-timing-function: steps(26); }
-  #path .ani.f27.go > i > img { animation-timing-function: steps(27); }
-  #path .ani.f28.go > i > img { animation-timing-function: steps(28); }
-  #path .ani.f29.go > i > img { animation-timing-function: steps(29); }
-  #path .ani.f30.go > i > img { animation-timing-function: steps(30); }
-  #path .ani.f31.go > i > img { animation-timing-function: steps(31); }
-  #path .ani.f32.go > i > img { animation-timing-function: steps(32); }
-  #path .ani.f33.go > i > img { animation-timing-function: steps(33); }
-  #path .ani.f34.go > i > img { animation-timing-function: steps(34); }
-  #path .ani.f35.go > i > img { animation-timing-function: steps(35); }
-  #path .ani.f36.go > i > img { animation-timing-function: steps(36); }
-  #path .ani.f37.go > i > img { animation-timing-function: steps(37); }
-  #path .ani.f38.go > i > img { animation-timing-function: steps(38); }
-  #path .ani.f39.go > i > img { animation-timing-function: steps(39); }
-  #path .ani.f40.go > i > img { animation-timing-function: steps(40); }
-  #path .ani.f41.go > i > img { animation-timing-function: steps(41); }
-  #path .ani.f42.go > i > img { animation-timing-function: steps(42); }
-  #path .ani.f43.go > i > img { animation-timing-function: steps(43); }
-  #path .ani.f44.go > i > img { animation-timing-function: steps(44); }
-  #path .ani.f45.go > i > img { animation-timing-function: steps(45); }
-  #path .ani.f46.go > i > img { animation-timing-function: steps(46); }
-  #path .ani.f47.go > i > img { animation-timing-function: steps(47); }
-  #path .ani.f48.go > i > img { animation-timing-function: steps(48); }
+  #path .ani.go > i > img { width: calc(var(--fr, 24) * 100%); max-width: none; animation: aniStrip var(--fd, 1s) steps(var(--fr, 24)) var(--dl, 0s) infinite; will-change: transform; }
   @keyframes aniStrip { to { transform: translateX(-100%); } }
   #path .ani:is(.m-walk, .m-hop, .m-side, .m-swim, .m-perch) > i { animation: aniWander var(--wd, 10s) linear var(--dl, 0s) infinite; }
   @keyframes aniWander { 0% { translate: calc(var(--wx) * -1) 0; scale: 1 1; } 47% { translate: var(--wx) 0; scale: 1 1; } 50% { translate: var(--wx) 0; scale: -1 1; } 97% { translate: calc(var(--wx) * -1) 0; scale: -1 1; } 100% { translate: calc(var(--wx) * -1) 0; scale: 1 1; } }
@@ -1479,7 +1455,11 @@ function aniHtml(cls, kind, x, y, w, R, extra) {
   const sp = mo.v || ANI_SPEED[mo.m], wx = sp ? Math.round(w * (mo.m === "perch" ? .14 : .5) * (.8 + R() * .5)) : 0, wd = sp ? (4 * wx / (w * sp)).toFixed(1) : 0;
   return `<div class="${cls} ani m-${mo.m} f${mo.fr}" data-kind="${kind}" style="${st};--fd:${mo.d}s;--fr:${mo.fr};--dl:-${(R() * 12).toFixed(1)}s;--wx:${wx}px;--wd:${wd}s${extra || ""}"><i><img data-sk="${kind}" src="${src}" alt=""></i></div>`;
 }
-function aniWake(el) { const im = el.querySelector("img[data-sk]"); if (!im || !D3) return; const k = im.dataset.sk; im.removeAttribute("data-sk"); D3.strip(k, 176, (url) => { if (!url || !el.isConnected) return; im.onload = () => el.classList.add("go"); im.src = url; }); }
+// 2026-10-28: the creatures' motion loops are files now (anim/cr-<kind>.webp, made by anim/src/bake-cr.cjs at 24 drawings a second); frames per strip:
+const CR = {"rabbit":38,"fox":24,"hedgehog":24,"deer":31,"sheep":31,"bear":38,"penguin":29,"butterfly":62,"bee":48,"bat":38,"crab":29,"eagle":67,"magpie":38,"gritt":38,"corvin":43,"flock":38};
+function aniWake(el) { const im = el.querySelector("img[data-sk]"); if (!im || !D3) return; const k = im.dataset.sk; im.removeAttribute("data-sk");
+  if (CR[k] && !window.__fast) { im.onload = () => el.classList.add("go"); im.src = "anim/cr-" + k + ".webp"; return; }
+  D3.strip(k, 176, (url) => { if (!url || !el.isConnected) return; im.onload = () => el.classList.add("go"); im.src = url; }); }
 function buildMap() {
   if (typeof mapZ !== "undefined" && mapZ !== 1) { mapZ = 1; $("path").style.zoom = ""; document.documentElement.classList.remove("mapZoom"); }
   const bm0 = performance.now(); tickLives(); $("lives").textContent = livesTxt();
@@ -2428,7 +2408,7 @@ const D3 = (() => {
   const keep = (key, blob) => { sdb.then(db => { if (!db || !blob) return; try { db.transaction("s", "readwrite").objectStore("s").put({ v: SPV, b: blob }, key); } catch (e) {} }); };
   const FR = 24, strips = new Map(), stripQ = [];
   let stripBusy = false;
-  const frOf = (kind) => Math.max(24, Math.min(48, Math.round(RIG.A[kind].d * 15)));
+  const frOf = (kind) => Math.max(24, Math.min(72, Math.round(RIG.A[kind].d * 24)));   // 2026-10-28: 24 drawings a second (was 15)
   function stripMake(kind, px) {
     const R0 = RIG.A[kind], FR = frOf(kind), scene = new T.Scene(); scene.add(new T.AmbientLight(0xfff6e8, (.45) * .9));
     const key = new T.DirectionalLight(0xfff0d8, .95); key.position.set(1.5, 4, 2.5); key.castShadow = true; key.shadow.mapSize.set(512, 512); Object.assign(key.shadow.camera, { left: -1.2, right: 1.2, top: 1.2, bottom: -1.2, near: .5, far: 10 }); key.shadow.bias = -.002; key.shadow.radius = 4; scene.add(key);
