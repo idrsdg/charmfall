@@ -1,0 +1,20 @@
+// node bake.cjs [names...]  : renders Pogo's keyed animations to prism/anim/pogo-<name>.webp (one row of 400 x 440 frames) and a contact sheet per animation
+const pp = require("/Users/aatiii/.npm/_npx/0f94ee7615faf582/node_modules/puppeteer-core"), fs = require("fs"), path = require("path");
+const OUT = path.join(__dirname, ".."), SHEETS = process.env.SHEETS || path.join(__dirname, "contact");
+(async () => { fs.mkdirSync(SHEETS, { recursive: true });
+  const b = await pp.connect({ browserURL: "http://127.0.0.1:9333", defaultViewport: null, protocolTimeout: 300000 }); const page = (await b.pages())[0];
+  await page.setViewport({ width: 900, height: 400, deviceScaleFactor: 1 });
+  await page.goto("http://127.0.0.1:8771/prism/index.html?bake&t=" + Date.now(), { waitUntil: "load" }); await new Promise(r => setTimeout(r, 2500));
+  await page.addScriptTag({ path: path.join(__dirname, "pogo-anim.js") });
+  const names = process.argv.slice(2).length ? process.argv.slice(2) : await page.evaluate(() => Object.keys(POGO_ANIMS));
+  const meta = {};
+  for (const name of names) {
+    const r = await page.evaluate((name) => { const fr = bakePogo(name), W = 400, H = 440, s = document.createElement("canvas"); s.width = W * fr.length; s.height = H; const x = s.getContext("2d"); fr.forEach((c, i) => x.drawImage(c, i * W, 0));
+      const per = 6, cw = 200, ch = 220, rows = Math.ceil(fr.length / per), k = document.createElement("canvas"); k.width = cw * per; k.height = ch * rows; const y = k.getContext("2d"); y.fillStyle = "#cfe9c8"; y.fillRect(0, 0, k.width, k.height);
+      fr.forEach((c, i) => { y.drawImage(c, (i % per) * cw, Math.floor(i / per) * ch, cw, ch); y.fillStyle = "#000"; y.font = "14px sans-serif"; y.fillText(String(i), (i % per) * cw + 4, Math.floor(i / per) * ch + 16); });
+      return { n: fr.length, sheet: s.toDataURL("image/webp", .86), contact: k.toDataURL("image/png") }; }, name);
+    fs.writeFileSync(path.join(OUT, "pogo-" + name + ".webp"), Buffer.from(r.sheet.split(",")[1], "base64"));
+    fs.writeFileSync(path.join(SHEETS, name + ".png"), Buffer.from(r.contact.split(",")[1], "base64"));
+    meta[name] = r.n; console.log(name, r.n, "frames", Math.round(fs.statSync(path.join(OUT, "pogo-" + name + ".webp")).size / 1024) + " KB");
+  }
+  await page.goto("about:blank"); b.disconnect(); })();

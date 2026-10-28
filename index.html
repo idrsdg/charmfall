@@ -598,13 +598,25 @@
   #path .mprop.mordo.ani:not(.go) img { animation: none; } #path .mprop.mordo.ani.arrive > i { animation: mordoArrive 1.1s .5s cubic-bezier(.3, 1.3, .5, 1) both, aniHover 3.4s 1.6s ease-in-out infinite alternate; }
   #path .ani:not(.vis) > i, #path .ani:not(.vis) > i > img { animation: none !important; will-change: auto; }
   .critter.ani { z-index: 3; }
+  #path .ani:is(.critter, .resident):not(.go) { opacity: 0; } #path .ani:is(.critter, .resident).go { transition: opacity .35s; }   /* 2026-10-28: a creature shows only once it moves; never a frozen first frame */
   .bg i, .bg svg, #gWeather u, #gWeather.storm::after { display: none !important; }
   #gWeather.fog::before, #gWeather.fog::after { animation: none !important; }
   /* 2026-10-28: Pogo's quick moments */
   #pgMoment { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 96px); width: 150px; height: 186px; margin-left: -75px; z-index: 80; pointer-events: none; opacity: 0; }
   #pgMoment::before { content: ""; position: absolute; left: 50%; top: 58%; width: 190px; height: 190px; margin: -95px 0 0 -95px; border-radius: 50%; background: repeating-conic-gradient(#ffd84a 0 10deg, #ffb52e 10deg 20deg); border: 4px solid #1d1424; opacity: 0; transform: scale(.4) rotate(0deg); }
   #pgMoment.on { animation: pgmIn .34s cubic-bezier(.3, 1.6, .5, 1) both; } #pgMoment.on::before { animation: pgmBurst 1.6s ease-out both; }
-  #pgMoment.off { animation: pgmOut .28s ease-in both; } #pgMoment .pogo { position: relative; width: 100%; height: 100%; }
+  #pgMoment.off { animation: pgmOut .28s ease-in both; } #pgMoment .pogo { position: relative; width: 100%; height: 100%; margin: 0; }
+  /* 2026-10-28 İdris "AI ile yapılmış gibi animasyon olmasın": Pogo plays hand-keyed animations from files (anim/pogo-*.webp, made by anim/src):
+     a row of 400 x 440 frames shot on twos, twelve drawings a second; the box is scaled up so the effects drawn round him have room */
+  .pa { background-repeat: no-repeat; background-size: calc(var(--n, 1) * 100%) 100%; transform: scale(1.25); transform-origin: 50% 100%; animation: paA var(--d, 1s) steps(var(--n, 1), jump-none) var(--it, 1) both; }
+  @keyframes paA { from { background-position: 0 0; } to { background-position: 100% 0; } } @keyframes paB { from { background-position: 0 0; } to { background-position: 100% 0; } }
+  #gStage { position: absolute; z-index: 2; pointer-events: none; } #gStage .pa { width: 100%; height: 100%; margin: 0; }
+  html.stage #gPogo { display: none !important; } html.app.stage .bar, html.app.stage .frz { grid-column: 3 / 13; } html.app.stage .frz { margin-right: 0; } html.stage #gDecor img:nth-child(2) { visibility: hidden; }
+  #wipe { position: fixed; inset: 0; z-index: 90; overflow: hidden; }
+  #wipe b { position: absolute; top: -10%; bottom: -10%; left: -25%; right: -25%; background: repeating-linear-gradient(90deg, transparent 0 34px, rgba(255, 255, 255, .25) 34px 40px), #ffc93a; border-left: 10px solid #1d1424; border-right: 10px solid #1d1424; transform: translateX(115%) skewX(-14deg); animation: wpIn .28s cubic-bezier(.55, 0, .85, .45) forwards, wpOut .34s .5s cubic-bezier(.15, .55, .3, 1) forwards; }
+  @keyframes wpIn { to { transform: translateX(0) skewX(-14deg); } } @keyframes wpOut { from { transform: translateX(0) skewX(-14deg); } to { transform: translateX(-125%) skewX(-14deg); } }
+  #wipe i { position: absolute; left: 0; top: 50%; width: 150px; height: 165px; margin-top: -90px; animation: wpRun .84s linear forwards; } #wipe i .pa { width: 100%; height: 100%; margin: 0; }
+  @keyframes wpRun { from { transform: translateX(-200px); } to { transform: translateX(calc(100vw + 40px)); } }
   @keyframes pgmIn { from { opacity: 0; transform: translateY(46px) scale(.4); } to { opacity: 1; transform: none; } }
   @keyframes pgmOut { from { opacity: 1; } to { opacity: 0; transform: translateY(30px) scale(.6); } }
   @keyframes pgmBurst { 0% { opacity: 0; transform: scale(.3) rotate(0deg); } 25% { opacity: .9; transform: scale(1) rotate(25deg); } 100% { opacity: 0; transform: scale(1.15) rotate(70deg); } }
@@ -856,7 +868,7 @@ COLORS.forEach((C, j) => Object.assign(C, PASTEL[j]));
 let PAL = COLORS;
 const rnd = (n) => Math.floor(Math.random() * n);
 // a sleep only wakes up if the same game is still running, so leaving a level mid-cascade quietly drops the rest of that cascade
-// in-level motion runs a quarter slower than the original pace (İdris, 2026-10-13): SWAP_MS, FALL_K, BOUNCE_MS, FLY_MS and the chain stagger carry the slower numbers
+// in-level motion: slowed by a quarter on 2026-10-13, then made brisker again on 2026-10-28 (İdris: "oyunu daha hızlandır"): SWAP_MS, FALL_K, BOUNCE_MS, FLY_MS and the chain stagger carry the quicker numbers
 const sleep = (ms) => { const g0 = G; return new Promise(r => setTimeout(() => { if (G === g0) r(); }, window.__fast ? 0 : ms)); };
 const $ = (id) => document.getElementById(id);
 
@@ -931,9 +943,27 @@ const pogoSvg = (mood, face) => `<svg class="pogo ${mood || ""}${face ? " face" 
 </g></svg>`;
 // a short reaction beside the bars (app only): big chains, a full Frenzy meter, special combinations
 const PG_ACT = ["happy", "wow", "yay", "clap", "win", "hello"], pgActive = (cv) => PG_ACT.some(c => cv.classList.contains(c));
-let pogoT = 0; function pogoReact(mood) { mood = mood || "happy"; const el = $("gPogo"); if (!el || !el.firstChild) return; const n = el.firstChild; n.classList.remove(...PG_ACT); void n.getBoundingClientRect(); n.classList.add(mood); clearTimeout(pogoT); pogoT = setTimeout(() => n.classList.remove(mood), mood === "happy" ? 1100 : 1500); }
+// 2026-10-28: Pogo's hand-keyed animations (see anim/src/pogo-anim.js): frame counts of the sheets in anim/, the looping ones, and a player
+const PA = { hello: 18, win: 23, yay: 13, clap: 14, wow: 15, worry: 12, sad: 17, dash: 6, idle: 24 }, PA_LOOP = /^(worry|dash|idle)$/, PA_OF = { happy: "yay", yay: "yay", clap: "clap", wow: "wow", win: "win", hello: "hello", sad: "sad", cheer: "sad" };
+{ const st = document.createElement("style"); st.textContent = Object.entries(PA).map(([k, n]) => `.pa[data-pa=${k}]{--n:${n};--d:${(n / 12).toFixed(3)}s;--it:${PA_LOOP.test(k) ? "infinite" : 1};background-image:url(anim/pogo-${k}.webp)}`).join(""); document.head.appendChild(st);
+  addEventListener("load", () => setTimeout(() => { for (const k in PA) { const im = new Image(); im.src = "anim/pogo-" + k + ".webp"; } }, 200)); }
+const paHtml = (name, cls) => `<div class="pogo pa${cls ? " " + cls : ""}" data-pa="${name}"></div>`;
+function paPlay(el, name, then) { if (!el) return; el.dataset.pa = name; el.style.animationName = el.style.animationName === "paA" ? "paB" : "paA"; clearTimeout(el._pt); if (then && !PA_LOOP.test(name)) el._pt = setTimeout(() => { if (el.isConnected) then(); }, PA[name] * 1000 / 12 + 380); }
+// Pogo stands on the edge of the board while a level is played: he idles, reacts to what happens and frets when the moves run low
+const stagePa = () => { const s = $("gStage"); return s && !s.hidden ? s.firstElementChild : null; }, stageBase = () => G && !G.over && G.moves <= 5 ? "worry" : "idle";
+function placeStage() { const bw = $("boardWrap"); let el = $("gStage"); if (!bw) return; if (!el) { el = document.createElement("div"); el.id = "gStage"; el.innerHTML = paHtml("idle"); bw.appendChild(el); }
+  const room = canvas.offsetTop, ok = !window.__fast && !!G && room >= 60, h = Math.min(150, room + 24); el.hidden = !ok; document.documentElement.classList.toggle("stage", ok); if (!ok) return;
+  el.style.cssText = `left:${Math.round(canvas.offsetLeft + 2)}px;top:${Math.round(room - h + 16)}px;width:${Math.round(h * 400 / 440)}px;height:${Math.round(h)}px`; }
+addEventListener("resize", () => setTimeout(() => { if (G && !$("game").hidden) placeStage(); }, 60));
+function stageMood() { const el = stagePa(); if (el && (el.dataset.pa === "idle" || el.dataset.pa === "worry") && el.dataset.pa !== stageBase()) paPlay(el, stageBase()); }
+// a wipe between screens: a flat yellow panel sweeps across with Pogo dashing over it; the screen changes while it covers
+function wipe(mid) { if (window.__fast) { mid(); return; } const old = $("wipe"); if (old) old.remove(); const el = document.createElement("div"); el.id = "wipe"; el.innerHTML = `<b></b><i>${paHtml("dash")}</i>`; document.body.appendChild(el);
+  setTimeout(() => { try { mid(); } catch (e) { console.error(e); } }, 290); setTimeout(() => el.remove(), 880); }
+function pogoReact(mood) { const sp = stagePa(); if (sp) { paPlay(sp, PA_OF[mood || "happy"] || "yay", () => paPlay(sp, stageBase())); return; } pogoReactHud(mood); }
+let pogoT = 0; function pogoReactHud(mood) { mood = mood || "happy"; const el = $("gPogo"); if (!el || !el.firstChild) return; const n = el.firstChild; n.classList.remove(...PG_ACT); void n.getBoundingClientRect(); n.classList.add(mood); clearTimeout(pogoT); pogoT = setTimeout(() => n.classList.remove(mood), mood === "happy" ? 1100 : 1500); }
 // 2026-10-28: a quick moment: Pogo pops up at the bottom of the screen, does one short thing (a wave, a spin, a clap...) and goes again
-function pogoMoment(mood, ms = 1600) { if (window.__fast) return; let el = $("pgMoment"); if (!el) { el = document.createElement("div"); el.id = "pgMoment"; document.body.appendChild(el); } clearTimeout(pogoMoment.t); clearTimeout(pogoMoment.u); el.className = ""; el.innerHTML = pogoSvg(mood); void el.offsetWidth; el.className = "on";
+function pogoMoment(mood, ms = 1600, over) { if (window.__fast || (!over && document.querySelector(".modal:not([hidden])"))) return;   // never over an open card, it would sit on its buttons
+  let el = $("pgMoment"); if (!el) { el = document.createElement("div"); el.id = "pgMoment"; document.body.appendChild(el); } clearTimeout(pogoMoment.t); clearTimeout(pogoMoment.u); el.className = ""; const nm = PA_OF[mood] || mood; el.innerHTML = paHtml(nm); ms = Math.max(ms, (PA[nm] || 12) * 1000 / 12 + 450); void el.offsetWidth; el.className = "on";
   pogoMoment.t = setTimeout(() => { el.className = "off"; pogoMoment.u = setTimeout(() => { el.className = ""; el.innerHTML = ""; }, 300); }, ms); }
 // every carrot Pogo eats puts a little weight on him, up to a comfortably round rabbit at forty
 const plump = () => Math.min(1, ((typeof save === "object" && save && save.fed) || 0) / 15), pogoKg = () => (1.5 + plump() * 2.5).toFixed(1);
@@ -974,7 +1004,7 @@ $("petBox").addEventListener("pointerup", petUp); $("petBox").addEventListener("
 $("petFeed").addEventListener("click", feedPogo); $("petClose").addEventListener("click", closePet);
 // on the map Pogo never stands still: a new act every few seconds, never the same one twice in a row
 const ACTS = ["a-hop", "a-wave", "a-juggle", "a-dance", "a-spin", "a-look"]; let actI = -1;
-setInterval(() => { const n = document.querySelector(".pogoMap svg.pogo"); if (!n || $("map").hidden || document.hidden) return; n.classList.remove(...ACTS); let k; do k = rnd(ACTS.length); while (k === actI); actI = k; void n.getBoundingClientRect(); n.classList.add(ACTS[k]); setTimeout(() => n.classList.remove(ACTS[k]), 2400); }, 3400);
+setInterval(() => { const n = document.querySelector(".pogoMap .pa"); if (!n || $("map").hidden || document.hidden || n.dataset.pa !== "idle") return; const acts = ["hello", "yay", "clap", "wow"]; let k; do k = rnd(acts.length); while (k === actI); actI = k; paPlay(n, acts[k], () => paPlay(n, "idle")); }, 5200);   // on the map Pogo plays one of his keyed acts every few seconds, then idles again
 // ---------------------------------------------------------------- cel shading (2026-10-28 İdris: "Cel-shaded 3B · anime" is the look of the whole game)
 // Every 3D material is a toon material with three hard light steps; bump maps and gloss are dropped, so the light falls in flat bands like an anime cel.
 const TOON = window.THREE ? (() => { const T = THREE, g = new T.DataTexture(new Uint8Array([105, 105, 105, 255, 180, 180, 180, 255, 255, 255, 255, 255]), 3, 1, T.RGBAFormat); g.minFilter = g.magFilter = T.NearestFilter; g.generateMipmaps = false; g.needsUpdate = true;
@@ -1095,11 +1125,11 @@ const P3 = (() => {
     let u = t % TOTAL, i = 0; while (u >= acts[i][0]) u -= acts[i++][0]; acts[i][1](b, u / acts[i][0], p);
     p.tz += Math.sin(t * .8) * .012; p.lz += Math.sin(t * 1.3) * .03; p.rz -= Math.sin(t * 1.3 + .6) * .03; p.hx += Math.sin(t * 1.1 + 1) * .015; return p;   // never quite still: weight shifts, the arms hang loose
   }
-  function draw(cv, st, now, dt) {
+  function draw(cv, st, now, dt, fix) {
     const cl = cv.classList, mood = cl.contains("hello") ? "hello" : cl.contains("win") ? "win" : cl.contains("yay") ? "yay" : cl.contains("clap") ? "clap" : cl.contains("wow") ? "wow" : cl.contains("eat") ? "eat" : cl.contains("sleep") ? "sleep" : cl.contains("pet") ? "pet" : cl.contains("happy") ? "happy" : cl.contains("cheer") ? "cheer" : cl.contains("calm") ? "calm" : cl.contains("sad") ? "sad" : "", face = cv.classList.contains("face"), t = (now - st.t0) / 1000;
     if (st.mood !== mood) { st.mood = mood; st.t0 = now; }
-    st.lean = +cv.dataset.lean || 0; st.lx = cv.dataset.lx === undefined ? undefined : +cv.dataset.lx; st.ly = +cv.dataset.ly || 0; const p = target(st, (now - st.t0) / 1000, mood, face), c = st.c, k = 1 - Math.exp(-dt * 13);
-    const kh = 1 - Math.exp(-dt * 7), ke = 1 - Math.exp(-dt * 22);
+    st.lean = +cv.dataset.lean || 0; st.lx = cv.dataset.lx === undefined ? undefined : +cv.dataset.lx; st.ly = +cv.dataset.ly || 0; const p = fix || target(st, (now - st.t0) / 1000, mood, face), c = st.c, k = fix ? 1 : 1 - Math.exp(-dt * 13);
+    const kh = fix ? 1 : 1 - Math.exp(-dt * 7), ke = fix ? 1 : 1 - Math.exp(-dt * 22);
     for (const q in c) c[q] = (p.spin && (q === "ry" || q === "y")) || q === "car" ? p[q] : c[q] + (p[q] - c[q]) * (q === "hy" || q === "hx" ? kh : q === "gx" || q === "gy" ? ke : p.hop && q === "y" ? 1 - Math.exp(-dt * 40) : k); if (!p.spin && Math.abs(c.ry) > Math.PI) { c.ry -= Math.sign(c.ry) * Math.PI * 2; st.pr = c.ry; }
     fox.position.set(c.x, c.y, 0); fox.rotation.y = c.ry + (st.turn || 0); fox.scale.set(2 - c.sq, c.sq, 2 - c.sq);
     const br = 1 + Math.sin(t * 3) * .015, fat = plump(); torso.scale.set(1 + fat * .5, br * (1 + fat * .08), 1 + fat * .46); head.scale.set((1 + fat * .14) / (1 + fat * .5), (1 + fat * .06) / (br * (1 + fat * .08)), (1 + fat * .12) / (1 + fat * .46)); footL.position.x = toeL.position.x = -.27 - fat * .12; footR.position.x = toeR.position.x = .27 + fat * .12; toeL.scale.x = toeR.scale.x = .15 + fat * .04; torso.rotation.set(0, c.ty, c.tz); head.rotation.set(c.hx, c.hy, c.hz);
@@ -1141,6 +1171,7 @@ const P3 = (() => {
     if (wantW) { const w = Math.min(RW, Math.max(96, wantW)); if (w !== bufW) { bufW = w; bufH = Math.round(w * RH / RW); R.setSize(bufW, bufH, false); } wantW = 0; }   // takes effect from the next frame
     if (window.__p3) { const d = performance.now() - p3t; window.__p3.ms += d; window.__p3.n++; if (d >= 3 && PERF.cur.length < 12) PERF.cur.push("p3:" + Math.round(d)); }
   }
+  if (/[?&]bake\b/.test(location.search)) { window.__noPogo = 1; window.__P3 = { draw, Z };  }   // the animation bench (anim/src) poses him frame by frame
   requestAnimationFrame(frame); return true;
 })();
 // ---------------------------------------------------------------- persistence
@@ -1486,37 +1517,38 @@ function buildMap() {
       if (lastCur >= 0 && cur === lastCur + 1 && !window.__fast) { const oc = pts[lastCur][1] - G_ * .5; h += `<div class="band lock recede" style="top:${cut}px;height:${oc - cut}px;${vars}"></div>`; for (let m = 0; m < 12; m++) h += `<u class="mote" style="left:${Math.round(pts[cur][0] + (m - 5.5) * (big ? 46 : 30))}px;top:${Math.round(cut + (oc - cut) * (.2 + (m * 37 % 60) / 100))}px;--dl:${(.7 + (m % 5) * .16).toFixed(2)}s;--dx:${(m % 2 ? 1 : -1) * (10 + m * 2)}px"></u>`; } } }
   // props: twelve large pieces per chapter, six a side, from the chapter's own list; the village of every chapter sits beside its middle
   let seed = 5; const R = () => { seed = seed + 0x6D2B79F5 | 0; let q = Math.imul(seed ^ seed >>> 15, 1 | seed); q = q + Math.imul(q ^ q >>> 7, 61 | q) ^ q; return ((q ^ q >>> 14) >>> 0) / 4294967296; };
-  const LIFE = ["deer", "fox", "rabbit", "hedgehog", "duck", "butterfly", "bird", "bird2"];
+  const LIFE = ["blossom", "tulip", "maple", "flower", "clover", "round", "sunflower", "bush"];   // 2026-10-28 İdris "durgun ve donuk olanları kaldır": a won place blooms; still pictures of animals bobbing on the spot are gone
+  const STILL = /^(owl|frog|duck|bird\d?|parrot|eagle|bee|bat|fox|hedgehog|crab|penguin|deer|sheep|bear)$/, unstill = (k) => STILL.test(k) ? "bush" : k;   // an animal only appears where it really moves
   // Only the place the player is in and its two neighbours are built at once. The scenery of the other seventeen places is added a moment
   // later, off screen, so coming back to the map does not wait for seven hundred pictures to be laid out.
   const lateBy = {}, farC = new Set();
   for (let c = 0; c < CHAPTERS.length; c++) { const C = CHAPTERS[c], lock = c * 10 > cur, won = c * 10 + 9 < cur, h0 = h, far = pts[Math.min(N - 1, c * 10 + 9)][1] - G_ > pts[cur][1] + 1000 || pts[Math.min(N - 1, c * 10)][1] + G_ < pts[cur][1] - 1000; h = "";   // 2026-10-27: only what lies within a screen or so of the current stop is laid out at once
-    for (let k = 0; k < 20; k++) { const i = c * 10 + Math.floor(k * 9 / 20), p = pts[Math.min(N - 1, i)], side = (k >> 1) % 2 ? 1 : -1, lock = i > cur, life = won && k % 2 === 1, kind = life ? LIFE[(c + k) % LIFE.length] : D3 ? (D3.EMO[C.props[k % 4]] || "bush") : "bush", sz = Math.round((66 + R() * 40) * (big ? 1.35 : 1) * (life ? 2.4 : TALL.test(kind) ? 2.4 : 1)), xo = (big ? 100 : 70) + R() * (big ? 260 : 150), x = Math.max(W * .04, Math.min(W * .96, p[0] + side * xo)), y = p[1] - 40 + R() * 150;
-      if (D3) h += `<div data-kind="${kind}" class="mprop${lock ? " lock" : ""}${won ? (k % 2 === 1 ? " live" : " won") : ""}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px;--dl:-${(R() * 3).toFixed(1)}s"><img src="${D3.sprite(kind, sz > 150 ? 256 : 128)}" alt=""></div>`; }
-    if (D3) for (let k = 0; k < 10; k++) { const i = c * 10 + k, p = pts[Math.min(N - 1, i)], side = k % 2 ? 1 : -1, lock = i > cur, kind = D3.EMO[C.props[(k + 1) % 4]] || "bush", sz = Math.round((70 + R() * 50) * (big ? 1.35 : 1) * (TALL.test(kind) ? 2.4 : 1)), x = Math.max(W * .03, Math.min(W * .97, p[0] + side * ((big ? 380 : 240) + R() * W * .22))), y = p[1] - 70 + R() * 170;
+    for (let k = 0; k < 20; k++) { const i = c * 10 + Math.floor(k * 9 / 20), p = pts[Math.min(N - 1, i)], side = (k >> 1) % 2 ? 1 : -1, lock = i > cur, life = won && k % 2 === 1, kind = life ? LIFE[(c + k) % LIFE.length] : D3 ? unstill(D3.EMO[C.props[k % 4]] || "bush") : "bush", sz = Math.round((66 + R() * 40) * (big ? 1.35 : 1) * (life ? 1.3 : TALL.test(kind) ? 2.4 : 1)), xo = (big ? 100 : 70) + R() * (big ? 260 : 150), x = Math.max(W * .04, Math.min(W * .96, p[0] + side * xo)), y = p[1] - 40 + R() * 150;
+      if (D3) h += `<div data-kind="${kind}" class="mprop${lock ? " lock" : ""}${won ? " won" : ""}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px;--dl:-${(R() * 3).toFixed(1)}s"><img src="${D3.sprite(kind, sz > 150 ? 256 : 128)}" alt=""></div>`; }
+    if (D3) for (let k = 0; k < 10; k++) { const i = c * 10 + k, p = pts[Math.min(N - 1, i)], side = k % 2 ? 1 : -1, lock = i > cur, kind = unstill(D3.EMO[C.props[(k + 1) % 4]] || "bush"), sz = Math.round((70 + R() * 50) * (big ? 1.35 : 1) * (TALL.test(kind) ? 2.4 : 1)), x = Math.max(W * .03, Math.min(W * .97, p[0] + side * ((big ? 380 : 240) + R() * W * .22))), y = p[1] - 70 + R() * 170;
       h += `<div data-kind="${kind}" class="mprop${lock ? " lock" : won ? " won" : ""}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px;--dl:-${(R() * 3).toFixed(1)}s"><img src="${D3.sprite(kind, sz > 150 ? 256 : 128)}" alt=""></div>`; }
     // the rails run between tall trees, as a real line runs through a wood: two rows of the place's own tree a little way off each side of the track
     if (D3) { const TK = CHAP_TREE[c] || "pine"; for (let k = 0; k < 16; k++) { const i = c * 10 + Math.floor(k * 10 / 16), p = pts[Math.min(N - 1, i)], side = k % 2 ? 1 : -1, x = Math.max(W * .02, Math.min(W * .98, p[0] + side * ((big ? 160 : 104) + R() * (big ? 70 : 46)))), y = p[1] - G_ * .3 + R() * G_ * .6, sz = Math.round((big ? 250 : 168) * (.8 + R() * .4)), kind = k % 5 === 4 ? (TK === "pine" || TK === "snowpine" ? "round" : "pine") : TK;
       h += `<div data-kind="${kind}" class="mprop tall${i > cur ? " lock" : ""}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px"><img src="${D3.sprite(kind, 256)}" alt=""></div>`; } }
     if (D3) { const i = c * 10 + 6, p = pts[i], side = p[0] > W / 2 ? -1 : 1, vw = big ? 180 : 85, x = Math.max(vw * .4, Math.min(W - vw * .4, p[0] + side * Math.max(W * .5, vw * .5 + 95))); h += `<div class="mvillage${i > cur ? " lock" : ""}" style="left:${Math.round(x)}px;top:${p[1] + 5}px"><img src="${D3.village(c, won, 480)}" alt=""></div>`;
-      const R0 = RESIDENT[c], rx = Math.max(W * .05, Math.min(W * .95, x + (x > W / 2 ? -1 : 1) * (big ? 130 : 78))); h += aniHtml(`mprop resident${i > cur ? " lock" : ""}`, R0[0], rx, p[1] + 40, big ? 150 : 110, R); }
+      const R0 = RESIDENT[c], rx = Math.max(W * .05, Math.min(W * .95, x + (x > W / 2 ? -1 : 1) * (big ? 130 : 78))); if (/^(rabbit|fox|hedgehog|deer|sheep|bear|penguin|butterfly|bee|bat|crab|eagle|magpie|gritt|corvin|flock)$/.test(R0[0])) h += aniHtml(`mprop resident${i > cur ? " lock" : ""}`, R0[0], rx, p[1] + 40, big ? 150 : 110, R); }
     if (c > 0) { const gp = pts[c * 10], gs = gp[0] > W / 2 ? -1 : 1; h += `<div class="gate${c * 10 > cur ? " lock" : ""}" style="left:${Math.round(Math.max(W * .1, Math.min(W * .9, gp[0] + gs * (big ? 200 : 130))))}px;top:${Math.round(gp[1] + G_ * .45)}px">${CHAPTERS[c].name}</div>`; }
     if (D3 && c * 10 <= cur && !(save.feathers || {})[c]) { const fi = c * 10 + (c * 7) % 9, fp = pts[Math.min(N - 1, fi)], fs = (c % 2 ? 1 : -1); h += `<div class="mprop feather" data-c="${c}" style="left:${Math.round(Math.max(W * .06, Math.min(W * .94, fp[0] + fs * (big ? 150 : 96))))}px;top:${fp[1] - 20}px;width:${big ? 52 : 40}px"><img src="${D3.sprite("feather", 96)}" alt=""></div>`; }
     if (won) { for (let f = 0; f < 8; f++) { const p = pts[c * 10 + Math.floor(f * 1.25)]; h += `<u class="firefly" style="left:${Math.round(p[0] + (f % 2 ? 55 : -55) + (f % 3) * 18)}px;top:${p[1] - 70 + (f % 4) * 45}px;--dl:-${f * .6}s"></u>`; }
       if (D3) for (let f = 0; f < 14; f++) { const p = pts[c * 10 + Math.floor(f * 10 / 14)], side = f % 2 ? 1 : -1, x = Math.max(W * .04, Math.min(W * .96, p[0] + side * (36 + R() * 90))), y = p[1] - 60 + R() * 180, sz = Math.round((40 + R() * 22) * (big ? 1.3 : 1)); h += `<div class="mprop won flower" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px;--dl:-${(R() * 3).toFixed(1)}s"><img src="${D3.sprite(["flower", "tulip", "clover", "sprout"][f % 4], 64)}" alt=""></div>`; } }
-    if (D3) { const SMALL = ["rock", "bush", "mushroom", "flower", "sprout", D3.EMO[C.props[0]] || "bush", D3.EMO[C.props[2]] || "flower"];   // little things right beside the rail, so the track runs through a place, not over a lawn
+    if (D3) { const SMALL = ["rock", "bush", "mushroom", "flower", "sprout", unstill(D3.EMO[C.props[0]] || "bush"), unstill(D3.EMO[C.props[2]] || "flower")];   // little things right beside the rail, so the track runs through a place, not over a lawn
       for (let k = 0; k < 14; k++) { const i = c * 10 + Math.floor(k * 10 / 14), p = pts[Math.min(N - 1, i)], side = k % 2 ? 1 : -1, x = Math.max(W * .03, Math.min(W * .97, p[0] + side * (30 + R() * (big ? 70 : 46)))), y = p[1] - 50 + R() * 140, sz = Math.round((26 + R() * 20) * (big ? 1.3 : 1));
         h += `<div class="mprop small${i > cur ? " lock" : ""}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px"><img src="${D3.sprite(SMALL[k % SMALL.length], 64)}" alt=""></div>`; }
       for (const k of [1, 6]) { const i = c * 10 + k, p = pts[Math.min(N - 1, i)], side = (c + k) % 2 ? 1 : -1, pw = Math.round((120 + R() * 50) * (big ? 1.3 : 1)), x = Math.max(pw * .6, Math.min(W - pw * .6, p[0] + side * ((big ? 230 : 150) + R() * 60))), y = p[1] + 30 + R() * 40, lk = i > cur ? " lock" : "";
         h += `<div class="mprop pond${lk}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${pw}px"><img src="${D3.sprite("pond", 192, true)}" alt=""></div>`;
-        for (let q = 0; q < 4; q++) { const kind = ["reed", "flower", "reed", "frog"][q], a = q * 1.6 + R(), rx = x + Math.cos(a) * pw * .5, ry = y - pw * .18 + Math.sin(a) * pw * .16; h += `<div data-kind="${kind}" class="mprop small${lk}" style="left:${Math.round(rx)}px;top:${Math.round(ry)}px;width:${Math.round(pw * (kind === "reed" ? .32 : .22))}px"><img src="${D3.sprite(kind, 64)}" alt=""></div>`; } }
+        for (let q = 0; q < 4; q++) { const kind = ["reed", "flower", "reed", "lily"][q], a = q * 1.6 + R(), rx = x + Math.cos(a) * pw * .5, ry = y - pw * .18 + Math.sin(a) * pw * .16; h += `<div data-kind="${kind}" class="mprop small${lk}" style="left:${Math.round(rx)}px;top:${Math.round(ry)}px;width:${Math.round(pw * (kind === "reed" ? .32 : .22))}px"><img src="${D3.sprite(kind, 64)}" alt=""></div>`; } }
       for (let k = 0; k < 12; k++) { const i = c * 10 + Math.floor(k * 10 / 12), p = pts[Math.min(N - 1, i)], side = k % 2 ? -1 : 1, x = Math.max(W * .03, Math.min(W * .97, p[0] + side * ((big ? 120 : 80) + R() * W * .3))), y = p[1] - 60 + R() * 160, kind = ["flower", "tulip", "log", "rock", "clover", "bush", "mushroom", "sprout", "flower", "acorn", "leaf", "flower"][k], sz = Math.round((22 + R() * 18) * (big ? 1.3 : 1));
         h += `<div data-kind="${kind}" class="mprop small${i > cur ? " lock" : ""}" style="left:${Math.round(x)}px;top:${Math.round(y)}px;width:${sz}px"><img src="${D3.sprite(kind, 64)}" alt=""></div>`; }
       for (let k = 0; k < 18; k++) { const i = c * 10 + Math.floor(k * 10 / 18), p = pts[Math.min(N - 1, i)], x = Math.round(R() * W), y = Math.round(p[1] - 60 + R() * 150); h += `<u class="${k % 4 === 3 ? "pebble" : "tuft"}" style="left:${x}px;top:${y}px;--s:${(.7 + R() * .7).toFixed(2)}"></u>`; }
       for (let k = 0; k < 4; k++) { const i = c * 10 + k * 2 + 1, p = pts[Math.min(N - 1, i)], x = Math.max(W * .04, Math.min(W * .96, p[0] + (k % 2 ? 1 : -1) * (60 + R() * W * .3))), y = p[1] - 40 + R() * 120;
         for (let q = 0; q < 3; q++) h += `<div class="mprop small${i > cur ? " lock" : ""}" style="left:${Math.round(x + (q - 1) * 14)}px;top:${Math.round(y + (q % 2) * 8)}px;width:${Math.round((18 + R() * 8) * (big ? 1.3 : 1))}px"><img src="${D3.sprite(["flower", "tulip", "flower"][q], 64)}" alt=""></div>`; }
       { const vi = c * 10 + 6, vp = pts[vi], vs = vp[0] > W / 2 ? -1 : 1, vx = Math.max(W * .1, Math.min(W * .9, vp[0] + vs * Math.max(W * .5, 140))); h += `<div class="mprop small${vi > cur ? " lock" : ""}" style="left:${Math.round(vx - vs * 70)}px;top:${vp[1] + 70}px;width:${big ? 70 : 52}px"><img src="${D3.sprite("fence", 96)}" alt=""></div><div class="mprop small${vi > cur ? " lock" : ""}" style="left:${Math.round(vx + vs * 60)}px;top:${vp[1] + 60}px;width:${big ? 46 : 34}px"><img src="${D3.sprite("well", 96)}" alt=""></div>`; }
-      if (!far) for (let k = 0; k < 3; k++) { const i = c * 10 + 2 + k * 3, p = pts[Math.min(N - 1, i)], kind = ["rabbit", "fox", "bird", "hedgehog", "duck", "deer", "bird2", "rabbit", "butterfly"][(c * 3 + k) % 9], x = Math.max(W * .03, Math.min(W * .97, p[0] + (k % 2 ? 1 : -1) * (120 + R() * W * .32))), y = p[1] - 50 + R() * 130;
+      if (!far) for (let k = 0; k < 2; k++) { const i = c * 10 + 3 + k * 4, p = pts[Math.min(N - 1, i)], kind = ["rabbit", "fox", "hedgehog", "deer", "butterfly", "sheep", "bear", "penguin", "bee"][(c * 2 + k) % 9], x = Math.max(W * .03, Math.min(W * .97, p[0] + (k % 2 ? 1 : -1) * (120 + R() * W * .32))), y = p[1] - 50 + R() * 130;
         h += aniHtml(`critter c-${kind}`, kind, x, y, (big ? 110 : 80) * (.85 + R() * .3), R, `;--fx:${((k % 2 ? 1 : -1) * (30 + R() * 30)).toFixed(0)}px`); }
       if (c * 10 <= cur + 10) for (let k = 0; k < 8; k++) { const i = c * 10 + k, p = pts[Math.min(N - 1, i)], x = Math.max(W * .03, Math.min(W * .97, p[0] + (k % 2 ? -1 : 1) * (20 + R() * W * .25))), y = p[1] - 30 + R() * 110; h += `<u class="fly" style="left:${Math.round(x)}px;top:${Math.round(y)}px;--dl:-${(R() * 3).toFixed(1)}s"></u>`; }
       for (let k = 0; k < 3; k++) { const i = c * 10 + 2 + k * 3, p = pts[Math.min(N - 1, i)]; h += `<div class="mcloud" style="left:${Math.round(R() * W * .8)}px;top:${Math.round(p[1] - 80 - R() * 60)}px;width:${Math.round((110 + R() * 70) * (big ? 1.3 : 1))}px;--t:${(38 + R() * 30).toFixed(0)}s;--dl:-${(R() * 30).toFixed(0)}s"><img src="${D3.sprite("cloud", 192)}" alt=""></div>`; } }
@@ -1537,7 +1569,7 @@ function buildMap() {
     h += `<div class="lv ${st}${hd ? " hard" + hd : ""}" data-i="${i}" style="left:${Math.round(p[0])}px;top:${p[1]}px"><b>${i + 1}</b>${save.stars[i] ? `<s>${"★".repeat(save.stars[i])}<i>${"★".repeat(3 - save.stars[i])}</i></s>` : ""}${md ? `<em>${MORDO}</em>` : ""}${i === cur ? `<i class="lvplate${pl} go">Play</i>` : (i + 1) % 20 === 0 ? `<i class="lvplate${pl} st"><small>Level ${i + 1}</small>${CHAPTERS[chapOf(i)].name}</i>` : ""}</div>`; if (farC.has(fc) && i !== cur) { lateBy[fc] = (lateBy[fc] || "") + h; h = hs; } else h = hs + h; });
   // (2026-10-24 İdris: the butterflies round the current stop were too busy and too close to the rails; they are gone)
   // Pogo beside the current stop, on the roomier side
-  { const p = pts[cur], left = p[0] > W / 2; h += `<div class="pogoMap pogoBig${left ? " flip" : ""}" onclick="openPet()" style="left:${Math.round(p[0] + (left ? -65 : 65))}px;top:${p[1] + 3}px">${pogoSvg()}</div>`; }
+  { const p = pts[cur], left = p[0] > W / 2; h += `<div class="pogoMap pogoBig${left ? " flip" : ""}" onclick="openPet()" style="left:${Math.round(p[0] + (left ? -65 : 65))}px;top:${p[1] + 3}px">${paHtml("idle")}</div>`; }
   path.insertAdjacentHTML("beforeend", h); clearRail([...path.children]);
   path.querySelectorAll(".mtrain").forEach(el => { const a = +el.dataset.a, b = +el.dataset.b; if (a !== b && el.animate) el.animate([{ offsetDistance: a + "px" }, { offsetDistance: b + "px" }], { duration: 2600, delay: 450, easing: "cubic-bezier(.45,0,.2,1)", fill: "backwards" }); });
   // A far place's scenery is only put on the map when the player scrolls near it: the map holds a few hundred elements, not six thousand
@@ -1596,7 +1628,7 @@ function openLevel(i) {
   tickLives();
   if (save.lives <= 0) { showLives(); return; }
   const L = LEVELS[i]; pendingLevel = i;
-  $("sPogo").innerHTML = pogoSvg();
+  $("sPogo").innerHTML = paHtml("idle");
   { const nk = rotOf(i); $("sNew").hidden = !(nk > (save.gemSeen3 || 0)); if (nk > (save.gemSeen3 || 0)) { const nm = newCharms(nk); $("sNew").textContent = "✨ New charms from here on: " + (nm.length === 3 ? nm[0] + ", " + nm[1] + " and " + nm[2] : nm[0] + " and " + nm[1]); } }
   { const ch = chapOf(i), k = i % 10; $("sPlace").textContent = "Chapter " + (ch + 1) + " · " + CHAPTERS[ch].name + " · " + "Stop " + (k + 1) + "/10"; $("sBeat").innerHTML = ""; if (k >= 4 && k <= 7) { const b = document.createElement("b"); b.textContent = RESIDENT[ch][1]; const q = document.createElement("span"); q.className = "q"; q.textContent = RESIDENT[ch][2]; if (D3) { const im = new Image(); im.className = "who"; im.alt = ""; im.src = D3.sprite(RESIDENT[ch][0], 96); $("sBeat").append(im); } $("sBeat").append(b, " ", q); } else $("sBeat").textContent = k === 9 ? BOSS_BEAT[ch] : k === 8 ? HARD_BEAT : CHAPTERS[ch].title; $("sBar").style.width = (k * 10 + 5) + "%"; }
   $("sTitle").textContent = "Level " + (i + 1); $("sGoal").innerHTML = ico({ score: "star", jelly: "jelly", ingredients: "key", blockers: "ice" }[L.goal]) + " "; $("sGoal").appendChild(document.createTextNode(goalText(L)));
@@ -1774,7 +1806,7 @@ function stationCheck() {
   $("snChip").textContent = "Station " + k + " of " + STATIONS.length + " · " + S.name; $("snTitle").textContent = S.task; $("snPct").textContent = forestPct() + "%"; $("snBar").style.width = forestPct() + "%";
   $("snText").textContent = S.story; $("snNext").textContent = k < STATIONS.length ? "Next station: " + STATIONS[k].name + " · " + S.next : S.next; $("snPay").textContent = gift ? "🎁 Station gift: +4 🥕 · +16 of every booster · ∞ lives for 120 min" : "🎁 The next station brings a gift";
   if (D3) D3.show($("snScene"), { props: [{ kind: "forest", x: -2.2, z: .2, s: 1.3 }, { kind: "forest", x: 2.2, z: -.3, s: 1.2, ry: 1 }, { kind: "pogo", x: -.3, z: 1.3, s: 1 }, { kind: ["sprout", "pond", "tulip", "round", "bird", "bee", "bridge", "star", "snowman", "crystal", "cactus", "sun"][(k - 1) % 12], x: 1.2, z: 1.1, s: 1, bob: true }, { kind: "deer", x: .6, z: -1.2, s: .9, ry: -.8 }], ground: 0x3fc85f, hill: 0x2d8b3c });
-  stationCeremony(k, () => { show("mStation"); SFX.reward(); setTimeout(() => pogoMoment("wow", 1500), 350); }); return true;
+  stationCeremony(k, () => { show("mStation"); SFX.reward(); setTimeout(() => pogoMoment("wow", 1500, true), 350); }); return true;
 }
 $("snGo").addEventListener("click", () => { hide("mStation"); buildMap(); });
 function storyScene(ch, end) {
@@ -2861,7 +2893,7 @@ $("lifeClose").addEventListener("click", () => hide("mLives"));
 let pendingLevel = 0;
 $("sPlay").addEventListener("click", () => { hide("mStart"); clearProgress(); zoomFromStop(); startLevel(pendingLevel); });
 $("mStart").addEventListener("click", e => { if (e.target === $("mStart")) hide("mStart"); });
-$("btnBack").addEventListener("click", () => { if (G && !G.over) { snapshot(); logEv("quit"); } showMap(); });
+$("btnBack").addEventListener("click", () => { if (G && !G.over) { snapshot(); logEv("quit"); } wipe(showMap); });
 function showMap() { tip(""); G = null; $("game").hidden = true; $("map").hidden = false; buildMap(); if (!storyCheck()) stationCheck(); }
 const STARK = { jelly: [.75, 1, 1.3], ingredients: [.5, .8, 1.1], blockers: [.25, .38, .62] };   // 2026-10-14: set from bot wins so that about two wins in three earn all three stars
 function starTargets(L) { if (L.target) return [L.target, Math.round(L.target * 1.3), Math.round(L.target * 1.65)]; const base = { jelly: 20000, ingredients: 18000, blockers: 18000 }[L.goal] * (1 + L.moves / 40); return STARK[L.goal].map(k => Math.round(base * k)); }   // 2026-10-13: the climb above the winning score halved
@@ -2990,7 +3022,7 @@ function startLevel(i, snap) {
   G.t0 = performance.now(); if (!resumed) logEv("start"); if (i < 2) G.hintAt = performance.now() + 900;
   { const k = rotOf(i); if (k > (save.gemSeen3 || 0) && !window.__fast) { save.gemSeen3 = k; persist(); } }
   particles.length = 0; fx.length = 0; floaters.length = 0; dying.length = 0;
-  tip(""); $("map").hidden = true; $("game").hidden = false; $("gPogo").innerHTML = pogoSvg("", true); layout(); hudInit(); gameDecor(i); gameWeather(i); gameGround(i); SFX.go();
+  tip(""); $("map").hidden = true; $("game").hidden = false; $("gPogo").innerHTML = pogoSvg("", true); layout(); hudInit(); gameDecor(i); gameWeather(i); gameGround(i); placeStage(); { const sp = stagePa(); if (sp) paPlay(sp, "hello", () => paPlay(sp, stageBase())); } SFX.go();
   if (window.__lowPower && !window.__lpTold) { window.__lpTold = 1; setTimeout(() => tip("Low Power Mode is on: iPhone holds games at 30 fps", 4800), 1300); }
   if (!resumed) snapshot();
   introDrop();
@@ -3069,9 +3101,9 @@ function gameTheme(i) { const el = $("gTheme"); if (!el) return; const k = Math.
 function gameWeather(i) { const el = $("gWeather"), ch = chapOf(i), w = themeOf(i).w; $("game").classList.toggle("shore", ch >= 10); if (!el) return; if ($("game").firstElementChild !== el) $("game").prepend(el); { const g = $("gGround"); if (g && g.previousElementSibling !== el) el.after(g); const th = $("gTheme"); if (th && $("game").firstElementChild !== th) $("game").prepend(th); }   // first in the screen, so the bars and the board are drawn over it if (!w || window.__fast) { el.hidden = true; return; }
   if (el.className !== w) { el.className = w; let h = ""; for (let n = 0; n < (w === "fog" || w === "storm" ? 0 : 12); n++) h += `<u style="--x:${(n * 37) % 100}%;--y:${4 + (n * 23) % 40}%;--t:${(w === "night" || w === "glints" ? 1.6 : 6) + (n % 5) * .9}s;--d:-${(n * 1.3).toFixed(1)}s"></u>`; el.innerHTML = h; }
   el.hidden = false; }
-function gameGround(i) { const el = $("gGround"); if (!el) return; if (!D3 || window.__fast) { el.hidden = true; return; } const key = "t" + Math.floor(i / 20); if (el.dataset.k !== key) { el.dataset.k = key; const K = themeOf(i).gr; el.innerHTML = K.map((k, n) => `<img src="${D3.sprite(k, 64)}" style="--s:${[46, 34, 30, 36, 40, 28, 44][n]}px" alt="">`).join(""); } el.hidden = false; }
+function gameGround(i) { const el = $("gGround"); if (!el) return; if (!D3 || window.__fast) { el.hidden = true; return; } const key = "t" + Math.floor(i / 20); if (el.dataset.k !== key) { el.dataset.k = key; const K = themeOf(i).gr.map(k => /^(owl|frog|duck|bird\d?|parrot|eagle|bee|bat|fox|hedgehog|crab|penguin|deer|sheep|bear|rabbit|butterfly)$/.test(k) ? "bush" : k); el.innerHTML = K.map((k, n) => `<img src="${D3.sprite(k, 64)}" style="--s:${[46, 34, 30, 36, 40, 28, 44][n]}px" alt="">`).join(""); } el.hidden = false; }
 function gameDecor(i) { const el = $("gDecor"); if (!el) return; const top = canvas.offsetTop - 64; if (!D3 || window.__fast || top < 0) { el.hidden = true; return; }
-  const key = "t" + Math.floor(i / 20); if (el.dataset.k !== key) { el.dataset.k = key; const T = themeOf(i); el.innerHTML = `<img class="far" src="${D3.sprite(T.big, 256)}" alt="">` + T.dec.map((e, n) => `<img class="${n === 1 || n === 2 ? "s" : ""}" src="${D3.sprite(e, 96)}" alt="">`).join(""); }
+  const key = "t" + Math.floor(i / 20); if (el.dataset.k !== key) { el.dataset.k = key; const T = themeOf(i), still = /^(owl|frog|duck|bird\d?|parrot|eagle|bee|bat|fox|hedgehog|crab|penguin|deer|sheep|bear|rabbit|butterfly|magpie)$/, keep = T.gr.find(k => !still.test(k)) || "bush"; el.innerHTML = `<img class="far" src="${D3.sprite(T.big, 256)}" alt="">` + T.dec.map(e => still.test(e) ? keep : e).map((e, n) => `<img class="${n === 1 || n === 2 ? "s" : ""}" src="${D3.sprite(e, 96)}" alt="">`).join(""); }
   el.style.setProperty("--far", Math.max(60, Math.min(120, canvas.offsetTop - 24)) + "px");
   el.style.top = top + "px"; el.hidden = false; }
 function pauseGame() { if (!G || G.over || G.paused) return; G.paused = true; G.sel = null; down = null; snapshot(); show("mPause"); }
@@ -3086,7 +3118,7 @@ if (window.__nativeApp) $("pMap").textContent = "Exit to map";
 document.querySelectorAll(".snd").forEach(el => el.addEventListener("click", toggleSound)); renderSound(); renderSettings();
 addEventListener("keydown", e => { if (e.key === "m" || e.key === "M") toggleSound(); });
 $("pResume").addEventListener("click", resumeGame);
-$("pMap").addEventListener("click", () => { hide("mPause"); if (G) { G.paused = false; snapshot(); if (!G.over) logEv("quit"); } showMap(); });
+$("pMap").addEventListener("click", () => { hide("mPause"); if (G) { G.paused = false; snapshot(); if (!G.over) logEv("quit"); } wipe(showMap); });
 $("mPause").addEventListener("click", e => { if (e.target === $("mPause")) resumeGame(); });
 addEventListener("keydown", e => { if ((e.key === "p" || e.key === "P" || e.key === "Escape") && G && !G.over && !isOpen("mEnd")) { if (G.paused) resumeGame(); else pauseGame(); } });
 document.addEventListener("visibilitychange", () => { if (document.hidden && G && !G.over && !G.paused && !isOpen("mEnd")) pauseGame(); });
@@ -3149,7 +3181,7 @@ function hudInit() {
 }
 function updateHud() {
   if (G.moves !== HUD.mT) { HUD.mT = G.moves; HUD.moves.textContent = G.moves; bump(HUD.moves); }
-  HUD.moves.style.color = G.moves <= 5 ? "#ff7a95" : ""; $("gPogo").classList.toggle("worry", G.moves <= 5 && !G.over);
+  HUD.moves.style.color = G.moves <= 5 ? "#ff7a95" : ""; $("gPogo").classList.toggle("worry", G.moves <= 5 && !G.over); stageMood();
   if (G.score !== HUD.sG) { if (G.score > HUD.sG) bump(HUD.score); HUD.sG = G.score; }
   const left = goalLeft(); if (left < HUD.left && G.L.goal !== "score") bump(HUD.goalN); HUD.left = left;
   const st = HUD.st, sc = G.score, f = sc >= st[2] ? 1 : sc >= st[1] ? 2 / 3 + (sc - st[1]) / Math.max(1, st[2] - st[1]) / 3 : sc >= st[0] ? 1 / 3 + (sc - st[0]) / Math.max(1, st[1] - st[0]) / 3 : sc / Math.max(1, st[0]) / 3; HUD.bar.style.transform = `translateX(${(f - 1) * 100}%)`; HUD.bar.style.setProperty("--f", f.toFixed(4));
@@ -3216,7 +3248,7 @@ function shuffle(silent) {
 }
 
 // ---------------------------------------------------------------- resolving a move
-const SWAP_MS = 320;
+const SWAP_MS = 230;
 async function trySwap(r1, c1, r2, c2) {
   if (!G || G.busy || G.over || G.paused) return false;
   const a = cell(r1, c1), b = cell(r2, c2); if (!a || !b || Math.abs(r1 - r2) + Math.abs(c1 - c2) !== 1) return false;
@@ -3278,9 +3310,9 @@ async function frenzy() {
   const set = new Set();
   for (let i = 0; i < 5 && pool.length; i++) {
     const g = pool.splice(rnd(pool.length), 1)[0]; g.special = ["h", "v", "wrap"][rnd(3)]; g.sx = 1.6; g.pop = performance.now(); sparkle(g.c + .5, g.r + .5, PAL[g.color].c); ring(g.c + .5, g.r + .5, "#ffd200", 1.2, 460, 8);
-    set.add(g.r * COLS + g.c); SFX.pop(i + 1); await sleep(125);
+    set.add(g.r * COLS + g.c); SFX.pop(i + 1); await sleep(85);
   }
-  await sleep(240); G.combo = 1;
+  await sleep(170); G.combo = 1;
   await blast(set); await gravity(); await resolve(null);
   G.inFrenzy = false;
 }
@@ -3322,7 +3354,7 @@ function flyTarget(set, taken) {
     else if (g && g.kind === "gem") tiers[3].push(k); }
   const t = tiers.find(a => a.length); return t ? t[rnd(t.length)] : -1;
 }
-const FLY_MS = 345;
+const FLY_MS = 270;
 // carry: a line or wrapped gem the firefly was swapped with goes off where it lands
 function launchFly(set, r, c, color, carry) {
   const taken = G.flyTaken || (G.flyTaken = new Set()), k = flyTarget(set, taken); if (k < 0) return; taken.add(k);
@@ -3387,7 +3419,7 @@ async function blast(clear, spawn = [], opts = {}) {
     if (G.combo >= 4) { for (let k = 0; k < 3; k++) fx.push({ k: "comet", x: -1, y: Math.random() * 4, x2: COLS + 1, y2: 3 + Math.random() * 5, color: ["#ffe04a", "#ff8adb", "#7fdcff"][k], t: n0 + k * 160, life: 900 }); } }
   if (G.combo === 3) { toast("Bloom!"); pogoReact("yay"); } else if (G.combo === 4) { toast("Glow!"); pogoReact("clap"); } else if (G.combo >= 5) { toast("Wildwood!"); pogoReact("wow"); }   // Charmwood's own words for a chain if (detonated.size) G.shake = performance.now();
   updateHud();
-  await sleep(detonated.size ? 300 : 230);
+  await sleep(detonated.size ? 210 : 150);
 }
 // cleared goal pieces fly from the board to the goal counter (a few per blast at most)
 let flyBudget = 5, FLYR = null;
@@ -3414,7 +3446,7 @@ function hitBlock(r, c, direct, color) {
 }
 
 // Falls are real free fall (time grows with the square root of the distance), then a small fixed-height bounce.
-const FALL_K = 190, BOUNCE_MS = 260, spawnN = new Int8Array(COLS);
+const FALL_K = 145, BOUNCE_MS = 200, spawnN = new Int8Array(COLS);
 async function gravity() {
   let moved = true, maxFall = 0, falls = 0; spawnN.fill(0);
   const canHold = (r, c) => r >= 0 && c >= 0 && r < ROWS && c < COLS && !G.hole[r][c] && !G.block[r][c];
@@ -3499,14 +3531,14 @@ async function win() {
   const mordo = isMordo(G.level) ? 2 : 0, bonus = hardOf(G.level) + mordo; save.streak = (save.streak || 0) + 1; if (!window.__fast) { raceWin(); afterWinOnline(); }
   const drops = window.__fast || roomStart ? [] : afterWinMeta(stars, bonus);
   const gain = addCarrots(stars + bonus); save.stats.wins++; save.stats.bestScore = Math.max(save.stats.bestScore, G.score); persist(); checkAch();
-  $("ePogo").innerHTML = pogoSvg(stars === 3 ? "yay" : "win"); setTimeout(() => { const n = $("ePogo").firstElementChild; if (n) { n.classList.remove("win", "yay"); n.classList.add("happy"); } }, 1700); $("eTitle").textContent = "Level " + (G.level + 1) + " complete"; $("eTitle").classList.toggle("perfect", stars === 3); if (stars === 3) { setTimeout(() => { SFX.perfect(); flash(.5, 500, "#ffd200"); confetti(); toast("Perfect!"); buzz([30, 40, 60]); }, 700); } { const SP = "M12 1.8l3.1 6.5 7.1 1-5.2 5 1.3 7.1L12 18l-6.3 3.4 1.3-7.1-5.2-5 7.1-1z", hollow = `<svg class="o" viewBox="-1 -1 26 26"><path d="${SP}" fill="rgba(0,0,0,.28)" stroke="rgba(255,255,255,.45)" stroke-width="1.4" stroke-linejoin="round"/></svg>`, full = `<svg class="f" viewBox="-1 -1 26 26"><path d="${SP}" fill="#ffd200" stroke="#9a5b00" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 4.6l2.2 4.7 5 .7" fill="none" stroke="#fff6c2" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/></svg>`;
+  $("ePogo").innerHTML = paHtml("win"); { const n = $("ePogo").firstElementChild; paPlay(n, "win", () => paPlay(n, stars === 3 ? "yay" : "hello", () => paPlay(n, "idle"))); } $("eTitle").textContent = "Level " + (G.level + 1) + " complete"; $("eTitle").classList.toggle("perfect", stars === 3); if (stars === 3) { setTimeout(() => { SFX.perfect(); flash(.5, 500, "#ffd200"); confetti(); toast("Perfect!"); buzz([30, 40, 60]); }, 700); } { const SP = "M12 1.8l3.1 6.5 7.1 1-5.2 5 1.3 7.1L12 18l-6.3 3.4 1.3-7.1-5.2-5 7.1-1z", hollow = `<svg class="o" viewBox="-1 -1 26 26"><path d="${SP}" fill="rgba(0,0,0,.28)" stroke="rgba(255,255,255,.45)" stroke-width="1.4" stroke-linejoin="round"/></svg>`, full = `<svg class="f" viewBox="-1 -1 26 26"><path d="${SP}" fill="#ffd200" stroke="#9a5b00" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 4.6l2.2 4.7 5 .7" fill="none" stroke="#fff6c2" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/></svg>`;
     const slot = (i) => i < stars ? `<i class="${i === 1 ? "mid" : ""}" style="--o:${i * .08}s;--d:${.55 + i * .32}s">${hollow}${full}</i>` : `<u class="${i === 1 ? "mid" : ""}" style="--o:${i * .08}s">${hollow}</u>`;
     $("eStars").className = "big stars3"; $("eStars").innerHTML = "<b>" + [0, 1, 2].filter(i => i < stars).map(slot).join("") + "</b><s>" + [0, 1, 2].filter(i => i >= stars).map(slot).join("") + "</s>";
     if (!window.__fast) for (let i = 0; i < stars; i++) setTimeout(() => { if (isOpen("mEnd")) { SFX.pop(2 + i); buzz(12); } }, 900 + i * 320); } seedWin(); { const ch = chapOf(G.level), k = G.level % 10; $("eTale").textContent = allDone() ? "" : k === 9 ? (ch + 1 < CHAPTERS.length ? bossOf(G.level).name + " flies on to " + CHAPTERS[ch + 1].name + "." : "") : CHAPTERS[ch].name + ": " + (k + 1) + " of 10 stops are green again."; if (k !== 9 && seedsSaved() && (G.L.goal === "ingredients" || save.stats.wins % 5 === 0)) $("eTale").textContent = "Seeds saved so far: " + seedsSaved() + " · " + treesGrown() + " of them are young trees now."; $("eNote").innerHTML = ""; $("eNote").hidden = k !== 9; if (k === 9) { const b = document.createElement("b"); b.textContent = bossOf(G.level).name; b.className = bossOf(G.level).kind === "magpie" ? "mordo" : bossOf(G.level).kind; const q = document.createElement("span"); q.className = "q"; q.textContent = BOSS_NOTE[ch]; if (D3) { const im = new Image(); im.className = "who"; im.alt = ""; im.src = D3.sprite(bossOf(G.level).kind, 96); $("eNote").append(im); } $("eNote").append(b, " ", q); } } $("eSub").textContent = (gain ? "+" + gain * 4 + " 🥕 for Pogo" : "🥕 a piece of carrot for Pogo") + (mordo ? " (" + MORDO + " " + bossOf(G.level).loot + ")" : bonus ? " (" + HARD_TXT[bonus - mordo].toLowerCase() + " +" + bonus + ")" : "") + " · 🔥 streak ×" + save.streak + (drops.length ? " · " + drops.join(" · ") : "");
   $("eBtns").innerHTML = ""; const next = G.level + 1 < LEVELS.length;
   const lv = G.level; mkBtn("eBtns", next ? "Next level" : "Back to map", () => { hide("mEnd"); showMap(); if (next && !isOpen("mStory")) openLevel(lv + 1); });
-  mkBtn("eBtns", window.__nativeApp ? "↻ Replay" : "↻ Replay level", () => { hide("mEnd"); clearProgress(); startLevel(lv); }, true);
-  if (next) mkBtn("eBtns", "Map", () => { hide("mEnd"); showMap(); }, true);
+  mkBtn("eBtns", window.__nativeApp ? "↻ Replay" : "↻ Replay level", () => { hide("mEnd"); clearProgress(); wipe(() => startLevel(lv)); }, true);
+  if (next) mkBtn("eBtns", "Map", () => { hide("mEnd"); wipe(showMap); }, true);
   await sleep(100); countUp($("eText"), starsOf(G.score), "Stars earned ★ "); show("mEnd"); trRoast(stars);
 }
 async function lose(dead) {
@@ -3514,7 +3546,7 @@ async function lose(dead) {
   if (dead) { toast("Boom!"); SFX.boom(); shock(dead.c + .5, dead.r + .5, "#ff2d55"); burst(dead.c + .5, dead.r + .5, "#ff2d55", 16, "tri"); flash(.35, 420, "#ff2d55"); G.shake = performance.now(); } else toast("Out of moves");
   const lives0 = save.lives, streak0 = save.streak || 0; save.streak = 0;
   SFX.lose(); if (!infLives()) save.lives = Math.max(0, save.lives - 1); delete save.inProgress; persist(); updateHud();
-  $("ePogo").innerHTML = pogoSvg(dead ? "sad" : "cheer"); $("eTitle").textContent = dead ? "Countdown hit zero" : "Out of moves"; $("eTale").textContent = ""; $("eNote").hidden = true; $("eStars").className = "big"; $("eStars").innerHTML = `<div class="hearts">${"❤️".repeat(save.lives)}<s>${"❤️".repeat(5 - save.lives)}</s></div>`; $("eSub").textContent = window.__infLives ? "Unlimited lives" : infLives() ? "Unlimited lives for " + infMin() + " more min" : "−1 life · " + save.lives + " of 5 left" + (save.lives < 5 ? " · a new one every 30 min" : "") + (streak0 ? " · win streak ×" + streak0 + " lost" : ""); delete $("eText").dataset.final;
+  $("ePogo").innerHTML = paHtml("sad"); $("eTitle").textContent = dead ? "Countdown hit zero" : "Out of moves"; $("eTale").textContent = ""; $("eNote").hidden = true; $("eStars").className = "big"; $("eStars").innerHTML = `<div class="hearts">${"❤️".repeat(save.lives)}<s>${"❤️".repeat(5 - save.lives)}</s></div>`; $("eSub").textContent = window.__infLives ? "Unlimited lives" : infLives() ? "Unlimited lives for " + infMin() + " more min" : "−1 life · " + save.lives + " of 5 left" + (save.lives < 5 ? " · a new one every 30 min" : "") + (streak0 ? " · win streak ×" + streak0 + " lost" : ""); delete $("eText").dataset.final;
   $("eText").textContent = dead ? "A gem with a number reached 0. It loses 1 every move: match it before it runs out, even with moves left." : goalText(G.L) + " · " + goalShow(goalLeft()) + " to go";
   $("eBtns").innerHTML = "";
   // keep playing: five more moves (or the countdown wound back to 5) with a +5 booster or with carrots, dearer each time in one level; the life and the win streak come back
@@ -3525,7 +3557,7 @@ async function lose(dead) {
     else if ((save.carrots || 0) >= price) mkBtn("eBtns", (dead ? "Defuse" : "+10 moves") + " · " + price + " 🥕", go(() => { save.carrots -= price; })); }
   mkBtn("eBtns", "Retry", () => { hide("mEnd"); const lv = G.level; showMap(); openLevel(lv); }, true);
   if (save.lives <= 0) $("eBtns").insertAdjacentHTML("beforeend", `<button class="btn ghost" type="button" data-arcade-room>👥 Play with friends</button>`);
-  mkBtn("eBtns", "Map", () => { hide("mEnd"); showMap(); }, true);
+  mkBtn("eBtns", "Map", () => { hide("mEnd"); wipe(showMap); }, true);
   await sleep(dead ? 800 : 500); show("mEnd"); trRoast(0);
 }
 // the arcade's one-line verdict is English; in Turkish the card gets its own line
