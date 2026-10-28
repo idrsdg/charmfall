@@ -5,7 +5,7 @@
 // pencil line that wanders and breaks. Uses the game's own shapes (BL, BLA, glowPart, mixc). bake-charms.cjs writes anim/ch-<name>.webp.
 (() => {
   // watercolour pigments for the six colour families (rose madder, cadmium orange, gamboge, sap green, cerulean, violet)
-  const WCHUE = ["#d9506a", "#e8823a", "#efbb36", "#5a9f4c", "#3a86c8", "#8a5cc0"];
+  const WCHUE = ["#f0305e", "#ff7a1a", "#ffc414", "#1fb84c", "#1a86f0", "#9a3cf0"];   // 2026-10-28 İdris "taşlar çok soluk, belirgin ve parlak yap": full-strength pigments
   const SEPIA = "rgba(74,52,40,", PAPER = [246, 239, 224];
   const R = (n) => { let s = (n * 9301 + 49297) % 233280; return () => (s = (s * 9301 + 49297) % 233280) / 233280; };
   // value noise for granulation and the paper's tooth
@@ -36,7 +36,7 @@
     // the cast shadow: a cool grey wash on the paper, soft
     x.save(); x.filter = "blur(2.5px)"; x.translate(2.5, 5); x.fillStyle = "rgba(70,78,110,.2)"; x.fill(body); x.restore();
     // first wash, shadow side, light lifted
-    wash(x, body, hue, seed, { a: .19, layers: 5, rw: 2.6, rim: .5 }); for (const p of parts) shadowWash(x, p, hue, 50, 50, 46, seed + 1); lift(x, body, 50, 50, 46);
+    wash(x, body, hue, seed, { a: .45, layers: 5, rw: 2.6, rim: .55 }); for (const p of parts) shadowWash(x, p, hue, 50, 50, 46, seed + 1); lift(x, body, 50, 50, 46);
     // a second, smaller glaze in the middle tones so the colour has depth
     x.save(); x.clip(body); x.filter = "blur(4px)"; x.fillStyle = hexA(hue, .14); x.beginPath(); x.ellipse(54, 56, 30, 26, .3, 0, 6.2832); x.fill(); x.restore();
     // details
@@ -50,21 +50,21 @@
       else if (t === "f") { const p = glowPart(o[1]), solid = /^#/.test(o[2]);
         if (solid) { const bb = bbox(o[1]), cx = (bb[0] + bb[2]) / 2, cy = (bb[1] + bb[3]) / 2, Rr = Math.max(4, Math.max(bb[2] - bb[0], bb[3] - bb[1]) / 2), six = /^#[0-9a-f]{6}$/i.test(o[2]), n = six ? parseInt(o[2].slice(1), 16) : 0, lum = six ? ((n >> 16) * .3 + (n >> 8 & 255) * .59 + (n & 255) * .11) / 255 : .5;
           const col = !six ? o[2] : lum < .3 ? mixc0(o[2], "#7a6050", .6) : mixc0(o[2], "#a08070", .15);   // the cel's near-black parts become a brown-sepia wash, never black
-          wash(x, p, col, seed + 3 + cx, { a: lum < .3 ? .3 : .26, layers: 4, cx, cy, rw: 1.8, j: 1 }); shadowWash(x, p, col, cx, cy, Rr, seed + 4); pencil(x, p, seed + 5 + cy, 1.1); }
+          wash(x, p, col, seed + 3 + cx, { a: lum < .3 ? .5 : .5, layers: 4, cx, cy, rw: 1.8, j: 1 }); shadowWash(x, p, col, cx, cy, Rr, seed + 4); pencil(x, p, seed + 5 + cy, 1.1); }
         else { x.fillStyle = o[2]; x.fill(p); } }
       x.restore(); }
     // warm light, cool shade: two faint glazes of other pigments, the way a painter shifts temperature across a form
     x.save(); x.clip(body); x.filter = "blur(6px)"; x.fillStyle = "rgba(240,190,110,.12)"; x.beginPath(); x.ellipse(36, 32, 30, 22, -.5, 0, 6.2832); x.fill(); x.fillStyle = "rgba(90,100,160,.1)"; x.beginPath(); x.ellipse(66, 74, 34, 24, -.5, 0, 6.2832); x.fill(); x.restore();
     // the pencil round the whole charm, on its silhouette only: drawn twice as wide on a sheet of its own, the inside rubbed out
-    { const t = document.createElement("canvas"); t.width = t.height = px; const y = t.getContext("2d"); y.setTransform(x.getTransform()); for (let i = 0; i < parts.length; i++) pencil(y, parts[i], seed + 11 + i, 3.2);
+    { const t = document.createElement("canvas"); t.width = t.height = px; const y = t.getContext("2d"); y.setTransform(x.getTransform()); for (let i = 0; i < parts.length; i++) pencil(y, parts[i], seed + 11 + i, 4.6);
       y.globalCompositeOperation = "destination-out"; y.fillStyle = "#000"; y.fill(body); x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.drawImage(t, 0, 0); x.restore(); }
     // granulation and the paper's tooth: pigment settles in the hollows, more of it where the wash is darker
     granulate(cv, 1);
     return cv; };
   // granulation and the paper's tooth on a finished picture: pigment settles in the hollows, more where the wash is darker; a tenth of paper shows through
   function granulate(cv, amt) { const x = cv.getContext("2d"), px = cv.width, py = cv.height; x.setTransform(1, 0, 0, 1, 0, 0); const id = x.getImageData(0, 0, px, py), dd = id.data, sc = 256 / Math.max(px, 256) * (amt || 1);
-    for (let y = 0; y < py; y++) for (let xx = 0; xx < px; xx++) { const i = (y * px + xx) * 4, a = dd[i + 3]; if (!a) continue; const lum = (dd[i] * .3 + dd[i + 1] * .59 + dd[i + 2] * .11) / 255, nz = NOISE(xx * sc, y * sc), g = 1 + (nz - .5) * (.05 + (1 - lum) * .14);
-      for (let c = 0; c < 3; c++) dd[i + c] = Math.max(0, Math.min(255, (dd[i + c] * .9 + PAPER[c] * .1) * g)); }   // a tenth of paper shines through every wash
+    for (let y = 0; y < py; y++) for (let xx = 0; xx < px; xx++) { const i = (y * px + xx) * 4, a = dd[i + 3]; if (!a) continue; const lum = (dd[i] * .3 + dd[i + 1] * .59 + dd[i + 2] * .11) / 255, nz = NOISE(xx * sc, y * sc), g = 1 + (nz - .5) * (.03 + (1 - lum) * .06);
+      for (let c = 0; c < 3; c++) dd[i + c] = Math.max(0, Math.min(255, dd[i + c] * g)); }   // a tenth of paper shines through every wash
     x.putImageData(id, 0, 0); return cv; }
   window.WC = { wash, shadowWash, lift, pencil, granulate, hexA, R, NOISE, bbox, SEPIA, PAPER, WCHUE };
   window.CHARM_LIST = () => { const out = []; BL.forEach((row, slot) => row.forEach((name, v) => out.push([name, slot, v]))); return out; };
