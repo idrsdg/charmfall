@@ -633,6 +633,7 @@
 .hud .box.lvl::before, .hud .box.lvl::after { content: ""; position: absolute; bottom: -9px; width: 14px; height: 18px; background: #9a1c28; z-index: -1; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%); }
 .hud .box.lvl::before { left: 22%; transform: rotate(14deg); } .hud .box.lvl::after { right: 22%; transform: rotate(-14deg); }
 /* 2026-10-29 İdris "booster ve duraklat düğmelerini de suluboya yap": a pigment wash on paper, a wobbly sepia line, no gloss */
+#c { box-shadow: 0 0 0 3px #f2cf7a, 0 0 0 9px #7a3e1c, 0 0 0 11px #3a1a08, 0 9px 0 11px #2a1206, 0 22px 36px rgba(40, 16, 0, .5) !important; outline: 3px dotted #f0b440 !important; outline-offset: 5px; }   /* a gilded, deep-painted frame round the board */
 .boost { --pg: #3a5ab8; background: url(anim/paper.webp) 0 0 / 160px 160px, radial-gradient(ellipse 70% 62% at 42% 38%, color-mix(in srgb, var(--pg) 38%, #f6eedc), color-mix(in srgb, var(--pg) 78%, #f6eedc) 70%, color-mix(in srgb, var(--pg) 92%, #3a2418) 100%) !important; background-blend-mode: multiply, normal !important;
   border: 2.5px solid #5a3a22 !important; border-radius: 19px 15px 20px 16px / 15px 20px 16px 19px !important; box-shadow: 0 0 0 2px #f6eedc, 0 4px 0 2px #cdb890, 0 9px 12px rgba(60, 40, 20, .25), inset 0 0 0 1px rgba(255, 248, 230, .35), inset -4px -6px 10px color-mix(in srgb, var(--pg) 60%, transparent) !important; }
 .boost[data-b="hammer"] { --pg: #3a5ab8; } .boost[data-b="moves"] { --pg: #3f8a3a; } .boost[data-b="switch"] { --pg: #7a4aa8; } .boost[data-b="cross"] { --pg: #24889a; } .boost[data-b="undo"] { --pg: #b8622a; }
@@ -3199,7 +3200,7 @@ function gameTheme(i) { const el = $("gTheme"); if (!el) return; const k = Math.
   // 2026-10-28 İdris "tema illa koyu olmasın, her levelde değişsin": a watercolour page painted on the Mac (anim/src/bg-wc.js): the theme's morning or
   // evening page by turns, and a slight shift of hue from level to level, so no two levels in a row look the same
   const v = i % 2, key = k + "-" + v; if (el.dataset.k !== key) { el.dataset.k = key; el.innerHTML = `<img class="bgwc" src="anim/bg-${k}-${v}.webp" alt="" decoding="async">`; }
-  el.style.filter = `hue-rotate(${((i % 7) - 3) * 7}deg) brightness(${(1 + ((i % 5) - 2) * .025).toFixed(3)})`; el.hidden = false; }
+  el.style.filter = `hue-rotate(${((i % 7) - 3) * 7}deg) saturate(1.45) contrast(1.06) brightness(${(.97 + ((i % 5) - 2) * .025).toFixed(3)})`;   /* 2026-10-29 İdris "tema soluk": the page's pigments pushed up */ el.hidden = false; }
 // ---- pause / resume (input is blocked by G.paused; a cascade in flight simply finishes underneath)
 // the four things that belong to this chapter's place stand along the top of the board frame (still pictures: they cost nothing while playing)
 function gameWeather(i) { const el = $("gWeather"), ch = chapOf(i), w = themeOf(i).w; $("game").classList.toggle("shore", ch >= 10); if (!el) return; if ($("game").firstElementChild !== el) $("game").prepend(el); { const g = $("gGround"); if (g && g.previousElementSibling !== el) el.after(g); const th = $("gTheme"); if (th && $("game").firstElementChild !== th) $("game").prepend(th); }   // first in the screen, so the bars and the board are drawn over it if (!w || window.__fast) { el.hidden = true; return; }
@@ -3745,7 +3746,7 @@ function buildStatic() {
   if (WCB.paper) { x.save(); x.beginPath(); x.roundRect(0, 0, W, W, 16); x.clip(); x.fillStyle = x.createPattern(WCB.paper, "repeat"); x.fillRect(0, 0, W, W);
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { if (G.hole[r][c]) { x.fillStyle = "rgba(120,100,70,.18)"; x.fillRect(c * CELL, r * CELL, CELL, CELL); continue; } const ci = WCB[(r + c) % 2 ? "cell-1" : "cell-0"]; if (ci) x.drawImage(ci, c * CELL - 2, r * CELL - 2, CELL + 4, CELL + 4); }   /* a piece not yet decoded is simply left out */
     /* 2026-10-29 İdris "tahta soluk, taşlar belirgin değil": the paper is glazed with a deep walnut ink (multiply keeps its tooth), so the cream-edged charms stand out */
-    x.globalCompositeOperation = "multiply"; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { if (G.hole[r][c]) continue; x.fillStyle = (r + c) % 2 ? "#6e5442" : "#5e4636"; x.fillRect(c * CELL, r * CELL, CELL, CELL); } x.globalCompositeOperation = "source-over";
+    x.globalCompositeOperation = "multiply"; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { if (G.hole[r][c]) continue; x.fillStyle = (r + c) % 2 ? "#7e4c2c" : "#683c22"; x.fillRect(c * CELL, r * CELL, CELL, CELL); } x.globalCompositeOperation = "source-over";
     x.strokeStyle = "rgba(255,236,200,.22)"; x.lineWidth = 1.4; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { if (G.hole[r][c]) continue; x.strokeRect(c * CELL + 1.5, r * CELL + 1.5, CELL - 3, CELL - 3); }   /* a light pencil frame round every cell */
     x.restore(); ST.bg = cv;
     const pic = (n) => { const [c2, k] = mkCan(CELL, CELL); k.imageSmoothingQuality = "high"; if (WCB[n]) k.drawImage(WCB[n], 0, 0, CELL, CELL); return c2; };
