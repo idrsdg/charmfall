@@ -596,6 +596,30 @@
   @keyframes pgmIn { from { opacity: 0; transform: translateY(46px) scale(.4); } to { opacity: 1; transform: none; } }
   @keyframes pgmOut { from { opacity: 1; } to { opacity: 0; transform: translateY(30px) scale(.6); } }
   @keyframes pgmBurst { 0% { opacity: 0; transform: scale(.3) rotate(0deg); } 25% { opacity: .9; transform: scale(1) rotate(25deg); } 100% { opacity: 0; transform: scale(1.15) rotate(70deg); } }
+
+  /* ================= 2026-10-28 İdris "Suluboya masal kitabı: arayüz de": every panel is a page of the book, every button a painted label =================
+     paper (anim/paper.webp) under a soft wash, a sepia pencil line, a storybook serif for headings, colours lifted toward the paper; no gloss, no shine sweep */
+  :root { --ink: #4a2e1c; --ink2: #6e5236; --pap: #f6eedc; --sep: rgba(74, 46, 28, .85); }
+  .modal { background: rgba(70, 52, 34, .45) !important; }
+  .card { background: url(anim/paper.webp) 0 0 / 256px 256px, #f6eedc !important; color: var(--ink) !important; border: 3px solid #8a6a46 !important; outline: 1.5px solid rgba(74, 46, 28, .35); outline-offset: -9px; border-radius: 18px 22px 16px 24px / 22px 16px 24px 18px !important; box-shadow: 0 10px 0 -2px #d8c6a0, 0 22px 40px rgba(60, 40, 20, .35) !important; text-shadow: none !important; }
+  .card h1, .card h2, .card h3 { font-family: "Iowan Old Style", "Palatino", Georgia, serif !important; color: #5a2e14 !important; -webkit-text-stroke: 0 !important; text-shadow: 0 1px 0 rgba(255, 255, 255, .6) !important; background: none !important; -webkit-text-fill-color: currentColor !important; }
+  .card p, .card small, .card .place, .card label, .card .chip, .card #eTale { color: var(--ink2) !important; text-shadow: none !important; }
+  .card .chip, .card .pill { background: rgba(214, 190, 150, .35) !important; border: 1.5px solid rgba(110, 82, 54, .5) !important; box-shadow: none !important; color: var(--ink) !important; }
+  .btn { background: radial-gradient(120% 140% at 30% 20%, #ffe390 0%, #f6c24a 55%, #e8a72a 100%) !important; color: #4a2a0c !important; text-shadow: none !important; border: 2.5px solid #7a4a1a !important; border-radius: 16px 20px 15px 21px / 20px 15px 21px 16px !important; box-shadow: 0 4px 0 #b9893c, 0 8px 14px rgba(70, 44, 18, .25) !important; font-family: "Iowan Old Style", "Palatino", Georgia, serif; letter-spacing: .01em; }
+  .btn::before, .btn:not(.ghost)::after { display: none !important; }
+  .btn.ghost { background: radial-gradient(120% 140% at 30% 20%, #cfe6f2 0%, #8ec2e0 60%, #6aa8cc 100%) !important; color: #183a52 !important; border-color: #3e6a86 !important; box-shadow: 0 4px 0 #557f99, 0 8px 14px rgba(30, 50, 70, .22) !important; }
+  .btn:active { translate: 0 3px; box-shadow: 0 1px 0 #b9893c !important; }
+  .hud .box { background: url(anim/paper.webp) 0 0 / 200px 200px, #f6eedc !important; border: 2.5px solid #8a6a46 !important; border-radius: 14px 17px 13px 18px / 17px 13px 18px 14px !important; box-shadow: 0 4px 0 #cdb890, 0 8px 12px rgba(60, 40, 20, .2) !important; }
+  .hud .box b, .hud .box small { color: var(--ink) !important; text-shadow: none !important; } .hud .box small { color: #8a5a30 !important; }
+  .bar { background: rgba(120, 96, 66, .25) !important; border: 2px solid #8a6a46 !important; } .frz span { color: #6e5236 !important; text-shadow: none !important; }
+  .pill, .mapbar button:not(.ready) { background: url(anim/paper.webp) 0 0 / 200px 200px, #f6eedc !important; color: var(--ink) !important; border: 2.5px solid #8a6a46 !important; box-shadow: 0 3px 0 #cdb890, 0 6px 10px rgba(60, 40, 20, .2) !important; text-shadow: none !important; }
+  .mapbar button span { color: #a0581c !important; }
+  .mapbar button.ready { background: radial-gradient(120% 140% at 30% 20%, #ffe390 0%, #f6c24a 60%, #e8a72a 100%) !important; color: #4a2a0c !important; border: 2.5px solid #7a4a1a !important; box-shadow: 0 4px 0 #b9893c !important; }
+  .pill .ico, .mapbar .ico, .hud .ico { filter: sepia(.35) saturate(.9); }
+  .card .goalrow > *, .card .goalrow div, .card .stats > * { background: rgba(214, 190, 150, .3) !important; border: 2px solid rgba(110, 82, 54, .55) !important; box-shadow: none !important; color: var(--ink) !important; }
+  .card .goalrow small, .card .goalrow i { color: #8a5a30 !important; }
+  .card h2.perfect, .card h1, .card h2 { text-shadow: none !important; }
+  .modal:not([hidden]) ~ #pgMoment { display: none; }   /* Pogo's quick moment never sits over an open page */
 </style>
 </head>
 <body>
