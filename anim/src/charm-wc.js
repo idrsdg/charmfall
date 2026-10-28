@@ -36,7 +36,7 @@
     // the cast shadow: a cool grey wash on the paper, soft
     x.save(); x.filter = "blur(2.5px)"; x.translate(2.5, 5); x.fillStyle = "rgba(70,78,110,.2)"; x.fill(body); x.restore();
     // first wash, shadow side, light lifted
-    wash(x, body, hue, seed, { a: .45, layers: 5, rw: 2.6, rim: .55 }); for (const p of parts) shadowWash(x, p, hue, 50, 50, 46, seed + 1); lift(x, body, 50, 50, 46);
+    wash(x, body, hue, seed, { a: .62, layers: 5, rw: 2.6, rim: .6 });   /* 2026-10-29 İdris "taşlar yeterince belirgin değil": a denser first wash */ for (const p of parts) shadowWash(x, p, hue, 50, 50, 46, seed + 1); lift(x, body, 50, 50, 46);
     // a second, smaller glaze in the middle tones so the colour has depth
     x.save(); x.clip(body); x.filter = "blur(4px)"; x.fillStyle = hexA(hue, .14); x.beginPath(); x.ellipse(54, 56, 30, 26, .3, 0, 6.2832); x.fill(); x.restore();
     // details
