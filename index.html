@@ -644,6 +644,14 @@
 .boost u { background: radial-gradient(circle at 40% 35%, #d84a50, #9a1c28) !important; border: 2px solid #f6eedc !important; box-shadow: 0 0 0 1.5px #6a1420, 0 2px 4px rgba(60, 20, 10, .35) !important; font-family: Georgia, serif !important; color: #fff6e0; }
 .back.pause, html.app #btnPause { background: url(anim/paper.webp) 0 0 / 160px 160px, radial-gradient(ellipse 70% 62% at 42% 38%, #f2c890, #d08a40 72%, #8a5224) !important; background-blend-mode: multiply, normal !important; border: 2.5px solid #5a3a22 !important; border-radius: 16px 13px 17px 12px / 13px 17px 12px 16px !important; box-shadow: 0 0 0 2px #f6eedc, 0 4px 0 2px #cdb890, 0 8px 12px rgba(60, 40, 20, .25) !important; color: #4a2a14 !important; }
 .back.pause .ico { filter: brightness(.35) sepia(1) saturate(2.2) hue-rotate(-12deg); }
+/* 2026-10-29 İdris "solukluğu kaldır": crisp HUD boxes and solid, bright booster buttons (no paper tooth, no multiply) */
+.hud .box:not(.lvl) { background: #ffffff !important; border: 2.5px solid #23252c !important; box-shadow: 0 3px 0 #23252c !important; }
+.hud .box:not(.lvl) b { color: #15171d !important; } .hud .box:not(.lvl) small { color: #4a4f60 !important; }
+.boost { background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--pg) 70%, #ffffff), var(--pg) 70%) !important; background-blend-mode: normal !important; border: 2.5px solid #ffffff !important; border-radius: 18px !important; box-shadow: 0 0 0 2px #23252c, 0 4px 0 2px #23252c !important; }
+.boost[data-b="hammer"] { --pg: #2f6bff; } .boost[data-b="moves"] { --pg: #1fb84c; } .boost[data-b="switch"] { --pg: #9a3cf0; } .boost[data-b="cross"] { --pg: #12a8c8; } .boost[data-b="undo"] { --pg: #ff8a1a; }
+.boost svg > circle:first-child { fill-opacity: .35; }
+.back.pause, html.app #btnPause { background: radial-gradient(circle at 50% 30%, #ffb35a, #ff7a1a 70%) !important; border: 2.5px solid #ffffff !important; box-shadow: 0 0 0 2px #23252c, 0 4px 0 2px #23252c !important; }
+.back.pause .ico { filter: none !important; }
 </style>
 </head>
 <body>
@@ -4382,8 +4390,8 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
     if (h) { t = (now - h) / 620; if (t >= 1) { jh[c] = 0; t = 2; } else if (t < 0) t = 0; }
     /* 2026-10-29 İdris "kül kalkınca belli olmuyor": a cell that had ash and is free of it now shows the fresh meadow (ob-clean); it opens from the middle */
     const AW = G.ashWas || (G.ashWas = []), aw = AW[r] || (AW[r] = []); if (j) aw[c] = 1; else if (!aw[c] && G.L.jelly && /[jJ]/.test(G.L.jelly[r][c])) aw[c] = 1;
-    if (!j && aw[c] && ST.clean) { if (t < 1) { const e = Math.min(1, easeBack(Math.min(1, t * 1.3))), rad = CELL * .74 * Math.max(0, e); ctx.save(); ctx.beginPath(); ctx.arc(x + CELL / 2, y + CELL / 2, rad, 0, 6.2832); ctx.clip(); ctx.drawImage(ST.clean, x, y, CELL, CELL); ctx.restore();
-        ctx.globalAlpha = (1 - t) * .9; ctx.strokeStyle = "#ffd25a"; ctx.lineWidth = 3 * (1 - t) + 1; ctx.beginPath(); ctx.arc(x + CELL / 2, y + CELL / 2, CELL * (.2 + .55 * easeOut(t)), 0, 6.2832); ctx.stroke(); ctx.globalAlpha = 1; } else ctx.drawImage(ST.clean, x, y, CELL, CELL); }
+    if (!j && aw[c]) { if (t < 1) {   /* 2026-10-29 İdris "küller gittikten sonra temiz olmalı arkası": a cleared cell is the plain board again; only a bright ring marks the moment */
+        ctx.globalAlpha = (1 - t) * .9; ctx.strokeStyle = "#ffd25a"; ctx.lineWidth = 3 * (1 - t) + 1; ctx.beginPath(); ctx.arc(x + CELL / 2, y + CELL / 2, CELL * (.2 + .55 * easeOut(t)), 0, 6.2832); ctx.stroke(); ctx.globalAlpha = 1; } }
     if (j) { if (t < 1) { const k = 1 + .16 * Math.sin(t * 6.2832) * (1 - t), w = CELL * k, hh = CELL * (2 - k); ctx.drawImage(ST.jelly[j - 1], x + (CELL - w) / 2, y + (CELL - hh) / 2, w, hh); } else ctx.drawImage(ST.jelly[j - 1], x, y, CELL, CELL); }
     if (ing && G.exit[c] === r) { ctx.globalAlpha = .6 + .4 * Math.sin(now / 200 + c); ctx.fillStyle = "#ffd200"; ctx.fillRect(x + 4, y + CELL - 6, CELL - 8, 4); ctx.strokeStyle = "#ffd200"; ctx.lineWidth = 2; ctx.beginPath(); for (let i = 0; i < 3; i++) { ctx.moveTo(x + CELL * (.2 + i * .3), y + CELL - 12); ctx.lineTo(x + CELL * (.3 + i * .3), y + CELL - 7); ctx.lineTo(x + CELL * (.4 + i * .3), y + CELL - 12); } ctx.stroke(); ctx.globalAlpha = 1; }
   } }
