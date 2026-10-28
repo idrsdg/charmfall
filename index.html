@@ -632,6 +632,17 @@
 .hud .box.lvl b { color: #fff6e0 !important; font-family: Georgia, "Times New Roman", serif; font-size: 24px; text-shadow: 0 2px 0 rgba(90, 10, 20, .6) !important; }
 .hud .box.lvl::before, .hud .box.lvl::after { content: ""; position: absolute; bottom: -9px; width: 14px; height: 18px; background: #9a1c28; z-index: -1; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%); }
 .hud .box.lvl::before { left: 22%; transform: rotate(14deg); } .hud .box.lvl::after { right: 22%; transform: rotate(-14deg); }
+/* 2026-10-29 İdris "booster ve duraklat düğmelerini de suluboya yap": a pigment wash on paper, a wobbly sepia line, no gloss */
+.boost { --pg: #3a5ab8; background: url(anim/paper.webp) 0 0 / 160px 160px, radial-gradient(ellipse 70% 62% at 42% 38%, color-mix(in srgb, var(--pg) 38%, #f6eedc), color-mix(in srgb, var(--pg) 78%, #f6eedc) 70%, color-mix(in srgb, var(--pg) 92%, #3a2418) 100%) !important; background-blend-mode: multiply, normal !important;
+  border: 2.5px solid #5a3a22 !important; border-radius: 19px 15px 20px 16px / 15px 20px 16px 19px !important; box-shadow: 0 0 0 2px #f6eedc, 0 4px 0 2px #cdb890, 0 9px 12px rgba(60, 40, 20, .25), inset 0 0 0 1px rgba(255, 248, 230, .35), inset -4px -6px 10px color-mix(in srgb, var(--pg) 60%, transparent) !important; }
+.boost[data-b="hammer"] { --pg: #3a5ab8; } .boost[data-b="moves"] { --pg: #3f8a3a; } .boost[data-b="switch"] { --pg: #7a4aa8; } .boost[data-b="cross"] { --pg: #24889a; } .boost[data-b="undo"] { --pg: #b8622a; }
+.boost svg { filter: none !important; } .boost svg > circle:first-child { fill: color-mix(in srgb, var(--pg) 70%, #2a1a10); fill-opacity: .55; stroke: #f6e2b0; stroke-width: 2.5; } .boost svg > circle:nth-child(2) { stroke: rgba(255, 246, 225, .45); stroke-dasharray: 14 3 22 2; }
+.boost:active { translate: 0 3px; box-shadow: 0 0 0 2px #f6eedc, 0 1px 0 2px #cdb890, inset -4px -6px 10px color-mix(in srgb, var(--pg) 60%, transparent) !important; }
+.boost.on { --pg: #e0a020; animation: pulse .8s infinite; }
+.boost.empty { opacity: .5; filter: grayscale(.7) sepia(.3); }
+.boost u { background: radial-gradient(circle at 40% 35%, #d84a50, #9a1c28) !important; border: 2px solid #f6eedc !important; box-shadow: 0 0 0 1.5px #6a1420, 0 2px 4px rgba(60, 20, 10, .35) !important; font-family: Georgia, serif !important; color: #fff6e0; }
+.back.pause, html.app #btnPause { background: url(anim/paper.webp) 0 0 / 160px 160px, radial-gradient(ellipse 70% 62% at 42% 38%, #f2c890, #d08a40 72%, #8a5224) !important; background-blend-mode: multiply, normal !important; border: 2.5px solid #5a3a22 !important; border-radius: 16px 13px 17px 12px / 13px 17px 12px 16px !important; box-shadow: 0 0 0 2px #f6eedc, 0 4px 0 2px #cdb890, 0 8px 12px rgba(60, 40, 20, .25) !important; color: #4a2a14 !important; }
+.back.pause .ico { filter: brightness(.35) sepia(1) saturate(2.2) hue-rotate(-12deg); }
 </style>
 </head>
 <body>
@@ -3732,12 +3743,12 @@ const WCB = {}; { const names = ["paper", "cell-0", "cell-1", "ob-ash1", "ob-ash
 function buildStatic() {
   const W = CELL * COLS; let [cv, x] = mkCan(W, W);
   if (WCB.paper) { x.save(); x.beginPath(); x.roundRect(0, 0, W, W, 16); x.clip(); x.fillStyle = x.createPattern(WCB.paper, "repeat"); x.fillRect(0, 0, W, W);
-    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { if (G.hole[r][c]) { x.fillStyle = "rgba(120,100,70,.18)"; x.fillRect(c * CELL, r * CELL, CELL, CELL); continue; } x.drawImage(WCB[(r + c) % 2 ? "cell-1" : "cell-0"], c * CELL - 2, r * CELL - 2, CELL + 4, CELL + 4); }
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { if (G.hole[r][c]) { x.fillStyle = "rgba(120,100,70,.18)"; x.fillRect(c * CELL, r * CELL, CELL, CELL); continue; } const ci = WCB[(r + c) % 2 ? "cell-1" : "cell-0"]; if (ci) x.drawImage(ci, c * CELL - 2, r * CELL - 2, CELL + 4, CELL + 4); }   /* a piece not yet decoded is simply left out */
     /* 2026-10-29 İdris "tahta soluk, taşlar belirgin değil": the paper is glazed with a deep walnut ink (multiply keeps its tooth), so the cream-edged charms stand out */
     x.globalCompositeOperation = "multiply"; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { if (G.hole[r][c]) continue; x.fillStyle = (r + c) % 2 ? "#6e5442" : "#5e4636"; x.fillRect(c * CELL, r * CELL, CELL, CELL); } x.globalCompositeOperation = "source-over";
     x.strokeStyle = "rgba(255,236,200,.22)"; x.lineWidth = 1.4; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { if (G.hole[r][c]) continue; x.strokeRect(c * CELL + 1.5, r * CELL + 1.5, CELL - 3, CELL - 3); }   /* a light pencil frame round every cell */
     x.restore(); ST.bg = cv;
-    const pic = (n) => { const [c2, k] = mkCan(CELL, CELL); k.imageSmoothingQuality = "high"; k.drawImage(WCB[n], 0, 0, CELL, CELL); return c2; };
+    const pic = (n) => { const [c2, k] = mkCan(CELL, CELL); k.imageSmoothingQuality = "high"; if (WCB[n]) k.drawImage(WCB[n], 0, 0, CELL, CELL); return c2; };
     ST.jelly = [pic("ob-ash1"), pic("ob-ash2")]; ST.frost = [pic("ob-bramble1"), pic("ob-bramble2"), pic("ob-bramble3")]; ST.choc = pic("ob-choc"); ST.stone = pic("ob-stone");
     ST.cbox = COLORS.map((C, i) => { const c2 = pic("ob-crate"), k = c2.getContext("2d"); const art = boldArt(i, (G && G.level ? rotOf(G.level) : 0), Math.round(CELL * .5)); k.drawImage(art, CELL * .25, CELL * .25, CELL * .5, CELL * .5); return c2; });
     ST.badge.clear(); for (let n = 1; n <= 12; n++) badge(n); ST.fonts = [.36, .42, .5].map(k => `900 ${Math.round(CELL * k)}px ui-rounded, system-ui, sans-serif`); return; }
