@@ -1368,7 +1368,7 @@ const STAR = 1000, starsOf = (pts) => Math.floor(pts / STAR);
 LEVELS.forEach((L) => { if (L.target) L.target = Math.max(STAR, Math.round(L.target / STAR) * STAR); });
 const BOOST0 = { hammer: 3, moves: 3, switch: 3, cross: 2, undo: 3 };
 // carrots are earned at a quarter of the old rate: every award is scaled, the remainder waits in the jar (save.carrotFrac) until a whole carrot is due
-const ART_Q = location.protocol === "file:" ? "" : "?v=1029e";   /* bump when the painted art in anim/ is baked again, so no browser keeps an old picture (the iOS app reads files, no query there) */
+const ART_Q = location.protocol === "file:" ? "" : "?v=1029f";   /* bump when the painted art in anim/ is baked again, so no browser keeps an old picture (the iOS app reads files, no query there) */
 const RWM = 2, BXM = 4;   /* 2026-10-29 İdris "ödül kazanmayı yarı yarıya indir, çok fazla booster kazanıyorum": carrots and ∞ lives x2 (was 4), boosters x4 (was 8) */
 const CARROT_RATE = .03125;   // 2026-10-27 İdris: rewards come half as often (the amount of each stays the same)
 function addCarrots(n) { save.carrotFrac = (save.carrotFrac || 0) + n * CARROT_RATE; const give = Math.floor(save.carrotFrac + 1e-9); save.carrotFrac -= give; save.carrots = (save.carrots || 0) + RWM * (give); carrotNew += RWM * (give); return give; }
@@ -3201,7 +3201,7 @@ function gameTheme(i) { const el = $("gTheme"); if (!el) return; const k = Math.
   // 2026-10-28 İdris "tema illa koyu olmasın, her levelde değişsin": a watercolour page painted on the Mac (anim/src/bg-wc.js): the theme's morning or
   // evening page by turns, and a slight shift of hue from level to level, so no two levels in a row look the same
   /* 2026-10-29 İdris "arka planı sadeleştir": no painted landscape, only a soft two-colour wash of the theme, lightened, changing level by level */
-  const v = i % 2, key = k + "-" + v + "-plain"; if (el.dataset.k !== key) { el.dataset.k = key; el.innerHTML = ""; el.style.background = `linear-gradient(180deg, color-mix(in srgb, ${v ? T.s2 : T.s1} 38%, #f4f6fa), color-mix(in srgb, ${v ? T.s1 : T.s2} 30%, #f4f6fa) 55%, color-mix(in srgb, ${T.g} 34%, #eef2ee))`; }
+  const v = i % 2, key = k + "-" + v + "-plain"; if (el.dataset.k !== key) { el.dataset.k = key; el.innerHTML = ""; el.style.background = `linear-gradient(180deg, color-mix(in srgb, ${v ? T.s2 : T.s1} 85%, #ffffff), color-mix(in srgb, ${v ? T.s1 : T.s2} 80%, #ffffff) 55%, ${T.g})`;   /* "solukluğu kaldır": full theme colours */ }
   el.style.filter = `hue-rotate(${((i % 7) - 3) * 9}deg)`;   /* 2026-10-29 İdris "tema soluk": the page's pigments pushed up */ el.hidden = false; }
 // ---- pause / resume (input is blocked by G.paused; a cascade in flight simply finishes underneath)
 // the four things that belong to this chapter's place stand along the top of the board frame (still pictures: they cost nothing while playing)

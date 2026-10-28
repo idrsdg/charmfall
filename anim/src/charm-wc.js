@@ -62,7 +62,7 @@
     granulate(cv, .35);
     // 2026-10-28 İdris "taşlar daha belirgin, sınırları belirgin olsun": a sticker edge round the silhouette, cream inside a dark line
     { const o = document.createElement("canvas"); o.width = o.height = px; const ox = o.getContext("2d"), stamp = (r, col) => { const t = document.createElement("canvas"); t.width = t.height = px; const tx = t.getContext("2d"); for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; tx.drawImage(cv, Math.cos(a) * r, Math.sin(a) * r); } tx.globalCompositeOperation = "source-in"; tx.fillStyle = col; tx.fillRect(0, 0, px, px); ox.drawImage(t, 0, 0); };
-      const k2 = px / 256; stamp(9 * k2, "#2a1a10"); stamp(6.5 * k2, "#fffaf0"); ox.drawImage(cv, 0, 0); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, px, px); x.drawImage(o, 0, 0); }
+      const k2 = px / 256; stamp(9 * k2, "#1a0e08"); stamp(6.5 * k2, "#ffffff"); { const v = document.createElement("canvas"); v.width = v.height = px; const vx = v.getContext("2d"); vx.filter = "saturate(1.55) contrast(1.18) brightness(1.04)"; vx.drawImage(cv, 0, 0); ox.drawImage(v, 0, 0); } x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, px, px); x.drawImage(o, 0, 0); }   /* 2026-10-29 İdris "daha canlı ve belirgin şekiller ve renkler": pigments pushed, a crisp white sticker edge in a near-black line */
     return cv; };
   // granulation and the paper's tooth on a finished picture: pigment settles in the hollows, more where the wash is darker; a tenth of paper shows through
   function granulate(cv, amt) { const x = cv.getContext("2d"), px = cv.width, py = cv.height; x.setTransform(1, 0, 0, 1, 0, 0); const id = x.getImageData(0, 0, px, py), dd = id.data, sc = 256 / Math.max(px, 256) * (amt || 1);
