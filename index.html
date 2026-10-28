@@ -4253,7 +4253,7 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
   if (G.hold) { const pn = performance.now(); if (pn > G.hold + 60) G.hold = 0; else if (pn > G.hold) return; }
   // 2026-10-24 İdris: "oyun içi animasyonlar çok durgun ve akıcı değil". The board runs at the display's full rate again; only when it has not
   // been touched for twenty seconds does it drop to about 30 frames a second (battery, 2026-10-23)
-  if (G.busy) wakeT = pf0; else if (pf0 - wakeT > 20000 && !particles.length && !fx.length && !dying.length && !floaters.length && !G.shake && pf0 - lastDraw < 30) return;
+  if (G.busy) wakeT = pf0;   // 2026-10-28 İdris "her hareket en az 60 fps": a quiet board is no longer drawn at half rate
   lastDraw = pf0;
   const now = ts, dt = Math.min(.05, Math.max(0, (ts - lastTs) / 1000)); lastTs = ts;
   hudTick(dt);

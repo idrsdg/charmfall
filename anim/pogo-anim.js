@@ -136,9 +136,9 @@
     blush(x, u) { const a = Math.min(1, u * 5, (1 - u) * 5) * .55; if (a <= 0) return; x.fillStyle = `rgba(255,120,150,${a})`; for (const sd of [-1, 1]) { x.beginPath(); x.ellipse(CX + sd * 48, HEADY + 24, 13, 7, 0, 0, 7); x.fill(); x.strokeStyle = `rgba(230,80,120,${a})`; x.lineWidth = 2; for (let k = 0; k < 3; k++) { x.beginPath(); x.moveTo(CX + sd * 48 - 8 + k * 6, HEADY + 20); x.lineTo(CX + sd * 48 - 11 + k * 6, HEADY + 28); x.stroke(); } } },
     eyestar(x, u, p, o, f) { const s = (7 + Math.sin(f * .7) * 2) * Math.min(1, u * 6); for (const sd of [-1, 1]) { star(x, CX + sd * 30 + 6, HEADY - 8, s, s * .3, 4, 0); x.fillStyle = "#fff"; x.fill(); } },
     whoosh(x, u) { x.strokeStyle = INK; x.lineCap = "round"; const a0 = -1.9 + u * 1.6; for (let k = 0; k < 3; k++) { x.lineWidth = 5 - k * 1.2; x.beginPath(); x.arc(CX + 10, HEADY + 40, 120 + k * 16, a0, a0 + .9 - u * .5); x.stroke(); } },
-    speed(x, u, p, o, f) { const rr = R(Math.floor(f / 2) + 3); x.strokeStyle = INK; x.lineCap = "round";
-      if (o.ring) { for (let k = 0; k < 14; k++) { const a = rr() * Math.PI * 2, r0 = 150 + rr() * 30; x.lineWidth = 2 + rr() * 3; x.beginPath(); x.moveTo(CX + Math.cos(a) * r0, 250 + Math.sin(a) * r0); x.lineTo(CX + Math.cos(a) * (r0 + 40), 250 + Math.sin(a) * (r0 + 40)); x.stroke(); } return; }
-      for (let k = 0; k < 7; k++) { const y = 170 + rr() * 220, x0 = 6 + rr() * 60, l = 40 + rr() * 70; x.lineWidth = 2 + rr() * 3; x.beginPath(); x.moveTo(x0, y); x.lineTo(x0 + l, y); x.stroke(); } },
+    speed(x, u, p, o, f) { const rr = R(3); x.strokeStyle = INK; x.lineCap = "round";   // every line keeps its place and slides on: no redraw jumps
+      if (o.ring) { for (let k = 0; k < 14; k++) { const a = rr() * Math.PI * 2, r0 = 150 + rr() * 30 + ((f * 9 + k * 13) % 30); x.lineWidth = 2 + rr() * 3; x.beginPath(); x.moveTo(CX + Math.cos(a) * r0, 250 + Math.sin(a) * r0); x.lineTo(CX + Math.cos(a) * (r0 + 40), 250 + Math.sin(a) * (r0 + 40)); x.stroke(); } return; }
+      for (let k = 0; k < 9; k++) { const y = 170 + rr() * 220, sp = 16 + rr() * 10, l = 40 + rr() * 70, x0 = 70 - ((f * sp + k * 37) % 110); x.lineWidth = 2 + rr() * 3; x.beginPath(); x.moveTo(x0, y); x.lineTo(x0 + l, y); x.stroke(); } },
   };
   // renders one animation; returns its frames as canvases (every frame at 24 fps, every other one at 12)
   window.bakePogo = function (name) {
@@ -146,7 +146,7 @@
     const st = { x: cv.getContext("2d"), c: P.Z(), es: { a: 0, v: 0, b: 0, w: 0 }, py: 0, px: 0, pr: 0, t0: 0, ph: 0, mood: "", turn: 0 };
     const pose = (f) => Object.assign(P.Z(), poseDragged(an, f, P.Z));
     for (let f = an.loop ? -an.len : -12; f < an.len; f++) {   // a run-up so the ears' springs are settled (a loop runs once before it is shot)
-      const p = pose(f); if (an.jitter) p.x += (Math.floor(f / 2) % 2 ? 1 : -1) * an.jitter;
+      const p = pose(f); if (an.jitter) p.x += Math.sin(f * Math.PI * 1.5) * an.jitter;
       P.draw(cv, st, f * 1000 / 24, 1 / 24, p);
       if (f < 0 || f % step) continue;
       const out = document.createElement("canvas"); out.width = W; out.height = H; const x = out.getContext("2d"), lift = -p.y * UNIT;
@@ -161,7 +161,7 @@
   // live playback (2026-10-28, İdris: "kasmasın, her animasyon en az 60 fps"): the game plays these same keyed clips at the display's rate.
   // render(x, name, t, P, st, cv3, dt): poses Pogo for time t (seconds) of the clip into the 3D canvas cv3 and composes it with the drawn effects on x
   window.PogoClip = { has: (k) => !!A[k], loop: (k) => !!A[k].loop, dur: (k) => A[k].len / 24, W, H, PW, PH,
-    render(x, name, t, P, st, cv3, dt) { const an = A[name], f = t * 24, p = Object.assign(P.Z(), poseDragged(an, an.loop ? f : Math.min(f, an.len), P.Z)); if (an.jitter) p.x += (Math.floor(f / 2) % 2 ? 1 : -1) * an.jitter;
+    render(x, name, t, P, st, cv3, dt) { const an = A[name], f = t * 24, p = Object.assign(P.Z(), poseDragged(an, an.loop ? f : Math.min(f, an.len), P.Z)); if (an.jitter) p.x += Math.sin(f * Math.PI * 1.5) * an.jitter;
       P.draw(cv3, st, t * 1000, dt, p); const cv = x.canvas, k = cv.width / W, lift = -p.y * UNIT, ff = an.loop ? f % an.len : Math.min(f, an.len);
       x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, cv.width, cv.height);
       x.setTransform(k * S, 0, 0, k * S, 0, 0); for (const e of an.fx || []) if (e.k === "speed" && ff >= e.from && ff <= e.to) FX.speed(x, (ff - e.from) / Math.max(1, e.to - e.from), {}, e, ff);
