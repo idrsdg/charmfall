@@ -626,6 +626,12 @@
   #path .lv.lock { background: radial-gradient(120% 130% at 30% 25%, #d8ccb6, #ae9f88) !important; border-color: #efe6d4 !important; color: #6e604e !important; }
   #path .lvplate { background: url(anim/paper.webp) 0 0 / 200px 200px, #f6eedc !important; color: #4a2e1c !important; border: 2px solid #8a6a46 !important; box-shadow: 0 3px 0 #cdb890 !important; text-shadow: none !important; }
   #path .lvplate.go { background: radial-gradient(120% 140% at 30% 20%, #ffe390, #f6c24a 55%, #e8a72a) !important; border-color: #7a4a1a !important; }   /* Pogo's quick moment never sits over an open page */
+/* 2026-10-29 İdris "level butonu diğerlerinden farklı olsun": the level is a painted wax seal with a ribbon, not a paper box */
+.hud .box.lvl { background: radial-gradient(circle at 35% 30%, #e0505a, #b0222e 58%, #7e1420) !important; border: 3px solid #f6e2b0 !important; border-radius: 50% 50% 46% 54% / 52% 48% 52% 48% !important; box-shadow: 0 0 0 2.5px #7e1420, 0 5px 0 #5a0e16, 0 9px 14px rgba(70, 20, 20, .35), inset 0 -5px 8px rgba(60, 0, 10, .35), inset 0 3px 4px rgba(255, 210, 200, .35) !important; aspect-ratio: 1; justify-self: center; position: relative; overflow: visible !important; }
+.hud .box.lvl small { color: #ffe9b8 !important; font-size: 9.5px; letter-spacing: .12em; }
+.hud .box.lvl b { color: #fff6e0 !important; font-family: Georgia, "Times New Roman", serif; font-size: 24px; text-shadow: 0 2px 0 rgba(90, 10, 20, .6) !important; }
+.hud .box.lvl::before, .hud .box.lvl::after { content: ""; position: absolute; bottom: -9px; width: 14px; height: 18px; background: #9a1c28; z-index: -1; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%); }
+.hud .box.lvl::before { left: 22%; transform: rotate(14deg); } .hud .box.lvl::after { right: 22%; transform: rotate(-14deg); }
 </style>
 </head>
 <body>
