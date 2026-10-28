@@ -57,5 +57,11 @@
     for (const [a, b] of [[13, 13], [87, 13], [13, 87], [87, 87]]) { x.fillStyle = "rgba(80,56,40,.8)"; x.beginPath(); x.arc(a, b, 1.8, 0, 6.28); x.fill(); }
     x.fillStyle = "rgba(250,244,230,.75)"; x.beginPath(); x.arc(50, 50, 24, 0, 6.28); x.fill(); pencil(x, (() => { const c = new Path2D(); c.arc(50, 50, 24, 0, 6.28); return c; })(), 123, 1.1);
     pencil(x, body, 124, 1.5); granulate(cv, 1.4); return cv; };
+  // ---- the ground tile for the map's bands: a transparent 256 px tile with grass tufts and pebbles, wrapped so it repeats
+  B.ground = () => { const N = 256, cv = document.createElement("canvas"); cv.width = cv.height = N; const x = cv.getContext("2d"); const r = R(9); x.lineCap = "round";
+    const wrap = (f) => { for (const dx of [-N, 0, N]) for (const dy of [-N, 0, N]) { x.save(); x.translate(dx, dy); f(); x.restore(); } };
+    for (let i = 0; i < 14; i++) { const cx = r() * N, cy = r() * N, s = .7 + r() * .7; wrap(() => { for (let b = 0; b < 4; b++) { const a = -1.9 + b * .55 + (r() - .5) * .3, l = (7 + r() * 6) * s; x.strokeStyle = `rgba(40,${90 + r() * 30 | 0},50,${.35 + r() * .2})`; x.lineWidth = 1.4 * s; x.beginPath(); x.moveTo(cx, cy); x.quadraticCurveTo(cx + Math.cos(a) * l * .5 - 2, cy + Math.sin(a) * l * .5, cx + Math.cos(a) * l, cy + Math.sin(a) * l); x.stroke(); } }); }
+    for (let i = 0; i < 6; i++) { const cx = r() * N, cy = r() * N, s = .7 + r() * .6; wrap(() => { x.fillStyle = "rgba(246,240,226,.7)"; x.beginPath(); x.ellipse(cx, cy, 3.5 * s, 2.4 * s, 0, 0, 6.28); x.fill(); x.strokeStyle = "rgba(74,52,40,.45)"; x.lineWidth = .8; x.stroke(); x.fillStyle = "rgba(246,240,226,.55)"; x.beginPath(); x.ellipse(cx + 7 * s, cy + 2, 2.4 * s, 1.6 * s, 0, 0, 6.28); x.fill(); }); }
+    return cv; };
   window.BOARD_WC = B;
 })();

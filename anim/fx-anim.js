@@ -20,7 +20,7 @@
   function puff(L, cx, cy, r, seed = 0) { if (r < 1.2) return; const q = R(seed + 1), lumps = [[0, 0, r], [-r * .62, r * .22, r * (.62 + q() * .12)], [r * .58, r * .18, r * (.58 + q() * .14)], [r * .2, -r * .42, r * (.5 + q() * .12)]];
     const all = (x) => { x.beginPath(); for (const [dx, dy, rr] of lumps) { x.moveTo(cx + dx + rr, cy + dy); x.arc(cx + dx, cy + dy, rr, 0, 7); } };
     all(L); L.lineWidth = Math.max(3, r * .3); L.strokeStyle = INK; L.lineJoin = "round"; L.stroke(); all(L); L.fillStyle = CREAM; L.fill();
-    L.save(); all(L); L.clip(); L.beginPath(); for (const [dx, dy, rr] of lumps) { L.moveTo(cx + dx + rr * 1.3, cy + dy + rr * .55); L.arc(cx + dx + rr * .3, cy + dy + rr * .55, rr, 0, 7); } L.fillStyle = SHADE; L.fill(); L.restore(); }
+    L.beginPath(); for (const [dx, dy, rr] of lumps) { L.moveTo(cx + dx + rr * .9, cy + dy + rr * .35); L.arc(cx + dx, cy + dy + rr * .35, rr * .62, 0, 7); } L.fillStyle = SHADE; L.fill(); }   // the shade is a smaller lump low in each lump: no clip, so it costs nothing on the phone
   function ring(L, M, cx, cy, r, w) { if (w <= .5) return; M.beginPath(); M.arc(cx, cy, r, 0, 7); M.lineWidth = w; M.strokeStyle = "#fff"; M.stroke(); if (w < 6) return; L.beginPath(); L.arc(cx, cy, r + w / 2, 0, 7); ink(L, 2.5); L.beginPath(); L.arc(cx, cy, Math.max(.5, r - w / 2), 0, 7); ink(L, 2.5); }
   const FX = {
     // a charm cleared: impact star, a ring of its colour, six shards, three puffs that split, a few twinkles
