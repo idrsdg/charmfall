@@ -3391,7 +3391,7 @@ function expandSpecials(set, detonated) {
       else if (g.special === "v") { for (let rr = 0; rr < ROWS; rr++) add(rr, c); beam("v", r, c, col0); }
       else if (g.special === "wrap") { for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) add(r + dr, c + dc); G.wrapAgain = G.wrapAgain || []; G.wrapAgain.push({ r, c, color: col0 }); shock(c + .5, r + .5, col0); }
       else if (g.special === "fly") { add(r, c + 1); add(r, c - 1); add(r + 1, c); add(r - 1, c); launchFly(set, r, c, col0); }
-      else if (g.special === "bomb") { const col = g.bombColor !== undefined ? g.bombColor : mostCommonColor(); const bc = PAL[col] ? PAL[col].c : "#fff"; let nb = 0; for (let rr = 0; rr < ROWS; rr++) for (let cc = 0; cc < COLS; cc++) { const t = cell(rr, cc); if (t && t.kind === "gem" && t.color === col) { add(rr, cc); if (nb++ < 30) bolt(c + .5, r + .5, cc + .5, rr + .5, bc); } } flash(.55, 320); shock(c + .5, r + .5, "#fff"); SFX.bomb(); }
+      else if (g.special === "bomb") { const col = g.bombColor !== undefined ? g.bombColor : mostCommonColor(); const bc = PAL[col] ? PAL[col].c : "#fff"; let nb = 0; for (let rr = 0; rr < ROWS; rr++) for (let cc = 0; cc < COLS; cc++) { const t = cell(rr, cc); if (t && t.kind === "gem" && t.color === col) { add(rr, cc); if (nb++ < 30) bolt(c + .5, r + .5, cc + .5, rr + .5, bc); } } sheetFx("whirl", c + .5, r + .5, 6); SFX.bomb(); }
       SFX.special();
     }
   }
@@ -3415,7 +3415,7 @@ async function blast(clear, spawn = [], opts = {}) {
     for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) if (G.block[r + dr] && G.block[r + dr][c + dc] && !clear.has((r + dr) * COLS + c + dc)) hitBlock(r + dr, c + dc, false, g.color);
     if (keep.has(k)) continue;
     // a short ripple runs along the match instead of everything popping on the same frame
-    const C = PAL[g.color], dl = Math.min(popped, 6) * step + (flyDl && flyDl.get(k) || 0); dying.push({ g, t: now + dl }); { const bc = C ? (GS === "bold" ? BLHUE_P[g.color % 6] : GS === "glow" ? GLHUE[g.color % 6] : typeof D3 !== "undefined" && D3 && D3.lpColor ? D3.lpColor(g.color, C) : C.c) : "#fff", n = (g.special ? 14 : 8) + Math.min(8, (G.combo - 1) * 2); burst(c + .5, r + .5, bc, n, C ? C.shape : "tri", dl); if (!window.__lowFx) { fx.push({ k: "star", x: c + .5, y: r + .5, color: bc, t: now + dl + 40, life: 420, size: .55 + Math.min(.4, G.combo * .08) }); fx.push({ k: "ring", x: c + .5, y: r + .5, color: bc, r1: .55 + Math.min(.5, G.combo * .1), t: now + dl, life: 360, w: 5 }); if (popped % 3 === 0) fx.push({ k: "bloom", x: c + .5, y: r + .5, color: bc, t: now + dl + 30, life: 620 }); } } if (g.special) ring(c + .5, r + .5, C ? C.l : "#fff", 1.3); G.grid[r][c] = null; popped++;
+    const C = PAL[g.color], dl = Math.min(popped, 6) * step + (flyDl && flyDl.get(k) || 0); dying.push({ g, t: now + dl }); { const bc = C ? (GS === "bold" ? BLHUE_P[g.color % 6] : GS === "glow" ? GLHUE[g.color % 6] : typeof D3 !== "undefined" && D3 && D3.lpColor ? D3.lpColor(g.color, C) : C.c) : "#fff", n = (g.special ? 14 : 8) + Math.min(8, (G.combo - 1) * 2); burst(c + .5, r + .5, bc, n, C ? C.shape : "tri", dl); if (!window.__lowFx && 0) { fx.push({ k: "star", x: c + .5, y: r + .5, color: bc, t: now + dl + 40, life: 420, size: .55 + Math.min(.4, G.combo * .08) }); fx.push({ k: "ring", x: c + .5, y: r + .5, color: bc, r1: .55 + Math.min(.5, G.combo * .1), t: now + dl, life: 360, w: 5 }); if (popped % 3 === 0) fx.push({ k: "bloom", x: c + .5, y: r + .5, color: bc, t: now + dl + 30, life: 620 }); } } if (g.special) ring(c + .5, r + .5, C ? C.l : "#fff", 1.3); G.grid[r][c] = null; popped++;
     if (detonated.has(k)) addScore(r, c, 200 * G.combo); else if (!opts.silent) G.score += 20 * Math.max(1, G.combo);
   }
   for (const s of spawn) { let g = cell(s.r, s.c); if (g && g.kind === "gem") { g.special = s.sp; g.color = s.color; } else { g = G.grid[s.r][s.c] = mkGem(s.color, s.r, s.c, s.sp); } g.sx = 1.6; g.pop = performance.now(); if (s.sp === "bomb") save.stats.bombs++; if (s.sp === "fly" && !save.seenFly && !window.__fast) { save.seenFly = 1; tip("Firefly! A 2×2 square makes one. It flies to what you need.", 3800); } sparkle(s.c + .5, s.r + .5, PAL[s.color].c); ring(s.c + .5, s.r + .5, "#fff", 1.3, 500, 9); burst(s.c + .5, s.r + .5, "#fff", 6, "round"); }
@@ -3716,29 +3716,29 @@ function layout() {
 const MAXP = 900;
 let capI = 0;
 function addP(p) { if (particles.length >= MAXP) particles[capI = (capI + 1) % MAXP] = p; else particles.push(p); }
-function burst(x, y, color, n, shape, delay) {
-  const now = performance.now() + (delay || 0);
-  for (let i = 0; i < n; i++) { const a = Math.random() * 6.28, s = 3 + Math.random() * 7; addP({ k: "shard", x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 4, t: now, life: 520 + Math.random() * 380, color, r: .08 + Math.random() * .1, rot: Math.random() * 6.28, vr: (Math.random() - .5) * 16, shape: shape || "tri" }); }
-  for (let i = 0; i < Math.ceil(n * .8); i++) { const a = Math.random() * 6.28, s = 7 + Math.random() * 11; addP({ k: "spark", x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, t: now, life: 260 + Math.random() * 260, color, r: 1.5 + Math.random() * 2.5 }); }
-  for (let i = 0; i < Math.ceil(n / 3); i++) { const a = Math.random() * 6.28, s = 1 + Math.random() * 3.5; addP({ k: "dot", x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 1.5, t: now, life: 520 + Math.random() * 420, color, r: 3 + Math.random() * 6 }); }
-}
+// 2026-10-28 İdris "animasyonları aşırı detaylı ve profesyonel yap": the board's effects are drawn frame by frame (anim/src/fx-anim.js, 24 fps):
+// an ink layer over a colour mask that is tinted with the charm's colour as it is drawn. [frames, columns, width, height] per sheet (anim/fx.json).
+const FXS = {"pop":[14,14,192,192],"blast":[22,22,384,384],"beam":[16,15,1024,128],"twinkle":[16,16,160,160],"whirl":[24,24,384,384],"nope":[10,10,128,128]}, FXI = {}, fxScratch = {};
+for (const k in FXS) { const a = new Image(), m = new Image(); a.src = "anim/fx-" + k + ".webp"; m.src = "anim/fx-" + k + "-c.webp"; FXI[k] = [a, m]; }
+function sheetFx(name, x, y, size, color, rot, delay) { if (window.__fast) return; fx.push({ k: "sheet", name, x, y, size, color, rot: rot || 0, t: performance.now() + (delay || 0), life: FXS[name][0] * 1000 / 24 }); }
+function drawSheetFx(f, t) { const [n, cols, w, h] = FXS[f.name], im = FXI[f.name]; if (!im[0].naturalWidth) return; const fr = Math.min(n - 1, Math.floor(t * n)), sx = (fr % cols) * w, sy = Math.floor(fr / cols) * h, dw = f.size * CELL, dh = dw * h / w;
+  ctx.translate(OX + f.x * CELL, OY + f.y * CELL); if (f.rot) ctx.rotate(f.rot);
+  if (f.color && im[1].naturalWidth) { let sc = fxScratch[f.name]; if (!sc) { sc = fxScratch[f.name] = document.createElement("canvas"); sc.width = w; sc.height = h; } const g = sc.getContext("2d"); g.globalCompositeOperation = "copy"; g.drawImage(im[1], sx, sy, w, h, 0, 0, w, h); g.globalCompositeOperation = "source-in"; g.fillStyle = f.color; g.fillRect(0, 0, w, h); ctx.drawImage(sc, -dw / 2, -dh / 2, dw, dh); }
+  ctx.drawImage(im[0], sx, sy, w, h, -dw / 2, -dh / 2, dw, dh); }
+function burst(x, y, color, n, shape, delay) { sheetFx("pop", x, y, 2.2, color, (x * 7 + y * 3) % 6.28, delay); }   // a charm, a frost, a crate popping
 function ring(x, y, color, r1 = 1.1, life = 420, w = 7) { fx.push({ k: "ring", x, y, color, r1, t: performance.now(), life, w }); }
 function flash(a = .5, life = 280, color = "#fff") { fx.push({ k: "flash", a: Math.min(a, .35), color, t: performance.now(), life }); }
-function beam(dir, r, c, color) {
-  const now = performance.now(); fx.push({ k: "beam", dir, r, c, color, t: now, life: 460 });
-  for (let i = 0; i < 14; i++) { const d = i % 2 ? 1 : -1, s = 14 + Math.random() * 18; addP({ k: "spark", x: c + .5, y: r + .5, vx: dir === "h" ? d * s : (Math.random() - .5) * 2, vy: dir === "v" ? d * s : (Math.random() - .5) * 2, t: now + Math.random() * 60, life: 320 + Math.random() * 200, color: i % 3 ? color : "#fff", r: 3 });
-  }
-}
-function shock(x, y, color) { fx.push({ k: "shock", x, y, color, t: performance.now(), life: 520 }); flash(.3, 220, color); }
+function beam(dir, r, c, color) { sheetFx("beam", c + .5, r + .5, COLS * 2.05, color, dir === "v" ? Math.PI / 2 : 0); }
+function shock(x, y, color) { sheetFx("blast", x, y, 5, color === "#fff" ? "#ffd23a" : color); }
 function bolt(x1, y1, x2, y2, color) {
   const pts = [[x1, y1]], n = 7, dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
   for (let i = 1; i < n; i++) { const t = i / n, j = (Math.random() - .5) * .5 * Math.min(1, L / 3); pts.push([x1 + dx * t + nx * j, y1 + dy * t + ny * j]); }
   pts.push([x2, y2]); fx.push({ k: "bolt", pts, color, t: performance.now(), life: 340 });
 }
-function sparkle(x, y, color) { fx.push({ k: "star", x, y, color, t: performance.now(), life: 520 }); }
+function sparkle(x, y, color) { sheetFx("twinkle", x, y, 1.8, color); }
 function puff(x, y) { const now = performance.now(); for (let i = 0; i < 4; i++) addP({ k: "dot", x: x + (Math.random() - .5) * .5, y, vx: (Math.random() - .5) * 3, vy: -1 - Math.random() * 2, t: now, life: 320 + Math.random() * 200, color: "#dfe8ff", r: 3 + Math.random() * 3, nog: true }); }
 function confetti() { const now = performance.now(); for (let i = 0; i < 160; i++) addP({ k: "conf", x: Math.random() * COLS, y: -Math.random() * 4, vx: (Math.random() - .5) * 2, vy: 2 + Math.random() * 3, t: now + Math.random() * 600, life: 2400 + Math.random() * 1000, color: PAL[rnd(NCOL)].c, r: .09 + Math.random() * .08, rot: Math.random() * 6.28, vr: (Math.random() - .5) * 10, ph: Math.random() * 6.28 }); }
-function nope(r, c) { fx.push({ k: "nope", r, c, t: performance.now(), life: 380 }); }
+function nope(r, c) { sheetFx("nope", c + .5, r + .5, 1.1); }
 
 const ease = (t) => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 const easeOut = (t) => 1 - Math.pow(1 - t, 3);
@@ -4325,7 +4325,7 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
     const d = dying[i], t = (now - d.t) / 340; if (t >= 1) { dying.splice(i, 1); continue; }
     const g = d.g, px = (g.c + .5) * CELL, py = (g.r + .5) * CELL;
     if (t <= 0) { drawGem(g, px, py, 1, now); continue; }
-    if (t < .4) { const k = easeOut(t / .4), s = 1 + .35 * k; drawGem(g, px, py, s, now); ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = k * .55; drawGem(g, px, py, s, now); ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1; }
+    if (t < .4) { const k = easeOut(t / .4), s = 1 + .3 * k; drawGem(g, px, py, s, now); }
     else { const k = (t - .4) / .6, kk = k * k; ctx.globalAlpha = 1 - kk; drawGem(g, px, py, 1.35 * (1 - kk), now, 1, kk * 1.6); ctx.globalAlpha = 1; }
   }
   // blockers on top (cached sprites)
@@ -4340,7 +4340,8 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
   for (let i = fx.length - 1; i >= 0; i--) {
     const f = fx[i], t = (now - f.t) / f.life; if (t >= 1) { fx.splice(i, 1); continue; } if (t < 0) continue;
     ctx.save();
-    if (f.k === "beam") {
+    if (f.k === "sheet") drawSheetFx(f, t);
+    else if (f.k === "beam") {
       const ext = easeOut(Math.min(1, t * 1.8)) * (COLS + 1), th = CELL * (.42 - .25 * t), a = .9 * (1 - t * t);
       const cx = OX + (f.c + .5) * CELL, cy = OY + (f.r + .5) * CELL;
       ctx.globalAlpha = a; ctx.fillStyle = f.color;
@@ -4355,14 +4356,12 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
       
     } else if (f.k === "dart") {
       const e = ease(Math.min(1, t * 1.15)), x = OX + (f.x + (f.x2 - f.x) * e) * CELL, y = OY + (f.y + (f.y2 - f.y) * e) * CELL - Math.sin(e * Math.PI) * CELL * .7, R0 = CELL * .3;
-      ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = t > .85 ? (1 - t) / .15 : 1;
-      const gr = ctx.createRadialGradient(x, y, 0, x, y, R0 * 1.8); gr.addColorStop(0, "#fff"); gr.addColorStop(.35, f.color); gr.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, R0 * 1.8, 0, 6.2832); ctx.fill();
-      ctx.globalCompositeOperation = "source-over"; ctx.fillStyle = "rgba(255,255,255,.85)"; const fl = Math.sin(now / 22) * .5;
+      if (t > .9) { ctx.restore(); continue; } ctx.beginPath(); ctx.arc(x, y, R0, 0, 6.2832); ctx.fillStyle = f.color; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = "#1d1424"; ctx.stroke(); ctx.beginPath(); ctx.arc(x - R0 * .3, y - R0 * .3, R0 * .32, 0, 6.2832); ctx.fillStyle = "#fff"; ctx.fill(); ctx.fillStyle = "rgba(255,255,255,.85)"; const fl = Math.sin(now / 22) * .5;
       for (const sx of [-1, 1]) { ctx.beginPath(); ctx.ellipse(x + sx * R0 * .8, y - R0 * .5, R0 * .7, R0 * (.22 + .12 * Math.abs(fl)), sx * (.5 + fl * .4), 0, 6.2832); ctx.fill(); }
     } else if (f.k === "bolt") {
-      ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = (1 - t) * (.7 + .3 * Math.sin(now / 12)); ctx.lineCap = "round"; ctx.lineJoin = "round";
+      if (t > .8) { ctx.restore(); continue; } ctx.lineCap = "round"; ctx.lineJoin = "round";
       ctx.beginPath(); for (let j = 0; j < f.pts.length; j++) { const p = f.pts[j]; if (j) ctx.lineTo(OX + p[0] * CELL, OY + p[1] * CELL); else ctx.moveTo(OX + p[0] * CELL, OY + p[1] * CELL); }
-      ctx.strokeStyle = f.color; ctx.lineWidth = 7; ctx.stroke(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 2.5; ctx.stroke();
+      ctx.strokeStyle = "#1d1424"; ctx.lineWidth = 11; ctx.stroke(); ctx.strokeStyle = f.color; ctx.lineWidth = 7; ctx.stroke(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 2.5; ctx.stroke();
     } else if (f.k === "star") {
       ctx.globalCompositeOperation = "lighter"; const e = Math.sin(t * Math.PI), x = OX + f.x * CELL, y = OY + f.y * CELL; ctx.translate(x, y); ctx.rotate(t * 2); ctx.globalAlpha = e; ctx.fillStyle = "#fff";
       const R = CELL * .9 * e * (f.size || 1), rr = R * .12; ctx.beginPath(); for (let j = 0; j < 8; j++) { const a = j * Math.PI / 4, rad = j % 2 ? rr : R; ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad); } ctx.closePath(); ctx.fill();
