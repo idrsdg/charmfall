@@ -25,7 +25,7 @@
   function lift(x, path, cx, cy, Rr) { x.save(); x.clip(path); x.filter = "blur(2.2px)"; x.globalCompositeOperation = "destination-out"; x.fillStyle = "rgba(0,0,0,.55)"; x.beginPath(); x.ellipse(cx - Rr * .34, cy - Rr * .4, Rr * .3, Rr * .17, -.6, 0, 6.2832); x.fill(); x.restore();
     x.save(); x.clip(path); x.filter = "blur(.6px)"; x.fillStyle = "rgba(255,252,242,.85)"; x.beginPath(); x.ellipse(cx - Rr * .44, cy - Rr * .48, Rr * .09, Rr * .05, -.6, 0, 6.2832); x.fill(); x.restore(); }
   // the pencil: two passes, the second a hair off; long dashes with small gaps where the lead skipped
-  function pencil(x, path, seed, w) { const r = R(seed); for (let pass = 0; pass < 2; pass++) { x.save(); x.translate(pass * .45, -pass * .35); x.strokeStyle = SEPIA + (pass ? ".32)" : ".82)"); x.lineWidth = (w || 1.5) * (pass ? .7 : 1); x.lineCap = "round"; x.lineJoin = "round";
+  function pencil(x, path, seed, w) { const r = R(seed); for (let pass = 0; pass < 2; pass++) { x.save(); x.translate(pass * .45, -pass * .35); x.strokeStyle = pass ? "rgba(58,36,24,.4)" : "rgba(44,26,16,.95)"; x.lineWidth = (w || 1.5) * (pass ? .7 : 1); x.lineCap = "round"; x.lineJoin = "round";
     const dash = []; for (let i = 0; i < 12; i++) { dash.push(18 + r() * 60, r() < .5 ? .8 + r() * 1.6 : .01); } x.setLineDash(dash); x.lineDashOffset = r() * 50; x.stroke(path); x.restore(); } }
   function bbox(q) { const bb = [100, 100, 0, 0]; const pts = typeof q === "string" ? (q.match(/-?\d+(\.\d+)?/g) || []).map(Number) : q[0] === "c" || q[0] === "e" ? [q[1] - q[3], q[2] - (q[4] || q[3]), q[1] + q[3], q[2] + (q[4] || q[3])] : q[1].flat();
     for (let i = 0; i + 1 < pts.length; i += 2) { bb[0] = Math.min(bb[0], pts[i]); bb[2] = Math.max(bb[2], pts[i]); bb[1] = Math.min(bb[1], pts[i + 1]); bb[3] = Math.max(bb[3], pts[i + 1]); } return bb; }
@@ -56,7 +56,7 @@
     // warm light, cool shade: two faint glazes of other pigments, the way a painter shifts temperature across a form
     x.save(); x.clip(body); x.filter = "blur(6px)"; x.fillStyle = "rgba(240,190,110,.12)"; x.beginPath(); x.ellipse(36, 32, 30, 22, -.5, 0, 6.2832); x.fill(); x.fillStyle = "rgba(90,100,160,.1)"; x.beginPath(); x.ellipse(66, 74, 34, 24, -.5, 0, 6.2832); x.fill(); x.restore();
     // the pencil round the whole charm, on its silhouette only: drawn twice as wide on a sheet of its own, the inside rubbed out
-    { const t = document.createElement("canvas"); t.width = t.height = px; const y = t.getContext("2d"); y.setTransform(x.getTransform()); for (let i = 0; i < parts.length; i++) pencil(y, parts[i], seed + 11 + i, 4.6);
+    { const t = document.createElement("canvas"); t.width = t.height = px; const y = t.getContext("2d"); y.setTransform(x.getTransform()); for (let i = 0; i < parts.length; i++) pencil(y, parts[i], seed + 11 + i, 5.6);
       y.globalCompositeOperation = "destination-out"; y.fillStyle = "#000"; y.fill(body); x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.drawImage(t, 0, 0); x.restore(); }
     // granulation and the paper's tooth: pigment settles in the hollows, more of it where the wash is darker
     granulate(cv, 1);

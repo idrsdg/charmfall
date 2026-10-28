@@ -4157,11 +4157,11 @@ const JELLY = window.__gemStyle !== "art", GS = window.__gemStyle || "bold";   /
 function drawGemRaw(ctx, g, now) {
   const C = PAL[g.color]; ctx.save();
   if (g.kind === "ing") { // a seed on its way to the soil: a pale halo so it is never lost among the charms, a brown seed, two green leaves
-    const u = CELL; ctx.fillStyle = "rgba(255,255,255,.3)"; ctx.beginPath(); ctx.arc(0, 0, u * .43, 0, 6.28); ctx.fill(); ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = 2; ctx.setLineDash([u * .1, u * .07]); ctx.stroke(); ctx.setLineDash([]);
+    const u = CELL; ctx.fillStyle = "#ffcf3a"; ctx.beginPath(); ctx.arc(0, 0, u * .45, 0, 6.28); ctx.fill(); ctx.strokeStyle = "#7a4210"; ctx.lineWidth = Math.max(2.5, u * .07); ctx.stroke(); ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.lineWidth = Math.max(1.5, u * .035); ctx.setLineDash([u * .1, u * .07]); ctx.beginPath(); ctx.arc(0, 0, u * .37, 0, 6.28); ctx.stroke(); ctx.setLineDash([]);   // 2026-10-28 İdris "tohumları çok daha belirgin yap": a bold golden disc with a dark rim on the paper board
     ctx.shadowColor = "transparent"; ctx.lineJoin = "round"; ctx.lineCap = "round";
     ctx.strokeStyle = "#1c5a2a"; ctx.lineWidth = Math.max(2, u * .06); ctx.beginPath(); ctx.moveTo(0, u * .02); ctx.lineTo(0, -u * .2); ctx.stroke();
-    ctx.fillStyle = "#5fd36f"; ctx.lineWidth = Math.max(1.4, u * .035); for (const sx of [-1, 1]) { ctx.beginPath(); ctx.moveTo(0, -u * .18); ctx.quadraticCurveTo(sx * u * .08, -u * .4, sx * u * .3, -u * .34); ctx.quadraticCurveTo(sx * u * .22, -u * .14, 0, -u * .18); ctx.fill(); ctx.stroke(); }
-    const sg = ctx.createRadialGradient(-u * .07, u * .08, 0, 0, u * .16, u * .24); sg.addColorStop(0, "#fffdf2"); sg.addColorStop(1, "#e6c98c"); ctx.fillStyle = sg; ctx.strokeStyle = "#6b4a1c"; ctx.lineWidth = Math.max(1.6, u * .045);
+    ctx.fillStyle = "#2fbf4a"; ctx.lineWidth = Math.max(1.6, u * .04); for (const sx of [-1, 1]) { ctx.beginPath(); ctx.moveTo(0, -u * .18); ctx.quadraticCurveTo(sx * u * .08, -u * .4, sx * u * .3, -u * .34); ctx.quadraticCurveTo(sx * u * .22, -u * .14, 0, -u * .18); ctx.fill(); ctx.stroke(); }
+    const sg = ctx.createRadialGradient(-u * .07, u * .08, 0, 0, u * .16, u * .24); sg.addColorStop(0, "#e0a050"); sg.addColorStop(1, "#8a4f1c"); ctx.fillStyle = sg; ctx.strokeStyle = "#3a200a"; ctx.lineWidth = Math.max(1.6, u * .045);
     ctx.beginPath(); ctx.ellipse(0, u * .17, u * .19, u * .22, 0, 0, 6.28); ctx.fill(); ctx.stroke();
     ctx.fillStyle = "rgba(255,255,255,.6)"; ctx.beginPath(); ctx.ellipse(-u * .07, u * .09, u * .045, u * .08, .5, 0, 6.28); ctx.fill();
     ctx.restore(); return;

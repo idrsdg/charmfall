@@ -22,10 +22,11 @@
   B["cell-0"] = () => { const [cv, x] = tile(); wash(x, blob(50, 50, 47, 47, 11, .05), "#c9b896", 21, { a: .07, layers: 4, rw: 2, rim: .22, j: 1.4 }); granulate(cv, 1.5); return cv; };
   B["cell-1"] = () => { const [cv, x] = tile(); wash(x, blob(50, 50, 47, 47, 12, .05), "#a9b8c4", 22, { a: .075, layers: 4, rw: 2, rim: .22, j: 1.4 }); granulate(cv, 1.5); return cv; };
   // ---- ash: a granulating grey wash (ash pigments settle hard), a scribbled pencil edge; two layers is darker, heaped, with ember dots
-  for (const n of [1, 2]) B["ash" + n] = () => { const [cv, x] = tile(); const col = n === 2 ? "#5c5668" : "#8e8899";
-    wash(x, blob(50, 52, 45, 44, 30 + n, .1), col, 31 + n, { a: n === 2 ? .3 : .24, layers: 5, rw: 3, rim: .6, j: 2 });
+  for (const n of [1, 2]) B["ash" + n] = () => { const [cv, x] = tile(); const col = n === 2 ? "#3c3648" : "#6a6478";   // 2026-10-28 İdris "küller hiç belli olmuyor": darker ash
+    { const bg = new Path2D(); bg.roundRect(4, 4, 92, 92, 14); x.fillStyle = n === 2 ? "rgba(70,62,84,.82)" : "rgba(128,120,142,.72)"; x.fill(bg); }   // the whole cell is ash-grey, so it shows all round a charm sitting on it
+    wash(x, blob(50, 52, 45, 44, 30 + n, .1), col, 31 + n, { a: n === 2 ? .55 : .45, layers: 5, rw: 4, rim: .85, j: 2 });
     if (n === 2) wash(x, blob(46, 58, 30, 24, 33, .2), "#4c4656", 34, { a: .14, layers: 3, rw: 2, rim: .35 });
-    pencil(x, blob(50, 52, 44, 43, 35 + n, .12), 36 + n, 1.2); const r = R(40 + n);
+    pencil(x, blob(50, 52, 44, 43, 35 + n, .12), 36 + n, 2.4); { const rr2 = new Path2D(); rr2.roundRect(5, 5, 90, 90, 14); x.strokeStyle = n === 2 ? "rgba(220,110,50,.95)" : "rgba(60,52,70,.9)"; x.lineWidth = 7; x.setLineDash(n === 2 ? [9, 6] : []); x.stroke(rr2); x.setLineDash([]); } const r = R(40 + n);   // a firm frame at the cell edge shows round any charm that sits on the ash
     for (let i = 0; i < 18 + n * 10; i++) { const a = r() * 6.28, d = 12 + r() * 30; x.fillStyle = r() < .5 ? "rgba(255,250,240,.5)" : "rgba(60,50,60,.35)"; x.beginPath(); x.arc(50 + Math.cos(a) * d, 52 + Math.sin(a) * d, .6 + r() * (n === 2 ? 1.6 : 1), 0, 6.28); x.fill(); }
     if (n === 2) for (let i = 0; i < 6; i++) { const a = r() * 6.28, d = 20 + r() * 22; x.fillStyle = "rgba(226,120,60,.75)"; x.beginPath(); x.arc(50 + Math.cos(a) * d, 52 + Math.sin(a) * d, 1.4, 0, 6.28); x.fill(); }
     granulate(cv, 2.2); return cv; };
