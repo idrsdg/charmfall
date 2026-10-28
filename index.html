@@ -600,6 +600,14 @@
   .critter.ani { z-index: 3; }
   .bg i, .bg svg, #gWeather u, #gWeather.storm::after { display: none !important; }
   #gWeather.fog::before, #gWeather.fog::after { animation: none !important; }
+  /* 2026-10-28: Pogo's quick moments */
+  #pgMoment { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 96px); width: 150px; height: 186px; margin-left: -75px; z-index: 80; pointer-events: none; opacity: 0; }
+  #pgMoment::before { content: ""; position: absolute; left: 50%; top: 58%; width: 190px; height: 190px; margin: -95px 0 0 -95px; border-radius: 50%; background: repeating-conic-gradient(#ffd84a 0 10deg, #ffb52e 10deg 20deg); border: 4px solid #1d1424; opacity: 0; transform: scale(.4) rotate(0deg); }
+  #pgMoment.on { animation: pgmIn .34s cubic-bezier(.3, 1.6, .5, 1) both; } #pgMoment.on::before { animation: pgmBurst 1.6s ease-out both; }
+  #pgMoment.off { animation: pgmOut .28s ease-in both; } #pgMoment .pogo { position: relative; width: 100%; height: 100%; }
+  @keyframes pgmIn { from { opacity: 0; transform: translateY(46px) scale(.4); } to { opacity: 1; transform: none; } }
+  @keyframes pgmOut { from { opacity: 1; } to { opacity: 0; transform: translateY(30px) scale(.6); } }
+  @keyframes pgmBurst { 0% { opacity: 0; transform: scale(.3) rotate(0deg); } 25% { opacity: .9; transform: scale(1) rotate(25deg); } 100% { opacity: 0; transform: scale(1.15) rotate(70deg); } }
 </style>
 </head>
 <body>
@@ -922,7 +930,11 @@ const pogoSvg = (mood, face) => `<svg class="pogo ${mood || ""}${face ? " face" 
 <path class="heart" d="M100 10 c-4 -6 -12 0 -6 6 l6 6 l6 -6 c6 -6 -2 -12 -6 -6z" fill="#ff4b3e" stroke-width="2.400"/>
 </g></svg>`;
 // a short reaction beside the bars (app only): big chains, a full Frenzy meter, special combinations
-let pogoT = 0; function pogoReact() { const el = $("gPogo"); if (!el || !el.firstChild) return; const n = el.firstChild; n.classList.remove("happy"); void n.getBoundingClientRect(); n.classList.add("happy"); clearTimeout(pogoT); pogoT = setTimeout(() => n.classList.remove("happy"), 1100); }
+const PG_ACT = ["happy", "wow", "yay", "clap", "win", "hello"], pgActive = (cv) => PG_ACT.some(c => cv.classList.contains(c));
+let pogoT = 0; function pogoReact(mood) { mood = mood || "happy"; const el = $("gPogo"); if (!el || !el.firstChild) return; const n = el.firstChild; n.classList.remove(...PG_ACT); void n.getBoundingClientRect(); n.classList.add(mood); clearTimeout(pogoT); pogoT = setTimeout(() => n.classList.remove(mood), mood === "happy" ? 1100 : 1500); }
+// 2026-10-28: a quick moment: Pogo pops up at the bottom of the screen, does one short thing (a wave, a spin, a clap...) and goes again
+function pogoMoment(mood, ms = 1600) { if (window.__fast) return; let el = $("pgMoment"); if (!el) { el = document.createElement("div"); el.id = "pgMoment"; document.body.appendChild(el); } clearTimeout(pogoMoment.t); clearTimeout(pogoMoment.u); el.className = ""; el.innerHTML = pogoSvg(mood); void el.offsetWidth; el.className = "on";
+  pogoMoment.t = setTimeout(() => { el.className = "off"; pogoMoment.u = setTimeout(() => { el.className = ""; el.innerHTML = ""; }, 300); }, ms); }
 // every carrot Pogo eats puts a little weight on him, up to a comfortably round rabbit at forty
 const plump = () => Math.min(1, ((typeof save === "object" && save && save.fed) || 0) / 15), pogoKg = () => (1.5 + plump() * 2.5).toFixed(1);
 // carrots: one per rating spark on a win, one for every Frenzy. Tap Pogo on the map to bring him up close and feed him; fresh carrots make him jump for joy when you come back.
@@ -963,6 +975,18 @@ $("petFeed").addEventListener("click", feedPogo); $("petClose").addEventListener
 // on the map Pogo never stands still: a new act every few seconds, never the same one twice in a row
 const ACTS = ["a-hop", "a-wave", "a-juggle", "a-dance", "a-spin", "a-look"]; let actI = -1;
 setInterval(() => { const n = document.querySelector(".pogoMap svg.pogo"); if (!n || $("map").hidden || document.hidden) return; n.classList.remove(...ACTS); let k; do k = rnd(ACTS.length); while (k === actI); actI = k; void n.getBoundingClientRect(); n.classList.add(ACTS[k]); setTimeout(() => n.classList.remove(ACTS[k]), 2400); }, 3400);
+// ---------------------------------------------------------------- cel shading (2026-10-28 İdris: "Cel-shaded 3B · anime" is the look of the whole game)
+// Every 3D material is a toon material with three hard light steps; bump maps and gloss are dropped, so the light falls in flat bands like an anime cel.
+const TOON = window.THREE ? (() => { const T = THREE, g = new T.DataTexture(new Uint8Array([105, 105, 105, 255, 180, 180, 180, 255, 255, 255, 255, 255]), 3, 1, T.RGBAFormat); g.minFilter = g.magFilter = T.NearestFilter; g.generateMipmaps = false; g.needsUpdate = true;
+  const OK = ["color", "map", "emissive", "emissiveIntensity", "emissiveMap", "transparent", "opacity", "side", "alphaTest", "alphaMap", "depthWrite", "depthTest", "vertexColors", "fog", "name", "polygonOffset", "polygonOffsetFactor"];
+  const hsl = {}; return (o = {}) => { const q = { gradientMap: g }; for (const k of OK) if (o[k] !== undefined) q[k] = o[k];
+    if (q.color !== undefined) { const c = new T.Color(q.color); c.getHSL(hsl); c.setHSL(hsl.h, Math.min(1, hsl.s * 1.3), hsl.l * .9); q.color = c; } return new T.MeshToonMaterial(q); }; })() : null;   // anime colours are a touch deeper and more saturated than the old soft ones
+// inkOutline(canvas, r): a dark outline r pixels wide round everything solid on a finished picture (the inked line of a cel)
+function inkOutline(cv, r) { try { const w = cv.width, h = cv.height, x = cv.getContext("2d"), id = x.getImageData(0, 0, w, h), d = id.data, n = w * h, m = new Uint8Array(n), a = new Uint8Array(n), b = new Uint8Array(n);
+  for (let i = 0; i < n; i++) m[i] = d[i * 4 + 3] > 150 ? 1 : 0;
+  for (let y = 0; y < h; y++) { let c = 0; const o = y * w; for (let k = 0; k < Math.min(r, w); k++) c += m[o + k]; for (let xx = 0; xx < w; xx++) { if (xx + r < w) c += m[o + xx + r]; if (xx - r - 1 >= 0) c -= m[o + xx - r - 1]; a[o + xx] = c > 0 ? 1 : 0; } }
+  for (let xx = 0; xx < w; xx++) { let c = 0; for (let k = 0; k < Math.min(r, h); k++) c += a[k * w + xx]; for (let y = 0; y < h; y++) { if (y + r < h) c += a[(y + r) * w + xx]; if (y - r - 1 >= 0) c -= a[(y - r - 1) * w + xx]; b[y * w + xx] = c > 0 ? 1 : 0; } }
+  for (let i = 0; i < n; i++) if (b[i] && !m[i]) { const j = i * 4; d[j] = 29; d[j + 1] = 20; d[j + 2] = 36; d[j + 3] = 255; } x.putImageData(id, 0, 0); } catch (e) {} return cv; }
 // ---------------------------------------------------------------- Pogo in 3D
 // One small three.js scene draws Pogo for every place he appears; each place is a 2D canvas that gets a copy of the frame.
 // The flat drawing above stays as the fallback when WebGL is not there.
@@ -971,14 +995,14 @@ const P3 = (() => {
   try { R = new T.WebGLRenderer({ alpha: true, antialias: true }); } catch (e) { return null; }
   // The drawing buffer is only as large as the largest Pogo on screen needs (the small one on the map is a quarter of the pet-screen one):
   // every frame is copied out of it into a 2D canvas, and on phones that copy and the shading both cost by the pixel.
-  const RW = 720, RH = 792; let bufW = RW, bufH = RH, wantW = 0; R.setPixelRatio(1); R.setSize(RW, RH, false); R.setClearColor(0, 0); R.outputEncoding = T.sRGBEncoding; if (T.ACESFilmicToneMapping) { R.toneMapping = T.ACESFilmicToneMapping; R.toneMappingExposure = 1.08; }
+  const RW = 720, RH = 792; let bufW = RW, bufH = RH, wantW = 0; R.setPixelRatio(1); R.setSize(RW, RH, false); R.setClearColor(0, 0); R.outputEncoding = T.sRGBEncoding; 
   const scene = new T.Scene(), cam = new T.PerspectiveCamera(30, RW / RH, .1, 50);
-  scene.add(new T.HemisphereLight(0xffffff, 0x7a5a48, .6)); const sun = new T.DirectionalLight(0xfff2d8, .7); sun.position.set(2.5, 4, 5); scene.add(sun);
-  const rim = new T.DirectionalLight(0xbfe8ff, .3); rim.position.set(-3, 2, -4); scene.add(rim); const fill = new T.DirectionalLight(0xffe4f0, .22); fill.position.set(0, -1, 4); scene.add(fill);
+  scene.add(new T.AmbientLight(0xffffff, .42)); const sun = new T.DirectionalLight(0xfff2d8, .62); sun.position.set(2.5, 4, 5); scene.add(sun);
+  const rim = new T.DirectionalLight(0xbfe8ff, .18); rim.position.set(-3, 2, -4); scene.add(rim); const fill = new T.DirectionalLight(0xffe4f0, .06); fill.position.set(0, -1, 4); scene.add(fill);
   // fur grain: a small noise canvas used as a bump map on everything furry, so the light catches a soft nap instead of a plastic shell
   const furMap = (() => { const c = document.createElement("canvas"); c.width = c.height = 256; const x = c.getContext("2d"), img = x.createImageData(256, 256); for (let i = 0; i < img.data.length; i += 4) { const v = 118 + Math.random() * 20; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; } x.putImageData(img, 0, 0); for (let k = 0; k < 1400; k++) { x.strokeStyle = "rgba(" + (k % 2 ? 255 : 0) + "," + (k % 2 ? 255 : 0) + "," + (k % 2 ? 255 : 0) + ",.18)"; x.lineWidth = 1; const sx = Math.random() * 256, sy = Math.random() * 256; x.beginPath(); x.moveTo(sx, sy); x.lineTo(sx + (Math.random() - .5) * 3, sy + 6 + Math.random() * 8); x.stroke(); } const tx = new T.CanvasTexture(c); tx.wrapS = tx.wrapT = T.RepeatWrapping; tx.repeat.set(3, 3); return tx; })();
-  const mat = (c, o) => new T.MeshStandardMaterial(Object.assign({ color: c, roughness: .55, metalness: 0 }, o)), SPH = new T.SphereGeometry(1, 28, 20);
-  const M = { fur: mat(0xe4d9cb, { roughness: .95, bumpMap: furMap, bumpScale: .018 }), cream: mat(0xf7efe4, { roughness: .92, bumpMap: furMap, bumpScale: .014 }), tip: mat(0xa8927c, { roughness: .96, bumpMap: furMap, bumpScale: .02 }), dark: mat(0xd9a2a8), paw: mat(0xb39d88, { roughness: .96, bumpMap: furMap, bumpScale: .02 }), pink: mat(0xd4647a), carrot: mat(0xff7a14), leaf: mat(0x3fbf4a), ink: mat(0x120a1c, { roughness: .2 }), iris: mat(0x5a3a1e, { roughness: .25 }), white: mat(0xffffff, { roughness: .2 }), whisk: mat(0xffffff, { transparent: true, opacity: .6 }), red: mat(0xe8332a), gold: mat(0xffc81a, { roughness: .3, metalness: .3 }), blush: mat(0xff8f9a), mouth: mat(0x9c1f2e) };
+  const mat = (c, o) => TOON(Object.assign({ color: c, roughness: .55, metalness: 0 }, o)), SPH = new T.SphereGeometry(1, 28, 20);
+  const M = { claw: mat(0x9a8a78), fur: mat(0xf3ebdf, { roughness: .95, bumpMap: furMap, bumpScale: .018 }), cream: mat(0xfffaf1, { roughness: .92, bumpMap: furMap, bumpScale: .014 }), tip: mat(0xa8927c, { roughness: .96, bumpMap: furMap, bumpScale: .02 }), dark: mat(0xd9a2a8), paw: mat(0xb39d88, { roughness: .96, bumpMap: furMap, bumpScale: .02 }), pink: mat(0xd4647a), carrot: mat(0xff7a14), leaf: mat(0x3fbf4a), ink: mat(0x120a1c, { roughness: .2 }), iris: mat(0x5a3a1e, { roughness: .25 }), white: mat(0xffffff, { roughness: .2 }), whisk: mat(0xffffff, { transparent: true, opacity: .6 }), red: mat(0xe8332a), gold: mat(0xffc81a, { roughness: .3, metalness: .3 }), blush: mat(0xff8f9a), mouth: mat(0x9c1f2e) };
   const ball = (m, x, y, z, sx, sy, sz, par) => { if (sy && sy.isObject3D) { par = sy; sy = sz = sx; } const o = new T.Mesh(SPH, m); o.position.set(x, y, z); o.scale.set(sx, sy === undefined ? sx : sy, sz === undefined ? sx : sz); par.add(o); return o; };   // (m, x, y, z, s, parent) is the short form
   const grp = (x, y, z, par) => { const g = new T.Group(); g.position.set(x, y, z); par.add(g); return g; };
   const shadow = new T.Mesh(new T.CircleGeometry(.75, 32), new T.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: .22 })); shadow.rotation.x = -Math.PI / 2; shadow.position.y = .01; scene.add(shadow);
@@ -988,6 +1012,11 @@ const P3 = (() => {
   const armL = grp(-.47, .3, .05, torso), armR = grp(.47, .3, .05, torso);
   ball(M.fur, 0, -.27, 0, .14, .3, .14, armL); ball(M.paw, 0, -.52, 0, .12, .11, .12, armL); ball(M.fur, 0, -.27, 0, .14, .3, .14, armR); ball(M.paw, 0, -.52, 0, .12, .11, .12, armR);
   const toeL = ball(M.paw, -.27, .11, .44, .15, .1, .12, fox), toeR = ball(M.paw, .27, .11, .44, .15, .1, .12, fox);   // darker foot tips
+  // 2026-10-28 İdris: "tavşanın elleri ve tırnakları belli değil": every paw has three plump fingers, a thumb, a pink pad and a small pale claw on each finger
+  const CLAW = new T.ConeGeometry(.022, .07, 8);
+  for (const arm of [armL, armR]) { const s = arm === armL ? -1 : 1; for (let i = -1; i <= 1; i++) { ball(M.fur, i * .055, -.6, .07 - Math.abs(i) * .015, .042, .05, .045, arm); const c = new T.Mesh(CLAW, M.claw); c.position.set(i * .058, -.645, .1 - Math.abs(i) * .015); c.rotation.x = Math.PI * .72; arm.add(c); }
+    ball(M.fur, -s * .1, -.5, .05, .038, .045, .04, arm); ball(M.pink, 0, -.56, .085, .045, .035, .02, arm); }
+  for (const k of [-1, 1]) for (let i = -1; i <= 1; i++) { const c = new T.Mesh(CLAW, M.claw); c.position.set(k * .27 + i * .068, .1, .57); c.rotation.x = Math.PI / 2; fox.add(c); }
   const scarf = new T.Mesh(new T.TorusGeometry(.36, .085, 12, 32), M.red); scarf.rotation.x = Math.PI / 2; scarf.position.y = .47; torso.add(scarf); ball(M.gold, 0, .4, .38, .1, .1, .1, torso);
   const tail = grp(0, -.2, -.4, torso); ball(M.cream, 0, 0, -.14, .24, .22, .22, tail); ball(M.fur, .11, .07, -.22, .11, tail); ball(M.fur, -.1, -.06, -.2, .1, tail);
   const head = grp(0, 1.02, .04, torso);
@@ -1004,6 +1033,11 @@ const P3 = (() => {
   const ears = [-1, 1].map(k => { const g = grp(k * .3, .5, -.02, head); ball(M.fur, 0, .48, 0, .17, .56, .1, g); ball(M.tip, 0, 1.0, 0, .185, .2, .115, g); ball(M.dark, 0, .5, .055, .1, .44, .06, g); ball(M.pink, 0, .52, .085, .065, .36, .04, g); g.rotation.z = -k * .1; return g; });
   // the carrot sits at his mouth and only shows while he eats
   const carrot = grp(.02, -.36, .7, head); carrot.rotation.set(-1.0, 0, -.5); { const c = new T.Mesh(new T.ConeGeometry(.13, .8, 20), M.carrot); c.position.y = -.4; carrot.add(c); for (let i = -1; i <= 1; i++) { const l = ball(M.leaf, i * .08, -.9, 0, .05, .17, .05, carrot); l.rotation.z = i * .5; } }
+  // the inked line: every larger piece gets a dark back-faced shell just outside it (a constant thickness whatever the piece's scale);
+  // where one piece pokes out of another the shell draws the inner line too, the way an anime cel is inked
+  { const OUTM = new T.MeshBasicMaterial({ color: 0x24182c, side: T.BackSide }), skip = new Set([M.white, M.iris, M.ink, M.whisk, M.blush, M.mouth]), list = []; fox.traverse(o => { if (o.isMesh && !skip.has(o.material) && o.material !== OUTM) list.push(o); });
+    for (const o of list) { const sc = o.scale, mn = Math.min(sc.x, sc.y, sc.z); if (o.geometry.type === "SphereGeometry" && mn < .035) continue; const e = .028, h = new T.Mesh(o.geometry, OUTM);
+      if (o.geometry.type === "SphereGeometry") h.scale.set(1 + e / sc.x, 1 + e / sc.y, 1 + e / sc.z); else h.scale.setScalar(o.geometry.type === "TorusGeometry" ? 1.07 : 1.35); h.renderOrder = -1; o.add(h); } }
   // pose values; every frame the current pose eases toward the target one, so acts blend into each other
   const Z = () => ({ x: 0, y: 0, ry: 0, tz: 0, ty: 0, hz: 0, hx: 0, hy: 0, lz: -.3, lx: 0, rz: .3, rx: 0, fl: 0, fr: 0, ear: 0, ex: 0, car: 0, sq: 1, eye: 1, mo: 0, gx: 0, gy: 0, nz: 1, ef: 0 });
   // small things a real rabbit never stops doing: the nose twitches in little bursts, an ear flicks now and then
@@ -1044,8 +1078,14 @@ const P3 = (() => {
     const p = Z(), b = t * Math.PI * 4; p.nz = twitch(t, st.ph); p.ef = flick(t, st.ph);
     // the head and the eyes follow a finger hovering over him (the pet screen passes it as data-lx / data-ly, -1 to 1)
     if (st.lx !== undefined) { p.hy = st.lx * .55; p.hx = -st.ly * .3; p.gx = st.lx * .22; p.gy = -st.ly * .16; }
-    if (face) { if (mood === "happy") { p.y = Math.abs(Math.sin(b)) * .12; p.hz = Math.sin(b / 2) * .22; p.mo = 1; } else p.hz = Math.sin(t * 1.3) * .05; return p; }
+    if (face) { if (mood === "wow") { p.y = Math.sin(Math.min(1, t / .5) * Math.PI) * .14; p.ear = -.35; p.mo = 1; p.hx = -.14; } else if (mood && mood !== "sad" && mood !== "calm" && mood !== "sleep" && mood !== "eat" && mood !== "pet" && mood !== "cheer") { p.y = Math.abs(Math.sin(b)) * .12; p.hz = Math.sin(b / 2) * .22; p.mo = 1; p.eye = mood === "happy" ? 1 : .3; } else p.hz = Math.sin(t * 1.3) * .05; return p; }
     if (mood === "happy") { const u = (t % 2.4) / 2.4; if (u < .42) spin(u / .42, p, 1, 2.7); else { hop(((u - .42) / .58 * 2) % 1, p, .5); p.lz = -2.7; p.rz = 2.7; p.lx = p.rx = 0; } p.mo = 1; return p; }
+    // 2026-10-28: short moments, each about a second and a half, for the things that happen in the game
+    if (mood === "hello") { const s = Math.sin(Math.min(1, t / 1.5) * Math.PI); if (t < .45) hop(t / .45, p, .35); p.rz = .3 + 2.5 * s + Math.sin(t * 16) * .35 * s; p.rx = -.2 * s; p.hz = .14 * s; p.tz = -.05 * s; p.mo = s; p.ear = -.1 * s; return p; }   // app opened: a little hop and a quick wave
+    if (mood === "win") { if (t < .85) spin(t / .85, p, 1, 2.8); else { hop(Math.min(1, (t - .85) / .6), p, .55); p.lz = -2.8; p.rz = 2.8; p.lx = p.rx = 0; } p.mo = 1; p.eye = .25; return p; }   // level won: a spin with both arms up, then a hop
+    if (mood === "yay") { const k = Math.min(1, t / .25), pump = Math.abs(Math.sin(t * 9)); p.rz = .3 + 2.3 * k - pump * .6; p.rx = -.3 * k; p.lz = -.6 * k; p.y = pump * .08; p.sq = 1 - pump * .04; p.mo = 1; p.eye = .3; p.hz = .08; p.ear = -.15; return p; }   // three stars: a fist pump
+    if (mood === "clap") { const c = Math.abs(Math.sin(t * 13)); p.lx = p.rx = -1.35; p.lz = -.1 - .45 * (1 - c); p.rz = .1 + .45 * (1 - c); p.y = Math.abs(Math.sin(t * 6.5)) * .05; p.eye = .25; p.mo = 1; p.hz = Math.sin(t * 6.5) * .06; return p; }   // an award: he claps
+    if (mood === "wow") { const k = Math.min(1, t / .18), back = Math.sin(Math.min(1, t / .5) * Math.PI); p.y = back * .22; p.z = -back * .1; p.sq = 1 + .1 * back; p.ear = -.35 * k; p.eye = 1.3; p.mo = 1; p.lz = -1.2 * k; p.rz = 1.2 * k; p.lx = p.rx = -.4 * k; p.hx = -.12 * k; return p; }   // something big: surprise, jumps back, ears straight up
     if (mood === "sleep") { p.eye = .05; p.hx = .34; p.hz = .13; p.ear = .32; p.sq = .95 + Math.sin(t * 1.5) * .028; p.lz = -.18; p.rz = .18; return p; }   // asleep: head down, slow deep breaths
     if (mood === "pet") { const l = st.lean || 0; p.eye = .05; p.hz = -l * .26; p.hx = .07; p.tz = -l * .07; p.x = l * .05; p.ear = .16; p.mo = .3; p.sq = .975 + Math.sin(t * 15) * .006; p.lz = -.2; p.rz = .2; p.gx = p.gy = 0; p.hy *= .3; return p; }   // being stroked: eyes shut, leaning into the hand
     if (mood === "calm") { p.hz = Math.sin(t * .9) * .06; p.hy = Math.sin(t * .5) * .28; p.hx = Math.sin(t * .7) * .04; p.ear = Math.max(0, Math.sin(t * 1.7) - .93) * 2; return p; }
@@ -1056,7 +1096,7 @@ const P3 = (() => {
     p.tz += Math.sin(t * .8) * .012; p.lz += Math.sin(t * 1.3) * .03; p.rz -= Math.sin(t * 1.3 + .6) * .03; p.hx += Math.sin(t * 1.1 + 1) * .015; return p;   // never quite still: weight shifts, the arms hang loose
   }
   function draw(cv, st, now, dt) {
-    const cl = cv.classList, mood = cl.contains("eat") ? "eat" : cl.contains("sleep") ? "sleep" : cl.contains("pet") ? "pet" : cl.contains("happy") ? "happy" : cl.contains("cheer") ? "cheer" : cl.contains("calm") ? "calm" : cl.contains("sad") ? "sad" : "", face = cv.classList.contains("face"), t = (now - st.t0) / 1000;
+    const cl = cv.classList, mood = cl.contains("hello") ? "hello" : cl.contains("win") ? "win" : cl.contains("yay") ? "yay" : cl.contains("clap") ? "clap" : cl.contains("wow") ? "wow" : cl.contains("eat") ? "eat" : cl.contains("sleep") ? "sleep" : cl.contains("pet") ? "pet" : cl.contains("happy") ? "happy" : cl.contains("cheer") ? "cheer" : cl.contains("calm") ? "calm" : cl.contains("sad") ? "sad" : "", face = cv.classList.contains("face"), t = (now - st.t0) / 1000;
     if (st.mood !== mood) { st.mood = mood; st.t0 = now; }
     st.lean = +cv.dataset.lean || 0; st.lx = cv.dataset.lx === undefined ? undefined : +cv.dataset.lx; st.ly = +cv.dataset.ly || 0; const p = target(st, (now - st.t0) / 1000, mood, face), c = st.c, k = 1 - Math.exp(-dt * 13);
     const kh = 1 - Math.exp(-dt * 7), ke = 1 - Math.exp(-dt * 22);
@@ -1089,13 +1129,13 @@ const P3 = (() => {
     const inGame = !$("game").hidden, petting = document.documentElement.classList.contains("petting");
     if (window.__noPogo) return;
     document.querySelectorAll("canvas.pogo").forEach(cv => {
-      let st = slots.get(cv); if (inGame && (cv.closest("#map") || (st && st.drawn && st.idle && cv.classList.contains("face") && !cv.classList.contains("happy")))) return;   // checked before offsetParent, which forces a layout
+      let st = slots.get(cv); if (inGame && (cv.closest("#map") || (st && st.drawn && st.idle && cv.classList.contains("face") && !pgActive(cv)))) return;   // checked before offsetParent, which forces a layout
       if (!cv.offsetParent) return;
       if (!st) { const d = Math.min(devicePixelRatio || 1, 2); cv.width = Math.round(cv.clientWidth * d); cv.height = Math.round(cv.clientHeight * d); st = { x: cv.getContext("2d"), c: Z(), es: { a: 0, v: 0, b: 0, w: 0 }, py: 0, px: 0, pr: 0, t0: now, ph: Math.random() * 3, mood: "", turn: cv.closest(".pogoMap.flip") ? .3 : cv.closest(".pogoMap") ? -.3 : 0, drawn: 0 }; slots.set(cv, st); }
       // while a level is on screen Pogo only moves when he reacts, and the map copy behind it rests; while the pet screen is up only that one Pogo is drawn
       if (inGame && cv.closest("#map")) return; if (petting && !cv.closest("#mPet")) return;
-      if (!petting && cv.closest("#map") && !cv.classList.contains("happy") && now - (st.lt || 0) < 30) return; st.lt = now;   // 2026-10-27: Pogo resting on the map breathes at 30 frames a second; his 3D draw was a third of every map frame on the phone if (inGame && cv.classList.contains("face") && st.drawn && !cv.classList.contains("happy") && st.idle) return;
-      draw(cv, st, now, dt); st.drawn = 1; st.idle = !cv.classList.contains("happy");
+      if (!petting && cv.closest("#map") && !cv.classList.contains("happy") && now - (st.lt || 0) < 30) return; st.lt = now;   // 2026-10-27: Pogo resting on the map breathes at 30 frames a second; his 3D draw was a third of every map frame on the phone if (inGame && cv.classList.contains("face") && st.drawn && !pgActive(cv) && st.idle) return;
+      draw(cv, st, now, dt); st.drawn = 1; st.idle = !pgActive(cv);
     });
     for (const cv of slots.keys()) if (!cv.isConnected) slots.delete(cv);
     if (wantW) { const w = Math.min(RW, Math.max(96, wantW)); if (w !== bufW) { bufW = w; bufH = Math.round(w * RH / RW); R.setSize(bufW, bufH, false); } wantW = 0; }   // takes effect from the next frame
@@ -1734,7 +1774,7 @@ function stationCheck() {
   $("snChip").textContent = "Station " + k + " of " + STATIONS.length + " · " + S.name; $("snTitle").textContent = S.task; $("snPct").textContent = forestPct() + "%"; $("snBar").style.width = forestPct() + "%";
   $("snText").textContent = S.story; $("snNext").textContent = k < STATIONS.length ? "Next station: " + STATIONS[k].name + " · " + S.next : S.next; $("snPay").textContent = gift ? "🎁 Station gift: +4 🥕 · +16 of every booster · ∞ lives for 120 min" : "🎁 The next station brings a gift";
   if (D3) D3.show($("snScene"), { props: [{ kind: "forest", x: -2.2, z: .2, s: 1.3 }, { kind: "forest", x: 2.2, z: -.3, s: 1.2, ry: 1 }, { kind: "pogo", x: -.3, z: 1.3, s: 1 }, { kind: ["sprout", "pond", "tulip", "round", "bird", "bee", "bridge", "star", "snowman", "crystal", "cactus", "sun"][(k - 1) % 12], x: 1.2, z: 1.1, s: 1, bob: true }, { kind: "deer", x: .6, z: -1.2, s: .9, ry: -.8 }], ground: 0x3fc85f, hill: 0x2d8b3c });
-  stationCeremony(k, () => { show("mStation"); SFX.reward(); }); return true;
+  stationCeremony(k, () => { show("mStation"); SFX.reward(); setTimeout(() => pogoMoment("wow", 1500), 350); }); return true;
 }
 $("snGo").addEventListener("click", () => { hide("mStation"); buildMap(); });
 function storyScene(ch, end) {
@@ -1768,8 +1808,8 @@ $("stGo").addEventListener("click", () => { hide("mStory"); buildMap(); setTimeo
 const D3 = (() => {
   if (!window.THREE) return null; const T = THREE; let R; try { R = new T.WebGLRenderer({ alpha: true, antialias: true }); } catch (e) { return null; }
   const RW = 640, RH = 360; R.setPixelRatio(1); R.setSize(RW, RH, false); R.setClearColor(0, 0); R.outputEncoding = T.sRGBEncoding;
-  const mats = new Map(), mat = (c, o) => { const k = c + JSON.stringify(o || {}); if (!mats.has(k)) mats.set(k, new T.MeshStandardMaterial(Object.assign({ color: c, roughness: .62, metalness: 0, flatShading: false }, o))); return mats.get(k); };
-  const glow = (c) => mat(c, { emissive: c, emissiveIntensity: .9, roughness: .4 }), GHOST = new T.MeshStandardMaterial({ color: 0x9a8fc8, transparent: true, opacity: .22, roughness: 1 });
+  const mats = new Map(), mat = (c, o) => { const k = c + JSON.stringify(o || {}); if (!mats.has(k)) mats.set(k, TOON(Object.assign({ color: c, roughness: .62, metalness: 0, flatShading: false }, o))); return mats.get(k); };
+  const glow = (c) => mat(c, { emissive: c, emissiveIntensity: .9, roughness: .4 }), GHOST = TOON({ color: 0x9a8fc8, transparent: true, opacity: .22, roughness: 1 });
   const matS = (c, o) => mat(c, Object.assign({ flatShading: false, roughness: .8 }, o || {}));   // smooth: for living things
   const GEO = { sph: new T.SphereGeometry(1, 26, 18), sphS: new T.SphereGeometry(1, 26, 18), cone: new T.ConeGeometry(1, 1, 24), cyl: new T.CylinderGeometry(1, 1, 1, 20), box: new T.BoxGeometry(1, 1, 1), tor: new T.TorusGeometry(1, .16, 12, 28), half: new T.TorusGeometry(1, .14, 12, 28, Math.PI), disc: new T.CircleGeometry(1, 28), oct: new T.OctahedronGeometry(1, 0), rock: new T.DodecahedronGeometry(1, 0), pyr: new T.ConeGeometry(1, 1, 4) };
   // put(g, m, x, y, z, s, parent, rx, ry, rz) is the short form of put(g, m, x, y, z, sx, sy, sz, parent, rx, ry, rz)
@@ -1893,8 +1933,8 @@ const D3 = (() => {
       for (let i = 0; i < 2600; i++) { const px = Math.random() * 128, py = Math.random() * 128, l = 1.2 + Math.random() * 2.6, a = Math.random() * PI, v = 70 + Math.random() * 120 | 0; x.strokeStyle = `rgb(${v},${v},${v})`; x.lineWidth = .7 + Math.random() * .6; x.beginPath(); x.moveTo(px, py); x.lineTo(px + Math.cos(a) * l, py + Math.sin(a) * l); x.stroke(); }
       const t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(5, 5); return t; })();
     const MS = new Map(), mm = (k, f) => { let m = MS.get(k); if (!m) MS.set(k, m = f()); return m; };
-    const fur = (c, b) => mm("f" + c + ":" + (b || 1), () => new T.MeshStandardMaterial({ color: c, roughness: .9, metalness: 0, bumpMap: furTex, bumpScale: .12 * (b || 1) }));
-    const sm = (c, r, o) => mm("s" + c + ":" + r + JSON.stringify(o || {}), () => new T.MeshStandardMaterial(Object.assign({ color: c, roughness: r === undefined ? .45 : r, metalness: 0 }, o)));
+    const fur = (c, b) => mm("f" + c + ":" + (b || 1), () => TOON({ color: c, roughness: .9, metalness: 0, bumpMap: furTex, bumpScale: .12 * (b || 1) }));
+    const sm = (c, r, o) => mm("s" + c + ":" + r + JSON.stringify(o || {}), () => TOON(Object.assign({ color: c, roughness: r === undefined ? .45 : r, metalness: 0 }, o)));
     const mk = (geo, m, par, x, y, z, sx, sy, sz, rx, ry, rz) => { const o = new T.Mesh(geo, m); o.castShadow = o.receiveShadow = true; o.position.set(x || 0, y || 0, z || 0); const a = sx === undefined ? 1 : sx; o.scale.set(a, sy === undefined ? a : sy, sz === undefined ? a : sz); o.rotation.set(rx || 0, ry || 0, rz || 0); par.add(o); return o; };
     const pv = (par, x, y, z, rx, ry, rz) => { const g = new T.Group(); g.position.set(x || 0, y || 0, z || 0); g.rotation.set(rx || 0, ry || 0, rz || 0); par.add(g); return g; };
     const hang = (par, r, l, m) => mk(cap(r, l - 2 * r), m, par, 0, -l / 2, 0);   // a limb hanging down from its joint
@@ -2118,8 +2158,8 @@ const D3 = (() => {
   let stripBusy = false;
   const frOf = (kind) => Math.max(24, Math.min(48, Math.round(RIG.A[kind].d * 15)));
   function stripMake(kind, px) {
-    const R0 = RIG.A[kind], FR = frOf(kind), scene = new T.Scene(); scene.add(new T.HemisphereLight(0xfff6e8, 0x5a4a7a, .75));
-    const key = new T.DirectionalLight(0xfff0d8, 1.05); key.position.set(1.5, 4, 2.5); key.castShadow = true; key.shadow.mapSize.set(512, 512); Object.assign(key.shadow.camera, { left: -1.2, right: 1.2, top: 1.2, bottom: -1.2, near: .5, far: 10 }); key.shadow.bias = -.002; key.shadow.radius = 4; scene.add(key);
+    const R0 = RIG.A[kind], FR = frOf(kind), scene = new T.Scene(); scene.add(new T.AmbientLight(0xfff6e8, (.45) * .9));
+    const key = new T.DirectionalLight(0xfff0d8, .95); key.position.set(1.5, 4, 2.5); key.castShadow = true; key.shadow.mapSize.set(512, 512); Object.assign(key.shadow.camera, { left: -1.2, right: 1.2, top: 1.2, bottom: -1.2, near: .5, far: 10 }); key.shadow.bias = -.002; key.shadow.radius = 4; scene.add(key);
     const rim = new T.DirectionalLight(0xd8e8ff, .5); rim.position.set(-2.5, 1.5, -2); scene.add(rim);
     const g = grp(scene), P = R0.b(g); g.rotation.y = RIG.VIEW[R0.m] || .5; if (R0.m === "fly") g.rotation.x = .8; if (R0.m === "flutter") g.rotation.x = .25;   // fliers are seen a little from above, so the wings show
     const box = new T.Box3(), tmp = new T.Box3(); for (let f = 0; f < FR; f++) { R0.p(P, f / FR); g.updateMatrixWorld(true); tmp.setFromObject(g); box.union(tmp); }
@@ -2140,7 +2180,7 @@ const D3 = (() => {
     const done = (url, blob) => { if (blob) keep("S" + k, blob); const cbs = strips.get(k); strips.set(k, url); if (Array.isArray(cbs)) cbs.forEach(f => { try { f(url); } catch (e) {} }); stripBusy = false; setTimeout(stripPump, window.__fast ? 0 : 60); };
     const tick = () => { if (!window.__fast && performance.now() - mapMoveT < 220) { setTimeout(tick, 120); return; }
       let fin = false; try { fin = !job || job.step(); } catch (e) { console.warn(e); job = null; fin = true; }
-      if (!fin) { setTimeout(tick, window.__fast ? 0 : 24); return; } const cv = job && job.cv;
+      if (!fin) { setTimeout(tick, window.__fast ? 0 : 24); return; } const cv = job && job.cv; if (cv) inkOutline(cv, 3);
       if (!cv) done(null); else if (cv.toBlob) cv.toBlob(b => done(b ? URL.createObjectURL(b) : cv.toDataURL(), b)); else done(cv.toDataURL()); };
     setTimeout(tick, window.__fast ? 0 : 16);
   }
@@ -2150,7 +2190,7 @@ const D3 = (() => {
   const EMO = { "🌱": "sprout", "🥕": "carrot", "🌼": "flower", "🪵": "log", "🍀": "clover", "🌾": "reed", "🦋": "flower", "🪷": "lily", "🐸": "frog", "🌿": "bush", "🪻": "tulip", "🍄": "mushroom", "🌰": "acorn", "🐌": "rock", "🍂": "leaf", "🌳": "round", "🦉": "owl", "🍃": "bush", "🫐": "bush", "🦔": "hedgehog", "🌹": "tulip", "🎐": "wind", "🌻": "flower", "🪁": "star", "🏮": "lantern", "🌙": "moon", "🪨": "rock", "⭐": "star", "🌲": "pine", "🪶": "feather", "🕸️": "bush", "💎": "crystal", "🪺": "nest", "🌷": "tulip", "🏡": "house", "⛲": "fountain", "🎡": "wheel", "🌈": "rainbow", "⚓": "anchor", "🐚": "shell", "🪸": "coral", "⛵": "boat", "🗼": "lighthouse", "🌊": "pond", "🦀": "crab", "💧": "pond", "🌴": "tree", "🏖️": "sand", "🦆": "duck", "🌫️": "cloud", "🦅": "eagle", "🌬️": "wind", "🍎": "apple", "🍐": "apple", "🐝": "bee", "🪜": "ladder", "⛈️": "cloud", "⚡": "bolt", "🔮": "crystal", "🕯️": "candle", "🦇": "bat", "🍁": "maple", "🦊": "fox", "❄️": "snowpine", "☃️": "snowman", "🐧": "penguin", "🧊": "crystal", "🦌": "deer", "🌌": "star", "🌸": "blossom", "🌵": "cactus", "☀️": "sun", "🦜": "parrot", "☁️": "cloud", "🎈": "balloon", "🐑": "sheep", "🏔️": "mountain", "🐻": "bear" };
   const scenes = new Map();
   function build(spec) {
-    const scene = new T.Scene(); scene.add(new T.HemisphereLight(0xfff6e8, 0x4a3a6a, spec.night ? .5 : .85)); const sun = new T.DirectionalLight(spec.night ? 0xc9d4ff : 0xfff0d0, spec.night ? .35 : .75); sun.position.set(2.5, 4, 3); scene.add(sun);
+    const scene = new T.Scene(); scene.add(new T.AmbientLight(0xfff6e8, (spec.night ? .5 : .85) * .9)); const sun = new T.DirectionalLight(spec.night ? 0xc9d4ff : 0xfff0d0, spec.night ? .35 : .75); sun.position.set(2.5, 4, 3); scene.add(sun);
     put("disc", mat(spec.ground || 0x3f8a4d), 0, 0, 0, 4.8, 2.6, 1, scene, -Math.PI / 2); put("sph", mat(spec.hill || 0x2d6b3c), -1.2, -.3, -3, 3.4, 1.4, 1.6, scene); put("sph", mat(spec.hill || 0x2d6b3c), 2.2, -.4, -3.2, 2.8, 1.2, 1.4, scene);
     for (const p of spec.props) { const g = grp(scene); g.position.set(p.x, 0, p.z); const s = p.s || 1; g.scale.set(s, s, s); g.rotation.y = p.ry || 0; (BUILD[p.kind] || BUILD.bush)(g, p.color); g.userData = { bob: p.bob, t0: performance.now(), st: p.state || "live", k: Math.random() * 6 }; if (p.state === "todo") g.traverse(o => { if (o.isMesh) o.material = GHOST; if (o.isLight) o.intensity = 0; }); }
     const cam = new T.PerspectiveCamera(30, RW / RH, .1, 40); return { scene, cam };
@@ -2167,24 +2207,24 @@ const D3 = (() => {
   // the village diorama, rendered once per chapter and state with real shadows, from a raised three-quarter view
   function village(ch, past, px) {
     const key = "v" + ch + ":" + (past ? 1 : 0) + ":" + px; if (sprites.has(key)) return sprites.get(key);
-    const scene = new T.Scene(); scene.add(new T.HemisphereLight(0xfff6e8, 0x5a4a8a, .8)); const sun = new T.DirectionalLight(0xfff0d0, 1.1); sun.position.set(4, 7, 3); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -4.2, right: 4.2, top: 4.2, bottom: -4.2, near: 1, far: 20 }); sun.shadow.bias = -.001; scene.add(sun);
+    const scene = new T.Scene(); scene.add(new T.AmbientLight(0xfff6e8, (.48) * .9)); const sun = new T.DirectionalLight(0xfff0d0, .95); sun.position.set(4, 7, 3); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -4.2, right: 4.2, top: 4.2, bottom: -4.2, near: 1, far: 20 }); sun.shadow.bias = -.001; scene.add(sun);
     const g = grp(scene); BUILD.village(g, past, ch);
     const cam = new T.PerspectiveCamera(28, 4 / 3, .1, 40); cam.position.set(3.2, 6.2, 8.4); cam.lookAt(0, .3, 0);
     R.shadowMap.enabled = true; R.shadowMap.type = T.PCFSoftShadowMap; R.setSize(px, Math.round(px * .75), false); R.render(scene, cam); const cv = document.createElement("canvas"); cv.width = px; cv.height = Math.round(px * .75); cv.getContext("2d").drawImage(R.domElement, 0, 0); R.setSize(RW, RH, false); R.shadowMap.enabled = false;
-    const url = cv.toDataURL(); sprites.set(key, url); if (cv.toBlob) cv.toBlob(b => { if (b) { sprites.set(key, URL.createObjectURL(b)); keep("P" + key, b); } }); return url;
+    inkOutline(cv, Math.max(2, Math.min(4, Math.round(px * .016)))); const url = cv.toDataURL(); sprites.set(key, url); if (cv.toBlob) cv.toBlob(b => { if (b) { sprites.set(key, URL.createObjectURL(b)); keep("P" + key, b); } }); return url;
   }
   // A picture is handed out as a short blob address, not as a data URL: the map uses the same eighty pictures seven hundred times, and written
   // out as data URLs its markup was almost six megabytes that had to be parsed on every visit.
   function shortUrl(cv) { const d = cv.toDataURL(); try { const bin = atob(d.slice(d.indexOf(",") + 1)), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); return URL.createObjectURL(new Blob([u8], { type: "image/png" })); } catch (e) { return d; } }
   function sprite(kind, px, top) {
     const key = kind + ":" + px + (top ? ":t" : ""); if (sprites.has(key)) return sprites.get(key);
-    const scene = new T.Scene(); scene.add(new T.HemisphereLight(0xfff6e8, 0x4a3a6a, .95)); const sun = new T.DirectionalLight(0xfff0d0, .8); sun.position.set(2, 4, 3); scene.add(sun);
+    const scene = new T.Scene(); scene.add(new T.AmbientLight(0xfff6e8, (.38) * .9)); const sun = new T.DirectionalLight(0xfff0d0, .8); sun.position.set(2, 4, 3); scene.add(sun);
     const g = grp(scene); (BUILD[kind] || BUILD.bush)(g);
     // every prop is scaled to fill the same frame, whatever its own size: a wide house fits as well as a mushroom
     const box = new T.Box3().setFromObject(g), sz = box.getSize(new T.Vector3()), ctr = box.getCenter(new T.Vector3()), fit = (top ? 2.1 : 1.3) / (Math.max(sz.x, sz.y, sz.z) || 1); g.scale.setScalar(fit); g.position.set(-ctr.x * fit, top ? -ctr.y * fit : -box.min.y * fit, -ctr.z * fit);
     const cam = new T.PerspectiveCamera(30, 1, .1, 20); if (top) { cam.position.set(0, 4.2, .9); cam.lookAt(0, 0, 0); } else { cam.position.set(.5, 1.0, 3.1); cam.lookAt(0, .62, 0); }
     R.setSize(px, px, false); R.render(scene, cam); const cv = document.createElement("canvas"); cv.width = cv.height = px; cv.getContext("2d").drawImage(R.domElement, 0, 0); R.setSize(RW, RH, false);
-    const url = cv.toDataURL(); sprites.set(key, url); if (cv.toBlob) cv.toBlob(b => { if (b) { sprites.set(key, URL.createObjectURL(b)); keep("P" + key, b); } }); return url;
+    inkOutline(cv, Math.max(2, Math.min(4, Math.round(px * .016)))); const url = cv.toDataURL(); sprites.set(key, url); if (cv.toBlob) cv.toBlob(b => { if (b) { sprites.set(key, URL.createObjectURL(b)); keep("P" + key, b); } }); return url;
   }
   let last = 0;
   function frame(now) {
@@ -2202,9 +2242,9 @@ const D3 = (() => {
   function charm(C, px) {
     const key = C.name + C.c + ":" + px; if (charms.has(key)) return charms.get(key);
     const lin = (h) => { const c = new T.Color(h); return c.convertSRGBToLinear ? c.convertSRGBToLinear() : c; }, col = lin(C.c), lt = lin(C.l), dk = lin(C.d), S20 = new T.SphereGeometry(1, 32, 22), CONE = new T.ConeGeometry(1, 1, 28), CYL = new T.CylinderGeometry(1, 1, 1, 20);
-    const shiny = (c, o) => new T.MeshStandardMaterial(Object.assign({ color: c, roughness: .34, metalness: .04, emissive: c, emissiveIntensity: .05 }, o));
+    const shiny = (c, o) => TOON(Object.assign({ color: c, roughness: .34, metalness: .04, emissive: c, emissiveIntensity: .05 }, o));
     const add = (geo, m, x, y, z, sx, sy, sz, par, rx, ry, rz) => { const o = new T.Mesh(geo, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); o.rotation.set(rx || 0, ry || 0, rz || 0); par.add(o); return o; };
-    const scene = new T.Scene(); scene.add(new T.HemisphereLight(0xffffff, 0x4a3a6a, .55)); const sun = new T.DirectionalLight(0xfff4e0, .95); sun.position.set(-2, 4, 4); scene.add(sun); const rim = new T.DirectionalLight(0xffffff, .35); rim.position.set(3, 1, -2); scene.add(rim);
+    const scene = new T.Scene(); scene.add(new T.AmbientLight(0xffffff, (.55) * .9)); const sun = new T.DirectionalLight(0xfff4e0, .95); sun.position.set(-2, 4, 4); scene.add(sun); const rim = new T.DirectionalLight(0xffffff, .35); rim.position.set(3, 1, -2); scene.add(rim);
     const g = grp(scene), M = shiny(col), D = shiny(dk), W = shiny(lin("#fff6ea"), { emissiveIntensity: .02 }), GR = shiny(lin("#3fae4f"));
     const LATHE = (pts, seg) => new T.LatheGeometry(pts.map(([x, y]) => new T.Vector2(x, y)), seg || 36);
     const mix = (a, b, k) => a.clone().lerp(b, k), LG = mix(col, lt, .45), DK = mix(col, dk, .55);
@@ -2255,8 +2295,8 @@ const D3 = (() => {
     if (Q.art) { x.save(); Q.art(x, u, C); x.restore(); }
     const tex = new T.CanvasTexture(tc); if (T.sRGBEncoding) tex.encoding = T.sRGBEncoding; tex.repeat.set(1 / 3.2, 1 / 3.2); tex.offset.set(.5, .5); tex.anisotropy = 4;
     const lin = (h) => { const c = new T.Color(h); return c.convertSRGBToLinear ? c.convertSRGBToLinear() : c; };
-    const face = new T.MeshStandardMaterial({ map: tex, roughness: .42, metalness: .04 }), side = new T.MeshStandardMaterial({ color: lin(mixc(C.c, C.d, .35)), roughness: .45, metalness: .04 });
-    const scene = new T.Scene(); scene.add(new T.HemisphereLight(0xffffff, 0x3a3050, .75)); const sun = new T.DirectionalLight(0xfff4e6, 1.15); sun.position.set(-2.5, 3.5, 4); scene.add(sun); const rim = new T.DirectionalLight(0xffffff, .45); rim.position.set(3, -1, 2); scene.add(rim);
+    const face = TOON({ map: tex, roughness: .42, metalness: .04 }), side = TOON({ color: lin(mixc(C.c, C.d, .35)), roughness: .45, metalness: .04 });
+    const scene = new T.Scene(); scene.add(new T.AmbientLight(0xffffff, (.75) * .9)); const sun = new T.DirectionalLight(0xfff4e6, 1.15); sun.position.set(-2.5, 3.5, 4); scene.add(sun); const rim = new T.DirectionalLight(0xffffff, .45); rim.position.set(3, -1, 2); scene.add(rim);
     const m = new T.Mesh(geo, [face, side]); m.rotation.set(-.32, .22, 0); scene.add(m);
     const cam = new T.PerspectiveCamera(26, 1, .1, 30); cam.position.set(0, 0, 7.6); cam.lookAt(0, 0, 0);
     R.setSize(px, px, false); R.render(scene, cam); const cv = document.createElement("canvas"); cv.width = cv.height = px; cv.getContext("2d").drawImage(R.domElement, 0, 0); R.setSize(RW, RH, false);
@@ -2280,8 +2320,8 @@ const D3 = (() => {
     const det = blur(base.map((l, i) => inside[i] ? l - mean : 0), 2), edge = blur(inside, 2);   // the drawn detail, raised where it is lighter
     const geo = new T.PlaneGeometry(3.2, 3.2, N - 1, N - 1), pos = geo.attributes.position; for (let v = 0; v < pos.count; v++) { const ix = v % N, iy = Math.floor(v / N), i = iy * N + ix; pos.setZ(v, inside[i] ? h[i] * 1.1 + det[i] * .6 * Math.min(1, h[i] * 3) + ((col.__nz[i] - .5) * .006 + (col.__lg[i] - .5) * .03) * Math.min(1, h[i] * 4) : 0); } geo.computeVertexNormals();
     const tex = new T.CanvasTexture(col); if (T.sRGBEncoding) tex.encoding = T.sRGBEncoding; tex.anisotropy = 4; const am = new T.CanvasTexture(mask); am.minFilter = am.magFilter = T.LinearFilter;
-    const matl = new T.MeshStandardMaterial({ map: tex, alphaMap: am, alphaTest: .5, roughness: .78, metalness: 0 });   // a natural matte surface: no wet shine, a soft sheen where the light grazes
-    const scene = new T.Scene(); scene.add(new T.HemisphereLight(0xffffff, 0x3a3050, .7)); const sun = new T.DirectionalLight(0xfff1dc, 1.55); sun.position.set(-3, 3.5, 2.6); scene.add(sun); const fill = new T.DirectionalLight(0xc8d8ff, .35); fill.position.set(3, 1, 3); scene.add(fill); const rim = new T.DirectionalLight(0xffffff, .7); rim.position.set(2.5, -2, -1.5); scene.add(rim);   // key, cool fill and a back rim: studio light
+    const matl = TOON({ map: tex, alphaMap: am, alphaTest: .5, roughness: .78, metalness: 0 });   // a natural matte surface: no wet shine, a soft sheen where the light grazes
+    const scene = new T.Scene(); scene.add(new T.AmbientLight(0xffffff, (.7) * .9)); const sun = new T.DirectionalLight(0xfff1dc, 1.55); sun.position.set(-3, 3.5, 2.6); scene.add(sun); const fill = new T.DirectionalLight(0xc8d8ff, .35); fill.position.set(3, 1, 3); scene.add(fill); const rim = new T.DirectionalLight(0xffffff, .7); rim.position.set(2.5, -2, -1.5); scene.add(rim);   // key, cool fill and a back rim: studio light
     const m = new T.Mesh(geo, matl); m.rotation.set(-.42, .26, 0); scene.add(m);
     const cam = new T.PerspectiveCamera(26, 1, .1, 30); cam.position.set(0, 0, 7.4); cam.lookAt(0, 0, 0);
     const P2 = Math.min(1024, px * 2); R.setSize(P2, P2, false); R.render(scene, cam); const cv = document.createElement("canvas"); cv.width = cv.height = px; const cx2 = cv.getContext("2d"); cx2.imageSmoothingQuality = "high"; cx2.drawImage(R.domElement, 0, 0, P2, P2, 0, 0, px, px); R.setSize(RW, RH, false);   // drawn at twice the size and scaled down: smooth edges
@@ -2303,7 +2343,7 @@ const D3 = (() => {
     else { geo = L([[0, -.42], [.5, -.34], [.85, -.22], [1.05, -.1], [1.1, 0], [1.05, .1], [.85, .26], [.6, .38], [0, .42]], 3 + (v ? 2 : 0)); rx = .8; ry = .3; }   // trillion
     geo = geo.toNonIndexed(); geo.computeVertexNormals();
     const lin = (h) => { const c = new T.Color(h); return c.convertSRGBToLinear ? c.convertSRGBToLinear() : c; };
-    const matl = new T.MeshStandardMaterial({ color: lin(C.c), flatShading: true, roughness: .82, metalness: 0, emissive: lin(C.d), emissiveIntensity: .06 });
+    const matl = TOON({ color: lin(C.c), flatShading: true, roughness: .82, metalness: 0, emissive: lin(C.d), emissiveIntensity: .06 });
     const scene = new T.Scene(); scene.add(new T.AmbientLight(0xffffff, .14)); for (const [x, y, z, k] of [[-3, 4, 4, 2.1], [3.5, 1.5, 3, .7], [0, -3, 3, .35], [2, 3, -3, .9], [-3, -1, 2, .4]]) { const d = new T.DirectionalLight(0xffffff, k); d.position.set(x, y, z); scene.add(d); }   // light from many sides: every facet catches its own tone
     const m = new T.Mesh(geo, matl); m.rotation.set(rx, ry, 0); scene.add(m);
     const edges = new T.LineSegments(new T.EdgesGeometry(geo, 4), new T.LineBasicMaterial({ color: lin(mixc(C.c, "#ffffff", .7)), transparent: true, opacity: .85 })); edges.rotation.copy(m.rotation); scene.add(edges);   // crisp facet edges
@@ -2321,7 +2361,7 @@ const D3 = (() => {
   function lowpoly(slot, v, C, px) {
     const name = LP[slot % 6][Math.min(4, v || 0)], key = name + ":" + px; if (!LPNAT[name] && LPNAT_HEX[name]) { const c = sat(LPNAT_HEX[name], LPV.sat); LPNAT[name] = { c, l: mixc(c, "#ffffff", .45), d: mixc(c, "#000000", .45) }; } C = Object.assign({}, C, LPNAT[name] || {});   // each thing in its own natural colour if (lps.has(key)) return lps.get(key);
     const lin = (h) => { const c = new T.Color(h); return c.convertSRGBToLinear ? c.convertSRGBToLinear() : c; };
-    const mt = (h, o) => LPV.toon ? new T.MeshToonMaterial(Object.assign({ color: lin(h) }, o)) : new T.MeshStandardMaterial(Object.assign({ color: lin(h), flatShading: !LPV.smooth, roughness: LPV.rough, metalness: LPV.metal || 0 }, o)), B = mt(C.c), DK = mt(mixc(C.c, C.d, .5)), LT = mt(mixc(C.c, C.l, .5));
+    const mt = (h, o) => LPV.toon ? new T.MeshToonMaterial(Object.assign({ color: lin(h) }, o)) : TOON(Object.assign({ color: lin(h), flatShading: !LPV.smooth, roughness: LPV.rough, metalness: LPV.metal || 0 }, o)), B = mt(C.c), DK = mt(mixc(C.c, C.d, .5)), LT = mt(mixc(C.c, C.l, .5));
     const BROWN = mt("#7a4f2a"), GREEN = mt("#4f9a3a"), DGREEN = mt("#2f6f2a"), WHITE = mt("#f4efe6"), BLACK = mt("#2a2228"), YEL = mt("#f2c230"), PINK = mt("#ff8fb0");
     const g = new T.Group(), parts = [];
     const add = (geo, m, x, y, z, sx, sy, sz, rx, ry, rz) => { const o = new T.Mesh(geo, m); o.position.set(x || 0, y || 0, z || 0); o.scale.set(sx ?? 1, sy ?? sx ?? 1, sz ?? sx ?? 1); o.rotation.set(rx || 0, ry || 0, rz || 0); g.add(o); parts.push(o); return o; };
@@ -2350,7 +2390,7 @@ const D3 = (() => {
       case "cactus": add(lathe([[0, -1.1], [.38, -1.1], [.42, .6], [.32, .92], [0, 1.02]], 6), B); add(cyl(7), B, .55, .05, 0, .2, .55, .2); add(cyl(7), B, .55, .38, 0, .2, .2, .2, 0, 0, 0); add(cyl(7), B, -.55, -.15, 0, .2, .5, .2); add(new T.BoxGeometry(.4, .14, .14), B, .4, -.18, 0); add(new T.BoxGeometry(.4, .14, .14), B, -.38, -.38, 0); add(ext(ring(10, (i) => i % 2 ? .07 : .17), .06, .02), PINK, 0, 1.05, 0); for (let k = 0; k < 10; k++) add(cone(3), LT, Math.cos(k) * .4, -.8 + k * .17, Math.sin(k) * .4, .025, .1, .025, 0, 0, Math.PI / 2); add(lathe([[0, -1.25], [.55, -1.25], [.62, -.95], [0, -.95]], 5), mt("#b05a3a")); break;
       case "clover": for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2 + Math.PI / 4; add(ext(ring(12, (i, b) => .42 + .12 * Math.cos(2 * b)), .1, .05), B, Math.cos(a) * .45, Math.sin(a) * .45 + .15, 0); } add(cyl(4), DK, .12, -.75, 0, .04, .9, .04, 0, 0, .25); break;
       case "bush": for (const [x, y, z, r] of [[0, .25, 0, .7], [-.55, -.15, .1, .55], [.55, -.15, .1, .55], [0, -.35, .35, .5], [.25, .55, -.2, .45]]) add(ico(1), B, x, y, z, r); for (const [x, y, z] of [[-.3, .3, .6], [.35, .1, .55], [.6, -.25, .5], [-.5, -.3, .55], [.1, .6, .35]]) add(ico(0), mt("#d8344a"), x, y, z, .1); break;
-      case "globe": { const geo = new T.IcosahedronGeometry(1, 1).toNonIndexed(), pos = geo.attributes.position, cols = []; const sea = lin(C.c), land = lin("#5aa84a"), ice = lin("#f2f6f8"); for (let i = 0; i < pos.count; i += 3) { const x = (pos.getX(i) + pos.getX(i + 1) + pos.getX(i + 2)) / 3, y = (pos.getY(i) + pos.getY(i + 1) + pos.getY(i + 2)) / 3, z = (pos.getZ(i) + pos.getZ(i + 1) + pos.getZ(i + 2)) / 3, f = Math.sin(x * 3.1 + 1) * Math.sin(y * 2.7) + Math.sin(z * 3.3 + 2) * .7, c = Math.abs(y) > .82 ? ice : f > .25 ? land : sea; for (let k = 0; k < 3; k++) cols.push(c.r, c.g, c.b); } geo.setAttribute("color", new T.Float32BufferAttribute(cols, 3)); add(geo, new T.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: .8 }), 0, 0, 0, .98); add(ico(0), WHITE, .05, 1.12, 0, .001); add(ico(0), WHITE, 0, -1.12, 0, .001); g.rotation.set(.35, .6, .2); break; }
+      case "globe": { const geo = new T.IcosahedronGeometry(1, 1).toNonIndexed(), pos = geo.attributes.position, cols = []; const sea = lin(C.c), land = lin("#5aa84a"), ice = lin("#f2f6f8"); for (let i = 0; i < pos.count; i += 3) { const x = (pos.getX(i) + pos.getX(i + 1) + pos.getX(i + 2)) / 3, y = (pos.getY(i) + pos.getY(i + 1) + pos.getY(i + 2)) / 3, z = (pos.getZ(i) + pos.getZ(i + 1) + pos.getZ(i + 2)) / 3, f = Math.sin(x * 3.1 + 1) * Math.sin(y * 2.7) + Math.sin(z * 3.3 + 2) * .7, c = Math.abs(y) > .82 ? ice : f > .25 ? land : sea; for (let k = 0; k < 3; k++) cols.push(c.r, c.g, c.b); } geo.setAttribute("color", new T.Float32BufferAttribute(cols, 3)); add(geo, TOON({ vertexColors: true, flatShading: true, roughness: .8 }), 0, 0, 0, .98); add(ico(0), WHITE, .05, 1.12, 0, .001); add(ico(0), WHITE, 0, -1.12, 0, .001); g.rotation.set(.35, .6, .2); break; }
       case "drop": add(lathe([[0, -.9], [.45, -.8], [.72, -.45], [.72, -.05], [.5, .45], [.22, .85], [0, 1.15]], 6), B); add(ico(0), WHITE, -.32, -.2, .55, .12, .22, .06); break;
       case "bird": add(ico(1), B, 0, -.1, 0, .72, .62, .62); add(ico(1), B, .55, .42, 0, .4); add(cone(4), YEL, 1.0, .4, 0, .12, .3, .12, 0, 0, -Math.PI / 2); add(ico(0), BLACK, .7, .55, .3, .07); add(ext(wing.map(([x, y]) => [x * .8, y * .55]), .08, .04), DK, -.25, 0, .5, 1, 1, 1, 0, 0, .3); add(ext([[0, 0], [-.6, .35], [-.75, -.1]], .08, .03), DK, -.6, -.1, 0); add(lathe([[0, -.62], [.62, -.62], [.62, -.4], [0, -.4]], 5), mt("#e8d8c0"), 0, 0, 0, .9, .4, .9); break;
       case "bluefly": case "butterfly": for (const sx of [-1, 1]) { add(ext(wing, .06, .03), B, 0, 0, 0, sx * .9, .95, 1, 0, 0, 0); add(ext(ring(10, () => .2), .05, .02), LT, sx * .62, .42, .08); add(ext(ring(10, () => .13), .05, .02), WHITE, sx * .55, -.4, .08); } add(lathe([[0, -.8], [.12, -.6], [.14, .5], [0, .75]], 5), BLACK); for (const sx of [-1, 1]) add(cyl(3), BLACK, sx * .14, .95, 0, .02, .45, .02, 0, 0, -sx * .4); g.rotation.x = .45; break;
@@ -2387,7 +2427,7 @@ const D3 = (() => {
     else if (name === "plum") { smallLeaf(-.32, 1.02, 1.0, .45); }
     else if (name === "sun") { for (let k = 0; k < 12; k++) { const a = k * Math.PI / 6 + Math.PI / 12; add(cone(3), mt(mixc(C.c, "#ff6a1a", .5)), Math.cos(a) * .72, Math.sin(a) * .72, -.05, .08, .2, .08, 0, 0, a - Math.PI / 2); } add(ico(1), mt(mixc(C.c, "#ff8a1a", .25)), 0, 0, .3, .42, .42, .3); }
     g.rotation.x += LPV.rx; g.rotation.y += LPV.ry;
-    const scene = new T.Scene(); scene.add(new T.HemisphereLight(0xffffff, 0x3a3048, LPV.hemi)); for (const [x, y, z, k] of [[-3, 4, 4, LPV.key], [3.5, 1.5, 3, LPV.fill]]) { const d = new T.DirectionalLight(0xffffff, k); d.position.set(x, y, z); scene.add(d); }
+    const scene = new T.Scene(); scene.add(new T.AmbientLight(0xffffff, (LPV.hemi) * .9)); for (const [x, y, z, k] of [[-3, 4, 4, LPV.key], [3.5, 1.5, 3, LPV.fill]]) { const d = new T.DirectionalLight(0xffffff, k); d.position.set(x, y, z); scene.add(d); }
     scene.add(g); for (const o of parts) { const e = new T.LineSegments(new T.EdgesGeometry(o.geometry, 32), new T.LineBasicMaterial({ color: LPV.outline ? 0x1a1420 : 0xffffff, transparent: true, opacity: LPV.outline || LPV.edge })); o.add(e); }
     const box = new T.Box3().setFromObject(g), sz = box.getSize(new T.Vector3()), ctr = box.getCenter(new T.Vector3()), fit = (name === "globe" || name === "orange" || name === "lemon" ? 2.55 : name === "goldfish" || name === "fish" ? 1.95 : 2.3) / Math.max(sz.x, sz.y); g.scale.multiplyScalar(fit); g.position.set(-ctr.x * fit, -ctr.y * fit, -ctr.z * fit);
     const cam = new T.PerspectiveCamera(26, 1, .1, 40); cam.position.set(0, 0, 6.2); cam.lookAt(0, 0, 0);
@@ -2638,7 +2678,7 @@ let achQ = 0;
 function achPop(a) {
   const now = performance.now(), delay = Math.max(0, achQ - now); achQ = now + delay + 1900;
   setTimeout(() => {
-    const el = document.createElement("div"); el.className = "achpop"; el.textContent = "🏆 " + a.name + " · +1 🐦"; document.body.appendChild(el); SFX.ach();
+    const el = document.createElement("div"); el.className = "achpop"; el.textContent = "🏆 " + a.name + " · +1 🐦"; document.body.appendChild(el); SFX.ach(); if (G && !G.over) pogoReact("clap"); else pogoMoment("clap", 1500);
     const an = el.animate([{ transform: "translate(-50%,-160%)", easing: "cubic-bezier(.2,1.3,.4,1)" }, { transform: "translate(-50%,0)", offset: .16, easing: "linear" }, { transform: "translate(-50%,0)", offset: .86, easing: "cubic-bezier(.5,0,.9,.5)" }, { transform: "translate(-50%,-160%)" }], { duration: 1800 });
     an.onfinish = () => el.remove();
   }, delay);
@@ -3004,7 +3044,7 @@ function spreadChocolate() {
 }
 // ---- frenzy: every popped gem charges the meter; when it is full five gems turn special and go off together
 async function frenzy() {
-  G.frenzy = 0; G.inFrenzy = true; save.stats.frenzy++; if (addCarrots(1)) flyText("+4 🥕"); pogoReact(); toast("Frenzy!"); SFX.frenzy(); flash(.3, 420, "#ffd200"); G.shake = performance.now(); updateHud();
+  G.frenzy = 0; G.inFrenzy = true; save.stats.frenzy++; if (addCarrots(1)) flyText("+4 🥕"); pogoReact("wow"); toast("Frenzy!"); SFX.frenzy(); flash(.3, 420, "#ffd200"); G.shake = performance.now(); updateHud();
   const pool = []; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const g = cell(r, c); if (g && g.kind === "gem" && !g.special && !g.lock) pool.push(g); }
   const set = new Set();
   for (let i = 0; i < 5 && pool.length; i++) {
@@ -3116,7 +3156,7 @@ async function blast(clear, spawn = [], opts = {}) {
     fx.push({ k: "whirl", x: cc + .5, y: rr + .8, t: n0, life: 1100 });
     if (G.combo >= 3) fx.push({ k: "spirit", x: cc + .5, y: rr + .5, t: n0 + 120, life: 1500 });
     if (G.combo >= 4) { for (let k = 0; k < 3; k++) fx.push({ k: "comet", x: -1, y: Math.random() * 4, x2: COLS + 1, y2: 3 + Math.random() * 5, color: ["#ffe04a", "#ff8adb", "#7fdcff"][k], t: n0 + k * 160, life: 900 }); } }
-  if (G.combo === 3) { toast("Bloom!"); pogoReact(); } else if (G.combo === 4) toast("Glow!"); else if (G.combo >= 5) toast("Wildwood!");   // Charmwood's own words for a chain if (detonated.size) G.shake = performance.now();
+  if (G.combo === 3) { toast("Bloom!"); pogoReact("yay"); } else if (G.combo === 4) { toast("Glow!"); pogoReact("clap"); } else if (G.combo >= 5) { toast("Wildwood!"); pogoReact("wow"); }   // Charmwood's own words for a chain if (detonated.size) G.shake = performance.now();
   updateHud();
   await sleep(detonated.size ? 300 : 230);
 }
@@ -3230,7 +3270,7 @@ async function win() {
   const mordo = isMordo(G.level) ? 2 : 0, bonus = hardOf(G.level) + mordo; save.streak = (save.streak || 0) + 1; if (!window.__fast) { raceWin(); afterWinOnline(); }
   const drops = window.__fast || roomStart ? [] : afterWinMeta(stars, bonus);
   const gain = addCarrots(stars + bonus); save.stats.wins++; save.stats.bestScore = Math.max(save.stats.bestScore, G.score); persist(); checkAch();
-  $("ePogo").innerHTML = pogoSvg("happy"); $("eTitle").textContent = "Level " + (G.level + 1) + " complete"; $("eTitle").classList.toggle("perfect", stars === 3); if (stars === 3) { setTimeout(() => { SFX.perfect(); flash(.5, 500, "#ffd200"); confetti(); toast("Perfect!"); buzz([30, 40, 60]); }, 700); } { const SP = "M12 1.8l3.1 6.5 7.1 1-5.2 5 1.3 7.1L12 18l-6.3 3.4 1.3-7.1-5.2-5 7.1-1z", hollow = `<svg class="o" viewBox="-1 -1 26 26"><path d="${SP}" fill="rgba(0,0,0,.28)" stroke="rgba(255,255,255,.45)" stroke-width="1.4" stroke-linejoin="round"/></svg>`, full = `<svg class="f" viewBox="-1 -1 26 26"><path d="${SP}" fill="#ffd200" stroke="#9a5b00" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 4.6l2.2 4.7 5 .7" fill="none" stroke="#fff6c2" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/></svg>`;
+  $("ePogo").innerHTML = pogoSvg(stars === 3 ? "yay" : "win"); setTimeout(() => { const n = $("ePogo").firstElementChild; if (n) { n.classList.remove("win", "yay"); n.classList.add("happy"); } }, 1700); $("eTitle").textContent = "Level " + (G.level + 1) + " complete"; $("eTitle").classList.toggle("perfect", stars === 3); if (stars === 3) { setTimeout(() => { SFX.perfect(); flash(.5, 500, "#ffd200"); confetti(); toast("Perfect!"); buzz([30, 40, 60]); }, 700); } { const SP = "M12 1.8l3.1 6.5 7.1 1-5.2 5 1.3 7.1L12 18l-6.3 3.4 1.3-7.1-5.2-5 7.1-1z", hollow = `<svg class="o" viewBox="-1 -1 26 26"><path d="${SP}" fill="rgba(0,0,0,.28)" stroke="rgba(255,255,255,.45)" stroke-width="1.4" stroke-linejoin="round"/></svg>`, full = `<svg class="f" viewBox="-1 -1 26 26"><path d="${SP}" fill="#ffd200" stroke="#9a5b00" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 4.6l2.2 4.7 5 .7" fill="none" stroke="#fff6c2" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/></svg>`;
     const slot = (i) => i < stars ? `<i class="${i === 1 ? "mid" : ""}" style="--o:${i * .08}s;--d:${.55 + i * .32}s">${hollow}${full}</i>` : `<u class="${i === 1 ? "mid" : ""}" style="--o:${i * .08}s">${hollow}</u>`;
     $("eStars").className = "big stars3"; $("eStars").innerHTML = "<b>" + [0, 1, 2].filter(i => i < stars).map(slot).join("") + "</b><s>" + [0, 1, 2].filter(i => i >= stars).map(slot).join("") + "</s>";
     if (!window.__fast) for (let i = 0; i < stars; i++) setTimeout(() => { if (isOpen("mEnd")) { SFX.pop(2 + i); buzz(12); } }, 900 + i * 320); } seedWin(); { const ch = chapOf(G.level), k = G.level % 10; $("eTale").textContent = allDone() ? "" : k === 9 ? (ch + 1 < CHAPTERS.length ? bossOf(G.level).name + " flies on to " + CHAPTERS[ch + 1].name + "." : "") : CHAPTERS[ch].name + ": " + (k + 1) + " of 10 stops are green again."; if (k !== 9 && seedsSaved() && (G.L.goal === "ingredients" || save.stats.wins % 5 === 0)) $("eTale").textContent = "Seeds saved so far: " + seedsSaved() + " · " + treesGrown() + " of them are young trees now."; $("eNote").innerHTML = ""; $("eNote").hidden = k !== 9; if (k === 9) { const b = document.createElement("b"); b.textContent = bossOf(G.level).name; b.className = bossOf(G.level).kind === "magpie" ? "mordo" : bossOf(G.level).kind; const q = document.createElement("span"); q.className = "q"; q.textContent = BOSS_NOTE[ch]; if (D3) { const im = new Image(); im.className = "who"; im.alt = ""; im.src = D3.sprite(bossOf(G.level).kind, 96); $("eNote").append(im); } $("eNote").append(b, " ", q); } } $("eSub").textContent = (gain ? "+" + gain * 4 + " 🥕 for Pogo" : "🥕 a piece of carrot for Pogo") + (mordo ? " (" + MORDO + " " + bossOf(G.level).loot + ")" : bonus ? " (" + HARD_TXT[bonus - mordo].toLowerCase() + " +" + bonus + ")" : "") + " · 🔥 streak ×" + save.streak + (drops.length ? " · " + drops.join(" · ") : "");
@@ -3740,42 +3780,22 @@ function realArt(slot, v, px) {
   const A = BLA[name], hue = BLHUE_P[slot % 6], cv = document.createElement("canvas"); cv.width = cv.height = px; const x = cv.getContext("2d"), k = px * .86 / 100;
   x.translate(px / 2, px / 2 - px * .025); x.scale(k, k); x.translate(-50, -50); x.lineJoin = "round"; x.lineCap = "round";
   const parts = A.b.map(glowPart), body = new Path2D(); for (const p of parts) body.addPath(p);
-  const deep = mixc(hue, "#2a0e4a", .5), ink = mixc(hue, "#2a0e4a", .66), TH = 10;   // TH: how thick the piece is, in the art's own units
-  const shade = (path, base, cx, cy, R) => {   // a soft clay solid: a broad pale light from the upper left, the colour in the middle, a tinted (never black) shadow toward the far edge
-    const g = x.createRadialGradient(cx - R * .36, cy - R * .44, R * .02, cx - R * .08, cy - R * .06, R * 1.15); g.addColorStop(0, mixc(base, "#ffffff", .4)); g.addColorStop(.2, mixc(base, "#ffffff", .05)); g.addColorStop(.42, base); g.addColorStop(.84, mixc(base, deep, .3)); g.addColorStop(1, mixc(base, deep, .55));
-    x.fillStyle = g; x.fill(path);
-    x.save(); x.clip(path); const rb = x.createRadialGradient(cx + R * .5, cy + R * .78, R * .1, cx + R * .5, cy + R * .78, R * .75); rb.addColorStop(0, "rgba(255,255,255,.15)"); rb.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = rb; x.fillRect(-10, -10, 120, 120); x.restore(); };
-  // the piece stands on the board: a soft contact shadow, then its side wall (the outline pushed down layer by layer, darker toward the bottom)
-  x.save(); x.filter = "blur(3px)"; x.fillStyle = "rgba(40,20,60,.28)"; x.translate(2, TH + 3); x.fill(body); x.restore();
-  for (let t = TH; t >= 1; t--) { x.save(); x.translate(0, t); x.fillStyle = mixc(hue, deep, .32 + .3 * t / TH); x.fill(body); x.strokeStyle = ink; x.lineWidth = t === TH ? 2.6 : 0; if (t === TH) for (const p of parts) x.stroke(p); x.restore(); }
-  x.save(); x.strokeStyle = ink; x.lineWidth = 2.6; for (const p of parts) x.stroke(p); x.restore();
+  // 2026-10-28 İdris chose "Cel-shaded 3B · anime": every charm is painted like an anime cel. Three hard tones (light, shadow, a thin deep rim on
+  // the far side), one hard highlight, a flat side wall, a hard drop shadow and a thick dark outline. No gradients, no blur, no gloss.
+  const deep = mixc(hue, "#2a0e4a", .5), ink = "#1d1424", TH = 8;
+  const shade = (path, base, cx, cy, R) => { x.save(); x.clip(path); x.fillStyle = mixc(base, "#2a0e4a", .42); x.fill(path); x.translate(-R * .08, -R * .1); x.fillStyle = mixc(base, "#3a1a5a", .2); x.fill(path); x.translate(-R * .14, -R * .18); x.fillStyle = base; x.fill(path); x.restore();
+    x.fillStyle = mixc(base, "#ffffff", .5); x.beginPath(); x.ellipse(cx - R * .36, cy - R * .44, R * .24, R * .12, -.6, 0, 6.2832); x.fill(); x.fillStyle = "#ffffff"; x.beginPath(); x.arc(cx - R * .48, cy - R * .5, Math.max(1, R * .06), 0, 6.2832); x.fill(); };
+  x.save(); x.fillStyle = "rgba(29,20,36,.32)"; x.translate(3, TH + 4); x.fill(body); x.restore();
+  x.save(); x.translate(0, TH); x.fillStyle = mixc(hue, deep, .7); x.fill(body); x.strokeStyle = ink; x.lineWidth = 5; for (const p of parts) x.stroke(p); x.restore();
+  for (let t = TH - 1; t >= 1; t--) { x.save(); x.translate(0, t); x.fillStyle = mixc(hue, deep, .7); x.fill(body); x.restore(); }
+  x.save(); x.strokeStyle = ink; x.lineWidth = 5; for (const p of parts) x.stroke(p); x.restore();
   for (const p of parts) shade(p, hue, 50, 50, 48);
-  x.save(); x.clip(body);   // a soft occlusion along the rim, a bevel (light top edge, shaded bottom edge), then one broad sheen
-  x.strokeStyle = mixc(hue, deep, .5); x.globalAlpha = .22; x.lineWidth = 7; x.filter = "blur(2px)"; for (const p of parts) x.stroke(p); x.filter = "none"; x.globalAlpha = 1;
-  x.save(); x.translate(1.6, 2.6); x.strokeStyle = "rgba(255,255,255,.6)"; x.lineWidth = 3; x.filter = "blur(1px)"; for (const p of parts) x.stroke(p); x.restore(); x.filter = "none";   // the outline moved down-right shows only along the lit upper-left rim
-  // cut facets, a little: the body is split into planes around an off-centre point, each plane a touch lighter or darker as it faces the light, with fine bright edges
-  // 2026-10-27 İdris: "elmas gibi kesikli": a brilliant cut: a flat table in the middle, a ring of star facets round it, then the long girdle facets out to the rim, each plane lit by how it faces the upper-left light, with bright cut edges
-  { const fx = 47, fy = 46, N = 8, ring = (r, off, sy) => Array.from({ length: N }, (_, i) => { const a = (i + off) * 6.2832 / N - 1.3; return [fx + Math.cos(a) * r, fy + Math.sin(a) * r * sy]; }),
-      T = ring(17, 0, .9), M = ring(36, .5, .92), O = ring(80, 0, 1), litOf = (a) => Math.cos(a + 2.35), tri = (p, q, r, l) => { x.beginPath(); x.moveTo(p[0], p[1]); x.lineTo(q[0], q[1]); x.lineTo(r[0], r[1]); x.closePath(); x.fillStyle = l > 0 ? `rgba(255,255,255,${(l * .42).toFixed(3)})` : `rgba(30,0,60,${(-l * .36).toFixed(3)})`; x.fill(); };
-    for (let i = 0; i < N; i++) { const a = (i + .5) * 6.2832 / N - 1.3, n = (i + 1) % N, pm = (i + N - 1) % N;
-      tri(T[i], T[n], M[i], litOf(a) * .7);   // star facets
-      tri(M[pm], T[i], M[i], litOf(a - .26) * .5 + .05);
-      tri(M[i], O[i], O[n], litOf(a));        // girdle facets, two planes each
-      tri(M[i], M[n], O[n], litOf(a + .26) * .75); }
-    x.beginPath(); T.forEach((p, i) => i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1])); x.closePath(); x.fillStyle = "rgba(255,255,255,.26)"; x.fill();   // the table
-    x.strokeStyle = "rgba(255,255,255,.3)"; x.lineWidth = .8; x.beginPath(); T.forEach((p, i) => i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1])); x.closePath();
-    for (let i = 0; i < N; i++) { const n = (i + 1) % N; x.moveTo(T[i][0], T[i][1]); x.lineTo(M[i][0], M[i][1]); x.lineTo(T[n][0], T[n][1]); x.moveTo(M[i][0], M[i][1]); x.lineTo(O[i][0], O[i][1]); x.moveTo(M[i][0], M[i][1]); x.lineTo(O[n][0], O[n][1]); } x.stroke();
-    x.fillStyle = "#ffffff"; for (const [sx, sy, r] of [[30, 26, 2.6], [64, 34, 1.5], [40, 68, 1.2]]) { x.beginPath(); x.moveTo(sx, sy - r * 3); x.lineTo(sx + r * .5, sy - r * .5); x.lineTo(sx + r * 3, sy); x.lineTo(sx + r * .5, sy + r * .5); x.lineTo(sx, sy + r * 3); x.lineTo(sx - r * .5, sy + r * .5); x.lineTo(sx - r * 3, sy); x.lineTo(sx - r * .5, sy - r * .5); x.closePath(); x.fill(); } }   // glints where the light catches a cut edge
-  // a matte finish: one soft sheen instead of a glossy spot
-  const sp = x.createRadialGradient(32, 26, 0, 32, 26, 30); sp.addColorStop(0, "rgba(255,255,255,.38)"); sp.addColorStop(.4, "rgba(255,255,255,.08)"); sp.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = sp; x.fillRect(0, 0, 100, 100);
-  x.fillStyle = "rgba(255,255,255,.7)"; x.filter = "blur(.8px)"; x.beginPath(); x.ellipse(29, 22, 7, 3.6, -.6, 0, 6.2832); x.fill(); x.filter = "none";
-  x.restore();
   const dark = mixc(hue, "#3a2448", .72);
   for (const o of A.d) {
     const t = o[0]; x.save();
     if (t === "s" || t === "S") { const P2 = new Path2D(o[1]); if (t === "S") { x.strokeStyle = "rgba(255,255,255,.28)"; x.lineWidth = (o[2] || 3) * .6; x.translate(.6, .9); x.stroke(P2); x.translate(-.6, -.9); } x.strokeStyle = t === "s" ? "rgba(255,255,255,.92)" : dark; x.lineWidth = (o[2] || 3) * .85; x.stroke(P2); }
     else if (t === "d") { x.fillStyle = "#ffffff"; x.beginPath(); x.arc(o[1], o[2], o[3], 0, 6.2832); x.fill(); }
-    else if (t === "k") { const g = x.createRadialGradient(o[1] - o[3] * .3, o[2] - o[3] * .3, 0, o[1], o[2], o[3]); g.addColorStop(0, mixc(dark, "#ffffff", .25)); g.addColorStop(1, mixc(dark, "#000000", .4)); x.fillStyle = g; x.beginPath(); x.arc(o[1], o[2], o[3], 0, 6.2832); x.fill(); x.fillStyle = "rgba(255,255,255,.85)"; x.beginPath(); x.arc(o[1] - o[3] * .35, o[2] - o[3] * .35, Math.max(.8, o[3] * .3), 0, 6.2832); x.fill(); }
+    else if (t === "k") { x.fillStyle = "#1d1424"; x.beginPath(); x.arc(o[1], o[2], o[3], 0, 6.2832); x.fill(); x.fillStyle = "rgba(255,255,255,.85)"; x.beginPath(); x.arc(o[1] - o[3] * .35, o[2] - o[3] * .35, Math.max(.8, o[3] * .3), 0, 6.2832); x.fill(); }
     else if (t === "w") { const p = glowPart(o[1]); x.fillStyle = "rgba(255,255,255,.62)"; x.fill(p); x.strokeStyle = "rgba(0,0,0,.1)"; x.lineWidth = 1; x.stroke(p); }
     else if (t === "y") { x.fillStyle = "rgba(0,0,0,.28)"; x.beginPath(); x.ellipse(o[1] + .5, o[2] + .8, 2.8, 4, 0, 0, 6.2832); x.fill(); const g = x.createLinearGradient(o[1], o[2] - 3.6, o[1], o[2] + 3.6); g.addColorStop(0, "#fff6c0"); g.addColorStop(1, "#d8a83a"); x.fillStyle = g; x.beginPath(); x.ellipse(o[1], o[2], 2.2, 3.4, 0, 0, 6.2832); x.fill(); }
     else if (t === "o") { x.fillStyle = "rgba(0,0,0,.2)"; x.beginPath(); x.arc(o[1], o[2], 1.8, 0, 6.2832); x.fill(); x.fillStyle = "rgba(255,255,255,.35)"; x.beginPath(); x.arc(o[1] - .7, o[2] - .7, 1, 0, 6.2832); x.fill(); }
@@ -3786,7 +3806,7 @@ function realArt(slot, v, px) {
       else { x.fillStyle = o[2]; x.fill(p); } }
     x.restore();
   }
-  x.save(); x.strokeStyle = ink; x.lineWidth = 1.1; x.globalAlpha = .55; for (const p of parts) x.stroke(p); x.restore();
+  x.save(); x.strokeStyle = ink; x.lineWidth = 3.6; for (const p of parts) x.stroke(p); x.restore();
   boldCache.set(key, cv); return cv;
 }
 function boldArt(slot, v, px, mode) {
@@ -4137,7 +4157,8 @@ requestAnimationFrame(render);
 // the pictures kept from the last launch are read back first, so the first map is laid out from them instead of being drawn again in 3D
 (D3 && D3.warm && !window.__fast ? D3.warm() : Promise.resolve()).then(() => { if (!$("map").hidden && $("path").childElementCount < 50) buildMap();
   if (!save.guideSeen && !window.__fast && !roomStart) openGuide(() => { if (!storyCheck()) stationCheck(); });
-  else if (!storyCheck() && !stationCheck() && save.inProgress && LEVELS[save.inProgress.level]) openLevel(save.inProgress.level); });
+  else if (!storyCheck() && !stationCheck() && save.inProgress && LEVELS[save.inProgress.level]) openLevel(save.inProgress.level);
+  if (save.guideSeen && !window.__fast) setTimeout(() => { if (!$("map").hidden && !document.querySelector(".modal:not([hidden])")) pogoMoment("hello", 1700); }, 700); });
 { const last = save.lastSeen || 0; if (last && Date.now() - last > 20 * 3600000 && !window.__fast) { const C = CHAPTERS[chapOf(highest())]; setTimeout(() => tip("Last time: " + C.name + " · " + C.title, 4800), 1600); } save.lastSeen = Date.now(); }
 checkAch();
 function bestMove() {
