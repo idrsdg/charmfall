@@ -502,13 +502,13 @@
   /* gloss: a light rim on top and a soft shade below on every pill, HUD box and bar button */
   .pill, .mapbar button:not(.ready) { box-shadow: 0 4px 0 #123a1c, inset 0 2px 0 rgba(255, 255, 255, .45), inset 0 -6px 10px rgba(18, 58, 28, .35); }
   /* ---- map v3: bands, path, stops, props */
-  .band { position: absolute; left: 0; right: 0; z-index: 0; background: url(anim/ground.webp) 0 0 / 256px 256px repeat, linear-gradient(180deg, var(--s1) 0%, var(--s2) 13%, var(--g) 14%, color-mix(in srgb, var(--g) 72%, #2a6a3a) 100%); border-top: 3px solid rgba(255, 255, 255, .55); box-shadow: inset 0 -40px 60px rgba(0, 0, 0, .12); }
+  .band { position: absolute; left: 0; right: 0; z-index: 0; background-blend-mode: normal, normal, multiply, normal; background: url(anim/ground.webp) 0 0 / 256px 256px repeat, linear-gradient(rgba(246, 238, 220, .38), rgba(246, 238, 220, .38)), url(anim/paper.webp) 0 0 / 256px 256px repeat, linear-gradient(180deg, var(--s1) 0%, var(--s2) 13%, var(--g) 14%, color-mix(in srgb, var(--g) 72%, #2a6a3a) 100%); border-top: 3px solid rgba(255, 255, 255, .55); box-shadow: inset 0 -40px 60px rgba(0, 0, 0, .12); }
   .band::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, .25), rgba(255, 255, 255, 0) 60%); }
-  .band.lock { filter: none; background: radial-gradient(ellipse 70% 40% at 50% 60%, rgba(120, 20, 40, .28), rgba(120, 20, 40, 0) 70%), linear-gradient(180deg, #120a1c 0%, #1d1029 40%, #0b0712 100%) !important; }
+  .band.lock { filter: none; background: url(anim/paper.webp) 0 0 / 256px 256px, linear-gradient(180deg, #8a7a66 0%, #6e604e 100%) !important; background-blend-mode: multiply, normal; }   /* 2026-10-28: the pages not yet reached are a sepia under-painting */
   /* 2026-10-27 İdris: the levels not yet won are dark and frightening: the scenery there is only black shapes with a cold edge, under a red-tinged gloom */
   #path u.dark { display: none; }
-  #path .dark, #path .mprop.lock:not(.stn), #path .mvillage.lock { filter: grayscale(1) brightness(.18) contrast(1.4) !important; opacity: .95; } .band.lock { border-top: 0; }   /* 2026-10-28 "harita kasıyor": no blur (drop-shadow) filters on hundreds of pictures, no filter on the bands */
-  .band.ground { background: linear-gradient(180deg, var(--g) 0%, color-mix(in srgb, var(--g) 72%, #2a6a3a) 100%); border-top: 4px solid rgba(255, 255, 255, .9); box-shadow: 0 -2px 0 rgba(40, 20, 80, .6); }
+  #path .dark, #path .mprop.lock:not(.stn), #path .mvillage.lock { filter: grayscale(1) sepia(.6) brightness(.42) !important; opacity: .9; }   /* the unexplored part is a sepia under-drawing, not black */ .band.lock { border-top: 0; }   /* 2026-10-28 "harita kasıyor": no blur (drop-shadow) filters on hundreds of pictures, no filter on the bands */
+  .band.ground { background-blend-mode: normal, normal, multiply, normal; background: url(anim/ground.webp) 0 0 / 256px 256px repeat, linear-gradient(rgba(246, 238, 220, .38), rgba(246, 238, 220, .38)), url(anim/paper.webp) 0 0 / 256px 256px repeat, linear-gradient(180deg, var(--g) 0%, color-mix(in srgb, var(--g) 72%, #2a6a3a) 100%); border-top: 4px solid rgba(255, 255, 255, .9); box-shadow: 0 -2px 0 rgba(40, 20, 80, .6); }
   .dawn { position: absolute; left: -30px; right: -30px; height: 40px; z-index: 0; background: linear-gradient(180deg, rgba(80, 70, 110, 0), rgba(80, 70, 110, .35) 60%, rgba(255, 255, 255, .6) 100%); pointer-events: none; } .band.lock::after { background: repeating-linear-gradient(135deg, rgba(255, 255, 255, .06) 0 14px, rgba(255, 255, 255, 0) 14px 28px); }
   .path svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 1; }
   .mprop { position: absolute; transform: translate(-50%, -100%); pointer-events: none; z-index: 1; } .mprop img { display: block; width: 100%; height: auto; } .mprop.lock { filter: grayscale(1) brightness(.5); opacity: .8; }
@@ -619,7 +619,13 @@
   .card .goalrow > *, .card .goalrow div, .card .stats > * { background: rgba(214, 190, 150, .3) !important; border: 2px solid rgba(110, 82, 54, .55) !important; box-shadow: none !important; color: var(--ink) !important; }
   .card .goalrow small, .card .goalrow i { color: #8a5a30 !important; }
   .card h2.perfect, .card h1, .card h2 { text-shadow: none !important; }
-  .modal:not([hidden]) ~ #pgMoment { display: none; }   /* Pogo's quick moment never sits over an open page */
+  .modal:not([hidden]) ~ #pgMoment { display: none; }
+  #path .lv { text-shadow: none !important; box-shadow: 0 4px 0 rgba(110, 82, 54, .55), 0 8px 12px rgba(60, 40, 20, .22) !important; outline: 2px solid rgba(74, 46, 28, .55) !important; border-radius: 30% 34% 28% 36% / 34% 28% 36% 30% !important; }
+  #path .lv.done { background: radial-gradient(120% 130% at 30% 25%, #ffe9a8, #f2c04e 60%, #dc9a2a) !important; border-color: #fff6dc !important; color: #5a3410 !important; }
+  #path .lv.now { background: radial-gradient(120% 130% at 30% 25%, #ffd2a0, #ee8a48 60%, #d0642a) !important; border-color: #fff6dc !important; color: #fff !important; }
+  #path .lv.lock { background: radial-gradient(120% 130% at 30% 25%, #d8ccb6, #ae9f88) !important; border-color: #efe6d4 !important; color: #6e604e !important; }
+  #path .lvplate { background: url(anim/paper.webp) 0 0 / 200px 200px, #f6eedc !important; color: #4a2e1c !important; border: 2px solid #8a6a46 !important; box-shadow: 0 3px 0 #cdb890 !important; text-shadow: none !important; }
+  #path .lvplate.go { background: radial-gradient(120% 140% at 30% 20%, #ffe390, #f6c24a 55%, #e8a72a) !important; border-color: #7a4a1a !important; }   /* Pogo's quick moment never sits over an open page */
 </style>
 </head>
 <body>
@@ -1044,12 +1050,18 @@ const TOON = window.THREE ? (() => { const T = THREE, g = new T.DataTexture(new 
   const OK = ["color", "map", "emissive", "emissiveIntensity", "emissiveMap", "transparent", "opacity", "side", "alphaTest", "alphaMap", "depthWrite", "depthTest", "vertexColors", "fog", "name", "polygonOffset", "polygonOffsetFactor"];
   const hsl = {}; return (o = {}) => { const q = { gradientMap: g }; for (const k of OK) if (o[k] !== undefined) q[k] = o[k];
     if (q.color !== undefined) { const c = new T.Color(q.color); c.getHSL(hsl); c.setHSL(hsl.h, Math.min(1, hsl.s * 1.3), hsl.l * .9); q.color = c; } return new T.MeshToonMaterial(q); }; })() : null;   // anime colours are a touch deeper and more saturated than the old soft ones
+// wcify(canvas): a finished 3D picture turned into a watercolour: colour lifted a fifth toward the paper and a little desaturated, pigment settled
+// in the paper's tooth (more where the wash is dark). Run once per picture when it is made, never per frame.
+function wcify(cv) { try { const w = cv.width, h = cv.height, x = cv.getContext("2d"), id = x.getImageData(0, 0, w, h), d = id.data; let sd = 7;
+  for (let y = 0; y < h; y++) for (let xx = 0; xx < w; xx++) { const i = (y * w + xx) * 4; if (d[i + 3] < 8) continue; sd = (sd * 16807) % 2147483647; const n = ((sd / 2147483647) - .5), r = d[i], g = d[i + 1], b = d[i + 2], l = r * .3 + g * .59 + b * .11, gr = 1 + n * (.06 + (1 - l / 255) * .1);
+    d[i] = ((r + (l - r) * .32) * .68 + 246 * .32) * gr; d[i + 1] = ((g + (l - g) * .32) * .68 + 238 * .32) * gr; d[i + 2] = ((b + (l - b) * .32) * .68 + 220 * .32) * gr; }
+  x.putImageData(id, 0, 0); } catch (e) {} return cv; }
 // inkOutline(canvas, r): a dark outline r pixels wide round everything solid on a finished picture (the inked line of a cel)
 function inkOutline(cv, r) { try { const w = cv.width, h = cv.height, x = cv.getContext("2d"), id = x.getImageData(0, 0, w, h), d = id.data, n = w * h, m = new Uint8Array(n), a = new Uint8Array(n), b = new Uint8Array(n);
   for (let i = 0; i < n; i++) m[i] = d[i * 4 + 3] > 150 ? 1 : 0;
   for (let y = 0; y < h; y++) { let c = 0; const o = y * w; for (let k = 0; k < Math.min(r, w); k++) c += m[o + k]; for (let xx = 0; xx < w; xx++) { if (xx + r < w) c += m[o + xx + r]; if (xx - r - 1 >= 0) c -= m[o + xx - r - 1]; a[o + xx] = c > 0 ? 1 : 0; } }
   for (let xx = 0; xx < w; xx++) { let c = 0; for (let k = 0; k < Math.min(r, h); k++) c += a[k * w + xx]; for (let y = 0; y < h; y++) { if (y + r < h) c += a[(y + r) * w + xx]; if (y - r - 1 >= 0) c -= a[(y - r - 1) * w + xx]; b[y * w + xx] = c > 0 ? 1 : 0; } }
-  for (let i = 0; i < n; i++) if (b[i] && !m[i]) { const j = i * 4; d[j] = 29; d[j + 1] = 20; d[j + 2] = 36; d[j + 3] = 255; } x.putImageData(id, 0, 0); } catch (e) {} return cv; }
+  for (let i = 0; i < n; i++) if (b[i] && !m[i]) { const j = i * 4; d[j] = 92; d[j + 1] = 62; d[j + 2] = 40; d[j + 3] = 215; } /* 2026-10-28 watercolour: a sepia pencil line, not black ink */ x.putImageData(id, 0, 0); } catch (e) {} return cv; }
 // ---------------------------------------------------------------- Pogo in 3D
 // One small three.js scene draws Pogo for every place he appears; each place is a 2D canvas that gets a copy of the frame.
 // The flat drawing above stays as the fallback when WebGL is not there.
@@ -1098,7 +1110,7 @@ const P3 = (() => {
   const carrot = grp(.02, -.36, .7, head); carrot.rotation.set(-1.0, 0, -.5); { const c = new T.Mesh(new T.ConeGeometry(.13, .8, 20), M.carrot); c.position.y = -.4; carrot.add(c); for (let i = -1; i <= 1; i++) { const l = ball(M.leaf, i * .08, -.9, 0, .05, .17, .05, carrot); l.rotation.z = i * .5; } }
   // the inked line: every larger piece gets a dark back-faced shell just outside it (a constant thickness whatever the piece's scale);
   // where one piece pokes out of another the shell draws the inner line too, the way an anime cel is inked
-  { const OUTM = new T.MeshBasicMaterial({ color: 0x24182c, side: T.BackSide }), skip = new Set([M.white, M.iris, M.ink, M.whisk, M.blush, M.mouth]), list = []; fox.traverse(o => { if (o.isMesh && !skip.has(o.material) && o.material !== OUTM) list.push(o); });
+  { const OUTM = new T.MeshBasicMaterial({ color: 0x5c3e28, side: T.BackSide }), skip = new Set([M.white, M.iris, M.ink, M.whisk, M.blush, M.mouth]), list = []; fox.traverse(o => { if (o.isMesh && !skip.has(o.material) && o.material !== OUTM) list.push(o); });
     for (const o of list) { const sc = o.scale, mn = Math.min(sc.x, sc.y, sc.z); if (o.geometry.type === "SphereGeometry" && mn < .035) continue; const e = .028, h = new T.Mesh(o.geometry, OUTM);
       if (o.geometry.type === "SphereGeometry") h.scale.set(1 + e / sc.x, 1 + e / sc.y, 1 + e / sc.z); else h.scale.setScalar(o.geometry.type === "TorusGeometry" ? 1.07 : 1.35); h.renderOrder = -1; o.add(h); } }
   // pose values; every frame the current pose eases toward the target one, so acts blend into each other
@@ -1375,6 +1387,22 @@ setInterval(() => { tickLives(); $("lives").textContent = livesTxt(); }, 5000);
 
 // ---------------------------------------------------------------- audio
 let AC = null;
+// 2026-10-28 İdris "Suluboya masal kitabı... tüm müzikler": a storybook music box. Two gentle tunes in a major pentatonic, a soft bass note under
+// each bar and a slow pad, scheduled ahead on the audio clock (never on frames); one for the map, a livelier one on the board. Off whenever sound is off.
+const MUSIC = (() => { let on = false, mode = "", nextT = 0, step = 0, timer = 0, bus = null; const P = [0, 2, 4, 7, 9, 12, 14, 16];
+  const TUNES = { map: { bpm: 84, root: 60, mel: [0, 2, 4, 2, 3, 2, 1, 0, 0, 1, 2, 4, 3, 1, 2, -1, 4, 5, 4, 3, 2, 3, 1, 0, 1, 2, 1, 0, 1, -1, 0, -1], bass: [0, 0, 5, 3] }, play: { bpm: 104, root: 62, mel: [0, 2, 4, 5, 4, 2, 3, 1, 2, 4, 6, 5, 4, 3, 2, -1, 4, 3, 2, 1, 2, 3, 4, 2, 1, 0, 1, 2, 0, -1, 0, -1], bass: [0, 3, 5, 4] } };
+  const hz = (m) => 440 * Math.pow(2, (m - 69) / 12);
+  function note(t, f, d, g, type) { const o = AC.createOscillator(), v = AC.createGain(); o.type = type; o.frequency.value = f; v.gain.setValueAtTime(0, t); v.gain.linearRampToValueAtTime(g, t + .012); v.gain.exponentialRampToValueAtTime(.0004, t + d); o.connect(v).connect(bus); o.start(t); o.stop(t + d + .05); }
+  function pump() { if (!on || !AC) return; const T = TUNES[mode] || TUNES.map, beat = 60 / T.bpm / 2;
+    while (nextT < AC.currentTime + .6) { const i = step % T.mel.length, k = T.mel[i];
+      if (k >= 0) { const f = hz(T.root + 12 + P[k % P.length]); note(nextT, f, beat * 2.6, .05, "sine"); note(nextT, f * 2, beat * 1.2, .012, "triangle"); }   // the music-box tine and its bright overtone
+      if (i % 8 === 0) { const b = T.bass[(i / 8) % T.bass.length], f = hz(T.root - 12 + P[b]); note(nextT, f, beat * 7, .045, "triangle"); note(nextT, f * 1.5, beat * 7, .016, "sine"); }
+      nextT += beat; step++; } timer = setTimeout(pump, 200); }
+  return { set(m) { if (save.sound === false || window.__fast) { this.stop(); return; } try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+      if (!bus) { bus = AC.createGain(); bus.gain.value = .55; bus.connect(AC.destination); } if (on && mode === m) return; mode = m; step = 0; if (!on) { on = true; nextT = AC.currentTime + .15; clearTimeout(timer); pump(); } },
+    stop() { on = false; clearTimeout(timer); } }; })();
+document.addEventListener("visibilitychange", () => { if (document.hidden) MUSIC.stop(); else if (save.sound !== false && AC) MUSIC.set(G ? "play" : "map"); });
+addEventListener("pointerdown", () => { if (save.sound !== false) MUSIC.set(G && !$("game").hidden ? "play" : "map"); }, { capture: true });   // phones only allow sound after a touch
 function tone(f, d = .08, type = "sine", g = .12, slide = 0) {
   if (save.sound === false) return;
   try {
@@ -1892,7 +1920,7 @@ $("stGo").addEventListener("click", () => { hide("mStory"); buildMap(); setTimeo
 // ---------------------------------------------------------------- the garden and the story cards in 3D
 // One small renderer draws every scene: a round lawn, a hill behind it and a handful of props built from spheres, cones and boxes.
 // Scenes are described by a list of props; each canvas gets a copy of the frame. The emoji scenes stay as the fallback without WebGL.
-const D3 = (() => {
+const D3 = (() => { /* look: watercolour storybook v2 (2026-10-28; changing this note repaints every stored map picture) */
   if (!window.THREE) return null; const T = THREE; let R; try { R = new T.WebGLRenderer({ alpha: true, antialias: true }); } catch (e) { return null; }
   const RW = 640, RH = 360; R.setPixelRatio(1); R.setSize(RW, RH, false); R.setClearColor(0, 0); R.outputEncoding = T.sRGBEncoding;
   const mats = new Map(), mat = (c, o) => { const k = c + JSON.stringify(o || {}); if (!mats.has(k)) mats.set(k, TOON(Object.assign({ color: c, roughness: .62, metalness: 0, flatShading: false }, o))); return mats.get(k); };
@@ -2467,7 +2495,7 @@ const D3 = (() => {
   // 2026-10-27 İdris "oyun bazen kasıyor": every picture on the map was drawn again in 3D at each launch, two to three seconds on the phone before
   // the map could appear. Each finished picture is now kept on the phone (IndexedDB) and read back at the next launch; any change to this
   // script changes the version, so an update never shows an old picture.
-  const SPV = (() => { const all = (document.currentScript && document.currentScript.text) || "", i0 = all.indexOf("const D3 = (() =>"), i1 = all.indexOf("return { show, sprite, village, EMO"), t = i0 >= 0 && i1 > i0 ? all.slice(i0, i1) : all /* 2026-10-28: keyed on the drawing code only */; let h = 2166136261; for (let i = 0; i < t.length; i += 3) h = Math.imul(h ^ t.charCodeAt(i), 16777619); return (h >>> 0).toString(36) + t.length; })();
+  const SPV = (() => { const all = (document.currentScript && document.currentScript.text) || "", i0 = all.indexOf("const D3 = (() =>"), i1 = all.indexOf("return { show, sprite, village, EMO"), t = i0 >= 0 && i1 > i0 ? all.slice(i0, i1) : all /* 2026-10-28: keyed on the drawing code only */; let h = 2166136261; for (let i = 0; i < t.length; i += 3) h = Math.imul(h ^ t.charCodeAt(i), 16777619); return (h >>> 0).toString(36) + t.length + "-wc2"; })();   /* bump the suffix to repaint every stored picture */
   const sdb = new Promise(res => { try { const q = indexedDB.open("prismSpr", 1); q.onupgradeneeded = () => q.result.createObjectStore("s"); q.onsuccess = () => res(q.result); q.onerror = () => res(null); q.onblocked = () => res(null); } catch (e) { res(null); } });
   const keep = (key, blob) => { sdb.then(db => { if (!db || !blob) return; try { db.transaction("s", "readwrite").objectStore("s").put({ v: SPV, b: blob }, key); } catch (e) {} }); };
   const FR = 24, strips = new Map(), stripQ = [];
@@ -2496,7 +2524,7 @@ const D3 = (() => {
     const done = (url, blob) => { if (blob) keep("S" + k, blob); const cbs = strips.get(k); strips.set(k, url); if (Array.isArray(cbs)) cbs.forEach(f => { try { f(url); } catch (e) {} }); stripBusy = false; setTimeout(stripPump, window.__fast ? 0 : 60); };
     const tick = () => { if (!window.__fast && performance.now() - mapMoveT < 220) { setTimeout(tick, 120); return; }
       let fin = false; try { fin = !job || job.step(); } catch (e) { console.warn(e); job = null; fin = true; }
-      if (!fin) { setTimeout(tick, window.__fast ? 0 : 24); return; } const cv = job && job.cv; if (cv) inkOutline(cv, 3);
+      if (!fin) { setTimeout(tick, window.__fast ? 0 : 24); return; } const cv = job && job.cv; if (cv) { wcify(cv); inkOutline(cv, 3); }
       if (!cv) done(null); else if (cv.toBlob) cv.toBlob(b => done(b ? URL.createObjectURL(b) : cv.toDataURL(), b)); else done(cv.toDataURL()); };
     setTimeout(tick, window.__fast ? 0 : 16);
   }
@@ -2527,7 +2555,7 @@ const D3 = (() => {
     const g = grp(scene); BUILD.village(g, past, ch);
     const cam = new T.PerspectiveCamera(28, 4 / 3, .1, 40); cam.position.set(3.2, 6.2, 8.4); cam.lookAt(0, .3, 0);
     R.shadowMap.enabled = true; R.shadowMap.type = T.PCFSoftShadowMap; R.setSize(px, Math.round(px * .75), false); R.render(scene, cam); const cv = document.createElement("canvas"); cv.width = px; cv.height = Math.round(px * .75); cv.getContext("2d").drawImage(R.domElement, 0, 0); R.setSize(RW, RH, false); R.shadowMap.enabled = false;
-    inkOutline(cv, Math.max(2, Math.min(4, Math.round(px * .016)))); const url = cv.toDataURL(); sprites.set(key, url); if (cv.toBlob) cv.toBlob(b => { if (b) { sprites.set(key, URL.createObjectURL(b)); keep("P" + key, b); } }); return url;
+    wcify(cv); inkOutline(cv, Math.max(2, Math.min(4, Math.round(px * .016)))); const url = cv.toDataURL(); sprites.set(key, url); if (cv.toBlob) cv.toBlob(b => { if (b) { sprites.set(key, URL.createObjectURL(b)); keep("P" + key, b); } }); return url;
   }
   // A picture is handed out as a short blob address, not as a data URL: the map uses the same eighty pictures seven hundred times, and written
   // out as data URLs its markup was almost six megabytes that had to be parsed on every visit.
@@ -2540,7 +2568,7 @@ const D3 = (() => {
     const box = new T.Box3().setFromObject(g), sz = box.getSize(new T.Vector3()), ctr = box.getCenter(new T.Vector3()), fit = (top ? 2.1 : 1.3) / (Math.max(sz.x, sz.y, sz.z) || 1); g.scale.setScalar(fit); g.position.set(-ctr.x * fit, top ? -ctr.y * fit : -box.min.y * fit, -ctr.z * fit);
     const cam = new T.PerspectiveCamera(30, 1, .1, 20); if (top) { cam.position.set(0, 4.2, .9); cam.lookAt(0, 0, 0); } else { cam.position.set(.5, 1.0, 3.1); cam.lookAt(0, .62, 0); }
     R.setSize(px, px, false); R.render(scene, cam); const cv = document.createElement("canvas"); cv.width = cv.height = px; cv.getContext("2d").drawImage(R.domElement, 0, 0); R.setSize(RW, RH, false);
-    inkOutline(cv, Math.max(2, Math.min(4, Math.round(px * .016)))); const url = cv.toDataURL(); sprites.set(key, url); if (cv.toBlob) cv.toBlob(b => { if (b) { sprites.set(key, URL.createObjectURL(b)); keep("P" + key, b); } }); return url;
+    wcify(cv); inkOutline(cv, Math.max(2, Math.min(4, Math.round(px * .016)))); const url = cv.toDataURL(); sprites.set(key, url); if (cv.toBlob) cv.toBlob(b => { if (b) { sprites.set(key, URL.createObjectURL(b)); keep("P" + key, b); } }); return url;
   }
   let last = 0;
   function frame(now) {
@@ -3168,7 +3196,7 @@ function pauseGame() { if (!G || G.over || G.paused) return; G.paused = true; G.
 function resumeGame() { if (!G || !G.paused) return; hide("mPause"); G.paused = false; G.hintAt = performance.now() + 4000; SFX.swap(); }
 $("btnPause").addEventListener("click", pauseGame);
 function renderSound() { document.querySelectorAll(".snd").forEach(el => { el.innerHTML = ico(save.sound === false ? "mute" : "sound") + (el.classList.contains("btn") ? (save.sound === false ? " Sound off" : " Sound on") : ""); }); }
-function toggleSound() { save.sound = save.sound === false; persist(); renderSound(); if (window.__audioMode) window.__audioMode(); if (save.sound !== false) SFX.swap(); }   // the app switches the audio route with it
+function toggleSound() { save.sound = save.sound === false; persist(); renderSound(); if (save.sound === false) MUSIC.stop(); else MUSIC.set(G ? "play" : "map"); if (window.__audioMode) window.__audioMode(); if (save.sound !== false) SFX.swap(); }   // the app switches the audio route with it
 function renderSettings() { const so = save.sound !== false; $("setSound").classList.toggle("off", !so); $("setSound").firstChild.innerHTML = ico(so ? "sound" : "mute"); if ($("setSnd")) $("setSnd").firstChild.innerHTML = ico(so ? "sound" : "mute"); }
 const buzz = (p) => { if (navigator.vibrate && save.haptic !== false) navigator.vibrate(p); };
 $("setSound").addEventListener("click", () => { toggleSound(); renderSettings(); });
