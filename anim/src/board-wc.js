@@ -21,15 +21,25 @@
   // ---- cell washes: two very pale, slightly different washes laid on the paper, so the grid reads without a hard checker
   B["cell-0"] = () => { const [cv, x] = tile(); wash(x, blob(50, 50, 47, 47, 11, .05), "#c9b896", 21, { a: .07, layers: 4, rw: 2, rim: .22, j: 1.4 }); granulate(cv, 1.5); return cv; };
   B["cell-1"] = () => { const [cv, x] = tile(); wash(x, blob(50, 50, 47, 47, 12, .05), "#a9b8c4", 22, { a: .075, layers: 4, rw: 2, rim: .22, j: 1.4 }); granulate(cv, 1.5); return cv; };
-  // ---- ash: a granulating grey wash (ash pigments settle hard), a scribbled pencil edge; two layers is darker, heaped, with ember dots
-  for (const n of [1, 2]) B["ash" + n] = () => { const [cv, x] = tile(); const col = n === 2 ? "#3c3648" : "#6a6478";   // 2026-10-28 İdris "küller hiç belli olmuyor": darker ash
-    { const bg = new Path2D(); bg.roundRect(4, 4, 92, 92, 14); x.fillStyle = n === 2 ? "rgba(70,62,84,.82)" : "rgba(128,120,142,.72)"; x.fill(bg); }   // the whole cell is ash-grey, so it shows all round a charm sitting on it
-    wash(x, blob(50, 52, 45, 44, 30 + n, .1), col, 31 + n, { a: n === 2 ? .55 : .45, layers: 5, rw: 4, rim: .85, j: 2 });
-    if (n === 2) wash(x, blob(46, 58, 30, 24, 33, .2), "#4c4656", 34, { a: .14, layers: 3, rw: 2, rim: .35 });
-    pencil(x, blob(50, 52, 44, 43, 35 + n, .12), 36 + n, 2.4); { const rr2 = new Path2D(); rr2.roundRect(5, 5, 90, 90, 14); x.strokeStyle = n === 2 ? "rgba(220,110,50,.95)" : "rgba(60,52,70,.9)"; x.lineWidth = 7; x.setLineDash(n === 2 ? [9, 6] : []); x.stroke(rr2); x.setLineDash([]); } const r = R(40 + n);   // a firm frame at the cell edge shows round any charm that sits on the ash
-    for (let i = 0; i < 18 + n * 10; i++) { const a = r() * 6.28, d = 12 + r() * 30; x.fillStyle = r() < .5 ? "rgba(255,250,240,.5)" : "rgba(60,50,60,.35)"; x.beginPath(); x.arc(50 + Math.cos(a) * d, 52 + Math.sin(a) * d, .6 + r() * (n === 2 ? 1.6 : 1), 0, 6.28); x.fill(); }
-    if (n === 2) for (let i = 0; i < 6; i++) { const a = r() * 6.28, d = 20 + r() * 22; x.fillStyle = "rgba(226,120,60,.75)"; x.beginPath(); x.arc(50 + Math.cos(a) * d, 52 + Math.sin(a) * d, 1.4, 0, 6.28); x.fill(); }
+  // ---- ash (2026-10-29 İdris "küller hiç belirgin değil, kalktığı belli olmuyor, ciddiye al"): on the dark walnut board one layer is a pale
+  // silver heap of ash with a charcoal frame, two layers is black soot with a glowing ember frame; a cleared cell is a fresh meadow (B.clean)
+  for (const n of [1, 2]) B["ash" + n] = () => { const [cv, x] = tile(), r = R(40 + n), soot = n === 2;
+    { const bg = rr(3, 3, 94, 94, 14); x.fillStyle = soot ? "rgba(38,32,42,.96)" : "rgba(206,202,210,.97)"; x.fill(bg); }
+    wash(x, blob(50, 54, 44, 40, 30 + n, .14), soot ? "#14101a" : "#a8a2b2", 31 + n, { a: soot ? .5 : .22, layers: 5, rw: 4, rim: .9, j: 2 });
+    wash(x, blob(44, 40, 26, 18, 33 + n, .25), soot ? "#5a5462" : "#f4f2f6", 34 + n, { a: soot ? .35 : .55, layers: 3, rw: 1.5, rim: .2 });   /* the lighter crest of the heap */
+    for (let i = 0; i < 46; i++) { const a = r() * 6.28, d = 6 + r() * 36; x.fillStyle = soot ? (r() < .6 ? "rgba(150,140,160,.55)" : "rgba(0,0,0,.5)") : (r() < .55 ? "rgba(70,62,80,.6)" : "rgba(255,255,255,.7)"); x.beginPath(); x.arc(50 + Math.cos(a) * d, 52 + Math.sin(a) * d, .6 + r() * 1.5, 0, 6.28); x.fill(); }
+    if (soot) for (let i = 0; i < 9; i++) { const a = r() * 6.28, d = 14 + r() * 26, ex = 50 + Math.cos(a) * d, ey = 52 + Math.sin(a) * d; x.save(); x.filter = "blur(1.5px)"; x.fillStyle = "rgba(255,120,40,.7)"; x.beginPath(); x.arc(ex, ey, 3.2, 0, 6.28); x.fill(); x.restore(); x.fillStyle = "#ffd070"; x.beginPath(); x.arc(ex, ey, 1.2, 0, 6.28); x.fill(); }
+    pencil(x, blob(50, 52, 44, 42, 35 + n, .12), 36 + n, 2.2);
+    { const fr = rr(5, 5, 90, 90, 14); if (soot) { x.save(); x.filter = "blur(2.5px)"; x.strokeStyle = "rgba(255,110,30,.95)"; x.lineWidth = 14; x.stroke(rr(8, 8, 84, 84, 13)); x.restore(); x.strokeStyle = "#ffb040"; x.lineWidth = 5; x.setLineDash([10, 5]); x.stroke(fr); x.setLineDash([]); } else { x.save(); x.filter = "blur(1.2px)"; x.strokeStyle = "rgba(250,248,255,.98)"; x.lineWidth = 13; x.stroke(rr(8, 8, 84, 84, 13)); x.restore(); for (let i = 0; i < 70; i++) { const a = r() * 6.28, d = 39 + r() * 6; x.fillStyle = r() < .5 ? "rgba(120,112,132,.7)" : "rgba(255,255,255,.9)"; x.beginPath(); x.arc(50 + Math.cos(a) * d * 1.05, 50 + Math.sin(a) * d * 1.05, .6 + r() * 1.3, 0, 6.28); x.fill(); } x.strokeStyle = "rgba(30,24,36,.9)"; x.lineWidth = 2; x.stroke(rr(2, 2, 96, 96, 15)); } }   /* the part that shows round a charm is the rim: one layer has a thick rim of pale ash */
     granulate(cv, 2.2); return cv; };
+  // ---- a cell freed of ash: a fresh pale-green meadow wash on the paper, a gold pencil line, two small shoots in the corner
+  B.clean = () => { const [cv, x] = tile(); { x.fillStyle = "rgba(240,236,206,.96)"; x.fill(rr(3, 3, 94, 94, 14)); }
+    wash(x, blob(50, 52, 44, 42, 61, .08), "#a8d878", 62, { a: .32, layers: 5, rw: 3, rim: .5, j: 1.6 });
+    wash(x, blob(40, 38, 24, 16, 63, .2), "#fffbe6", 64, { a: .5, layers: 3, rw: 1, rim: .1 });
+    { x.strokeStyle = "rgba(170,220,110,.95)"; x.lineWidth = 11; x.stroke(rr(8, 8, 84, 84, 13)); x.strokeStyle = "rgba(214,160,40,.95)"; x.lineWidth = 3; x.stroke(rr(3, 3, 94, 94, 15)); }   /* a fresh green rim with a gold line, so a cleared cell reads round its charm */
+    for (const [sx, sy, k] of [[18, 84, 1], [27, 86, .8]]) { x.strokeStyle = "#4a8a3a"; x.lineWidth = 1.6; x.beginPath(); x.moveTo(sx, sy); x.quadraticCurveTo(sx + 1, sy - 7 * k, sx + 3, sy - 11 * k); x.stroke();
+      for (const sd of [-1, 1]) { const lp = new Path2D(); lp.ellipse(sx + 3 + sd * 4 * k, sy - 10 * k, 4.2 * k, 2.2 * k, sd * -.5, 0, 6.28); wash(x, lp, "#5fae4a", 70 + sx + sd, { a: .6, layers: 3, rw: 1, cx: sx, cy: sy, j: .4 }); } }
+    granulate(cv, 1.4); return cv; };
   // ---- brambles: a sap-green wash with brown briar strokes and thorns; one to three canes as it is cut back
   for (const hp of [1, 2, 3]) B["bramble" + hp] = () => { const [cv, x] = tile();
     wash(x, rr(5, 5, 90, 90, 14), ["#7fae6a", "#62965a", "#4c7e4a"][hp - 1], 50 + hp, { a: .22, layers: 5, rw: 3, rim: .55, j: 1.5 });
