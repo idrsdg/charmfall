@@ -633,7 +633,7 @@
 .hud .box.lvl::before, .hud .box.lvl::after { content: ""; position: absolute; bottom: -9px; width: 14px; height: 18px; background: #9a1c28; z-index: -1; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%); }
 .hud .box.lvl::before { left: 22%; transform: rotate(14deg); } .hud .box.lvl::after { right: 22%; transform: rotate(-14deg); }
 /* 2026-10-29 İdris "booster ve duraklat düğmelerini de suluboya yap": a pigment wash on paper, a wobbly sepia line, no gloss */
-#c { box-shadow: 0 0 0 3px #f2cf7a, 0 0 0 9px #7a3e1c, 0 0 0 11px #3a1a08, 0 9px 0 11px #2a1206, 0 22px 36px rgba(40, 16, 0, .5) !important; outline: 3px dotted #f0b440 !important; outline-offset: 5px; }   /* a gilded, deep-painted frame round the board */
+#c { box-shadow: 0 0 0 2px rgba(255, 255, 255, .85), 0 0 0 6px #23252c, 0 14px 30px rgba(0, 0, 0, .3) !important; outline: none !important; }   /* 2026-10-29 İdris "çerçeveyi sadeleştir": a thin white line and a plain dark band */
 .boost { --pg: #3a5ab8; background: url(anim/paper.webp) 0 0 / 160px 160px, radial-gradient(ellipse 70% 62% at 42% 38%, color-mix(in srgb, var(--pg) 38%, #f6eedc), color-mix(in srgb, var(--pg) 78%, #f6eedc) 70%, color-mix(in srgb, var(--pg) 92%, #3a2418) 100%) !important; background-blend-mode: multiply, normal !important;
   border: 2.5px solid #5a3a22 !important; border-radius: 19px 15px 20px 16px / 15px 20px 16px 19px !important; box-shadow: 0 0 0 2px #f6eedc, 0 4px 0 2px #cdb890, 0 9px 12px rgba(60, 40, 20, .25), inset 0 0 0 1px rgba(255, 248, 230, .35), inset -4px -6px 10px color-mix(in srgb, var(--pg) 60%, transparent) !important; }
 .boost[data-b="hammer"] { --pg: #3a5ab8; } .boost[data-b="moves"] { --pg: #3f8a3a; } .boost[data-b="switch"] { --pg: #7a4aa8; } .boost[data-b="cross"] { --pg: #24889a; } .boost[data-b="undo"] { --pg: #b8622a; }
@@ -3200,8 +3200,9 @@ function gameTheme(i) { const el = $("gTheme"); if (!el) return; const k = Math.
   g.style.setProperty("--gs1", T.s1); g.style.setProperty("--gs2", T.s2); g.style.setProperty("--gg", T.g); g.dataset.theme = T.land;
   // 2026-10-28 İdris "tema illa koyu olmasın, her levelde değişsin": a watercolour page painted on the Mac (anim/src/bg-wc.js): the theme's morning or
   // evening page by turns, and a slight shift of hue from level to level, so no two levels in a row look the same
-  const v = i % 2, key = k + "-" + v; if (el.dataset.k !== key) { el.dataset.k = key; el.innerHTML = `<img class="bgwc" src="anim/bg-${k}-${v}.webp${ART_Q}" alt="" decoding="async">`; }
-  el.style.filter = `hue-rotate(${((i % 7) - 3) * 7}deg) saturate(1.45) contrast(1.06) brightness(${(.97 + ((i % 5) - 2) * .025).toFixed(3)})`;   /* 2026-10-29 İdris "tema soluk": the page's pigments pushed up */ el.hidden = false; }
+  /* 2026-10-29 İdris "arka planı sadeleştir": no painted landscape, only a soft two-colour wash of the theme, lightened, changing level by level */
+  const v = i % 2, key = k + "-" + v + "-plain"; if (el.dataset.k !== key) { el.dataset.k = key; el.innerHTML = ""; el.style.background = `linear-gradient(180deg, color-mix(in srgb, ${v ? T.s2 : T.s1} 38%, #f4f6fa), color-mix(in srgb, ${v ? T.s1 : T.s2} 30%, #f4f6fa) 55%, color-mix(in srgb, ${T.g} 34%, #eef2ee))`; }
+  el.style.filter = `hue-rotate(${((i % 7) - 3) * 9}deg)`;   /* 2026-10-29 İdris "tema soluk": the page's pigments pushed up */ el.hidden = false; }
 // ---- pause / resume (input is blocked by G.paused; a cascade in flight simply finishes underneath)
 // the four things that belong to this chapter's place stand along the top of the board frame (still pictures: they cost nothing while playing)
 function gameWeather(i) { const el = $("gWeather"), ch = chapOf(i), w = themeOf(i).w; $("game").classList.toggle("shore", ch >= 10); if (!el) return; if ($("game").firstElementChild !== el) $("game").prepend(el); { const g = $("gGround"); if (g && g.previousElementSibling !== el) el.after(g); const th = $("gTheme"); if (th && $("game").firstElementChild !== th) $("game").prepend(th); }   // first in the screen, so the bars and the board are drawn over it if (!w || window.__fast) { el.hidden = true; return; }
