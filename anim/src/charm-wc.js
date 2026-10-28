@@ -16,9 +16,9 @@
   // a wash: the path filled several times, each time nudged and scaled a hair, thin each time; then the pooled rim
   function wash(x, path, col, seed, o = {}) { const r = R(seed), L = o.layers || 5, cx = o.cx || 50, cy = o.cy || 50;
     for (let i = 0; i < L; i++) { x.save(); const s = 1 + (r() - .5) * (o.wob || .035); x.translate(cx + (r() - .5) * (o.j || 1.6), cy + (r() - .5) * (o.j || 1.6)); x.scale(s, s * (1 + (r() - .5) * .02)); x.translate(-cx, -cy); x.fillStyle = hexA(col, o.a || .26); x.fill(path); x.restore(); }
-    x.save(); x.clip(path); x.filter = "blur(.7px)"; x.strokeStyle = hexA(mixc0(col, "#3a2436", .35), o.rim || .55); x.lineWidth = o.rw || 3; x.stroke(path); x.restore(); }
+    x.save(); x.clip(path); x.filter = "blur(.7px)"; x.strokeStyle = hexA(mixc0(col, "#140c0c", .3), o.rim || .55); x.lineWidth = o.rw || 3; x.stroke(path); x.restore(); }
   // the shadow side: a second, darker wash clipped to the shape, with a soft inner edge and a firmer dried line
-  function shadowWash(x, path, col, cx, cy, Rr, seed) { x.save(); x.clip(path); const d = mixc0(col, "#3a2848", .38);
+  function shadowWash(x, path, col, cx, cy, Rr, seed) { x.save(); x.clip(path); const d = mixc0(col, "#1a1010", .32);   /* 2026-10-29 İdris "renkler karışmış": the shade is the same pigment, darker, never violet */
     x.filter = "blur(3px)"; x.fillStyle = hexA(d, .3); x.beginPath(); x.ellipse(cx + Rr * .42, cy + Rr * .48, Rr * 1.0, Rr * .92, -.5, 0, 6.2832); x.fill();
     x.filter = "none"; x.strokeStyle = hexA(d, .16); x.lineWidth = 1.2; x.beginPath(); x.ellipse(cx + Rr * .42, cy + Rr * .48, Rr * 1.0, Rr * .92, -.5, 0, 6.2832); x.stroke(); x.restore(); }
   // the light: pigment lifted out with a damp brush, back to the paper
@@ -34,7 +34,7 @@
     x.translate(px / 2, px / 2 - px * .02); x.scale(k, k); x.translate(-50, -50); x.lineJoin = "round"; x.lineCap = "round";
     const parts = A.b.map(glowPart), body = new Path2D(); for (const p of parts) body.addPath(p); const seed = [...name].reduce((a, c) => a * 31 + c.charCodeAt(0), 7) % 9973;
     // the cast shadow: a cool grey wash on the paper, soft
-    x.save(); x.filter = "blur(2.5px)"; x.translate(2.5, 5); x.fillStyle = "rgba(70,78,110,.2)"; x.fill(body); x.restore();
+    x.save(); x.filter = "blur(2.5px)"; x.translate(2.5, 5); x.fillStyle = "rgba(0,0,0,.22)"; x.fill(body); x.restore();
     // first wash, shadow side, light lifted
     wash(x, body, hue, seed, { a: .62, layers: 5, rw: 2.6, rim: .6 });   /* 2026-10-29 İdris "taşlar yeterince belirgin değil": a denser first wash */ for (const p of parts) shadowWash(x, p, hue, 50, 50, 46, seed + 1); lift(x, body, 50, 50, 46);
     // a second, smaller glaze in the middle tones so the colour has depth
@@ -54,12 +54,12 @@
         else { x.fillStyle = o[2]; x.fill(p); } }
       x.restore(); }
     // warm light, cool shade: two faint glazes of other pigments, the way a painter shifts temperature across a form
-    x.save(); x.clip(body); x.filter = "blur(6px)"; x.fillStyle = "rgba(240,190,110,.12)"; x.beginPath(); x.ellipse(36, 32, 30, 22, -.5, 0, 6.2832); x.fill(); x.fillStyle = "rgba(90,100,160,.1)"; x.beginPath(); x.ellipse(66, 74, 34, 24, -.5, 0, 6.2832); x.fill(); x.restore();
+    /* (the warm and cool glazes of other pigments are gone: each charm is one clean colour) */
     // the pencil round the whole charm, on its silhouette only: drawn twice as wide on a sheet of its own, the inside rubbed out
     { const t = document.createElement("canvas"); t.width = t.height = px; const y = t.getContext("2d"); y.setTransform(x.getTransform()); for (let i = 0; i < parts.length; i++) pencil(y, parts[i], seed + 11 + i, 5.6);
       y.globalCompositeOperation = "destination-out"; y.fillStyle = "#000"; y.fill(body); x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.drawImage(t, 0, 0); x.restore(); }
     // granulation and the paper's tooth: pigment settles in the hollows, more of it where the wash is darker
-    granulate(cv, 1);
+    granulate(cv, .35);
     // 2026-10-28 İdris "taşlar daha belirgin, sınırları belirgin olsun": a sticker edge round the silhouette, cream inside a dark line
     { const o = document.createElement("canvas"); o.width = o.height = px; const ox = o.getContext("2d"), stamp = (r, col) => { const t = document.createElement("canvas"); t.width = t.height = px; const tx = t.getContext("2d"); for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; tx.drawImage(cv, Math.cos(a) * r, Math.sin(a) * r); } tx.globalCompositeOperation = "source-in"; tx.fillStyle = col; tx.fillRect(0, 0, px, px); ox.drawImage(t, 0, 0); };
       const k2 = px / 256; stamp(9 * k2, "#2a1a10"); stamp(6.5 * k2, "#fffaf0"); ox.drawImage(cv, 0, 0); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, px, px); x.drawImage(o, 0, 0); }

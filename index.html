@@ -1368,7 +1368,7 @@ const STAR = 1000, starsOf = (pts) => Math.floor(pts / STAR);
 LEVELS.forEach((L) => { if (L.target) L.target = Math.max(STAR, Math.round(L.target / STAR) * STAR); });
 const BOOST0 = { hammer: 3, moves: 3, switch: 3, cross: 2, undo: 3 };
 // carrots are earned at a quarter of the old rate: every award is scaled, the remainder waits in the jar (save.carrotFrac) until a whole carrot is due
-const ART_Q = location.protocol === "file:" ? "" : "?v=1029d";   /* bump when the painted art in anim/ is baked again, so no browser keeps an old picture (the iOS app reads files, no query there) */
+const ART_Q = location.protocol === "file:" ? "" : "?v=1029e";   /* bump when the painted art in anim/ is baked again, so no browser keeps an old picture (the iOS app reads files, no query there) */
 const RWM = 2, BXM = 4;   /* 2026-10-29 İdris "ödül kazanmayı yarı yarıya indir, çok fazla booster kazanıyorum": carrots and ∞ lives x2 (was 4), boosters x4 (was 8) */
 const CARROT_RATE = .03125;   // 2026-10-27 İdris: rewards come half as often (the amount of each stays the same)
 function addCarrots(n) { save.carrotFrac = (save.carrotFrac || 0) + n * CARROT_RATE; const give = Math.floor(save.carrotFrac + 1e-9); save.carrotFrac -= give; save.carrots = (save.carrots || 0) + RWM * (give); carrotNew += RWM * (give); return give; }
@@ -3744,14 +3744,14 @@ const WCB = {}; { const names = ["paper", "cell-0", "cell-1", "ob-ash1", "ob-ash
   for (const n of names) { const im = new Image(); im.src = "anim/" + n + ".webp" + ART_Q; (im.decode ? im.decode() : new Promise(r => { im.onload = r; })).then(() => { WCB[n] = im; done(); }, done); } }
 function buildStatic() {
   const W = CELL * COLS; let [cv, x] = mkCan(W, W);
-  if (WCB.paper) { x.save(); x.beginPath(); x.roundRect(0, 0, W, W, 16); x.clip(); x.fillStyle = x.createPattern(WCB.paper, "repeat"); x.fillRect(0, 0, W, W);
-    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { if (G.hole[r][c]) { x.fillStyle = "rgba(120,100,70,.18)"; x.fillRect(c * CELL, r * CELL, CELL, CELL); continue; } const ci = WCB[(r + c) % 2 ? "cell-1" : "cell-0"]; if (ci) x.drawImage(ci, c * CELL - 2, r * CELL - 2, CELL + 4, CELL + 4); }   /* a piece not yet decoded is simply left out */
-    /* 2026-10-29 İdris "tahta soluk, taşlar belirgin değil": the paper is glazed with a deep walnut ink (multiply keeps its tooth), so the cream-edged charms stand out */
-    x.globalCompositeOperation = "multiply"; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { if (G.hole[r][c]) continue; x.fillStyle = (r + c) % 2 ? "#4a4c58" : "#40424e";   /* 2026-10-29 İdris "renkler birbirine karışmış": a colourless charcoal glaze, no hue of its own to fight the charms */ x.fillRect(c * CELL, r * CELL, CELL, CELL); } x.globalCompositeOperation = "source-over";
-    x.strokeStyle = "rgba(255,255,255,.32)"; x.lineWidth = 1.2; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { if (G.hole[r][c]) continue; x.strokeRect(c * CELL + 1.5, r * CELL + 1.5, CELL - 3, CELL - 3); }   /* a light pencil frame round every cell */
+  if (WCB.paper) { x.save(); x.beginPath(); x.roundRect(0, 0, W, W, 16); x.clip();
+    /* 2026-10-29 İdris "renkler çok karışmış": a plain, even board: flat charcoal cells with the faintest checker, no paper tooth, no glazes; only the charms carry colour */
+    x.fillStyle = "#2c2e36"; x.fillRect(0, 0, W, W);
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { if (G.hole[r][c]) continue; x.fillStyle = (r + c) % 2 ? "#3a3d48" : "#353843"; x.beginPath(); x.roundRect(c * CELL + 1.5, r * CELL + 1.5, CELL - 3, CELL - 3, CELL * .14); x.fill(); }
     x.restore(); ST.bg = cv;
     const pic = (n) => { const [c2, k] = mkCan(CELL, CELL); k.imageSmoothingQuality = "high"; if (WCB[n]) k.drawImage(WCB[n], 0, 0, CELL, CELL); return c2; };
-    ST.jelly = [pic("ob-ash1"), pic("ob-ash2")]; ST.clean = pic("ob-clean"); ST.frost = [pic("ob-bramble1"), pic("ob-bramble2"), pic("ob-bramble3")]; ST.choc = pic("ob-choc"); ST.stone = pic("ob-stone");
+    const flat = (fill, line) => { const [c2, k] = mkCan(CELL, CELL); k.fillStyle = fill; k.beginPath(); k.roundRect(1.5, 1.5, CELL - 3, CELL - 3, CELL * .14); k.fill(); if (line) { k.strokeStyle = line; k.lineWidth = 1.5; k.stroke(); } return c2; };
+    ST.jelly = [flat("#a9adb9", "rgba(255,255,255,.75)"), flat("#666a78", "rgba(255,255,255,.75)")]; ST.clean = flat("#3f5a44", "rgba(150,220,140,.55)");   /* ash: one layer light grey, two layers mid grey; a cleared cell turns a quiet green */ ST.frost = [pic("ob-bramble1"), pic("ob-bramble2"), pic("ob-bramble3")]; ST.choc = pic("ob-choc"); ST.stone = pic("ob-stone");
     ST.cbox = COLORS.map((C, i) => { const c2 = pic("ob-crate"), k = c2.getContext("2d"); const art = boldArt(i, (G && G.level ? rotOf(G.level) : 0), Math.round(CELL * .5)); k.drawImage(art, CELL * .25, CELL * .25, CELL * .5, CELL * .5); return c2; });
     ST.badge.clear(); for (let n = 1; n <= 12; n++) badge(n); ST.fonts = [.36, .42, .5].map(k => `900 ${Math.round(CELL * k)}px ui-rounded, system-ui, sans-serif`); return; }
   x.fillStyle = "#14151f"; x.beginPath(); x.roundRect(0, 0, W, W, 16); x.fill();
