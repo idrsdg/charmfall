@@ -3413,7 +3413,7 @@ function expandSpecials(set, detonated) {
       else if (g.special === "v") { for (let rr = 0; rr < ROWS; rr++) add(rr, c); beam("v", r, c, col0); }
       else if (g.special === "wrap") { for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) add(r + dr, c + dc); G.wrapAgain = G.wrapAgain || []; G.wrapAgain.push({ r, c, color: col0 }); shock(c + .5, r + .5, col0); }
       else if (g.special === "fly") { add(r, c + 1); add(r, c - 1); add(r + 1, c); add(r - 1, c); launchFly(set, r, c, col0); }
-      else if (g.special === "bomb") { const col = g.bombColor !== undefined ? g.bombColor : mostCommonColor(); const bc = PAL[col] ? PAL[col].c : "#fff"; let nb = 0; for (let rr = 0; rr < ROWS; rr++) for (let cc = 0; cc < COLS; cc++) { const t = cell(rr, cc); if (t && t.kind === "gem" && t.color === col) { add(rr, cc); if (nb++ < 30) bolt(c + .5, r + .5, cc + .5, rr + .5, bc); } } sheetFx("whirl", c + .5, r + .5, 6); SFX.bomb(); }
+      else if (g.special === "bomb") { const col = g.bombColor !== undefined ? g.bombColor : mostCommonColor(); const bc = PAL[col] ? PAL[col].c : "#fff"; let nb = 0; for (let rr = 0; rr < ROWS; rr++) for (let cc = 0; cc < COLS; cc++) { const t = cell(rr, cc); if (t && t.kind === "gem" && t.color === col) { add(rr, cc); if (nb++ < 30) bolt(c + .5, r + .5, cc + .5, rr + .5, bc); } } sheetFx("whirl", c + .5, r + .5, 5.2); SFX.bomb(); }
       SFX.special();
     }
   }
@@ -3767,8 +3767,8 @@ function drawSheetFx(f, t) { const name = f.name;
 function burst(x, y, color, n, shape, delay) { sheetFx("pop", x, y, 2.2, color, (x * 7 + y * 3) % 6.28, delay); }   // a charm, a frost, a crate popping
 function ring(x, y, color, r1 = 1.1, life = 420, w = 7) { fx.push({ k: "ring", x, y, color, r1, t: performance.now(), life, w }); }
 function flash(a = .5, life = 280, color = "#fff") { fx.push({ k: "flash", a: Math.min(a, .35), color, t: performance.now(), life }); }
-function beam(dir, r, c, color) { sheetFx("beam", c + .5, r + .5, COLS * 2.05, color, dir === "v" ? Math.PI / 2 : 0); }
-function shock(x, y, color) { sheetFx("blast", x, y, 5, color === "#fff" ? "#ffd23a" : color); }
+function beam(dir, r, c, color) { sheetFx("beam", c + .5, r + .5, COLS * 1.8, color, dir === "v" ? Math.PI / 2 : 0); }   // 2026-10-28 İdris: a little smaller
+function shock(x, y, color) { sheetFx("blast", x, y, 4.2, color === "#fff" ? "#ffd23a" : color); }   // 2026-10-28 İdris: a little smaller
 function bolt(x1, y1, x2, y2, color) {
   const pts = [[x1, y1]], n = 7, dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
   for (let i = 1; i < n; i++) { const t = i / n, j = (Math.random() - .5) * .5 * Math.min(1, L / 3); pts.push([x1 + dx * t + nx * j, y1 + dy * t + ny * j]); }
