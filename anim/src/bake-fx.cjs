@@ -4,7 +4,7 @@ const pp = require("/Users/aatiii/.npm/_npx/0f94ee7615faf582/node_modules/puppet
 const OUT = path.join(__dirname, ".."), SHEETS = process.env.SHEETS || path.join(__dirname, "contact");
 (async () => { fs.mkdirSync(SHEETS, { recursive: true });
   const b = await pp.connect({ browserURL: "http://127.0.0.1:9333", defaultViewport: null, protocolTimeout: 300000 }); const page = (await b.pages())[0];
-  await page.goto("about:blank"); await page.addScriptTag({ path: path.join(__dirname, "fx-anim.js") });
+  await page.goto("about:blank"); await page.addScriptTag({ path: path.join(__dirname, "..", "fx-anim.js") });
   const names = process.argv.slice(2).length ? process.argv.slice(2) : await page.evaluate(() => Object.keys(FX_LIST)), meta = {};
   for (const name of names) {
     const r = await page.evaluate((name) => { const fr = bakeFx(name), { n, w, h } = FX_LIST[name], cols = Math.min(n, Math.floor(16000 / w)), rows = Math.ceil(n / cols);

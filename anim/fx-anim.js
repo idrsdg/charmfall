@@ -3,7 +3,8 @@
 // ease-out and spin, cel smoke in two tones that breaks up into smaller puffs instead of fading. Every effect is two layers:
 //   fx-<name>.webp     ink, white and fixed colours (drawn on top)
 //   fx-<name>-c.webp   a white mask of the parts that take the charm's colour (the game tints it, then draws the first layer over it)
-// All at 24 fps. bake-fx.cjs writes the sheets and fx.json.
+// Keyed on a 24 fps timeline. The game draws them live at the display's rate (60 or 120 a second) with a fractional frame; held drawings
+// (the impact frames, the boiling of the fireball, the speed streaks) still change on whole frames, the way they are drawn. bake-fx.cjs writes sheets for review.
 (() => {
   const INK = "#1d1424", CREAM = "#fffaf1", SHADE = "#e3d6c4";
   const R = (n) => { let s = (n * 7919 + 104729) % 233280; return () => (s = (s * 9301 + 49297) % 233280) / 233280; };
@@ -24,7 +25,7 @@
   const FX = {
     // a charm cleared: impact star, a ring of its colour, six shards, three puffs that split, a few twinkles
     pop: { n: 14, w: 192, h: 192, draw(L, M, f) { const c = 96, u = f / 13, rr = R(3);
-      if (f <= 2) { const s = [1, .8, .45][f]; star(L, c, c, 62 * s, 16 * s, 8, .2); L.fillStyle = "#fff"; L.fill(); ink(L, 3.5); }
+      if (f <= 2) { const s = [1, .8, .45][Math.floor(f)]; star(L, c, c, 62 * s, 16 * s, 8, .2); L.fillStyle = "#fff"; L.fill(); ink(L, 3.5); }
       if (f >= 1 && f <= 6) { const k = (f - 1) / 5; ring(L, M, c, c, 26 + eo(k) * 52, 16 * (1 - k) + 2); }
       for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3 + .3 + rr() * .3, k = cl((f - 1) / 11), d = 18 + eo(k) * 70, s = 1 - ei(k); if (f >= 1 && s > .08) shard(L, M, c + Math.cos(a) * d, c + Math.sin(a) * d + k * k * 18, a + k * 3, 16 * s + 2, 7 * s + 1.5); }
       for (let i = 0; i < 3; i++) { const a = i * 2.1 + 1, k = cl((f - 2) / 11); if (f < 2 || k >= 1) continue; const d = 20 + eo(k) * 30, r = k < .45 ? 7 + k / .45 * 10 : 17 * (1 - (k - .45) / .55);
@@ -32,13 +33,13 @@
       for (let i = 0; i < 4; i++) { const k = (f - 3 - i) / 6; if (k <= 0 || k >= 1) continue; const a = i * 1.7 + .6, d = 50 + i * 8, s = Math.sin(k * Math.PI) * 9; star(L, c + Math.cos(a) * d, c + Math.sin(a) * d, s, s * .28, 4, 0); L.fillStyle = "#fff"; L.fill(); ink(L, 1.6); } } },
     // a bomb: one inverted impact frame, a white flash, a three-tone fireball that boils outward and breaks into smoke, a shock ring, flying chunks, speed lines
     blast: { n: 22, w: 384, h: 384, draw(L, M, f) { const c = 192, rr = R(11);
-      if (f === 0) { L.beginPath(); L.arc(c, c, 168, 0, 7); L.fillStyle = INK; L.fill(); L.strokeStyle = "#fff"; L.lineCap = "round"; for (let i = 0; i < 26; i++) { const a = rr() * Math.PI * 2, r0 = 20 + rr() * 30; L.lineWidth = 2 + rr() * 5; L.beginPath(); L.moveTo(c + Math.cos(a) * r0, c + Math.sin(a) * r0); L.lineTo(c + Math.cos(a) * 165, c + Math.sin(a) * 165); L.stroke(); } star(L, c, c, 70, 20, 8, .3); L.fillStyle = "#fff"; L.fill(); return; }
-      if (f === 1) { star(L, c, c, 150, 70, 12, .1); L.fillStyle = "#fff"; L.fill(); ink(L, 5); }
-      if (f >= 1 && f <= 5) { L.strokeStyle = INK; L.lineCap = "round"; const r3 = R(20 + f); for (let i = 0; i < 18; i++) { const a = r3() * Math.PI * 2, r0 = 120 + (f - 1) * 14 + r3() * 20; L.lineWidth = 2 + r3() * 4; L.beginPath(); L.moveTo(c + Math.cos(a) * r0, c + Math.sin(a) * r0); L.lineTo(c + Math.cos(a) * (r0 + 30 + r3() * 25), c + Math.sin(a) * (r0 + 30 + r3() * 25)); L.stroke(); } }
+      if (f < 1) { L.beginPath(); L.arc(c, c, 168, 0, 7); L.fillStyle = INK; L.fill(); L.strokeStyle = "#fff"; L.lineCap = "round"; for (let i = 0; i < 26; i++) { const a = rr() * Math.PI * 2, r0 = 20 + rr() * 30; L.lineWidth = 2 + rr() * 5; L.beginPath(); L.moveTo(c + Math.cos(a) * r0, c + Math.sin(a) * r0); L.lineTo(c + Math.cos(a) * 165, c + Math.sin(a) * 165); L.stroke(); } star(L, c, c, 70, 20, 8, .3); L.fillStyle = "#fff"; L.fill(); return; }
+      if (f >= 1 && f < 2) { star(L, c, c, 150, 70, 12, .1); L.fillStyle = "#fff"; L.fill(); ink(L, 5); }
+      if (f >= 1 && f <= 5) { L.strokeStyle = INK; L.lineCap = "round"; const r3 = R(20 + Math.floor(f)); for (let i = 0; i < 18; i++) { const a = r3() * Math.PI * 2, r0 = 120 + (f - 1) * 14 + r3() * 20; L.lineWidth = 2 + r3() * 4; L.beginPath(); L.moveTo(c + Math.cos(a) * r0, c + Math.sin(a) * r0); L.lineTo(c + Math.cos(a) * (r0 + 30 + r3() * 25), c + Math.sin(a) * (r0 + 30 + r3() * 25)); L.stroke(); } }
       if (f >= 2 && f <= 9) { const k = (f - 2) / 7; ring(L, M, c, c, 70 + eo(k) * 110, 22 * (1 - k) + 2); }
       // fireball: three tones, each one silhouette; the outer one carries the ink line. It swells fast, boils, then sinks back into the smoke.
-      if (f >= 2 && f <= 13) { const k = (f - 2) / 11, grow = eo(Math.min(1, k * 2)), shrink = k > .55 ? ei((k - .55) / .45) : 0, R0 = (54 + grow * 56) * (1 - shrink * .85), rl = R(5 + f);
-        const blob = (x, rad, rise) => { const q = R(5 + f); x.beginPath(); for (let i = 0; i < 9; i++) { const a = i * Math.PI * 2 / 9 + k * .8, off = rad * .55, rr2 = rad * (.5 + q() * .18); x.moveTo(c + Math.cos(a) * off + rr2, c + Math.sin(a) * off - rise); x.arc(c + Math.cos(a) * off, c + Math.sin(a) * off - rise, rr2, 0, 7); } x.moveTo(c + rad * .8, c - rise); x.arc(c, c - rise, rad * .8, 0, 7); };
+      if (f >= 2 && f <= 13) { const k = (f - 2) / 11, grow = eo(Math.min(1, k * 2)), shrink = k > .55 ? ei((k - .55) / .45) : 0, R0 = (54 + grow * 56) * (1 - shrink * .85), rl = R(5 + Math.floor(f));
+        const blob = (x, rad, rise) => { const q = R(5 + Math.floor(f)); x.beginPath(); for (let i = 0; i < 9; i++) { const a = i * Math.PI * 2 / 9 + k * .8, off = rad * .55, rr2 = rad * (.5 + q() * .18); x.moveTo(c + Math.cos(a) * off + rr2, c + Math.sin(a) * off - rise); x.arc(c + Math.cos(a) * off, c + Math.sin(a) * off - rise, rr2, 0, 7); } x.moveTo(c + rad * .8, c - rise); x.arc(c, c - rise, rad * .8, 0, 7); };
         const rise = shrink * 30; blob(L, R0, rise); L.lineWidth = 9; L.strokeStyle = INK; L.lineJoin = "round"; L.stroke(); blob(L, R0, rise); L.fillStyle = "#ff7a2a"; L.fill();
         if (shrink < .7) { blob(L, R0 * .72, rise + 4); L.fillStyle = "#ffc23a"; L.fill(); } if (shrink < .4) { blob(L, R0 * .4, rise + 8); L.fillStyle = "#fff6c8"; L.fill(); } void rl; }
       // smoke takes over: nine puffs of different sizes that drift up, split and shrink
@@ -48,12 +49,12 @@
       for (let i = 0; i < 10; i++) { const a = rr() * Math.PI * 2, sp = 120 + rr() * 80, k = cl((f - 2) / 14); if (f < 2 || k >= 1) continue; const d = eo(k) * sp, s = 1 - ei(k); shard(L, M, c + Math.cos(a) * (40 + d), c + Math.sin(a) * (40 + d) + k * k * 60, a + k * 6, 22 * s + 3, 9 * s + 2); } } },
     // a line charm: a spark at the start, the beam shoots out both ways with speed streaks, then thins and breaks into dashes and twinkles
     beam: { n: 16, w: 1024, h: 128, draw(L, M, f) { const c = 512, cy = 64, rr = R(7);
-      if (f <= 2) { const s = [1, .85, .5][f]; star(L, c, cy, 60 * s, 14 * s, 8, .2); L.fillStyle = "#fff"; L.fill(); ink(L, 3.5); }
+      if (f <= 2) { const s = [1, .85, .5][Math.floor(f)]; star(L, c, cy, 60 * s, 14 * s, 8, .2); L.fillStyle = "#fff"; L.fill(); ink(L, 3.5); }
       const ext = eo(cl(f / 5)) * 500, th = f < 6 ? 22 + (f / 6) * 14 : 36 * (1 - cl((f - 6) / 8));
       if (th > 1 && f < 14) { const tip = th * 1.6, body = (x) => { x.beginPath(); x.moveTo(c - ext - tip, cy); x.lineTo(c - ext, cy - th); x.lineTo(c + ext, cy - th); x.lineTo(c + ext + tip, cy); x.lineTo(c + ext, cy + th); x.lineTo(c - ext, cy + th); x.closePath(); };
         body(M); M.fillStyle = "#fff"; M.fill(); body(L); ink(L, 4);
         L.beginPath(); L.moveTo(c - ext, cy - th * .3); L.lineTo(c + ext, cy - th * .3); L.lineTo(c + ext + tip * .5, cy); L.lineTo(c + ext, cy + th * .3); L.lineTo(c - ext, cy + th * .3); L.lineTo(c - ext - tip * .5, cy); L.closePath(); L.fillStyle = "#fff"; L.fill();
-        L.strokeStyle = "rgba(255,255,255,.95)"; L.lineCap = "round"; const r2 = R(f + 9); for (let i = 0; i < 10; i++) { const sx = (r2() - .5) * 2 * ext, yy = cy + (r2() - .5) * th * 1.6, l = 30 + r2() * 60; L.lineWidth = 2 + r2() * 2; L.beginPath(); L.moveTo(c + sx, yy); L.lineTo(c + sx + Math.sign(sx || 1) * l, yy); L.stroke(); } }
+        L.strokeStyle = "rgba(255,255,255,.95)"; L.lineCap = "round"; const r2 = R(Math.floor(f) + 9); for (let i = 0; i < 10; i++) { const sx = (r2() - .5) * 2 * ext, yy = cy + (r2() - .5) * th * 1.6, l = 30 + r2() * 60; L.lineWidth = 2 + r2() * 2; L.beginPath(); L.moveTo(c + sx, yy); L.lineTo(c + sx + Math.sign(sx || 1) * l, yy); L.stroke(); } }
       if (f >= 8) { const k = (f - 8) / 7; for (let i = 0; i < 14; i++) { const sx = c + (i - 6.5) * 72 + (rr() - .5) * 20, s = (1 - k) * (6 + rr() * 6); if (s < 1) continue; if (i % 2) { star(L, sx, cy + (rr() - .5) * 40, s * 1.6, s * .45, 4, 0); L.fillStyle = "#fff"; L.fill(); ink(L, 1.6); } else { L.beginPath(); L.ellipse(sx, cy + (rr() - .5) * 30, s * 2.2, s * .8, 0, 0, 7); M.beginPath(); M.ellipse(sx, cy + (rr() - .5) * 30, s * 2.2, s * .8, 0, 0, 7); M.fillStyle = "#fff"; M.fill(); ink(L, 1.6); } } } } },
     // a special charm made, or a gift: a ring of its colour and three gold twinkles that pop in turn
     twinkle: { n: 16, w: 160, h: 160, draw(L, M, f) { const c = 80;
@@ -62,13 +63,14 @@
     // the colour charm: rainbow ribbons wind inward, the centre pops, stars spray out
     whirl: { n: 24, w: 384, h: 384, draw(L, M, f) { const c = 192, cols = ["#ff5a6a", "#ffa63a", "#ffe04a", "#6ad860", "#4ab0ff", "#a070ff"];
       if (f < 14) { const k = f / 13; cols.forEach((col, i) => { const a0 = i * Math.PI / 3 + k * 5, r0 = 110 * (1 - eo(k)) + 20; L.beginPath(); for (let s = 0; s <= 20; s++) { const t = s / 20, a = a0 + t * 2.2, r = r0 + t * 40 * (1 - k); L.lineTo(c + Math.cos(a) * r, c + Math.sin(a) * r); } L.lineWidth = 18 * (1 - k * .5) + 4; L.strokeStyle = INK; L.lineCap = "round"; L.stroke(); L.lineWidth = 18 * (1 - k * .5); L.strokeStyle = col; L.stroke(); }); }
-      if (f >= 12 && f <= 16) { const s = [1, 1.25, 1.1, .7, .3][f - 12]; star(L, c, c, 110 * s, 30 * s, 8, .2); L.fillStyle = "#fff"; L.fill(); ink(L, 4); }
+      if (f >= 12 && f <= 16) { const s = [1, 1.25, 1.1, .7, .3][Math.floor(f) - 12]; star(L, c, c, 110 * s, 30 * s, 8, .2); L.fillStyle = "#fff"; L.fill(); ink(L, 4); }
       if (f >= 13) { const k = (f - 13) / 10, rr = R(4); for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6 + rr() * .3, d = 40 + eo(k) * 150, s = (1 - ei(k)) * (16 + rr() * 10); if (s < 1.5) continue; star(L, c + Math.cos(a) * d, c + Math.sin(a) * d, s, s * .3, 4, k); L.fillStyle = cols[i % 6]; L.fill(); ink(L, 2); }
         const kr = cl(k * 2); ring(L, M, c, c, 60 + eo(kr) * 120, 18 * (1 - kr) + 1); } } },
     // a swap that does not match: a red cross pops and shakes
-    nope: { n: 10, w: 128, h: 128, draw(L, M, f) { const c = 64, s = f < 3 ? eo(f / 2) * 1.2 : f < 5 ? 1.2 - (f - 3) * .1 : 1 - (f - 5) / 5 * .9, sh = f >= 2 && f <= 6 ? (f % 2 ? 6 : -6) : 0;
+    nope: { n: 10, w: 128, h: 128, draw(L, M, f) { const c = 64, s = f < 3 ? eo(f / 2) * 1.2 : f < 5 ? 1.2 - (f - 3) * .1 : 1 - (f - 5) / 5 * .9, sh = f >= 2 && f <= 6 ? (Math.floor(f) % 2 ? 6 : -6) : 0;
       if (s <= .1) return; L.save(); L.translate(c + sh, c); L.rotate(.1); L.scale(s, s); for (const a of [Math.PI / 4, -Math.PI / 4]) { L.save(); L.rotate(a); L.beginPath(); L.roundRect(-34, -10, 68, 20, 8); L.fillStyle = "#ff3b5a"; L.fill(); ink(L, 4); L.restore(); } L.beginPath(); L.roundRect(-34, -10, 68, 20, 8); L.restore(); } },
   };
+  window.FxLive = { has: (k) => !!FX[k], dur: (k) => FX[k].n / 24, size: (k) => [FX[k].w, FX[k].h], draw: (k, f, L, M) => FX[k].draw(L, M, f) };
   window.FX_LIST = Object.fromEntries(Object.entries(FX).map(([k, v]) => [k, { n: v.n, w: v.w, h: v.h }]));
   window.bakeFx = function (name) { const fx = FX[name], out = [];
     for (let f = 0; f < fx.n; f++) { const a = document.createElement("canvas"), b = document.createElement("canvas"); a.width = b.width = fx.w; a.height = b.height = fx.h; fx.draw(a.getContext("2d"), b.getContext("2d"), f); out.push([a, b]); }

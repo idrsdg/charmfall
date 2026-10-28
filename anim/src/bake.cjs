@@ -5,7 +5,7 @@ const OUT = path.join(__dirname, ".."), SHEETS = process.env.SHEETS || path.join
   const b = await pp.connect({ browserURL: "http://127.0.0.1:9333", defaultViewport: null, protocolTimeout: 300000 }); const page = (await b.pages())[0];
   await page.setViewport({ width: 900, height: 400, deviceScaleFactor: 1 });
   await page.goto("http://127.0.0.1:8771/prism/index.html?bake&t=" + Date.now(), { waitUntil: "load" }); await new Promise(r => setTimeout(r, 2500));
-  await page.addScriptTag({ path: path.join(__dirname, "pogo-anim.js") });
+  await page.addScriptTag({ path: path.join(__dirname, "..", "pogo-anim.js") });
   const names = process.argv.slice(2).length ? process.argv.slice(2) : await page.evaluate(() => Object.keys(POGO_ANIMS));
   const meta = {};
   for (const name of names) {

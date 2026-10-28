@@ -3,7 +3,8 @@
 // fast-out snaps, held poses, squash on landings and stretch on pushes. Overlapping action is built in: the head trails the body by a frame and a half
 // and the arms by one, and the ears and tail hang on springs, so nothing arrives at once. Fast actions are shot on ones (24 drawings a second),
 // calm ones on twos (12). Effects (impact stars, sweat, tears, gloom lines, speed lines, dust, blush, eye sparkles) are painted over the frames in
-// the game's ink and flat colours. bake.cjs renders every animation to a sheet in prism/anim/ (pogo-<name>.webp); the game only plays those files.
+// the game's ink and flat colours. The game plays these keyed clips live at the display's rate (PogoClip below); bake.cjs renders sheets for review
+// and for phones without WebGL (prism/anim/pogo-<name>.webp).
 (() => {
   const W = 360, H = 396, S = W / 400;                               // output frame; effects are written in a 400 x 440 space and scaled
   const PW = 288, PH = 317, OX = 36, OY = 79;                        // Pogo's box inside the frame (same proportions as v1)
@@ -157,6 +158,17 @@
     }
     return frames;
   };
+  // live playback (2026-10-28, İdris: "kasmasın, her animasyon en az 60 fps"): the game plays these same keyed clips at the display's rate.
+  // render(x, name, t, P, st, cv3, dt): poses Pogo for time t (seconds) of the clip into the 3D canvas cv3 and composes it with the drawn effects on x
+  window.PogoClip = { has: (k) => !!A[k], loop: (k) => !!A[k].loop, dur: (k) => A[k].len / 24, W, H, PW, PH,
+    render(x, name, t, P, st, cv3, dt) { const an = A[name], f = t * 24, p = Object.assign(P.Z(), poseDragged(an, an.loop ? f : Math.min(f, an.len), P.Z)); if (an.jitter) p.x += (Math.floor(f / 2) % 2 ? 1 : -1) * an.jitter;
+      P.draw(cv3, st, t * 1000, dt, p); const cv = x.canvas, k = cv.width / W, lift = -p.y * UNIT, ff = an.loop ? f % an.len : Math.min(f, an.len);
+      x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, cv.width, cv.height);
+      x.setTransform(k * S, 0, 0, k * S, 0, 0); for (const e of an.fx || []) if (e.k === "speed" && ff >= e.from && ff <= e.to) FX.speed(x, (ff - e.from) / Math.max(1, e.to - e.from), {}, e, ff);
+      x.setTransform(k, 0, 0, k, 0, 0); x.drawImage(cv3, OX, OY, PW, PH);
+      x.setTransform(k * S, 0, 0, k * S, 0, 0);
+      for (const e of an.fx || []) { if (e.k === "speed" || ff < e.from || ff > e.to) continue; const u = (ff - e.from) / Math.max(1, e.to - e.from), at = { x: CX + (e.x || 0), y: HEADY + (e.y || 0) + (e.follow ? lift : 0) }; x.save(); if (!e.follow && /blush|eyestar|tear|sweat/.test(e.k)) x.translate(0, lift); FX[e.k](x, u, at, e, ff); x.restore(); }
+      x.setTransform(1, 0, 0, 1, 0, 0); } };
   window.POGO_ANIMS = Object.fromEntries(Object.entries(A).map(([k, v]) => [k, { fps: v.fps, loop: !!v.loop }]));
   window.POGO_FRAME = [W, H];
 })();

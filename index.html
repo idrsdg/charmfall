@@ -573,7 +573,7 @@
   #path .ani.m-flutter > i { animation: flutter 4.4s var(--dl, 0s) ease-in-out infinite; }
   #path .mprop.mordo.ani:not(.go) img { animation: none; } #path .mprop.mordo.ani.arrive > i { animation: mordoArrive 1.1s .5s cubic-bezier(.3, 1.3, .5, 1) both, aniHover 3.4s 1.6s ease-in-out infinite alternate; }
   #path .ani:not(.vis) > i, #path .ani:not(.vis) > i > img { animation: none !important; will-change: auto; }
-  .critter.ani { z-index: 3; }
+  .critter.ani { z-index: 3; } #path .ani .crs { display: block; width: 100%; aspect-ratio: 1; background-repeat: no-repeat; }
   #path .ani:is(.critter, .resident):not(.go) { opacity: 0; } #path .ani:is(.critter, .resident).go { transition: opacity .35s; }   /* 2026-10-28: a creature shows only once it moves; never a frozen first frame */
   .bg i, .bg svg, #gWeather u, #gWeather.storm::after { display: none !important; }
   #gWeather.fog::before, #gWeather.fog::after { animation: none !important; }
@@ -770,6 +770,8 @@
 <div class="tip" id="tip" role="status"></div>
 
 <script src="three.min.js"></script>
+<script src="anim/pogo-anim.js"></script>
+<script src="anim/fx-anim.js"></script>
 <script src="../games/arcade.js"></script>
 <script>Arcade.gfx.matte(1.18, 1.03);</script>
 <script>
@@ -921,17 +923,36 @@ const PG_ACT = ["happy", "wow", "yay", "clap", "win", "hello"], pgActive = (cv) 
 // 2026-10-28: Pogo's hand-keyed animations (see anim/src/pogo-anim.js): frame counts of the sheets in anim/, the looping ones, and a player
 // frames, columns, fps, loop of every sheet (anim/pogo.json, written by anim/src/bake.cjs)
 const PA = {"idle":[36,16,12,1],"look":[48,16,24,0],"groom":[30,16,12,0],"hello":[40,16,24,0],"ready":[32,16,24,0],"win":[36,16,12,0],"yay":[26,16,24,0],"clap":[28,16,24,0],"wow":[30,16,24,0],"nice":[20,16,24,0],"point":[30,16,24,0],"throw":[30,16,24,0],"worry":[12,12,12,1],"sad":[28,16,12,0],"dash":[12,12,24,1]}, PA_OF = { happy: "yay", yay: "yay", clap: "clap", wow: "wow", win: "win", hello: "hello", sad: "sad", cheer: "sad", nice: "nice", point: "point", throw: "throw", ready: "ready", look: "look", groom: "groom" };
-addEventListener("load", () => setTimeout(() => { for (const k of ["idle", "hello", "ready", "dash", "yay", "clap", "wow", "worry", "nice", "point", "throw", "look", "groom", "win", "sad"]) { const im = new Image(); im.src = "anim/pogo-" + k + ".webp"; } }, 200));
+addEventListener("load", () => setTimeout(() => { if (paLive()) return; for (const k of ["idle", "hello", "ready", "dash", "yay", "clap", "wow", "worry", "nice", "point", "throw", "look", "groom", "win", "sad"]) { const im = new Image(); im.src = "anim/pogo-" + k + ".webp"; } }, 200));
 const paHtml = (name, cls) => `<div class="pogo pa${cls ? " " + cls : ""}" data-pa="${name}"></div>`;
 // one ticker plays every Pogo on screen: it works out the frame from the clock and only touches an element when its frame changes
 const PA_RUN = new Set(); let paRaf = 0;
-function paPlay(el, name, then) { if (!el || !PA[name]) return; const [n, cols] = PA[name]; el.dataset.pa = name; el.dataset.on = 1; el.style.backgroundImage = `url(anim/pogo-${name}.webp)`; el.style.backgroundSize = `${cols * 100}% ${Math.ceil(n / cols) * 100}%`;
-  el._pa = { t0: performance.now(), f: -1, then }; PA_RUN.add(el); if (!paRaf) paRaf = requestAnimationFrame(paTick); }
+// 2026-10-28 İdris "kasmasın, her animasyon ve hareket en az 60 fps": the keyed clips are played live, a new pose every screen frame (60, or 120 on
+// ProMotion), through the 3D rig; the sheets in anim/ are only the fallback for a phone without WebGL.
+const paLive = () => !!(window.__P3 && window.PogoClip && !window.__fast); let paTok = 0;
+function paPlay(el, name, then) { if (!el || !PA[name]) return; el.dataset.pa = name; el.dataset.on = 1; const tok = ++paTok;
+  if (paLive()) { let s = el._pa; if (!s || !s.cv) { el.style.backgroundImage = "none"; const cv = document.createElement("canvas"); cv.style.cssText = "display:block;width:100%;height:100%"; el.appendChild(cv); const cv3 = document.createElement("canvas");
+      s = { cv, x: cv.getContext("2d"), cv3, st: { x: cv3.getContext("2d"), c: __P3.Z(), es: { a: 0, v: 0, b: 0, w: 0 }, py: 0, px: 0, pr: 0, t0: 0, ph: 0, mood: "", turn: 0 } }; }
+    el._pa = Object.assign(s, { name, t0: performance.now(), then, tok, done: 0, last: 0, vis: 1, vt: 0 }); }
+  else { const [n, cols] = PA[name]; el.style.backgroundImage = `url(anim/pogo-${name}.webp)`; el.style.backgroundSize = `${cols * 100}% ${Math.ceil(n / cols) * 100}%`; el._pa = { t0: performance.now(), f: -1, then, tok }; }
+  PA_RUN.add(el); if (!paRaf) paRaf = requestAnimationFrame(paTick); }
 function paTick(now) { paRaf = 0; if (document.hidden) { paRaf = requestAnimationFrame(paTick); return; }
-  for (const el of PA_RUN) { const s = el._pa; if (!el.isConnected || !s) { PA_RUN.delete(el); continue; } const [n, cols, fps, loop] = PA[el.dataset.pa]; let f = Math.floor((now - s.t0) * fps / 1000), end = false; if (f < 0) f = 0;
+  const live = []; let need = 0;
+  for (const el of PA_RUN) { const s = el._pa; if (!el.isConnected || !s) { PA_RUN.delete(el); continue; }
+    const fin = (s2) => { PA_RUN.delete(el); if (s2.then) { const tk = s2.tok; setTimeout(() => { if (el.isConnected && el._pa && el._pa.tok === tk) s2.then(); }, 320); } };
+    if (s.cr) { if (now - s.vt > 250) { s.vt = now; const r = el.getBoundingClientRect(); s.vis = r.width > 0 && r.bottom > -40 && r.top < innerHeight + 40; } if (!s.vis) continue;
+      const f = Math.floor((now - s.t0) * .06) % s.n; if (f !== s.f) { s.f = f; const rows = Math.ceil(s.n / s.cols), c = f % s.cols, r = Math.floor(f / s.cols); el.style.backgroundPosition = `${c / (s.cols - 1) * 100}% ${rows > 1 ? r / (rows - 1) * 100 : 0}%`; } continue; }
+    if (s.cv) { if (now - s.vt > 250) { s.vt = now; const r = el.getBoundingClientRect(); s.vis = r.width > 0 && r.bottom > -40 && r.top < innerHeight + 40 && r.right > -40 && r.left < innerWidth + 40; } if (!s.vis) continue;   // off screen or hidden: no frame
+      const d = Math.min(devicePixelRatio || 1, 2), w = Math.round(el.clientWidth * d * 1.25), h = Math.round(el.clientHeight * d * 1.25); if (!w || !h) continue;
+      if (s.cv.width !== w || s.cv.height !== h) { s.cv.width = w; s.cv.height = h; s.cv3.width = Math.round(w * PogoClip.PW / PogoClip.W); s.cv3.height = Math.round(h * PogoClip.PH / PogoClip.H); }
+      live.push(el); need = Math.max(need, s.cv3.width); continue; }
+    const [n, cols, fps, loop] = PA[el.dataset.pa]; let f = Math.floor((now - s.t0) * fps / 1000), end = false; if (f < 0) f = 0;
     if (f >= n) { if (loop) f %= n; else { f = n - 1; end = true; } }
     if (f !== s.f) { s.f = f; const rows = Math.ceil(n / cols), c = f % cols, r = Math.floor(f / cols); el.style.backgroundPosition = `${cols > 1 ? c / (cols - 1) * 100 : 0}% ${rows > 1 ? r / (rows - 1) * 100 : 0}%`; }
-    if (end) { PA_RUN.delete(el); if (s.then) setTimeout(() => { if (el.isConnected && el._pa === s) s.then(); }, 320); } }
+    if (end) fin(s); }
+  if (live.length) { __P3.size(need); for (const el of live) { const s = el._pa, nm = s.name, D = PogoClip.dur(nm), lp = PogoClip.loop(nm); let t = (now - s.t0) / 1000; const dt = s.last ? Math.min(.05, (now - s.last) / 1000) : 1 / 60; s.last = now;
+      if (!lp && t >= D) { t = D; PogoClip.render(s.x, nm, t, __P3, s.st, s.cv3, dt); PA_RUN.delete(el); if (s.then) { const tk = s.tok, th = s.then; setTimeout(() => { if (el.isConnected && el._pa && el._pa.tok === tk) th(); }, 320); } continue; }
+      PogoClip.render(s.x, nm, t, __P3, s.st, s.cv3, dt); } }
   if (PA_RUN.size) paRaf = requestAnimationFrame(paTick); }
 setInterval(() => document.querySelectorAll(".pa:not([data-on])").forEach(el => paPlay(el, el.dataset.pa)), 120);   // a Pogo just put on the page starts playing
 const paDur = (k) => PA[k] ? PA[k][0] * 1000 / PA[k][2] : 1000;
@@ -1158,7 +1179,8 @@ const P3 = (() => {
     if (wantW) { const w = Math.min(RW, Math.max(96, wantW)); if (w !== bufW) { bufW = w; bufH = Math.round(w * RH / RW); R.setSize(bufW, bufH, false); } wantW = 0; }   // takes effect from the next frame
     if (window.__p3) { const d = performance.now() - p3t; window.__p3.ms += d; window.__p3.n++; if (d >= 3 && PERF.cur.length < 12) PERF.cur.push("p3:" + Math.round(d)); }
   }
-  if (/[?&]bake\b/.test(location.search)) { window.__noPogo = 1; window.__P3 = { draw, Z };  }   // the animation bench (anim/src) poses him frame by frame
+  window.__P3 = { draw, Z, size(w) { w = Math.min(RW, Math.max(96, Math.round(w))); if (w !== bufW) { bufW = w; bufH = Math.round(w * RH / RW); R.setSize(bufW, bufH, false); } } };   // the keyed clips (anim/pogo-anim.js) pose him through this
+  if (/[?&]bake\b/.test(location.search)) window.__noPogo = 1;   // the animation bench (anim/src) poses him frame by frame
   requestAnimationFrame(frame); return true;
 })();
 // ---------------------------------------------------------------- persistence
@@ -1456,9 +1478,11 @@ function aniHtml(cls, kind, x, y, w, R, extra) {
   return `<div class="${cls} ani m-${mo.m} f${mo.fr}" data-kind="${kind}" style="${st};--fd:${mo.d}s;--fr:${mo.fr};--dl:-${(R() * 12).toFixed(1)}s;--wx:${wx}px;--wd:${wd}s${extra || ""}"><i><img data-sk="${kind}" src="${src}" alt=""></i></div>`;
 }
 // 2026-10-28: the creatures' motion loops are files now (anim/cr-<kind>.webp, made by anim/src/bake-cr.cjs at 24 drawings a second); frames per strip:
-const CR = {"rabbit":38,"fox":24,"hedgehog":24,"deer":31,"sheep":31,"bear":38,"penguin":29,"butterfly":62,"bee":48,"bat":38,"crab":29,"eagle":67,"magpie":38,"gritt":38,"corvin":43,"flock":38};
+const CR = {"rabbit":[96,16],"fox":[60,16],"hedgehog":[60,16],"deer":[78,16],"sheep":[78,16],"bear":[96,16],"penguin":[72,16],"butterfly":[156,16],"bee":[120,16],"bat":[96,16],"crab":[72,16],"eagle":[168,16],"magpie":[96,16],"gritt":[96,16],"corvin":[108,16],"flock":[96,16]};
 function aniWake(el) { const im = el.querySelector("img[data-sk]"); if (!im || !D3) return; const k = im.dataset.sk; im.removeAttribute("data-sk");
-  if (CR[k] && !window.__fast) { im.onload = () => el.classList.add("go"); im.src = "anim/cr-" + k + ".webp"; return; }
+  if (CR[k] && !window.__fast) { const [n, cols] = CR[k], b = document.createElement("b"), pre = new Image(); b.className = "crs"; b.style.backgroundImage = `url(anim/cr-${k}.webp)`; b.style.backgroundSize = `${cols * 100}% ${Math.ceil(n / cols) * 100}%`;
+    const go = () => { if (!el.isConnected) return; im.replaceWith(b); el.classList.add("go", "cr60"); b._pa = { cr: 1, n, cols, t0: performance.now() - Math.random() * 6000, f: -1, vis: 1, vt: 0 }; PA_RUN.add(b); if (!paRaf) paRaf = requestAnimationFrame(paTick); };
+    pre.src = "anim/cr-" + k + ".webp"; (pre.decode ? pre.decode() : new Promise(r => { pre.onload = r; })).then(go, go); return; }   // decoded off the main thread first, so a creature waking never costs a frame
   D3.strip(k, 176, (url) => { if (!url || !el.isConnected) return; im.onload = () => el.classList.add("go"); im.src = url; }); }
 function buildMap() {
   if (typeof mapZ !== "undefined" && mapZ !== 1) { mapZ = 1; $("path").style.zoom = ""; document.documentElement.classList.remove("mapZoom"); }
@@ -2408,7 +2432,7 @@ const D3 = (() => {
   const keep = (key, blob) => { sdb.then(db => { if (!db || !blob) return; try { db.transaction("s", "readwrite").objectStore("s").put({ v: SPV, b: blob }, key); } catch (e) {} }); };
   const FR = 24, strips = new Map(), stripQ = [];
   let stripBusy = false;
-  const frOf = (kind) => Math.max(24, Math.min(72, Math.round(RIG.A[kind].d * 24)));   // 2026-10-28: 24 drawings a second (was 15)
+  const frOf = (kind) => Math.max(24, Math.min(180, Math.round(RIG.A[kind].d * 60)));   // 2026-10-28 İdris "her hareket en az 60 fps": sixty drawings a second (was 15, then 24)
   function stripMake(kind, px) {
     const R0 = RIG.A[kind], FR = frOf(kind), scene = new T.Scene(); scene.add(new T.AmbientLight(0xfff6e8, (.45) * .9));
     const key = new T.DirectionalLight(0xfff0d8, .95); key.position.set(1.5, 4, 2.5); key.castShadow = true; key.shadow.mapSize.set(512, 512); Object.assign(key.shadow.camera, { left: -1.2, right: 1.2, top: 1.2, bottom: -1.2, near: .5, far: 10 }); key.shadow.bias = -.002; key.shadow.radius = 4; scene.add(key);
@@ -3699,9 +3723,15 @@ function addP(p) { if (particles.length >= MAXP) particles[capI = (capI + 1) % M
 // 2026-10-28 İdris "animasyonları aşırı detaylı ve profesyonel yap": the board's effects are drawn frame by frame (anim/src/fx-anim.js, 24 fps):
 // an ink layer over a colour mask that is tinted with the charm's colour as it is drawn. [frames, columns, width, height] per sheet (anim/fx.json).
 const FXS = {"pop":[14,14,192,192],"blast":[22,22,384,384],"beam":[16,15,1024,128],"twinkle":[16,16,160,160],"whirl":[24,24,384,384],"nope":[10,10,128,128]}, FXI = {}, fxScratch = {};
-for (const k in FXS) { const a = new Image(), m = new Image(); a.src = "anim/fx-" + k + ".webp"; m.src = "anim/fx-" + k + "-c.webp"; FXI[k] = [a, m]; }
+for (const k in FXS) { const a = new Image(), m = new Image(); FXI[k] = [a, m]; if (!window.FxLive) { a.src = "anim/fx-" + k + ".webp"; m.src = "anim/fx-" + k + "-c.webp"; } }
 function sheetFx(name, x, y, size, color, rot, delay) { if (window.__fast) return; fx.push({ k: "sheet", name, x, y, size, color, rot: rot || 0, t: performance.now() + (delay || 0), life: FXS[name][0] * 1000 / 24 }); }
-function drawSheetFx(f, t) { const [n, cols, w, h] = FXS[f.name], im = FXI[f.name]; if (!im[0].naturalWidth) return; const fr = Math.min(n - 1, Math.floor(t * n)), sx = (fr % cols) * w, sy = Math.floor(fr / cols) * h, dw = f.size * CELL, dh = dw * h / w;
+const FXNULL = document.createElement("canvas").getContext("2d");   // the pass that only wants one layer sends the other one here
+function drawSheetFx(f, t) { const name = f.name;
+  if (window.FxLive && FxLive.has(name)) { const [w, h] = FxLive.size(name), fr = Math.min(FXS[name][0] - .001, t * FXS[name][0]), k = f.size * CELL / w;
+    ctx.translate(OX + f.x * CELL, OY + f.y * CELL); if (f.rot) ctx.rotate(f.rot);
+    if (f.color) { let sc = fxScratch[name]; if (!sc) { sc = fxScratch[name] = document.createElement("canvas"); sc.width = w; sc.height = h; } const g = sc.getContext("2d"); g.globalCompositeOperation = "source-over"; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, w, h); FxLive.draw(name, fr, FXNULL, g); g.globalCompositeOperation = "source-in"; g.fillStyle = f.color; g.fillRect(0, 0, w, h); ctx.drawImage(sc, -w * k / 2, -h * k / 2, w * k, h * k); }
+    ctx.scale(k, k); ctx.translate(-w / 2, -h / 2); FxLive.draw(name, fr, ctx, FXNULL); return; }
+  const [n, cols, w, h] = FXS[f.name], im = FXI[f.name]; if (!im[0].naturalWidth) return; const fr = Math.min(n - 1, Math.floor(t * n)), sx = (fr % cols) * w, sy = Math.floor(fr / cols) * h, dw = f.size * CELL, dh = dw * h / w;
   ctx.translate(OX + f.x * CELL, OY + f.y * CELL); if (f.rot) ctx.rotate(f.rot);
   if (f.color && im[1].naturalWidth) { let sc = fxScratch[f.name]; if (!sc) { sc = fxScratch[f.name] = document.createElement("canvas"); sc.width = w; sc.height = h; } const g = sc.getContext("2d"); g.globalCompositeOperation = "copy"; g.drawImage(im[1], sx, sy, w, h, 0, 0, w, h); g.globalCompositeOperation = "source-in"; g.fillStyle = f.color; g.fillRect(0, 0, w, h); ctx.drawImage(sc, -dw / 2, -dh / 2, dw, dh); }
   ctx.drawImage(im[0], sx, sy, w, h, -dw / 2, -dh / 2, dw, dh); }
