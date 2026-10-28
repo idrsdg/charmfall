@@ -607,9 +607,8 @@
   #pgMoment.on { animation: pgmIn .34s cubic-bezier(.3, 1.6, .5, 1) both; } #pgMoment.on::before { animation: pgmBurst 1.6s ease-out both; }
   #pgMoment.off { animation: pgmOut .28s ease-in both; } #pgMoment .pogo { position: relative; width: 100%; height: 100%; margin: 0; }
   /* 2026-10-28 İdris "AI ile yapılmış gibi animasyon olmasın": Pogo plays hand-keyed animations from files (anim/pogo-*.webp, made by anim/src):
-     a row of 400 x 440 frames shot on twos, twelve drawings a second; the box is scaled up so the effects drawn round him have room */
-  .pa { background-repeat: no-repeat; background-size: calc(var(--n, 1) * 100%) 100%; transform: scale(1.25); transform-origin: 50% 100%; animation: paA var(--d, 1s) steps(var(--n, 1), jump-none) var(--it, 1) both; }
-  @keyframes paA { from { background-position: 0 0; } to { background-position: 100% 0; } } @keyframes paB { from { background-position: 0 0; } to { background-position: 100% 0; } }
+     a grid of 360 x 396 frames, fast actions on ones (24 a second), calm ones on twos (12); the box is scaled up so the effects drawn round him have room */
+  .pa { background-repeat: no-repeat; transform: scale(1.25); transform-origin: 50% 100%; }
   #gStage { position: absolute; z-index: 2; pointer-events: none; } #gStage .pa { width: 100%; height: 100%; margin: 0; }
   html.stage #gPogo { display: none !important; } html.app.stage .bar, html.app.stage .frz { grid-column: 3 / 13; } html.app.stage .frz { margin-right: 0; } html.stage #gDecor img:nth-child(2) { visibility: hidden; }
   #wipe { position: fixed; inset: 0; z-index: 90; overflow: hidden; }
@@ -944,17 +943,29 @@ const pogoSvg = (mood, face) => `<svg class="pogo ${mood || ""}${face ? " face" 
 // a short reaction beside the bars (app only): big chains, a full Frenzy meter, special combinations
 const PG_ACT = ["happy", "wow", "yay", "clap", "win", "hello"], pgActive = (cv) => PG_ACT.some(c => cv.classList.contains(c));
 // 2026-10-28: Pogo's hand-keyed animations (see anim/src/pogo-anim.js): frame counts of the sheets in anim/, the looping ones, and a player
-const PA = { hello: 18, win: 23, yay: 13, clap: 14, wow: 15, worry: 12, sad: 17, dash: 6, idle: 24 }, PA_LOOP = /^(worry|dash|idle)$/, PA_OF = { happy: "yay", yay: "yay", clap: "clap", wow: "wow", win: "win", hello: "hello", sad: "sad", cheer: "sad" };
-{ const st = document.createElement("style"); st.textContent = Object.entries(PA).map(([k, n]) => `.pa[data-pa=${k}]{--n:${n};--d:${(n / 12).toFixed(3)}s;--it:${PA_LOOP.test(k) ? "infinite" : 1};background-image:url(anim/pogo-${k}.webp)}`).join(""); document.head.appendChild(st);
-  addEventListener("load", () => setTimeout(() => { for (const k in PA) { const im = new Image(); im.src = "anim/pogo-" + k + ".webp"; } }, 200)); }
+// frames, columns, fps, loop of every sheet (anim/pogo.json, written by anim/src/bake.cjs)
+const PA = {"idle":[36,16,12,1],"look":[48,16,24,0],"groom":[30,16,12,0],"hello":[40,16,24,0],"ready":[32,16,24,0],"win":[36,16,12,0],"yay":[26,16,24,0],"clap":[28,16,24,0],"wow":[30,16,24,0],"nice":[20,16,24,0],"point":[30,16,24,0],"throw":[30,16,24,0],"worry":[12,12,12,1],"sad":[28,16,12,0],"dash":[12,12,24,1]}, PA_OF = { happy: "yay", yay: "yay", clap: "clap", wow: "wow", win: "win", hello: "hello", sad: "sad", cheer: "sad", nice: "nice", point: "point", throw: "throw", ready: "ready", look: "look", groom: "groom" };
+addEventListener("load", () => setTimeout(() => { for (const k of ["idle", "hello", "ready", "dash", "yay", "clap", "wow", "worry", "nice", "point", "throw", "look", "groom", "win", "sad"]) { const im = new Image(); im.src = "anim/pogo-" + k + ".webp"; } }, 200));
 const paHtml = (name, cls) => `<div class="pogo pa${cls ? " " + cls : ""}" data-pa="${name}"></div>`;
-function paPlay(el, name, then) { if (!el) return; el.dataset.pa = name; el.style.animationName = el.style.animationName === "paA" ? "paB" : "paA"; clearTimeout(el._pt); if (then && !PA_LOOP.test(name)) el._pt = setTimeout(() => { if (el.isConnected) then(); }, PA[name] * 1000 / 12 + 380); }
+// one ticker plays every Pogo on screen: it works out the frame from the clock and only touches an element when its frame changes
+const PA_RUN = new Set(); let paRaf = 0;
+function paPlay(el, name, then) { if (!el || !PA[name]) return; const [n, cols] = PA[name]; el.dataset.pa = name; el.dataset.on = 1; el.style.backgroundImage = `url(anim/pogo-${name}.webp)`; el.style.backgroundSize = `${cols * 100}% ${Math.ceil(n / cols) * 100}%`;
+  el._pa = { t0: performance.now(), f: -1, then }; PA_RUN.add(el); if (!paRaf) paRaf = requestAnimationFrame(paTick); }
+function paTick(now) { paRaf = 0; if (document.hidden) { paRaf = requestAnimationFrame(paTick); return; }
+  for (const el of PA_RUN) { const s = el._pa; if (!el.isConnected || !s) { PA_RUN.delete(el); continue; } const [n, cols, fps, loop] = PA[el.dataset.pa]; let f = Math.floor((now - s.t0) * fps / 1000), end = false; if (f < 0) f = 0;
+    if (f >= n) { if (loop) f %= n; else { f = n - 1; end = true; } }
+    if (f !== s.f) { s.f = f; const rows = Math.ceil(n / cols), c = f % cols, r = Math.floor(f / cols); el.style.backgroundPosition = `${cols > 1 ? c / (cols - 1) * 100 : 0}% ${rows > 1 ? r / (rows - 1) * 100 : 0}%`; }
+    if (end) { PA_RUN.delete(el); if (s.then) setTimeout(() => { if (el.isConnected && el._pa === s) s.then(); }, 320); } }
+  if (PA_RUN.size) paRaf = requestAnimationFrame(paTick); }
+setInterval(() => document.querySelectorAll(".pa:not([data-on])").forEach(el => paPlay(el, el.dataset.pa)), 120);   // a Pogo just put on the page starts playing
+const paDur = (k) => PA[k] ? PA[k][0] * 1000 / PA[k][2] : 1000;
 // Pogo stands on the edge of the board while a level is played: he idles, reacts to what happens and frets when the moves run low
 const stagePa = () => { const s = $("gStage"); return s && !s.hidden ? s.firstElementChild : null; }, stageBase = () => G && !G.over && G.moves <= 5 ? "worry" : "idle";
 function placeStage() { const bw = $("boardWrap"); let el = $("gStage"); if (!bw) return; if (!el) { el = document.createElement("div"); el.id = "gStage"; el.innerHTML = paHtml("idle"); bw.appendChild(el); }
   const room = canvas.offsetTop, ok = !window.__fast && !!G && room >= 60, h = Math.min(150, room + 24); el.hidden = !ok; document.documentElement.classList.toggle("stage", ok); if (!ok) return;
   el.style.cssText = `left:${Math.round(canvas.offsetLeft + 2)}px;top:${Math.round(room - h + 16)}px;width:${Math.round(h * 400 / 440)}px;height:${Math.round(h)}px`; }
 addEventListener("resize", () => setTimeout(() => { if (G && !$("game").hidden) placeStage(); }, 60));
+setInterval(() => { const sp = stagePa(); if (!sp || sp.dataset.pa !== "idle" || !G || G.busy || G.over || document.hidden) return; if (Math.random() < .5) paPlay(sp, Math.random() < .55 ? "look" : "groom", () => paPlay(sp, stageBase())); }, 6000);
 function stageMood() { const el = stagePa(); if (el && (el.dataset.pa === "idle" || el.dataset.pa === "worry") && el.dataset.pa !== stageBase()) paPlay(el, stageBase()); }
 // a wipe between screens: a flat yellow panel sweeps across with Pogo dashing over it; the screen changes while it covers
 function wipe(mid) { if (window.__fast) { mid(); return; } const old = $("wipe"); if (old) old.remove(); const el = document.createElement("div"); el.id = "wipe"; el.innerHTML = `<b></b><i>${paHtml("dash")}</i>`; document.body.appendChild(el);
@@ -963,7 +974,7 @@ function pogoReact(mood) { const sp = stagePa(); if (sp) { paPlay(sp, PA_OF[mood
 let pogoT = 0; function pogoReactHud(mood) { mood = mood || "happy"; const el = $("gPogo"); if (!el || !el.firstChild) return; const n = el.firstChild; n.classList.remove(...PG_ACT); void n.getBoundingClientRect(); n.classList.add(mood); clearTimeout(pogoT); pogoT = setTimeout(() => n.classList.remove(mood), mood === "happy" ? 1100 : 1500); }
 // 2026-10-28: a quick moment: Pogo pops up at the bottom of the screen, does one short thing (a wave, a spin, a clap...) and goes again
 function pogoMoment(mood, ms = 1600, over) { if (window.__fast || (!over && document.querySelector(".modal:not([hidden])"))) return;   // never over an open card, it would sit on its buttons
-  let el = $("pgMoment"); if (!el) { el = document.createElement("div"); el.id = "pgMoment"; document.body.appendChild(el); } clearTimeout(pogoMoment.t); clearTimeout(pogoMoment.u); el.className = ""; const nm = PA_OF[mood] || mood; el.innerHTML = paHtml(nm); ms = Math.max(ms, (PA[nm] || 12) * 1000 / 12 + 450); void el.offsetWidth; el.className = "on";
+  let el = $("pgMoment"); if (!el) { el = document.createElement("div"); el.id = "pgMoment"; document.body.appendChild(el); } clearTimeout(pogoMoment.t); clearTimeout(pogoMoment.u); el.className = ""; const nm = PA_OF[mood] || mood; el.innerHTML = paHtml(nm); ms = Math.max(ms, paDur(nm) + 450); void el.offsetWidth; el.className = "on";
   pogoMoment.t = setTimeout(() => { el.className = "off"; pogoMoment.u = setTimeout(() => { el.className = ""; el.innerHTML = ""; }, 300); }, ms); }
 // every carrot Pogo eats puts a little weight on him, up to a comfortably round rabbit at forty
 const plump = () => Math.min(1, ((typeof save === "object" && save && save.fed) || 0) / 15), pogoKg = () => (1.5 + plump() * 2.5).toFixed(1);
@@ -1004,7 +1015,7 @@ $("petBox").addEventListener("pointerup", petUp); $("petBox").addEventListener("
 $("petFeed").addEventListener("click", feedPogo); $("petClose").addEventListener("click", closePet);
 // on the map Pogo never stands still: a new act every few seconds, never the same one twice in a row
 const ACTS = ["a-hop", "a-wave", "a-juggle", "a-dance", "a-spin", "a-look"]; let actI = -1;
-setInterval(() => { const n = document.querySelector(".pogoMap .pa"); if (!n || $("map").hidden || document.hidden || n.dataset.pa !== "idle") return; const acts = ["hello", "yay", "clap", "wow"]; let k; do k = rnd(acts.length); while (k === actI); actI = k; paPlay(n, acts[k], () => paPlay(n, "idle")); }, 5200);   // on the map Pogo plays one of his keyed acts every few seconds, then idles again
+setInterval(() => { const n = document.querySelector(".pogoMap .pa"); if (!n || $("map").hidden || document.hidden || n.dataset.pa !== "idle") return; const acts = ["hello", "look", "groom", "yay", "clap", "nice"]; let k; do k = rnd(acts.length); while (k === actI); actI = k; paPlay(n, acts[k], () => paPlay(n, "idle")); }, 5200);   // on the map Pogo plays one of his keyed acts every few seconds, then idles again
 // ---------------------------------------------------------------- cel shading (2026-10-28 İdris: "Cel-shaded 3B · anime" is the look of the whole game)
 // Every 3D material is a toon material with three hard light steps; bump maps and gloss are dropped, so the light falls in flat bands like an anime cel.
 const TOON = window.THREE ? (() => { const T = THREE, g = new T.DataTexture(new Uint8Array([105, 105, 105, 255, 180, 180, 180, 255, 255, 255, 255, 255]), 3, 1, T.RGBAFormat); g.minFilter = g.magFilter = T.NearestFilter; g.generateMipmaps = false; g.needsUpdate = true;
@@ -1307,7 +1318,7 @@ const CARROT_RATE = .03125;   // 2026-10-27 İdris: rewards come half as often (
 function addCarrots(n) { save.carrotFrac = (save.carrotFrac || 0) + n * CARROT_RATE; const give = Math.floor(save.carrotFrac + 1e-9); save.carrotFrac -= give; save.carrots = (save.carrots || 0) + 4 * (give); carrotNew += 4 * (give); return give; }
 let save = { stars: {}, best: {}, lives: 5, lifeAt: Date.now(), boost: {}, daily: { last: "", streak: 0 }, ach: {}, stats: {} };
 try { Object.assign(save, JSON.parse(localStorage.getItem(SAVE) || "{}")); } catch (e) {}
-function boostBonus() { if (!G) return; G.moves += 3; flyText("+3 moves"); }   // 2026-10-20: every booster used also gives three moves, so a booster really turns a level around
+function boostBonus() { if (!G) return; G.moves += 3; flyText("+3 moves"); pogoReact("throw"); }   // 2026-10-20: every booster used also gives three moves, so a booster really turns a level around
 // 2026-10-27 İdris: "ödülleri ve boosterları tam 2 katına çıkar": every booster handed out now counts eight times (four before), carrots and unlimited lives twice what they were
 function boostX2(o) { return new Proxy(o, { set(t, k, v) { const old = t[k] || 0; t[k] = typeof v === "number" && v > old ? old + (v - old) * 8 : v; return true; } }); }   // 2026-10-20 İdris: "booster sayısını %100 arttır": every booster the game hands out comes in twos
 function normSave() {
@@ -3022,7 +3033,7 @@ function startLevel(i, snap) {
   G.t0 = performance.now(); if (!resumed) logEv("start"); if (i < 2) G.hintAt = performance.now() + 900;
   { const k = rotOf(i); if (k > (save.gemSeen3 || 0) && !window.__fast) { save.gemSeen3 = k; persist(); } }
   particles.length = 0; fx.length = 0; floaters.length = 0; dying.length = 0;
-  tip(""); $("map").hidden = true; $("game").hidden = false; $("gPogo").innerHTML = pogoSvg("", true); layout(); hudInit(); gameDecor(i); gameWeather(i); gameGround(i); placeStage(); { const sp = stagePa(); if (sp) paPlay(sp, "hello", () => paPlay(sp, stageBase())); } SFX.go();
+  tip(""); $("map").hidden = true; $("game").hidden = false; $("gPogo").innerHTML = pogoSvg("", true); layout(); hudInit(); gameDecor(i); gameWeather(i); gameGround(i); placeStage(); { const sp = stagePa(); if (sp) paPlay(sp, "ready", () => paPlay(sp, stageBase())); } SFX.go();
   if (window.__lowPower && !window.__lpTold) { window.__lpTold = 1; setTimeout(() => tip("Low Power Mode is on: iPhone holds games at 30 fps", 4800), 1300); }
   if (!resumed) snapshot();
   introDrop();
@@ -4254,7 +4265,7 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
   // selection frame
   const sel = G.sel, selK = sel ? easeOut(clamp01((now - G.selT) / 170)) : 0;
   if (sel) { const r = sel[0], c = sel[1], k = .5 + .5 * Math.sin(now / 120); ctx.globalAlpha = selK; ctx.strokeStyle = "#fff"; ctx.lineWidth = 3 + k; ctx.beginPath(); ctx.roundRect(c * CELL + 2, r * CELL + 2, CELL - 4, CELL - 4, 8); ctx.stroke(); ctx.strokeStyle = "#ffd200"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(c * CELL + 6, r * CELL + 6, CELL - 12, CELL - 12, 6); ctx.stroke(); ctx.globalAlpha = 1; }
-  const hinting = !G.busy && !G.over && !G.paused && now > G.hintAt; let h0 = null, h1 = null, hk = 0;
+  const hinting = !G.busy && !G.over && !G.paused && now > G.hintAt; if (hinting && G.ptAt !== G.hintAt) { G.ptAt = G.hintAt; const sp = stagePa(); if (sp && sp.dataset.pa === stageBase()) pogoReact("point"); } let h0 = null, h1 = null, hk = 0;
   if (hinting) { if (!G.hint) G.hint = findMove(); if (G.hint) { h0 = G.hint[0]; h1 = G.hint[1]; hk = Math.min(1, (now - G.hintAt) / 350); ctx.globalAlpha = hk * .9; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = Math.max(2, CELL * .05); ctx.lineCap = "round"; const m = CELL * .04, a = CELL * .22; ctx.beginPath(); for (const h of [h0, h1]) { const x0 = h[1] * CELL + m, y0 = h[0] * CELL + m, x1 = (h[1] + 1) * CELL - m, y1 = (h[0] + 1) * CELL - m; ctx.moveTo(x0, y0 + a); ctx.lineTo(x0, y0); ctx.lineTo(x0 + a, y0); ctx.moveTo(x1 - a, y0); ctx.lineTo(x1, y0); ctx.lineTo(x1, y0 + a); ctx.moveTo(x1, y1 - a); ctx.lineTo(x1, y1); ctx.lineTo(x1 - a, y1); ctx.moveTo(x0 + a, y1); ctx.lineTo(x0, y1); ctx.lineTo(x0, y1 - a); } ctx.stroke(); ctx.globalAlpha = 1; } }   // 2026-10-20 İdris: the hint looked like a special charm's glow. Now it is white corner marks and the two charms nudge toward each other, nothing glows
   // gems
   let n = 0; for (let r = 0; r < ROWS; r++) { const row = G.grid[r]; for (let c = 0; c < COLS; c++) { const g = row[c]; if (g) LIST[n++] = g; } } LIST.length = n;
