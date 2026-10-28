@@ -30,7 +30,7 @@
   function bbox(q) { const bb = [100, 100, 0, 0]; const pts = typeof q === "string" ? (q.match(/-?\d+(\.\d+)?/g) || []).map(Number) : q[0] === "c" || q[0] === "e" ? [q[1] - q[3], q[2] - (q[4] || q[3]), q[1] + q[3], q[2] + (q[4] || q[3])] : q[1].flat();
     for (let i = 0; i + 1 < pts.length; i += 2) { bb[0] = Math.min(bb[0], pts[i]); bb[2] = Math.max(bb[2], pts[i]); bb[1] = Math.min(bb[1], pts[i + 1]); bb[3] = Math.max(bb[3], pts[i + 1]); } return bb; }
   window.paintCharmWC = function (name, slot, px) {
-    const A = BLA[name], hue = WCHUE[slot % 6], cv = document.createElement("canvas"); cv.width = cv.height = px; const x = cv.getContext("2d"), k = px * .84 / 100;
+    const A = BLA[name], hue = WCHUE[slot % 6], cv = document.createElement("canvas"); cv.width = cv.height = px; const x = cv.getContext("2d"), k = px * .8 / 100;   // a little smaller, so the sticker edge fits
     x.translate(px / 2, px / 2 - px * .02); x.scale(k, k); x.translate(-50, -50); x.lineJoin = "round"; x.lineCap = "round";
     const parts = A.b.map(glowPart), body = new Path2D(); for (const p of parts) body.addPath(p); const seed = [...name].reduce((a, c) => a * 31 + c.charCodeAt(0), 7) % 9973;
     // the cast shadow: a cool grey wash on the paper, soft
@@ -60,6 +60,9 @@
       y.globalCompositeOperation = "destination-out"; y.fillStyle = "#000"; y.fill(body); x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.drawImage(t, 0, 0); x.restore(); }
     // granulation and the paper's tooth: pigment settles in the hollows, more of it where the wash is darker
     granulate(cv, 1);
+    // 2026-10-28 İdris "taşlar daha belirgin, sınırları belirgin olsun": a sticker edge round the silhouette, cream inside a dark line
+    { const o = document.createElement("canvas"); o.width = o.height = px; const ox = o.getContext("2d"), stamp = (r, col) => { const t = document.createElement("canvas"); t.width = t.height = px; const tx = t.getContext("2d"); for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; tx.drawImage(cv, Math.cos(a) * r, Math.sin(a) * r); } tx.globalCompositeOperation = "source-in"; tx.fillStyle = col; tx.fillRect(0, 0, px, px); ox.drawImage(t, 0, 0); };
+      const k2 = px / 256; stamp(9 * k2, "#2a1a10"); stamp(6.5 * k2, "#fffaf0"); ox.drawImage(cv, 0, 0); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, px, px); x.drawImage(o, 0, 0); }
     return cv; };
   // granulation and the paper's tooth on a finished picture: pigment settles in the hollows, more where the wash is darker; a tenth of paper shows through
   function granulate(cv, amt) { const x = cv.getContext("2d"), px = cv.width, py = cv.height; x.setTransform(1, 0, 0, 1, 0, 0); const id = x.getImageData(0, 0, px, py), dd = id.data, sc = 256 / Math.max(px, 256) * (amt || 1);
