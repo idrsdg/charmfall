@@ -29,6 +29,26 @@
     const dash = []; for (let i = 0; i < 12; i++) { dash.push(18 + r() * 60, r() < .5 ? .8 + r() * 1.6 : .01); } x.setLineDash(dash); x.lineDashOffset = r() * 50; x.stroke(path); x.restore(); } }
   function bbox(q) { const bb = [100, 100, 0, 0]; const pts = typeof q === "string" ? (q.match(/-?\d+(\.\d+)?/g) || []).map(Number) : q[0] === "c" || q[0] === "e" ? [q[1] - q[3], q[2] - (q[4] || q[3]), q[1] + q[3], q[2] + (q[4] || q[3])] : q[1].flat();
     for (let i = 0; i + 1 < pts.length; i += 2) { bb[0] = Math.min(bb[0], pts[i]); bb[2] = Math.max(bb[2], pts[i]); bb[1] = Math.min(bb[1], pts[i + 1]); bb[3] = Math.max(bb[3], pts[i + 1]); } return bb; }
+  // painted volume (2026-11-02, "derinlik"): a core shadow where the form turns from the light, paper light bounced into the far rim, the near rim lit.
+  // Everything stays inside the silhouette and in the charm's own pigment, so the colour stays clean (2026-10-29 "renkler karışmış").
+  function volume(x, body, hue, seed) {
+    const px = x.canvas.width, T = x.getTransform(), k = px / 256, d = mixc0(hue, "#1a0c0a", .55);
+    x.save(); x.clip(body); const g = x.createRadialGradient(36, 30, 4, 46, 44, 62);
+    g.addColorStop(0, hexA(d, 0)); g.addColorStop(.5, hexA(d, 0)); g.addColorStop(.8, hexA(d, .34)); g.addColorStop(1, hexA(d, .62)); x.fillStyle = g; x.fillRect(-20, -20, 140, 140); x.restore();
+    const rim = (dx, dy, col, a, blur) => { const t = document.createElement("canvas"); t.width = t.height = px; const y = t.getContext("2d"); y.setTransform(T); y.fillStyle = col; y.fill(body); y.globalCompositeOperation = "destination-out"; y.translate(dx, dy); y.fill(body);
+      x.save(); x.clip(body); x.setTransform(1, 0, 0, 1, 0, 0); x.globalAlpha = a; x.filter = `blur(${blur * k}px)`; x.drawImage(t, 0, 0); x.restore(); };
+    rim(-3, -3.6, mixc0(hue, "#fff6e8", .42), .5, 1.3);   // bounce light from the paper, low on the right
+    rim(2.2, 2.8, "#fffaf0", .6, .9);                     // the lit rim, high on the left
+  }
+  // the charm as a die-cut card piece of a pop-up book: the sticker lies on a sheet of card whose cut edge shows below it, lit from above
+  function card(x, o, px) {
+    const k = px / 256, T = Math.max(2, Math.round(8 * k)), up = Math.round(T * .5), sh = .28;
+    const sil = (col) => { const t = document.createElement("canvas"); t.width = t.height = px; const y = t.getContext("2d"); y.drawImage(o, 0, 0); y.globalCompositeOperation = "source-in"; y.fillStyle = col; y.fillRect(0, 0, px, px); return t; };
+    const ink = sil("#1a0e08"), lite = sil("#e8dfcc"), dark = sil("#9c8d76");
+    x.drawImage(ink, (T + 1.6 * k) * sh, T + 1.6 * k - up);   // the cut edge's bottom line
+    for (let i = T; i >= 1; i--) { const f = i / T; x.globalAlpha = 1; x.drawImage(lite, i * sh, i - up); x.globalAlpha = .25 + .75 * f; x.drawImage(dark, i * sh, i - up); }
+    x.globalAlpha = 1; x.drawImage(o, 0, -up);
+  }
   window.paintCharmWC = function (name, slot, px) {
     const A = BLA[name], hue = WCHUE[slot % 6], cv = document.createElement("canvas"); cv.width = cv.height = px; const x = cv.getContext("2d"), k = px * .8 / 100;   // a little smaller, so the sticker edge fits
     x.translate(px / 2, px / 2 - px * .02); x.scale(k, k); x.translate(-50, -50); x.lineJoin = "round"; x.lineCap = "round";
@@ -53,6 +73,9 @@
           wash(x, p, col, seed + 3 + cx, { a: lum < .3 ? .5 : .5, layers: 4, cx, cy, rw: 1.8, j: 1 }); shadowWash(x, p, col, cx, cy, Rr, seed + 4); pencil(x, p, seed + 5 + cy, 1.1); }
         else { x.fillStyle = o[2]; x.fill(p); } }
       x.restore(); }
+    // 2026-11-02 İdris "suluboya kalsın, derinlik ekle": painted volume over the whole face, details included. One light, high on the left:
+    // the form turns away from it into a core shadow on the lower right, paper light bounces back into the far rim, and the near rim catches the light.
+    if (!window.__flatCharms) volume(x, body, hue, seed);
     // warm light, cool shade: two faint glazes of other pigments, the way a painter shifts temperature across a form
     /* (the warm and cool glazes of other pigments are gone: each charm is one clean colour) */
     // the pencil round the whole charm, on its silhouette only: drawn twice as wide on a sheet of its own, the inside rubbed out
@@ -62,7 +85,7 @@
     granulate(cv, .35);
     // 2026-10-28 İdris "taşlar daha belirgin, sınırları belirgin olsun": a sticker edge round the silhouette, cream inside a dark line
     { const o = document.createElement("canvas"); o.width = o.height = px; const ox = o.getContext("2d"), stamp = (r, col) => { const t = document.createElement("canvas"); t.width = t.height = px; const tx = t.getContext("2d"); for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; tx.drawImage(cv, Math.cos(a) * r, Math.sin(a) * r); } tx.globalCompositeOperation = "source-in"; tx.fillStyle = col; tx.fillRect(0, 0, px, px); ox.drawImage(t, 0, 0); };
-      const k2 = px / 256; stamp(9 * k2, "#1a0e08"); stamp(6.5 * k2, "#ffffff"); { const v = document.createElement("canvas"); v.width = v.height = px; const vx = v.getContext("2d"); vx.filter = "saturate(1.55) contrast(1.18) brightness(1.04)"; vx.drawImage(cv, 0, 0); ox.drawImage(v, 0, 0); } x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, px, px); x.drawImage(o, 0, 0); }   /* 2026-10-29 İdris "daha canlı ve belirgin şekiller ve renkler": pigments pushed, a crisp white sticker edge in a near-black line */
+      const k2 = px / 256; stamp(9 * k2, "#1a0e08"); stamp(6.5 * k2, "#ffffff"); { const v = document.createElement("canvas"); v.width = v.height = px; const vx = v.getContext("2d"); vx.filter = "saturate(1.55) contrast(1.18) brightness(1.04)"; vx.drawImage(cv, 0, 0); ox.drawImage(v, 0, 0); } x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, px, px); if (window.__flatCharms) x.drawImage(o, 0, 0); else card(x, o, px); }   /* 2026-10-29 İdris "daha canlı ve belirgin şekiller ve renkler": pigments pushed, a crisp white sticker edge in a near-black line */
     return cv; };
   // granulation and the paper's tooth on a finished picture: pigment settles in the hollows, more where the wash is darker; a tenth of paper shows through
   function granulate(cv, amt) { const x = cv.getContext("2d"), px = cv.width, py = cv.height; x.setTransform(1, 0, 0, 1, 0, 0); const id = x.getImageData(0, 0, px, py), dd = id.data, sc = 256 / Math.max(px, 256) * (amt || 1);

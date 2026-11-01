@@ -691,6 +691,23 @@ html:not(.app) #topSet .plbl { order: 0; }
   html:not(.app) .top .plbl { order: 1; grid-column: 1 / -1; font-size: 9.5px; letter-spacing: 0; line-height: 1.15; }
   html:not(.app) #topSet { grid-template-columns: auto; }
 }
+/* 2026-11-02 İdris "suluboya kalsın, derinlik ekle" (pop-up book): one light, high on the left; every raised layer shows its cut edge and throws a soft shadow down and to the right */
+#c { box-shadow: 0 0 0 2px rgba(255, 255, 255, .85), 0 0 0 6px #23252c, 2px 6px 0 6px #13141a, 6px 18px 24px 4px rgba(18, 22, 40, .34), 2px 6px 6px 6px rgba(18, 22, 40, .3) !important; }
+html.app #boardWrap::before { display: none; }   /* the old floor shadow sat at the foot of the whole column, far under the board */
+#game > #gDio { position: absolute !important; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; perspective: 900px; perspective-origin: 50% 40%; }
+#gDio .dio { position: absolute; display: block; transform-origin: 50% 100%; backface-visibility: hidden; will-change: transform; }
+html.app .boosters { position: relative; z-index: 1; }
+/* the map as a pop-up book: what stands on the page throws a soft shadow down and to the right, the stops are thick card tokens, the page
+   recedes into a light haze toward the top of the screen, and each piece of scenery stands up from the page as it comes into view (popStand) */
+#path .mprop:not(.small):not(.pond):not(.flutter):not(.mordo):not(.feather)::after, #path .ani.m-walk::after, #path .ani.m-hop::after { content: ""; position: absolute; left: 18%; right: -34%; bottom: -7%; height: 20%; border-radius: 50%; background: radial-gradient(closest-side, rgba(46, 34, 22, .42), rgba(46, 34, 22, .16) 55%, rgba(46, 34, 22, 0)); z-index: -1; pointer-events: none; }
+#path .band.ground, #path .band.lock + .band:not(.lock) { box-shadow: inset 0 16px 16px -8px rgba(40, 28, 16, .42); }   /* the unexplored page lies on top: its cut edge throws a shadow on the won ground */
+#path .lv:not(.lock) { box-shadow: 0 6px 0 #8a5a00, 0 7.5px 0 rgba(60, 36, 10, .45), 7px 14px 14px rgba(40, 28, 14, .34), inset 0 -6px 9px rgba(0, 0, 0, .14), inset 0 2px 0 rgba(255, 255, 255, .55); }
+#path .lv.now { box-shadow: 0 5px 0 #8a3a00, 0 6.5px 0 rgba(60, 26, 0, .45), 7px 13px 14px rgba(40, 24, 10, .36), 0 0 0 7px rgba(255, 200, 80, .35), inset 0 -5px 8px rgba(0, 0, 0, .2), inset 0 2px 0 rgba(255, 255, 255, .5); }
+#path .lv.lock { box-shadow: 0 5px 0 #403868, 0 6.5px 0 rgba(20, 16, 40, .4), 6px 11px 12px rgba(20, 16, 30, .3), inset 0 -5px 8px rgba(0, 0, 0, .2); }
+html.app #map .top::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 110px; pointer-events: none; background: linear-gradient(rgba(250, 246, 236, .3), rgba(250, 246, 236, 0)); }
+#path .mprop > b.pst { display: block; transform-origin: 50% 100%; }
+#path.pp .mprop.pu:not(.up) > b.pst { transform: perspective(500px) rotateX(86deg); }
+#gStage::after { content: ""; position: absolute; left: 22%; right: 6%; bottom: 3%; height: 9%; border-radius: 50%; background: radial-gradient(closest-side, rgba(10, 10, 20, .45), rgba(10, 10, 20, 0)); z-index: -1; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -1414,7 +1431,7 @@ const STAR = 1000, starsOf = (pts) => Math.floor(pts / STAR);
 LEVELS.forEach((L) => { if (L.target) L.target = Math.max(STAR, Math.round(L.target / STAR) * STAR); });
 const BOOST0 = { hammer: 3, moves: 3, switch: 3, cross: 2, undo: 3 };
 // carrots are earned at a quarter of the old rate: every award is scaled, the remainder waits in the jar (save.carrotFrac) until a whole carrot is due
-const ART_Q = location.protocol === "file:" ? "" : "?v=1029f";   /* bump when the painted art in anim/ is baked again, so no browser keeps an old picture (the iOS app reads files, no query there) */
+const ART_Q = location.protocol === "file:" ? "" : "?v=1102a";   /* bump when the painted art in anim/ is baked again, so no browser keeps an old picture (the iOS app reads files, no query there) */
 const RWM = 2, BXM = 4;   /* 2026-10-29 İdris "ödül kazanmayı yarı yarıya indir, çok fazla booster kazanıyorum": carrots and ∞ lives x2 (was 4), boosters x4 (was 8) */
 const CARROT_RATE = .03125;   // 2026-10-27 İdris: rewards come half as often (the amount of each stays the same)
 function addCarrots(n) { save.carrotFrac = (save.carrotFrac || 0) + n * CARROT_RATE; const give = Math.floor(save.carrotFrac + 1e-9); save.carrotFrac -= give; save.carrots = (save.carrots || 0) + RWM * (give); carrotNew += RWM * (give); return give; }
@@ -1732,6 +1749,10 @@ function buildMap() {
   // only what is on or near the screen moves: every hopping creature, swaying plant and firefly is paused until it scrolls into view
   if (window.IntersectionObserver) { if (mapIO) mapIO.disconnect(); mapIO = new IntersectionObserver((es) => { for (const e of es) { e.target.classList.toggle("vis", e.isIntersecting); if (e.isIntersecting && e.target.classList.contains("ani")) aniWake(e.target); } }, { root: $("map"), rootMargin: "400px" }); path.querySelectorAll(".mprop.live, .mprop.won, .mprop.mordo, u.firefly, .mcloud, .mprop.flutter, .ani").forEach(n => mapIO.observe(n)); }
   else path.querySelectorAll(".mprop, u.firefly, .ani").forEach(n => { n.classList.add("vis"); if (n.classList.contains("ani")) aniWake(n); });
+  // 2026-11-02 the pop-up book: a piece of scenery lies flat on the page until it comes well into view, then stands up (ui-keys.js "popStand")
+  if (window.IntersectionObserver && !window.__fast && !matchMedia("(prefers-reduced-motion: reduce)").matches) { if (window.popIO) popIO.disconnect(); path.classList.add("pp"); let n = 0;
+    window.popIO = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) { const t = e.target; t.style.setProperty("--pd", (n++ % 5) * 55 + "ms"); t.classList.add("up"); popIO.unobserve(t); } }, { root: $("map"), rootMargin: "-9% 0px -7% 0px" });
+    path.querySelectorAll(".mprop:not(.small):not(.pond):not(.flutter):not(.mordo):not(.feather):not(.stn)").forEach(t => { const im = t.firstElementChild; if (!im || im.tagName !== "IMG") return; const b = document.createElement("b"); b.className = "pst"; t.insertBefore(b, im); b.appendChild(im); t.classList.add("pu"); popIO.observe(t); }); }
   // the current stop lands in the exact middle of the screen (the map's own offset inside the scroller is measured, not assumed)
   const off = path.getBoundingClientRect().top - $("map").getBoundingClientRect().top + $("map").scrollTop, yOf = (i) => Math.max(0, pts[i][1] + off - innerHeight / 2), target = yOf(cur), from = lastCur < 0 ? target + 260 : lastCur !== cur ? yOf(lastCur) : null; lastCur = cur;
   $("map").scrollLeft = pts[cur][0] - VW / 2;
@@ -3256,7 +3277,48 @@ function gameTheme(i) { const el = $("gTheme"); if (!el) return; const k = Math.
   // evening page by turns, and a slight shift of hue from level to level, so no two levels in a row look the same
   /* 2026-10-29 İdris "arka planı sadeleştir": no painted landscape, only a soft two-colour wash of the theme, lightened, changing level by level */
   const v = i % 2, key = k + "-" + v + "-plain"; if (el.dataset.k !== key) { el.dataset.k = key; el.innerHTML = ""; el.style.background = `linear-gradient(180deg, color-mix(in srgb, ${v ? T.s2 : T.s1} 85%, #ffffff), color-mix(in srgb, ${v ? T.s1 : T.s2} 80%, #ffffff) 55%, ${T.g})`;   /* "solukluğu kaldır": full theme colours */ }
-  el.style.filter = `hue-rotate(${((i % 7) - 3) * 9}deg)`;   /* 2026-10-29 İdris "tema soluk": the page's pigments pushed up */ el.hidden = false; }
+  el.style.filter = `hue-rotate(${((i % 7) - 3) * 9}deg)`;   /* 2026-10-29 İdris "tema soluk": the page's pigments pushed up */ el.hidden = false;  dioTheme(i); }
+// 2026-11-02 İdris "suluboya kalsın, derinlik ekle": the game screen is a pop-up book. Three cut-paper layers painted on the Mac in grey
+// (anim/src/dio-wc.js, bake-dio.cjs) are tinted here with this level's colours, once per level: a hazy far one on the horizon behind Pogo, a middle
+// one peeking from under the board, a near one the booster tray rests on. Each gets its lit cut edge and a soft shadow on the sheet behind it.
+// They stand up when the level opens (ui-keys.js "popUp") and lean a few pixels with the finger on the board or the tilt of the phone (not with
+// reduced motion). Nothing here is drawn per frame: the layers are plain pictures moved by the compositor.
+const DIO = { fam: { hills: "hills", orchard: "hills", blossom: "hills", fields: "hills", wheat: "hills", castle: "hills", pines: "pines", tundra: "pines", snow: "pines", jungle: "bush", bamboo: "bush", shrooms: "bush", pond: "waves", sea: "waves", reef: "waves", mesa: "rocks", volcano: "rocks", cave: "rocks", clouds: "clouds", space: "clouds" },
+  im: {}, key: "", tx: 0, ty: 0, cx: 0, cy: 0, raf: 0, last: 0, calm: matchMedia("(prefers-reduced-motion: reduce)") };
+function dioImg(n) { let im = DIO.im[n]; if (!im) { im = DIO.im[n] = new Image(); im.src = "anim/dio-" + n + ".webp" + ART_Q; im.ok = (im.decode ? im.decode() : new Promise(r => { im.onload = r; })).then(() => im, () => null); } return im.ok; }
+function hueRot(hex, deg) { const a = Math.cos(deg * Math.PI / 180), b = Math.sin(deg * Math.PI / 180), n = parseInt(hex.slice(1), 16), r = n >> 16, g = n >> 8 & 255, bl = n & 255;   // the same matrix as CSS hue-rotate(), so the layers shift with the page wash
+  const o = [r * (.213 + .787 * a - .213 * b) + g * (.715 - .715 * a - .715 * b) + bl * (.072 - .072 * a + .928 * b), r * (.213 - .213 * a + .143 * b) + g * (.715 + .285 * a + .14 * b) + bl * (.072 - .072 * a - .283 * b), r * (.213 - .213 * a - .787 * b) + g * (.715 - .715 * a + .715 * b) + bl * (.072 + .928 * a + .072 * b)];
+  return "#" + o.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join(""); }
+function dioTheme(i) {
+  let box = $("gDio"); if (!box) { box = document.createElement("div"); box.id = "gDio"; box.setAttribute("aria-hidden", "true"); $("gTheme").after(box); }
+  if (window.__fast || !document.documentElement.classList.contains("app")) { box.hidden = true; return; }
+  const k = Math.min(THEMES.length - 1, Math.floor(i / 20)), T = THEMES[k], v = i % 2, fam = DIO.fam[T.land] || "hills", hue = ((i % 7) - 3) * 9, key = fam + k + ":" + v + ":" + hue;
+  box.hidden = false; if (DIO.key === key && box.childElementCount) { dioPlace(); return; } DIO.key = key;
+  const sky = mixc0(v ? T.s1 : T.s2, "#ffffff", .2), tint = { far: mixc0(mixc0(T.far, sky, .45), "#ffffff", .18), mid: mixc0(T.mid, T.g, .45), near: mixc0(T.g, "#14121a", .06) };
+  const tok = key; box.innerHTML = ""; box.className = "";
+  Promise.all(["far", "mid", "near"].map(l => dioImg(fam + "-" + l))).then(ims => { if (DIO.key !== tok) return;
+    const dpr = Math.min(2, devicePixelRatio || 1), W = Math.round(innerWidth * 1.08), PAD = 18;
+    ims.forEach((im, n) => { if (!im) return; const l = ["far", "mid", "near"][n], h = Math.round(W * im.naturalHeight / im.naturalWidth), cv = document.createElement("canvas"); cv.className = "dio " + l;
+      cv.width = Math.round(W * dpr); cv.height = Math.round((h + PAD) * dpr); cv.style.width = W + "px"; cv.style.height = h + PAD + "px"; cv.dataset.h = h + PAD; const x = cv.getContext("2d"); x.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const t = document.createElement("canvas"); t.width = cv.width; t.height = cv.height; const y = t.getContext("2d"); y.setTransform(dpr, 0, 0, dpr, 0, 0);
+      y.drawImage(im, 0, PAD, W, h); y.globalCompositeOperation = "multiply"; y.fillStyle = hueRot(tint[l], hue); y.fillRect(0, 0, W, h + PAD); y.globalCompositeOperation = "destination-in"; y.drawImage(im, 0, PAD, W, h);   // the grey painting tinted
+      x.save(); x.shadowColor = "rgba(30,24,40,.32)"; x.shadowBlur = l === "far" ? 10 : 14; x.shadowOffsetX = 3; x.shadowOffsetY = -5; x.drawImage(t, 0, 0, W, h + PAD); x.restore();   // its shadow on the sheet behind
+      const rim = document.createElement("canvas"); rim.width = cv.width; rim.height = cv.height; const q = rim.getContext("2d"); q.drawImage(t, 0, 0); q.globalCompositeOperation = "destination-out"; q.drawImage(t, 0, 3 * dpr); q.globalCompositeOperation = "source-in"; q.fillStyle = "rgba(255,252,240,.55)"; q.fillRect(0, 0, rim.width, rim.height);
+      x.setTransform(1, 0, 0, 1, 0, 0); x.drawImage(rim, 0, 0); box.appendChild(cv);
+      if (l === "far") { const d = y.getImageData(0, t.height - 2, t.width, 1).data; let r = 0, gg = 0, b = 0; for (let j = 0; j < d.length; j += 4) { r += d[j]; gg += d[j + 1]; b += d[j + 2]; } const nn = d.length / 4, f = document.createElement("div"); f.className = "dio farfill"; f.style.background = `rgb(${r / nn | 0},${gg / nn | 0},${b / nn | 0})`; f.style.width = W + "px"; box.appendChild(f); } });   // the far sheet goes on down behind the board
+    dioPlace(); box.classList.add("up"); }); }
+function dioPlace() { const box = $("gDio"); if (!box || box.hidden || !G) return; const g = $("game").getBoundingClientRect(), c = canvas.getBoundingClientRect(), bt = c.top - g.top, bb = c.bottom - g.top, W = Math.round(innerWidth * 1.08), L = Math.round((innerWidth - W) / 2);
+  for (const cv of box.children) { const h = +cv.dataset.h || 0, l = cv.classList[1]; cv.style.left = L + "px";
+    if (l === "farfill") { cv.style.top = Math.round(bt + 33) + "px"; cv.style.height = Math.max(0, Math.round(bb - bt)) + "px"; continue; }
+    cv.style.top = Math.round(l === "far" ? bt + 34 - h : l === "mid" ? bb - 34 : g.height - h + 6) + "px"; } }
+function dioLean(nx, ny) { if (DIO.calm.matches) return; DIO.tx = Math.max(-1, Math.min(1, nx)); DIO.ty = Math.max(-1, Math.min(1, ny)); if (!DIO.raf) { DIO.last = performance.now(); DIO.raf = requestAnimationFrame(dioTick); } }
+function dioTick(now) { DIO.raf = 0; const box = $("gDio"); if (!box || box.hidden) return; const dt = Math.min(.05, (now - DIO.last) / 1000), f = 1 - Math.exp(-dt * 9); DIO.last = now;   // a damped follow of the finger, not a timed tween
+  DIO.cx += (DIO.tx - DIO.cx) * f; DIO.cy += (DIO.ty - DIO.cy) * f; const D = { far: 2.5, mid: 6, near: 10 };
+  for (const cv of box.children) { const d = D[cv.classList[1]] || D.far; cv.style.translate = `${(-DIO.cx * d).toFixed(2)}px ${(-DIO.cy * d * .5).toFixed(2)}px`; }
+  if (Math.abs(DIO.tx - DIO.cx) + Math.abs(DIO.ty - DIO.cy) > .003) DIO.raf = requestAnimationFrame(dioTick); }
+canvas.addEventListener("pointermove", (e) => { if (!down && e.pointerType !== "mouse") return; const r = canvas.getBoundingClientRect(); dioLean((e.clientX - r.left) / r.width * 2 - 1, (e.clientY - r.top) / r.height * 2 - 1); }, { passive: true });
+for (const ev of ["pointerup", "pointercancel", "pointerleave"]) canvas.addEventListener(ev, () => dioLean(0, 0), { passive: true });
+if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission !== "function") addEventListener("deviceorientation", (e) => { if (e.gamma == null || !G || $("game").hidden || down) return; dioLean((e.gamma || 0) / 25, ((e.beta || 0) - 45) / 30); }, { passive: true });   // phones that give the tilt without asking; iOS asks, so there the finger leads
 // ---- pause / resume (input is blocked by G.paused; a cascade in flight simply finishes underneath)
 // the four things that belong to this chapter's place stand along the top of the board frame (still pictures: they cost nothing while playing)
 function gameWeather(i) { const el = $("gWeather"), ch = chapOf(i), w = themeOf(i).w; $("game").classList.toggle("shore", ch >= 10); if (!el) return; if ($("game").firstElementChild !== el) $("game").prepend(el); { const g = $("gGround"); if (g && g.previousElementSibling !== el) el.after(g); const th = $("gTheme"); if (th && $("game").firstElementChild !== th) $("game").prepend(th); }   // first in the screen, so the bars and the board are drawn over it if (!w || window.__fast) { el.hidden = true; return; }
@@ -3802,10 +3864,27 @@ function buildStatic() {
   if (WCB.paper) { x.save(); x.beginPath(); x.roundRect(0, 0, W, W, 16); x.clip();
     /* 2026-10-29 İdris "renkler çok karışmış": a plain, even board: flat charcoal cells with the faintest checker, no paper tooth, no glazes; only the charms carry colour */
     x.fillStyle = "#2c2e36"; x.fillRect(0, 0, W, W);
-    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { if (G.hole[r][c]) continue; x.fillStyle = (r + c) % 2 ? "#3a3d48" : "#353843"; x.beginPath(); x.roundRect(c * CELL + 1.5, r * CELL + 1.5, CELL - 3, CELL - 3, CELL * .14); x.fill(); }
+    /* 2026-11-02 İdris "suluboya kalsın, derinlik ekle": the same quiet charcoal, but as a paper diorama: every cell a shallow well pressed into the
+       card (the rim above it throws a shadow in, the lip below catches the light), the frame's own shadow falls across the top rows, and the card's
+       tooth shows through. Painted once per layout; nothing here is drawn per frame. */
+    const well = (fill) => { const [c2, k] = mkCan(CELL, CELL), R = CELL * .14, p = 1.5, s = CELL - 3; k.fillStyle = fill; k.beginPath(); k.roundRect(p, p, s, s, R); k.fill(); k.save(); k.clip();
+      let g = k.createLinearGradient(0, p, 0, p + s * .3); g.addColorStop(0, "rgba(8,9,14,.55)"); g.addColorStop(1, "rgba(8,9,14,0)"); k.fillStyle = g; k.fillRect(0, 0, CELL, CELL);
+      g = k.createLinearGradient(p, 0, p + s * .2, 0); g.addColorStop(0, "rgba(8,9,14,.32)"); g.addColorStop(1, "rgba(8,9,14,0)"); k.fillStyle = g; k.fillRect(0, 0, CELL, CELL);
+      g = k.createLinearGradient(0, p + s, 0, p + s * .82); g.addColorStop(0, "rgba(255,255,255,.10)"); g.addColorStop(1, "rgba(255,255,255,0)"); k.fillStyle = g; k.fillRect(0, 0, CELL, CELL); k.restore();
+      k.strokeStyle = "rgba(255,255,255,.13)"; k.lineWidth = 1; k.beginPath(); k.moveTo(p + R, p + s + .5); k.lineTo(p + s - R, p + s + .5); k.stroke(); return c2; };
+    const wells = [well("#353843"), well("#3a3d48")];
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { if (G.hole[r][c]) continue; x.drawImage(wells[(r + c) % 2], c * CELL, r * CELL, CELL, CELL); }
+    x.save(); x.globalCompositeOperation = "overlay"; x.globalAlpha = .22; x.fillStyle = x.createPattern(WCB.paper, "repeat"); x.fillRect(0, 0, W, W); x.restore();   // the card's tooth
+    { let g = x.createLinearGradient(0, 0, 0, CELL * .55); g.addColorStop(0, "rgba(0,0,0,.42)"); g.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = g; x.fillRect(0, 0, W, CELL * .55);   // the frame stands above the board: its shadow across the top rows and down the left
+      g = x.createLinearGradient(0, 0, CELL * .4, 0); g.addColorStop(0, "rgba(0,0,0,.28)"); g.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = g; x.fillRect(0, 0, CELL * .4, W);
+      g = x.createLinearGradient(0, W, 0, W - CELL * .25); g.addColorStop(0, "rgba(255,255,255,.07)"); g.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = g; x.fillRect(0, W - CELL * .25, W, CELL * .25); }
     x.restore(); ST.bg = cv;
-    const pic = (n) => { const [c2, k] = mkCan(CELL, CELL); k.imageSmoothingQuality = "high"; if (WCB[n]) k.drawImage(WCB[n], 0, 0, CELL, CELL); return c2; };
-    const flat = (fill, line) => { const [c2, k] = mkCan(CELL, CELL); k.fillStyle = fill; k.beginPath(); k.roundRect(1.5, 1.5, CELL - 3, CELL - 3, CELL * .14); k.fill(); if (line) { k.strokeStyle = line; k.lineWidth = 1.5; k.stroke(); } return c2; };
+    /* 2026-11-02 depth: a blocker is a raised piece standing in its well (lifted a little toward the light, its shadow down and to the right, inside the cell);
+       an ash layer is a sheet laid in the well (lit top edge, shaded lower edge) */
+    const pic = (n) => { const [c2, k] = mkCan(CELL, CELL); k.imageSmoothingQuality = "high"; if (WCB[n]) { const m = CELL * .06, s = CELL - m * 1.6; k.save(); k.shadowColor = "rgba(6,6,12,.6)"; k.shadowBlur = CELL * .08; k.shadowOffsetX = CELL * .035; k.shadowOffsetY = CELL * .07; k.drawImage(WCB[n], m * .5, m * .3, s, s); k.restore(); } return c2; };
+    const flat = (fill, line) => { const [c2, k] = mkCan(CELL, CELL), p = 2.5, s = CELL - 5, R = CELL * .13; k.fillStyle = "rgba(0,0,0,.35)"; k.beginPath(); k.roundRect(p + .8, p + 1.6, s, s, R); k.fill(); k.fillStyle = fill; k.beginPath(); k.roundRect(p, p, s, s, R); k.fill();
+      k.save(); k.clip(); const g = k.createLinearGradient(0, p, 0, p + s); g.addColorStop(0, "rgba(255,255,255,.22)"); g.addColorStop(.35, "rgba(255,255,255,0)"); g.addColorStop(.75, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0,.22)"); k.fillStyle = g; k.fillRect(0, 0, CELL, CELL); k.restore();
+      if (line) { k.strokeStyle = line; k.lineWidth = 1.5; k.beginPath(); k.roundRect(p, p, s, s, R); k.stroke(); } return c2; };
     ST.jelly = [flat("#a9adb9", "rgba(255,255,255,.75)"), flat("#666a78", "rgba(255,255,255,.75)")]; ST.clean = flat("#3f5a44", "rgba(150,220,140,.55)");   /* ash: one layer light grey, two layers mid grey; a cleared cell turns a quiet green */ ST.frost = [pic("ob-bramble1"), pic("ob-bramble2"), pic("ob-bramble3")]; ST.choc = pic("ob-choc"); ST.stone = pic("ob-stone");
     ST.cbox = COLORS.map((C, i) => { const c2 = pic("ob-crate"), k = c2.getContext("2d"); const art = boldArt(i, (G && G.level ? rotOf(G.level) : 0), Math.round(CELL * .5)); k.drawImage(art, CELL * .25, CELL * .25, CELL * .5, CELL * .5); return c2; });
     ST.badge.clear(); for (let n = 1; n <= 12; n++) badge(n); ST.fonts = [.36, .42, .5].map(k => `900 ${Math.round(CELL * k)}px ui-rounded, system-ui, sans-serif`); return; }
@@ -3870,7 +3949,7 @@ function layout() {
   CELL = size / COLS; OX = 0; OY = 0;
   // pre-build sprites so the first cascade never stalls
   for (let col = 0; col < NCOL; col++) for (const sp of [null, "h", "v", "wrap", "bomb"]) sprite({ kind: "gem", color: col, special: sp, lock: false });
-  sprite({ kind: "ing", color: -1, special: null, lock: false }); shadowSprite(); buildStatic();
+  sprite({ kind: "ing", color: -1, special: null, lock: false }); shadowSprite(); buildStatic(); if (typeof dioPlace === "function") requestAnimationFrame(dioPlace);
      // the small copies that circle the firefly queen, made before play starts
   // warm up text + additive blending so the first pop never hitches
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); for (const f of ST.fonts) { ctx.font = f; ctx.strokeText("+0", -99, -99); ctx.fillText("+0", -99, -99); }
@@ -3885,15 +3964,19 @@ function addP(p) { if (particles.length >= MAXP) particles[capI = (capI + 1) % M
 const FXS = {"pop":[14,14,192,192],"blast":[22,22,384,384],"beam":[16,15,1024,128],"twinkle":[16,16,160,160],"whirl":[24,24,384,384],"nope":[10,10,128,128]}, FXI = {}, fxScratch = {};
 for (const k in FXS) { const a = new Image(), m = new Image(); FXI[k] = [a, m]; if (!window.FxLive) { a.src = "anim/fx-" + k + ".webp"; m.src = "anim/fx-" + k + "-c.webp"; } }
 function sheetFx(name, x, y, size, color, rot, delay) { if (window.__fast) return; fx.push({ k: "sheet", name, x, y, size, color, rot: rot || 0, t: performance.now() + (delay || 0), life: FXS[name][0] * 1000 / 24 }); }
+// 2026-11-02 depth: a burst is a sheet of painted paper lifted off the board: its own colour, multiplied, lies on the board below and to the right
+// (the light is high on the left), so the burst stands above the charms. One extra copy of the already tinted sheet, no blur, no filter.
+function fxLift(sc, x, y, w, h, rot) { const o = CELL * .09, c = Math.cos(-(rot || 0)), s = Math.sin(-(rot || 0)), dx = o * .55 * c - o * s, dy = o * .55 * s + o * c;
+  ctx.save(); ctx.globalCompositeOperation = "multiply"; ctx.globalAlpha *= .3; ctx.drawImage(sc, x + dx, y + dy, w, h); ctx.restore(); }
 const FXNULL = document.createElement("canvas").getContext("2d");   // the pass that only wants one layer sends the other one here
 function drawSheetFx(f, t) { const name = f.name;
   if (window.FxLive && FxLive.has(name)) { const [w, h] = FxLive.size(name), fr = Math.min(FXS[name][0] - .001, t * FXS[name][0]), k = f.size * CELL / w;
     ctx.translate(OX + f.x * CELL, OY + f.y * CELL); if (f.rot) ctx.rotate(f.rot);
-    if (f.color) { let sc = fxScratch[name]; if (!sc) { sc = fxScratch[name] = document.createElement("canvas"); sc.width = w; sc.height = h; } const g = sc.getContext("2d"); g.globalCompositeOperation = "source-over"; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, w, h); FxLive.draw(name, fr, FXNULL, g); g.globalCompositeOperation = "source-in"; g.fillStyle = f.color; g.fillRect(0, 0, w, h); ctx.drawImage(sc, -w * k / 2, -h * k / 2, w * k, h * k); }
+    if (f.color) { let sc = fxScratch[name]; if (!sc) { sc = fxScratch[name] = document.createElement("canvas"); sc.width = w; sc.height = h; } const g = sc.getContext("2d"); g.globalCompositeOperation = "source-over"; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, w, h); FxLive.draw(name, fr, FXNULL, g); g.globalCompositeOperation = "source-in"; g.fillStyle = f.color; g.fillRect(0, 0, w, h); fxLift(sc, -w * k / 2, -h * k / 2, w * k, h * k, f.rot); ctx.drawImage(sc, -w * k / 2, -h * k / 2, w * k, h * k); }
     ctx.scale(k, k); ctx.translate(-w / 2, -h / 2); FxLive.draw(name, fr, ctx, FXNULL); return; }
   const [n, cols, w, h] = FXS[f.name], im = FXI[f.name]; if (!im[0].naturalWidth) return; const fr = Math.min(n - 1, Math.floor(t * n)), sx = (fr % cols) * w, sy = Math.floor(fr / cols) * h, dw = f.size * CELL, dh = dw * h / w;
   ctx.translate(OX + f.x * CELL, OY + f.y * CELL); if (f.rot) ctx.rotate(f.rot);
-  if (f.color && im[1].naturalWidth) { let sc = fxScratch[f.name]; if (!sc) { sc = fxScratch[f.name] = document.createElement("canvas"); sc.width = w; sc.height = h; } const g = sc.getContext("2d"); g.globalCompositeOperation = "copy"; g.drawImage(im[1], sx, sy, w, h, 0, 0, w, h); g.globalCompositeOperation = "source-in"; g.fillStyle = f.color; g.fillRect(0, 0, w, h); ctx.drawImage(sc, -dw / 2, -dh / 2, dw, dh); }
+  if (f.color && im[1].naturalWidth) { let sc = fxScratch[f.name]; if (!sc) { sc = fxScratch[f.name] = document.createElement("canvas"); sc.width = w; sc.height = h; } const g = sc.getContext("2d"); g.globalCompositeOperation = "copy"; g.drawImage(im[1], sx, sy, w, h, 0, 0, w, h); g.globalCompositeOperation = "source-in"; g.fillStyle = f.color; g.fillRect(0, 0, w, h); fxLift(sc, -dw / 2, -dh / 2, dw, dh, f.rot); ctx.drawImage(sc, -dw / 2, -dh / 2, dw, dh); }
   ctx.drawImage(im[0], sx, sy, w, h, -dw / 2, -dh / 2, dw, dh); }
 function burst(x, y, color, n, shape, delay) { sheetFx("pop", x, y, 2.2, color, (x * 7 + y * 3) % 6.28, delay); }   // a charm, a frost, a crate popping
 function ring(x, y, color, r1 = 1.1, life = 420, w = 7) { fx.push({ k: "ring", x, y, color, r1, t: performance.now(), life, w }); }
@@ -4308,7 +4391,7 @@ function drawGemRaw(ctx, g, now) {
       const m = document.createElement("canvas"); m.width = C3.width; m.height = C3.height; const x = m.getContext("2d"), W = m.width; x.drawImage(C3, 0, 0); x.globalCompositeOperation = "source-atop";
       for (let i = -3; i <= 3; i++) { const o = W / 2 + i * W * .13; x.fillStyle = "rgba(255,255,255,.82)"; if (g.special === "h") x.fillRect(0, o - W * .028, W, W * .056); else x.fillRect(o - W * .028, 0, W * .056, W); x.fillStyle = "rgba(0,0,0,.12)"; if (g.special === "h") x.fillRect(0, o + W * .028, W, W * .012); else x.fillRect(o + W * .028, 0, W * .012, W); }
       img = m; }
-    ctx.save(); ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = 6; ctx.shadowOffsetY = 4; const w = s * (GS === "lowpoly" ? 4.8 : GS === "glow" ? 3 : GS === "bold" ? 3.3 : 2.9); ctx.drawImage(img, -w / 2, -w / 2, w, w); ctx.restore(); }
+    ctx.save(); ctx.shadowColor = "rgba(0,0,0,.42)"; ctx.shadowBlur = 5; ctx.shadowOffsetX = 1.5; ctx.shadowOffsetY = 3.5; const w = s * (GS === "lowpoly" ? 4.8 : GS === "glow" ? 3 : GS === "bold" ? 3.3 : 2.9); ctx.drawImage(img, -w / 2, -w / 2, w, w); ctx.restore(); }
   else {
   // dark base with a soft contact shadow, then the facets on top
   ctx.shadowColor = "rgba(0,0,0,.6)"; ctx.shadowBlur = 5; ctx.shadowOffsetY = 5; ctx.save(); ctx.translate(0, CELL * (JELLY ? .03 : .075)); gemPath(ctx, C.shape, s); ctx.fillStyle = GS === "soft" ? "rgba(0,0,0,0)" : JELLY ? mixc(C.d, C.c, .3) : edge; ctx.fill(); ctx.lineWidth = Math.max(2.5, CELL * .06); ctx.strokeStyle = edge; ctx.stroke(); ctx.restore(); ctx.shadowColor = "transparent"; ctx.shadowOffsetY = 0;
@@ -4487,10 +4570,11 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
     const br = 1;   // 2026-10-24 İdris: resting charms breathing on their own was confusing; they keep still again
     const px = (g.x + ox + .5) * CELL, py = (g.y + oy + .5) * CELL + (1 - sy) * CELL * .22;
     // contact shadow (grows + softens when the gem lifts)
-    if (sc === 1 && !lift && al === 1) { const rs = SPR.shadowRest; ctx.globalAlpha = 1; ctx.drawImage(rs, Math.round(px * DPR - rs.width / 2) / DPR, Math.round((py + CELL * .12) * DPR - rs.height / 2) / DPR, rs.width / DPR, rs.height / DPR); }
-    else { const sw = shw * (.72 + lift * .25) * sc; ctx.globalAlpha = (.9 - lift * .4) * al; ctx.drawImage(shd, 0, shd.height * .225, shd.width, shd.height * .55, px - sw / 2, py + CELL * (.12 + lift * .1) - sw * .275, sw, sw * .55); }
+    // 2026-11-02 depth: one light, high on the left, so every shadow falls down and to the right; a lifted charm's shadow slides further off and softens
+    if (sc === 1 && !lift && al === 1) { const rs = SPR.shadowRest; ctx.globalAlpha = 1; ctx.drawImage(rs, Math.round((px + CELL * .05) * DPR - rs.width / 2) / DPR, Math.round((py + CELL * .13) * DPR - rs.height / 2) / DPR, rs.width / DPR, rs.height / DPR); }
+    else { const sw = shw * (.72 + lift * .3) * sc; ctx.globalAlpha = (.9 - lift * .45) * al; ctx.drawImage(shd, 0, shd.height * .225, shd.width, shd.height * .55, px + CELL * (.05 + lift * .16) - sw / 2, py + CELL * (.13 + lift * .2) - sw * .275, sw, sw * .55); }
     if (vel > .06 && !g.intro) { ctx.globalAlpha = Math.min(.28, vel * 2) * al; drawGem(g, px, py - vel * CELL * 1.5, sc, now, sy * 1.08, rot); }   // short trail
-    ctx.globalAlpha = al; drawGem(g, px, py - lift * CELL * .08, sc * br, now, sy * (2 - br), rot);
+    ctx.globalAlpha = al; drawGem(g, px - lift * CELL * .03, py - lift * CELL * .14, sc * br, now, sy * (2 - br), rot);
     if (g.fuse) {
       const bd = badge(g.fuse); let bs = sc; if (g.fuseT) { const t = (now - g.fuseT) / 340; if (t >= 1) g.fuseT = 0; else if (t > 0) bs *= 1 + .5 * Math.sin(t * Math.PI); }
       const bw = bd.width / DPR * bs; ctx.drawImage(bd, px + CELL * .25 * sc - bw / 2, py + CELL * .24 * sc - bw / 2, bw, bw);

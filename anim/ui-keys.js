@@ -43,6 +43,25 @@
       [350, { transform: "translateY(1px)", opacity: 1 }, SETTLE],
       [460, { transform: "translateY(0px)", opacity: 1 }, SETTLE],
     ],
+    // 2026-11-02 the pop-up book: each paper layer of the game screen stands up from the page when a level opens. It lies flat, swings up fast,
+    // overshoots past upright, falls back a little and settles (the far layer first, the near one last: delays set below)
+    popUp: [
+      [0,   { transform: "rotateX(84deg)", opacity: 0 }],
+      [60,  { transform: "rotateX(78deg)", opacity: 1 }, LIFT],
+      [260, { transform: "rotateX(-9deg)", opacity: 1 }, SNAP],
+      [380, { transform: "rotateX(4deg)", opacity: 1 }, SETTLE],
+      [480, { transform: "rotateX(-1.5deg)", opacity: 1 }, SETTLE],
+      [580, { transform: "rotateX(0deg)", opacity: 1 }, SETTLE],
+    ],
+    // the map's scenery standing up from the page as it comes into view: a quick swing up past upright, back, settle (on a wrapper round the
+    // picture, so the pieces' own sway and hop keep running)
+    popStand: [
+      [0,   { transform: "perspective(500px) rotateX(86deg)" }],
+      [210, { transform: "perspective(500px) rotateX(-14deg)" }, SNAP],
+      [330, { transform: "perspective(500px) rotateX(6deg)" }, SETTLE],
+      [430, { transform: "perspective(500px) rotateX(-2deg)" }, SETTLE],
+      [520, { transform: "perspective(500px) rotateX(0deg)" }, SETTLE],
+    ],
     // the result card's empty stars spin in, overshoot and settle
     starHollow: [
       [0,   { transform: "rotate(-170deg) scale(0)", opacity: 0 }],
@@ -70,8 +89,10 @@
     .modal:not([hidden]):not(.out) .card > :is(p, h2, .goalrow, .cbar, .chip, #sPogo, #ePogo) { animation: kidIn ${KEYS.kidIn.at(-1)[0]}ms linear both; }
     #game:not([hidden]) .hud, #game:not([hidden]) .bar, #game:not([hidden]) .frz { animation: dropIn ${KEYS.dropIn.at(-1)[0]}ms linear both; }
     #game:not([hidden]) .boosters { animation: riseIn ${KEYS.riseIn.at(-1)[0]}ms 80ms linear both; }
+    #path.pp .mprop.pu.up > b.pst { animation: popStand ${KEYS.popStand.at(-1)[0]}ms var(--pd, 0ms) linear both; }
+    #gDio.up .dio.far, #gDio.up .dio.mid, #gDio.up .dio.near { animation: popUp ${KEYS.popUp.at(-1)[0]}ms 120ms linear both; } #gDio.up .dio.mid { animation-delay: 210ms; } #gDio.up .dio.near { animation-delay: 300ms; }
     #eStars.stars3 svg.o { animation: starHollow ${KEYS.starHollow.at(-1)[0]}ms linear both; animation-delay: var(--o, 0s); }
-    @media (prefers-reduced-motion: reduce) { .card, .modal, .modal.out, .modal.out .card, .modal .card > *, #game .hud, #game .bar, #game .frz, #game .boosters { animation-duration: 1ms !important; animation-delay: 0s !important; } }`;
+    @media (prefers-reduced-motion: reduce) { .card, .modal, .modal.out, .modal.out .card, .modal .card > *, #game .hud, #game .bar, #game .frz, #game .boosters, #gDio .dio, #path .mprop > b.pst { animation-duration: 1ms !important; animation-delay: 0s !important; } }`;
   const css = (props) => Object.entries(props).map(([k, v]) => `${k}: ${v};`).join(" ");
   let out = "";
   for (const [name, keys] of Object.entries(KEYS)) {
