@@ -652,6 +652,21 @@
 .boost svg > circle:first-child { fill-opacity: .35; }
 .back.pause, html.app #btnPause { background: radial-gradient(circle at 50% 30%, #ffb35a, #ff7a1a 70%) !important; border: 2.5px solid #ffffff !important; box-shadow: 0 0 0 2px #23252c, 0 4px 0 2px #23252c !important; }
 .back.pause .ico { filter: none !important; }
+
+/* 2026-11-02 declutter (owner: "the games have far too many buttons and too much text"). Hides and folds only; nothing restyled.
+   Map: the bottom bar shows only what is waiting (.ready: the daily gift, a season tier, a chest) plus one "More" that opens the full row.
+   Cards: one primary action each, no "All games" inside cards (the map header has it), no fine print that the numbers already say. */
+.mapbar:not(.open) > button:not(.ready):not(#btnMore) { display: none; }
+.mapbar.open #btnMore { filter: brightness(.92); translate: 0 2px; }
+.mapbar #btnRoom { font-size: 18px; line-height: 1; }
+html.app .mapset { display: none !important; }                 /* its one button (sound) is the first row of Settings */
+#mStart .rate, #sBeat, #mStart [data-arcade-room] { display: none !important; }   /* friends rooms: map bar, More */
+html:not(.app) #btnBack, html:not(.app) #btnSound { display: none !important; }   /* both in Pause */
+.frz { font-size: 0 !important; } .frz span { font-size: 13px !important; }       /* the bolt says it; the word "Frenzy" goes */
+#mPause .card > p, .card a.btn[href="../games/"] { display: none !important; }
+html:not(.app) #mPause .btn.snd { display: none !important; }                     /* the volume control under it mutes too */
+#eTale, #mLives p.sub:not(#invText) { display: none !important; }
+#mEnd:has(#eStars:not(.stars3)) [data-arcade-share], #mEnd:has(#eStars:not(.stars3)) #eSub { display: none !important; }
 </style>
 </head>
 <body>
@@ -664,7 +679,7 @@
   </div>
   <div class="pathWrap" id="pathWrap"><div class="path" id="path"><svg id="pathSvg" viewBox="0 0 420 1400" preserveAspectRatio="none"></svg></div></div>
   <div class="mapset"><button type="button" class="pill" id="setSound" title="Sound"><span><i class="ico" data-ico="sound"></i></span></button><button type="button" class="pill" id="setGear" title="Settings"><span><i class="ico" data-ico="gear"></i></span></button></div>
-  <div class="mapbar"><button type="button" id="btnBook" title="Story book">📖</button><button type="button" id="btnDaily" title="Daily gift"><i class="ico" data-ico="gift"></i></button><button type="button" id="btnAch" title="Awards"><i class="ico" data-ico="trophy"></i><span id="achN"></span></button><button type="button" id="btnGarden" title="Charmwood works"><i class="ico" data-ico="garden"></i><span id="gdN"></span></button><button type="button" id="btnRace" title="Race"><i class="ico" data-ico="race"></i></button><button type="button" id="btnSeason" title="Season"><i class="ico" data-ico="season"></i><span id="ssN"></span></button></div>
+  <div class="mapbar"><button type="button" id="btnBook" title="Story book">📖</button><button type="button" id="btnDaily" title="Daily gift"><i class="ico" data-ico="gift"></i></button><button type="button" id="btnAch" title="Awards"><i class="ico" data-ico="trophy"></i><span id="achN"></span></button><button type="button" id="btnGarden" title="Charmwood works"><i class="ico" data-ico="garden"></i><span id="gdN"></span></button><button type="button" id="btnRace" title="Race"><i class="ico" data-ico="race"></i></button><button type="button" id="btnSeason" title="Season"><i class="ico" data-ico="season"></i><span id="ssN"></span></button><button type="button" id="btnRoom" data-arcade-room title="Play with friends">👥</button><button type="button" id="btnMore" title="More" aria-expanded="false"><i class="ico" data-ico="more"></i></button></div>
 </section>
 
 <section class="screen" id="game" hidden>
@@ -1516,6 +1531,7 @@ const ICO = (() => {
     jelly: W(R("M2.5 19c1-5.5 4.5-9.5 9.5-9.5s8.5 4 9.5 9.5z", "#a9a6b4") + L("M8 15l2-2M13.5 16l2.5-1.5", "#fff", 1.5)),   // a heap of ash
     key: W(R("M12 22c-3.6 0-6-2.4-6-5.5S8.6 11 12 11s6 2.4 6 5.5-2.4 5.5-6 5.5z", "#fff1c9") + R("M12 11c0-4-2.6-6.5-6.5-6.5 0 4 2.6 6.5 6.5 6.5z", "#5fd36f") + R("M12 11c0-3.4 2.2-5.5 5.5-5.5 0 3.4-2.2 5.5-5.5 5.5z", "#5fd36f")),   // a seed with a sprout
     ice: W(R("M12 2l2 5.5 5.5-2-2 5.5 4.5 1-4.5 1 2 5.5-5.5-2-2 5.5-2-5.5-5.5 2 2-5.5L2 12l4.5-1-2-5.5 5.5 2z", "#3f9a4a") + L("M9 12h6M12 9v6", "#d8ffd0", 1.4)),   // a thorny thicket
+    more: W(R("M3.5 12a2.5 2.5 0 1 0 5 0 2.5 2.5 0 1 0-5 0") + R("M9.5 12a2.5 2.5 0 1 0 5 0 2.5 2.5 0 1 0-5 0") + R("M15.5 12a2.5 2.5 0 1 0 5 0 2.5 2.5 0 1 0-5 0")),
     pogo: W(R("M9 3c-1 0-1.5 4 0 7h6c1.5-3 1-7 0-7s-1 2.5-1.5 4h-3C10 5.5 10 3 9 3z", "#fff") + R("M6 15a6 5 0 1 0 12 0 6 5 0 1 0-12 0", "#fff") + `<circle cx="10" cy="14" r="1" fill="#4a1a06"/><circle cx="14" cy="14" r="1" fill="#4a1a06"/><circle cx="12" cy="16.2" r=".9" fill="#ff7a9a"/>`)
   };
 })();
@@ -1715,6 +1731,10 @@ function openBook() {
   if (n) out.push(st);
   $("bkList").replaceChildren(...out); $("bkSub").textContent = "Places reached: " + (reach + 1) + "/" + CHAPTERS.length + " · Mordo's feathers: " + nF + "/" + CHAPTERS.length + " · Seeds saved: " + seedsSaved() + " · Young trees: " + treesGrown(); show("mBook");
 }
+{ const bar = document.querySelector(".mapbar"), more = $("btnMore"), set = (on) => { bar.classList.toggle("open", on); more.setAttribute("aria-expanded", on); };   // 2026-11-02: one "More" holds the map's extras
+  more.addEventListener("click", (e) => { e.stopPropagation(); set(!bar.classList.contains("open")); });
+  bar.addEventListener("click", (e) => { if (e.target.closest("button") && e.target.closest("button") !== more) set(false); });
+  document.addEventListener("pointerdown", (e) => { if (bar.classList.contains("open") && !bar.contains(e.target)) set(false); }); }
 $("btnBook").addEventListener("click", openBook); $("bkClose").addEventListener("click", () => hide("mBook")); $("mBook").addEventListener("click", (e) => { if (e.target === $("mBook")) hide("mBook"); });
 let mapZ = 1; function setMapZoom(z, cx, cy) { const m = $("map"), p = $("path"); z = Math.max(1, Math.min(3.2, z)); const k = z / mapZ; if (Math.abs(k - 1) < .001) return; const sl = m.scrollLeft, st = m.scrollTop; mapZ = z; p.style.zoom = z === 1 ? "" : z; m.scrollLeft = (sl + cx) * k - cx; m.scrollTop = (st + cy) * k - cy; document.documentElement.classList.toggle("mapZoom", z >= 1.9); }
 // While the fingers move, the map is only scaled on the GPU (a transform: no layout, smooth at any frame rate); the real zoom, which lays the
@@ -1884,12 +1904,10 @@ function openStation(k) { const S = k ? STATIONS[k - 1] : null, reached = highes
   show("mSign"); }
 $("sgClose").addEventListener("click", () => hide("mSign"));
 // the five-step guide for a first visit; Skip leaves at once, the last step says Start. Settings can show it again.
-const GUIDE = [
-  { t: "Welcome to Charmwood", x: "Pogo the rabbit lives here. Mordo the magpie stole the forest's charms and the woods went grey. The Green Line train runs from this station to the Crown, and every level you win brings a charm home.", k: "pogo" },
-  { t: "The map", x: "Each stop on the rails is a level. Tap the orange one to play. The stars above a stop show how well you did there. Signs and stations along the line tell the story as you go.", k: "station" },
-  { t: "The board", x: "Swap two charms to line up three of a colour. Four in a row makes a striped charm, five makes a rainbow, a square makes a firefly. Specials clear far more than a plain match.", k: "crystal" },
-  { t: "Boosters, lives and carrots", x: "The row under the board holds your boosters: a hammer, five extra moves, a free switch, a cross blast and undo. A lost level costs a life; lives come back with time. Carrots are rare: feed them to Pogo on the map.", k: "carrot" },
-  { t: "Stations", x: "Every twenty levels the train reaches a station and the forest turns a little greener. Twenty stations, four hundred levels, one bright forest at the end. Ready?", k: "tree" }];
+const GUIDE = [   // 2026-11-02: three one-line steps (was five paragraphs); the board, the map and the stations teach themselves
+  { t: "Welcome to Charmwood", x: "Mordo stole the forest's charms. Win levels to bring them home.", k: "pogo" },
+  { t: "Match three", x: "Swap two charms. Four in a row: striped. Five: rainbow. A square: firefly.", k: "crystal" },
+  { t: "Lives and boosters", x: "A lost level costs a life. Boosters sit under the board.", k: "carrot" }];
 let guideI = 0, guideThen = null;
 function openGuide(then) { guideI = 0; guideThen = then || null; renderGuide(); show("mGuide"); }
 function renderGuide() { const s = GUIDE[guideI], last = guideI === GUIDE.length - 1; $("guChip").textContent = "Step " + (guideI + 1) + " of " + GUIDE.length; $("guTitle").textContent = s.t; $("guText").textContent = s.x; $("guArt").innerHTML = D3 ? `<img src="${D3.sprite(s.k, 160)}" alt="">` : ""; $("guDots").innerHTML = GUIDE.map((_, i) => `<i class="${i === guideI ? "on" : ""}"></i>`).join(""); $("guNext").textContent = last ? "Start" : "Next"; $("guSkip").hidden = last; }
@@ -4705,6 +4723,9 @@ const TR = {
   "The roost": "Tünek", "Gritt's roost on the highest rock. Ten levels to the last of the far shore's charms.": "Gritt'in tüneği en yüksek kayada. Uzak kıyının son tılsımına on seviye.",
   "The garden shines again": "Bahçe yeniden parlıyor", "Gritt hands back the last charm, Mordo pretends he never took the first one, and both get a carrot. Pogo's garden has never been brighter, and the Green Line runs bright from Ash Gate to the Crown: the highest ridge of Charmwood is green from end to end.": "Gritt son tılsımı geri veriyor, Mordo ilkini hiç almamış gibi yapıyor ve ikisi de havuç alıyor. Pogo'nun bahçesi hiç bu kadar parlak olmamıştı; Yeşil Hat Ash Gate'ten Crown'a pırıl pırıl işliyor, Charmwood'un en yüksek sırtı baştan başa yeşil.",
   "Mordo hands back the last charm, a little ashamed, and gets a carrot for his trouble. Pogo's garden has never been brighter.": "Mordo son tılsımı biraz utanarak geri veriyor ve zahmetine karşılık havuç alıyor. Pogo'nun bahçesi hiç bu kadar parlak olmamıştı.",
+  "Mordo stole the forest's charms. Win levels to bring them home.": "Mordo ormanın tılsımlarını çaldı. Seviyeleri kazan, onları eve getir.", "Match three": "Üçlü eşleştir",
+  "Swap two charms. Four in a row: striped. Five: rainbow. A square: firefly.": "İki tılsımın yerini değiştir. Dört sıra: çizgili. Beş: gökkuşağı. Kare: ateş böceği.",
+  "Lives and boosters": "Canlar ve güçlendiriciler", "A lost level costs a life. Boosters sit under the board.": "Kaybedilen seviye bir can götürür. Güçlendiriciler tahtanın altında.", "More": "Daha fazla",
   "{1} d {2} h left": "{1} g {2} s kaldı", "{1} h left": "{1} s kaldı", "{1} d {2} h": "{1} g {2} s", "{1} h": "{1} s", "{1} min": "{1} dk", "𝕏 Share on X": "𝕏 X'te paylaş", "Prism": "Prism", "Pop": "Pop"
 };
 if (save.lang === "tr" && !window.__fast) (() => {
