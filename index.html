@@ -668,13 +668,28 @@ html:not(.app) #mPause .btn.snd { display: none !important; }                   
 #eTale, #mLives p.sub:not(#invText) { display: none !important; }
 #mEnd:has(#eStars:not(.stars3)) [data-arcade-share], #mEnd:has(#eStars:not(.stars3)) #eSub { display: none !important; }
 
-/* 2026-11-02 web map header: the shared All games pill first, then the logo, the chips on the right; on narrow screens the pill drops to its own line under the logo. The app keeps its own header. */
-.card > .arcade-all { display: flex; width: max-content; margin: 0 auto 12px; }   /* pause and results: in the card header, clear of the game HUD */
+/* 2026-11-02 web map header: the shared All games pill first, then the logo, the chips on the right; every chip says what it is (label beside the number from 600 px, under it below) and opens what it counts. The app keeps its own header. */
+.top .plbl { display: none; }
 html:not(.app) .top { flex-wrap: wrap; justify-content: flex-start; column-gap: 12px; row-gap: 8px; }
 html:not(.app) .top .chips { margin-left: auto; }
-@media (max-width: 759px) {
+html:not(.app) .top .pill { cursor: pointer; }
+html:not(.app) .top .pill:focus-visible { outline: 3px solid #ffd200; outline-offset: 2px; }
+.card > .arcade-all { display: flex; width: max-content; margin: 0 auto 12px; }   /* pause and results: in the card header, clear of the game HUD */
+html:not(.app) .top .plbl { display: inline; order: -1; font-size: 12px; font-weight: 800; letter-spacing: .02em; opacity: .8; }
+html:not(.app) .top .pill .ico { order: -2; }
+html:not(.app) #topSet .plbl { order: 0; }
+@media (max-width: 899px) { html:not(.app) .top { padding-left: 14px; padding-right: 14px; column-gap: 10px; } html:not(.app) .top .pill { padding: 5px 9px; gap: 5px; font-size: 14px; } html:not(.app) .top .plbl { font-size: 11px; } html:not(.app) .top .chips { gap: 6px !important; } }
+@media (min-width: 600px) and (max-width: 899px) { html:not(.app) .logo { font-size: 22px; } }
+@media (max-width: 759px) {   /* not enough width for pill + logo + chips on one line: All games drops to its own line, top-left under the logo */
   html:not(.app) .top::before { content: ""; order: 2; flex-basis: 100%; height: 0; }
   html:not(.app) .top .arcade-all { order: 3; }
+}
+@media (max-width: 599px) {
+  html:not(.app) .top { row-gap: 6px; }
+  html:not(.app) .top .chips { gap: 5px !important; }
+  html:not(.app) .top .pill { display: inline-grid; grid-template-columns: auto auto; justify-items: center; align-items: center; column-gap: 3px; row-gap: 0; padding: 3px 7px 2px; border-radius: 14px; font-size: 13px; line-height: 1.1; }
+  html:not(.app) .top .plbl { order: 1; grid-column: 1 / -1; font-size: 9.5px; letter-spacing: 0; line-height: 1.15; }
+  html:not(.app) #topSet { grid-template-columns: auto; }
 }
 </style>
 </head>
@@ -685,7 +700,7 @@ html:not(.app) .top .chips { margin-left: auto; }
   <div class="top">
     <a class="arcade-all" href="/games/" aria-label="All games">All games</a>
     <div class="logo">Charm<span>fall</span></div>
-    <div class="chips" style="display:flex;gap:8px"><span class="pill"><i class="ico" data-ico="heart"></i> <span id="lives">5</span></span><span class="pill"><i class="ico" data-ico="star"></i> <span id="starsTotal">0</span></span><span class="pill" id="carPill" style="border-color:#ff8a3c"><i class="ico" data-ico="carrot"></i> <span id="carrots">0</span></span><span class="pill" id="topSet" style="border-color:#22e65a;cursor:pointer" title="Settings"><i class="ico" data-ico="gear"></i></span></div>
+    <div class="chips" style="display:flex;gap:8px"><span class="pill" id="livesPill" role="button" tabindex="0" title="Lives: a new one every 30 minutes"><i class="ico" data-ico="heart"></i> <span id="lives">5</span><small class="plbl">Lives</small></span><span class="pill" id="starsPill" role="button" tabindex="0" title="Stars to spend in Charmwood works"><i class="ico" data-ico="star"></i> <span id="starsTotal">0</span><small class="plbl">Stars</small></span><span class="pill" id="carPill" role="button" tabindex="0" style="border-color:#ff8a3c" title="Carrots: feed Pogo"><i class="ico" data-ico="carrot"></i> <span id="carrots">0</span><small class="plbl">Carrots</small></span><span class="pill" id="topSet" role="button" tabindex="0" style="border-color:#22e65a;cursor:pointer" title="Settings"><i class="ico" data-ico="gear"></i><small class="plbl">Settings</small></span></div>
   </div>
   <div class="pathWrap" id="pathWrap"><div class="path" id="path"><svg id="pathSvg" viewBox="0 0 420 1400" preserveAspectRatio="none"></svg></div></div>
   <div class="mapset"><button type="button" class="pill" id="setSound" title="Sound"><span><i class="ico" data-ico="sound"></i></span></button><button type="button" class="pill" id="setGear" title="Settings"><span><i class="ico" data-ico="gear"></i></span></button></div>
@@ -3026,6 +3041,11 @@ function openHunt(rc) {
 // what a win adds beyond carrots and stars: an album card, season points, and the counters on the map bar
 function afterWinMeta(stars, bonus) { save.carrots = save.carrots || 0; const out = [seasonWin(stars, bonus)]; const c = dropCard(bonus); if (c) out.push(c); return out; }
 $("lives").parentNode.style.cursor = "pointer"; $("lives").parentNode.addEventListener("click", showLives);
+{ // web header chips open what they count; the app keeps its own header behaviour (html.app is checked at tap time)
+  const web = (fn) => () => { if (!document.documentElement.classList.contains("app")) fn(); };
+  $("starsPill").addEventListener("click", web(() => openGarden())); $("carPill").addEventListener("click", web(() => openPet()));
+  for (const id of ["livesPill", "starsPill", "carPill", "topSet"]) $(id).addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $(id).click(); } });
+}
 $("lifeClose").addEventListener("click", () => hide("mLives"));
 let pendingLevel = 0;
 $("sPlay").addEventListener("click", () => { hide("mStart"); clearProgress(); zoomFromStop(); startLevel(pendingLevel); });
@@ -4734,7 +4754,7 @@ const TR = {
   "Mordo stole the forest's charms. Win levels to bring them home.": "Mordo ormanın tılsımlarını çaldı. Seviyeleri kazan, onları eve getir.", "Match three": "Üçlü eşleştir",
   "Swap two charms. Four in a row: striped. Five: rainbow. A square: firefly.": "İki tılsımın yerini değiştir. Dört sıra: çizgili. Beş: gökkuşağı. Kare: ateş böceği.",
   "Lives and boosters": "Canlar ve güçlendiriciler", "A lost level costs a life. Boosters sit under the board.": "Kaybedilen seviye bir can götürür. Güçlendiriciler tahtanın altında.", "More": "Daha fazla",
-  "{1} d {2} h left": "{1} g {2} s kaldı", "{1} h left": "{1} s kaldı", "{1} d {2} h": "{1} g {2} s", "{1} h": "{1} s", "{1} min": "{1} dk", "𝕏 Share on X": "𝕏 X'te paylaş", "Prism": "Prism", "Pop": "Pop"
+  "{1} d {2} h left": "{1} g {2} s kaldı", "{1} h left": "{1} s kaldı", "{1} d {2} h": "{1} g {2} s", "{1} h": "{1} s", "{1} min": "{1} dk", "Carrots": "Havuç", "Lives: a new one every 30 minutes": "Canlar: her 30 dakikada bir yenisi", "Stars to spend in Charmwood works": "Charmwood işlerinde harcanacak yıldızlar", "Carrots: feed Pogo": "Havuçlar: Pogo'yu besle", "𝕏 Share on X": "𝕏 X'te paylaş", "Prism": "Prism", "Pop": "Pop"
 };
 if (save.lang === "tr" && !window.__fast) (() => {
   const exact = new Map(), tpl = [], esc = (s) => s.replace(/[.*+?^$()[\]\\|]/g, "\\$&");
