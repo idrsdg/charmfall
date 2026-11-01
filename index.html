@@ -655,7 +655,7 @@
 
 /* 2026-11-02 declutter (owner: "the games have far too many buttons and too much text"). Hides and folds only; nothing restyled.
    Map: the bottom bar shows only what is waiting (.ready: the daily gift, a season tier, a chest) plus one "More" that opens the full row.
-   Cards: one primary action each, no "All games" inside cards (the map header has it), no fine print that the numbers already say. */
+   Cards: one primary action each, no "All games" inside cards (the shared .arcade-all pill sits in the map header and in the pause and results card headers), no fine print that the numbers already say. */
 .mapbar:not(.open) > button:not(.ready):not(#btnMore) { display: none; }
 .mapbar.open #btnMore { filter: brightness(.92); translate: 0 2px; }
 .mapbar #btnRoom { font-size: 18px; line-height: 1; }
@@ -663,10 +663,19 @@ html.app .mapset { display: none !important; }                 /* its one button
 #mStart .rate, #sBeat, #mStart [data-arcade-room] { display: none !important; }   /* friends rooms: map bar, More */
 html:not(.app) #btnBack, html:not(.app) #btnSound { display: none !important; }   /* both in Pause */
 .frz { font-size: 0 !important; } .frz span { font-size: 13px !important; }       /* the bolt says it; the word "Frenzy" goes */
-#mPause .card > p, .card a.btn[href="../games/"] { display: none !important; }
+#mPause .card > p { display: none !important; }
 html:not(.app) #mPause .btn.snd { display: none !important; }                     /* the volume control under it mutes too */
 #eTale, #mLives p.sub:not(#invText) { display: none !important; }
 #mEnd:has(#eStars:not(.stars3)) [data-arcade-share], #mEnd:has(#eStars:not(.stars3)) #eSub { display: none !important; }
+
+/* 2026-11-02 web map header: the shared All games pill first, then the logo, the chips on the right; on narrow screens the pill drops to its own line under the logo. The app keeps its own header. */
+.card > .arcade-all { display: flex; width: max-content; margin: 0 auto 12px; }   /* pause and results: in the card header, clear of the game HUD */
+html:not(.app) .top { flex-wrap: wrap; justify-content: flex-start; column-gap: 12px; row-gap: 8px; }
+html:not(.app) .top .chips { margin-left: auto; }
+@media (max-width: 759px) {
+  html:not(.app) .top::before { content: ""; order: 2; flex-basis: 100%; height: 0; }
+  html:not(.app) .top .arcade-all { order: 3; }
+}
 </style>
 </head>
 <body>
@@ -674,8 +683,9 @@ html:not(.app) #mPause .btn.snd { display: none !important; }                   
 
 <section class="screen" id="map">
   <div class="top">
+    <a class="arcade-all" href="/games/" aria-label="All games">All games</a>
     <div class="logo">Charm<span>fall</span></div>
-    <div style="display:flex;gap:8px"><span class="pill"><i class="ico" data-ico="heart"></i> <span id="lives">5</span></span><span class="pill"><i class="ico" data-ico="star"></i> <span id="starsTotal">0</span></span><span class="pill" id="carPill" style="border-color:#ff8a3c"><i class="ico" data-ico="carrot"></i> <span id="carrots">0</span></span><span class="pill" id="topSet" style="border-color:#22e65a;cursor:pointer" title="Settings"><i class="ico" data-ico="gear"></i></span><a class="pill" href="../games/" style="color:#fff;text-decoration:none;border-color:#ffd23f;box-shadow:0 3px 0 #123a1c"><i class="ico" data-ico="games"></i></a></div>
+    <div class="chips" style="display:flex;gap:8px"><span class="pill"><i class="ico" data-ico="heart"></i> <span id="lives">5</span></span><span class="pill"><i class="ico" data-ico="star"></i> <span id="starsTotal">0</span></span><span class="pill" id="carPill" style="border-color:#ff8a3c"><i class="ico" data-ico="carrot"></i> <span id="carrots">0</span></span><span class="pill" id="topSet" style="border-color:#22e65a;cursor:pointer" title="Settings"><i class="ico" data-ico="gear"></i></span></div>
   </div>
   <div class="pathWrap" id="pathWrap"><div class="path" id="path"><svg id="pathSvg" viewBox="0 0 420 1400" preserveAspectRatio="none"></svg></div></div>
   <div class="mapset"><button type="button" class="pill" id="setSound" title="Sound"><span><i class="ico" data-ico="sound"></i></span></button><button type="button" class="pill" id="setGear" title="Settings"><span><i class="ico" data-ico="gear"></i></span></button></div>
@@ -715,15 +725,14 @@ html:not(.app) #mPause .btn.snd { display: none !important; }                   
   <button class="btn" id="sPlay">Play</button>
   <button class="btn ghost" type="button" data-arcade-room>👥 Play with friends</button>
 </div></div>
-<div class="modal" id="mPause" hidden><div class="card">
+<div class="modal" id="mPause" hidden><div class="card"><a class="arcade-all" href="/games/" aria-label="All games">All games</a>
   <h2>Paused</h2><p>Your board is saved. Come back any time.</p>
   <button class="btn" id="pResume">▶ Resume</button>
   <button class="btn ghost" id="pMap">Map</button>
   <button class="btn ghost snd" type="button"><i class="ico" data-ico="sound"></i> Sound</button>
   <div data-arcade-vol></div>
-  <a class="btn ghost" href="../games/" style="display:inline-block;text-decoration:none"><i class="ico" data-ico="games"></i> All games</a>
 </div></div>
-<div class="modal" id="mEnd" hidden><div class="card">
+<div class="modal" id="mEnd" hidden><div class="card"><a class="arcade-all" href="/games/" aria-label="All games">All games</a>
   <div id="ePogo"></div><h2 id="eTitle">Level complete</h2>
   <div class="big" id="eStars"></div>
   <p id="eText"></p>
@@ -731,7 +740,6 @@ html:not(.app) #mPause .btn.snd { display: none !important; }                   
   <div data-arcade-roast></div>
   <div id="eBtns"></div>
   <a class="btn" data-arcade-share style="background:#000;color:#fff;border:2px solid #fff;text-decoration:none;display:inline-block;cursor:pointer">𝕏 Share on X</a>
-  <a class="btn ghost" href="../games/" style="display:inline-block;text-decoration:none"><i class="ico" data-ico="games"></i> All games</a>
 </div></div>
 <div class="modal" id="mLives" hidden><div class="card">
   <h2 id="lifeTitle">Out of lives</h2><p id="lifeText">A new life arrives in a while.</p>
@@ -740,7 +748,6 @@ html:not(.app) #mPause .btn.snd { display: none !important; }                   
   <button class="btn ghost" type="button" data-arcade-room>👥 Play with friends</button>
   <p class="sub" style="margin:10px 0 0">Friends rooms do not use lives.</p>
   <button class="btn ghost" id="lifeClose">OK</button>
-  <a class="btn ghost" href="../games/" style="display:inline-block;text-decoration:none"><i class="ico" data-ico="games"></i> All games</a>
 </div></div>
 <div class="modal" id="mDaily" hidden><div class="card">
   <h2>Daily gift</h2><p id="dText"></p>
