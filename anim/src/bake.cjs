@@ -2,9 +2,9 @@
 const pp = require("/Users/aatiii/.npm/_npx/0f94ee7615faf582/node_modules/puppeteer-core"), fs = require("fs"), path = require("path");
 const OUT = path.join(__dirname, ".."), SHEETS = process.env.SHEETS || path.join(__dirname, "contact");
 (async () => { fs.mkdirSync(SHEETS, { recursive: true });
-  const b = await pp.connect({ browserURL: "http://127.0.0.1:9333", defaultViewport: null, protocolTimeout: 300000 }); const page = (await b.pages())[0];
+  const b = await pp.connect({ browserURL: "http://127.0.0.1:9333", defaultViewport: null, protocolTimeout: 1800000 }); const page = await b.newPage();   // its own tab in the shared Chrome, closed at the end
   await page.setViewport({ width: 900, height: 400, deviceScaleFactor: 1 });
-  await page.goto("http://127.0.0.1:8771/prism/index.html?bake&t=" + Date.now(), { waitUntil: "load" }); await new Promise(r => setTimeout(r, 2500));
+  await page.goto((process.env.BAKE_BASE || "http://127.0.0.1:8771") + "/prism/index.html?bake&t=" + Date.now(), { waitUntil: "domcontentloaded", timeout: 120000 }); await new Promise(r => setTimeout(r, 6000));
   await page.addScriptTag({ path: path.join(__dirname, "..", "pogo-anim.js") });
   const names = process.argv.slice(2).length ? process.argv.slice(2) : await page.evaluate(() => Object.keys(POGO_ANIMS));
   const meta = {};
@@ -18,4 +18,4 @@ const OUT = path.join(__dirname, ".."), SHEETS = process.env.SHEETS || path.join
     meta[name] = [r.n, r.cols, r.fps, r.loop ? 1 : 0]; console.log(name, r.n, "frames", Math.round(fs.statSync(path.join(OUT, "pogo-" + name + ".webp")).size / 1024) + " KB");
   }
   if (process.argv.length <= 2) { fs.writeFileSync(path.join(OUT, "pogo.json"), JSON.stringify(meta)); console.log("PA =", JSON.stringify(meta)); }
-  await page.goto("about:blank"); b.disconnect(); })();
+  await page.close(); b.disconnect(); })();

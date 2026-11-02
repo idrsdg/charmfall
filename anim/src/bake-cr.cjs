@@ -4,9 +4,9 @@ const pp = require("/Users/aatiii/.npm/_npx/0f94ee7615faf582/node_modules/puppet
 const OUT = path.join(__dirname, ".."), SHEETS = process.env.SHEETS || path.join(__dirname, "contact");
 const LIVE = ["rabbit", "fox", "hedgehog", "deer", "sheep", "bear", "penguin", "butterfly", "bee", "bat", "crab", "eagle", "magpie", "gritt", "corvin", "flock"];
 (async () => { fs.mkdirSync(SHEETS, { recursive: true });
-  const b = await pp.connect({ browserURL: "http://127.0.0.1:9333", defaultViewport: null, protocolTimeout: 600000 }); const page = (await b.pages())[0];
+  const b = await pp.connect({ browserURL: "http://127.0.0.1:9333", defaultViewport: null, protocolTimeout: 1800000 }); const page = await b.newPage();   // its own tab in the shared Chrome, closed at the end
   await page.setViewport({ width: 900, height: 400, deviceScaleFactor: 1 });
-  await page.goto("http://127.0.0.1:8771/prism/index.html?bake&nocache=" + Date.now(), { waitUntil: "load" }); await new Promise(r => setTimeout(r, 3000));
+  await page.goto((process.env.BAKE_BASE || "http://127.0.0.1:8771") + "/prism/index.html?bake&nocache=" + Date.now(), { waitUntil: "domcontentloaded", timeout: 120000 }); await new Promise(r => setTimeout(r, 6000));
   const kinds = process.argv.slice(2).length ? process.argv.slice(2) : LIVE, meta = fs.existsSync(path.join(OUT, "cr.json")) ? JSON.parse(fs.readFileSync(path.join(OUT, "cr.json"))) : {};
   for (const k of kinds) {
     const r = await page.evaluate((k) => new Promise((res) => { window.__fast = 1; D3.strip(k, 176, (url) => { window.__fast = 0; if (!url) return res(null); const im = new Image(); im.onload = () => { const c = document.createElement("canvas"); c.width = im.width; c.height = im.height; c.getContext("2d").drawImage(im, 0, 0);
@@ -20,4 +20,4 @@ const LIVE = ["rabbit", "fox", "hedgehog", "deer", "sheep", "bear", "penguin", "
     meta[k] = [r.n, r.cols]; console.log(k, r.n, "frames", Math.round(fs.statSync(path.join(OUT, "cr-" + k + ".webp")).size / 1024) + " KB");
   }
   fs.writeFileSync(path.join(OUT, "cr.json"), JSON.stringify(meta)); console.log("CR =", JSON.stringify(meta));
-  await page.goto("about:blank"); b.disconnect(); })();
+  await page.close(); b.disconnect(); })();
