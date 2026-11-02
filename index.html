@@ -1116,7 +1116,7 @@ function pogoMoment(mood, ms = 1600, over) { if (window.__fast || (!over && docu
 const plump = () => Math.min(1, ((typeof save === "object" && save && save.fed) || 0) / 15), pogoKg = () => (1.5 + plump() * 2.5).toFixed(1);
 // carrots: one per rating spark on a win, one for every Frenzy. Tap Pogo on the map to bring him up close and feed him; fresh carrots make him jump for joy when you come back.
 let carrotNew = 0, feedT = 0;
-function flyText(t) { const el = document.createElement("div"); el.className = "fly"; el.textContent = t; el.style.cssText = "left:50%;top:150px;font-weight:900;font-size:22px;color:#fff;text-shadow:0 2px 0 #123a1c"; document.body.appendChild(el); if (!el.animate) { el.remove(); return; } el.animate([{ transform: "translate(-50%,10px) scale(.6)", opacity: 0 }, { transform: "translate(-50%,0) scale(1.1)", opacity: 1, offset: .2 }, { transform: "translate(-50%,-46px) scale(1)", opacity: 0 }], { duration: 1100, easing: "ease-out" }).onfinish = () => el.remove(); }
+function flyText(t) { const el = document.createElement("div"); el.className = "fly"; el.textContent = t; el.style.cssText = "left:50%;top:150px;font-weight:900;font-size:22px;color:#fff;text-shadow:0 2px 0 #123a1c"; document.body.appendChild(el); if (!el.animate) { el.remove(); return; } const k = KF("flyText"); el.animate(k.frames, { duration: k.duration }).onfinish = () => el.remove(); }
 const pogoEl = () => $("mPet").hidden ? document.querySelector(".pogoMap .pogo") : $("petBox").firstElementChild;
 const say = (t) => { if ($("mPet").hidden) tip(t); else $("petText").textContent = t; };
 function pogoMood(cls, ms, then) { const n = pogoEl(); if (!n) return; n.classList.remove("eat", "happy"); n.classList.add(cls); clearTimeout(feedT); feedT = setTimeout(() => { n.classList.remove(cls); if (then && n.isConnected) then(); }, ms); }
@@ -1130,7 +1130,7 @@ function feedPogo() {
 // the pet screen: tap Pogo on the map and he comes up close. Stroke him and he shuts his eyes; keep going and he dozes off.
 const PET = { m: 0, down: 0, x: 0, y: 0, moved: 0, t: 0, heart: 0, z: 0 }, SLEEPY = 3200;
 const petLabel = () => { const n = save.carrots || 0; $("petFeed").textContent = n > 0 ? "🥕 Feed (" + n + ")" : "🥕 No carrots yet"; $("petFeed").classList.toggle("ghost", !(n > 0)); };
-function floatAt(x, y, ch) { const el = document.createElement("div"); el.className = "fly"; el.textContent = ch; el.style.cssText = `left:${x}px;top:${y}px;z-index:13;font-size:24px;font-weight:900;color:#fff`; document.body.appendChild(el); if (!el.animate) { el.remove(); return; } const dx = (Math.random() - .5) * 50; el.animate([{ transform: "translate(-50%,-50%) scale(.4)", opacity: 0 }, { transform: "translate(-50%,-90%) scale(1.1)", opacity: 1, offset: .25 }, { transform: `translate(calc(-50% + ${dx}px),-260%) scale(.9)`, opacity: 0 }], { duration: 1300, easing: "ease-out" }).onfinish = () => el.remove(); }
+function floatAt(x, y, ch) { const el = document.createElement("div"); el.className = "fly"; el.textContent = ch; el.style.cssText = `left:${x}px;top:${y}px;z-index:13;font-size:24px;font-weight:900;color:#fff`; document.body.appendChild(el); if (!el.animate) { el.remove(); return; } el.style.setProperty("--dx", ((Math.random() - .5) * 50).toFixed(1) + "px"); const k = KF("floatAt"); el.animate(k.frames, { duration: k.duration }).onfinish = () => el.remove(); }
 function openPet() { PET.m = 0; document.documentElement.classList.add("petting"); $("petBox").innerHTML = pogoSvg("big calm"); $("petText").textContent = "Stroke him with your finger. He loves it. Weight: " + pogoKg() + " kg"; petLabel(); show("mPet"); }
 function closePet() { clearInterval(PET.z); clearTimeout(feedT); hide("mPet"); document.documentElement.classList.remove("petting"); setTimeout(() => { if ($("mPet").hidden) $("petBox").innerHTML = ""; }, 300); }
 function wakePogo(quiet) { const n = $("petBox").firstElementChild; if (!n || !n.classList.contains("sleep")) return false; n.classList.remove("sleep"); clearInterval(PET.z); PET.m = 0; if (!quiet) { pogoMood("happy", 2400); say("Good morning, Pogo!"); SFX.pop(2); } return true; }
@@ -1574,19 +1574,14 @@ const fmt = (n) => { n = Math.max(0, Math.round(n)); let s = String(n), o = ""; 
 function show(id) { const el = $(id); clearTimeout(el._t); el.classList.remove("out"); el.hidden = false; }
 function hide(id, now) { const el = $(id); if (el.hidden) return; clearTimeout(el._t); if (now || window.__fast) { el.classList.remove("out"); el.hidden = true; return; } el.classList.add("out"); el._t = setTimeout(() => { el.hidden = true; el.classList.remove("out"); }, 170); }
 const isOpen = (id) => { const el = $(id); return !el.hidden && !el.classList.contains("out"); };
-const BUMP = [{ transform: "scale(1)" }, { transform: "scale(1.32)", color: "#ffd200", offset: .4 }, { transform: "scale(1)" }];
-function bump(el) { if (typeof el === "string") el = $(el); if (!el || !el.animate) return; if (el._b) el._b.cancel(); el._b = el.animate(BUMP, { duration: 360, easing: "cubic-bezier(.3,1.3,.5,1)" }); }
-const TOAST_KF = [
-  { opacity: 0, transform: "translate(-50%,-50%) scale(.3) rotate(-8deg)", easing: "cubic-bezier(.2,1.5,.4,1)" },
-  { opacity: 1, transform: "translate(-50%,-50%) scale(1.12) rotate(2deg)", offset: .18, easing: "ease-in-out" },
-  { opacity: 1, transform: "translate(-50%,-50%) scale(1) rotate(0deg)", offset: .3, easing: "linear" },
-  { opacity: 1, transform: "translate(-50%,-52%) scale(1) rotate(0deg)", offset: .75, easing: "cubic-bezier(.5,0,.9,.6)" },
-  { opacity: 0, transform: "translate(-50%,-70%) scale(1.1) rotate(0deg)" }];
+// 2026-11-02 the script-driven motions read their keys from ui-keys.js (UI_KEYS.waapi): the HUD bump, the toast, tips, the achievement banner, floating text
+const KF = (name) => UI_KEYS.waapi(name);
+function bump(el) { if (typeof el === "string") el = $(el); if (!el || !el.animate) return; if (el._b) el._b.cancel(); const k = KF("bump"); el._b = el.animate(k.frames, { duration: k.duration }); }
 let toastA = null;
 function toast(t) { if (!t) return; const el = $("toast"); el.textContent = t; el.style.fontSize = t.length > 13 ? "clamp(18px, 4.6vw, 28px)" : "";
   // in a level the word sits right above the board, never over the gems
   if (G && !$("game").hidden) { const r = canvas.getBoundingClientRect(); el.style.setProperty("--toastY", Math.max(40, r.top - 64) + "px"); } else el.style.removeProperty("--toastY");
-  if (toastA) toastA.cancel(); if (el.animate) toastA = el.animate(TOAST_KF, { duration: 1100 }); }
+  if (toastA) toastA.cancel(); if (el.animate) { const k = KF("toast"); toastA = el.animate(k.frames, { duration: k.duration }); } }
 
 // instruction messages (boosters etc.): a crisp pill just above the board, readable for 3 s, never over the cells
 let tipA = null;
@@ -1594,8 +1589,9 @@ function tip(t, ms) {
   const el = $("tip"); if (tipA) { tipA.cancel(); tipA = null; } if (!t || !el.animate) return;
   el.textContent = t; ms = ms || 3000;
   const top = $("game").hidden ? 70 : Math.max(4, canvas.getBoundingClientRect().top - el.offsetHeight - 8); el.style.top = top + "px";
-  const total = ms + 420;
-  tipA = el.animate([{ opacity: 0, transform: "translate(-50%, 10px) scale(.9)", easing: "cubic-bezier(.2,1.4,.4,1)" }, { opacity: 1, transform: "translate(-50%, 0) scale(1)", offset: 200 / total, easing: "linear" }, { opacity: 1, transform: "translate(-50%, 0) scale(1)", offset: ms / total, easing: "ease-in" }, { opacity: 0, transform: "translate(-50%, -8px) scale(1)" }], { duration: total });
+  const ti = KF("tipIn"), to = KF("tipOut"), total = ms + to.duration;   // keyed in, a hold as long as the message needs, keyed out (ui-keys.js tipIn / tipOut)
+  const fr = ti.frames.map(f => Object.assign({}, f, { offset: f.offset * ti.duration / total })); fr[fr.length - 1].easing = "linear"; fr.push(...to.frames.map(f => Object.assign({}, f, { offset: (ms + f.offset * to.duration) / total })));
+  tipA = el.animate(fr, { duration: total });
 }
 
 // ---------------------------------------------------------------- icons
@@ -3202,7 +3198,7 @@ function achPop(a) {
   const now = performance.now(), delay = Math.max(0, achQ - now); achQ = now + delay + 1900;
   setTimeout(() => {
     const el = document.createElement("div"); el.className = "achpop"; el.textContent = "🏆 " + a.name + " · +1 🐦"; document.body.appendChild(el); SFX.ach(); if (G && !G.over) pogoReact("clap"); else pogoMoment("clap", 1500);
-    const an = el.animate([{ transform: "translate(-50%,-160%)", easing: "cubic-bezier(.2,1.3,.4,1)" }, { transform: "translate(-50%,0)", offset: .16, easing: "linear" }, { transform: "translate(-50%,0)", offset: .86, easing: "cubic-bezier(.5,0,.9,.5)" }, { transform: "translate(-50%,-160%)" }], { duration: 1800 });
+    const ak = KF("achpop"), an = el.animate(ak.frames, { duration: ak.duration });
     an.onfinish = () => el.remove();
   }, delay);
 }
@@ -3283,7 +3279,7 @@ function startLevel(i, snap) {
   }
   G.t0 = performance.now(); if (!resumed) logEv("start"); if (i < 2) G.hintAt = performance.now() + 900;
   { const k = rotOf(i); if (k > (save.gemSeen3 || 0) && !window.__fast) { save.gemSeen3 = k; persist(); } }
-  particles.length = 0; fx.length = 0; floaters.length = 0; dying.length = 0;
+  particles.length = 0; fx.length = 0; floaters.length = 0; dying.length = 0; PETALS.length = 0;
   tip(""); $("map").hidden = true; $("game").hidden = false; $("gPogo").innerHTML = pogoSvg("", true); layout(); hudInit(); gameDecor(i); gameWeather(i); gameGround(i); placeStage(); { const sp = stagePa(); if (sp) paPlay(sp, "ready", () => paPlay(sp, stageBase())); } SFX.go();
   if (window.__lowPower && !window.__lpTold) { window.__lpTold = 1; setTimeout(() => tip("Low Power Mode is on: iPhone holds games at 30 fps", 4800), 1300); }
   if (!resumed) snapshot();
@@ -3899,7 +3895,7 @@ function doUndo() {
   if (!save.boost.undo) { tip("None left: collect the Daily gift for more"); SFX.bad(); return false; }
   save.boost.undo--; G.bu = (G.bu || 0) + 1; boostBonus(); const s = G.undo; G.undo = null; unpack(s); const now = performance.now();
   for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const g = G.grid[r][c]; if (g) g.born = now + (r + c) * 14; }
-  G.sel = null; G.boost = null; G.hint = null; G.hintAt = now + 4000; G.combo = 0; dying.length = 0; floaters.length = 0;
+  G.sel = null; G.boost = null; G.hint = null; G.hintAt = now + 4000; G.combo = 0; dying.length = 0; floaters.length = 0; PETALS.length = 0;
   SFX.undo(); tip("Move undone"); updateHud(); snapshot(); return true;
 }
 
@@ -4074,7 +4070,11 @@ function bolt(x1, y1, x2, y2, color) {
 }
 function sparkle(x, y, color) { sheetFx("twinkle", x, y, 1.8, color); }
 function puff(x, y) { const now = performance.now(); for (let i = 0; i < 4; i++) addP({ k: "dot", x: x + (Math.random() - .5) * .5, y, vx: (Math.random() - .5) * 3, vy: -1 - Math.random() * 2, t: now, life: 320 + Math.random() * 200, color: "#dfe8ff", r: 3 + Math.random() * 3, nog: true }); }
-function confetti() { const now = performance.now(); for (let i = 0; i < 160; i++) addP({ k: "conf", x: Math.random() * COLS, y: -Math.random() * 4, vx: (Math.random() - .5) * 2, vy: 2 + Math.random() * 3, t: now + Math.random() * 600, life: 2400 + Math.random() * 1000, color: PAL[rnd(NCOL)].c, r: .09 + Math.random() * .08, rot: Math.random() * 6.28, vr: (Math.random() - .5) * 10, ph: Math.random() * 6.28 }); }
+// 2026-11-02 a won level: paper petals in the level's colours drift down over the board on one hand-keyed glide each (ui-keys.js BOARD.petal), staggered
+// and mirrored; no physics confetti. Seeded, so the same fall every time it is reviewed.
+const PETALS = [];
+function confetti() { const now = performance.now(); PETALS.length = 0; let s = 97; const rr = () => { s = (s * 1103515245 + 12345) | 0; return ((s >>> 8) & 65535) / 65535; };
+  for (let i = 0; i < 96; i++) PETALS.push({ x: .3 + rr() * (COLS - .6), y: -.8 - rr() * 3.6, t: now + rr() * 1100, m: i & 1 ? -1 : 1, c: i % NCOL, k: .75 + rr() * .5, ph: rr() }); }
 function nope(r, c) { sheetFx("nope", c + .5, r + .5, 1.1); }
 
 const ease = (t) => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
@@ -4088,6 +4088,49 @@ function shadowSprite() {
   const rw = Math.round(S * .72), rh = Math.ceil(rw * .55), rc = document.createElement("canvas"); rc.width = rw; rc.height = rh; const rx = rc.getContext("2d"); rx.globalAlpha = .9; rx.drawImage(c, 0, S * .225, S, S * .55, 0, 0, rw, rh); SPR.shadowRest = rc;   // resting gems: already at size and strength, copied 1:1
   return c;
 }
+// 2026-11-02 the board's keyed motion (ui-keys.js BOARD.*): the sampled values land in these objects, nothing is allocated in the frame
+const HP = {}, BP = {}, PP = {}, FP = {}, PTL = {}, HINT_LEN = UI_KEYS.len("hint"), BORN_LEN = UI_KEYS.len("born"), POP_LEN = UI_KEYS.len("popSpecial"), FLT_LEN = UI_KEYS.len("floater"), PETAL_LEN = UI_KEYS.len("petal");
+// the wash under a hinted cell: three pools of warm cream a little off each other (a loaded brush), the rim where the water dried darker, and a
+// sepia pencil ring drawn by hand round the cell (a rounded square with a small tremor). Painted once per board size, drawn at a keyed alpha.
+function hintSprite() {
+  if (SPR.hint && SPR.hintSize === CELL * DPR) return SPR.hint;
+  const pad = CELL * .2, S = Math.ceil((CELL + pad * 2) * DPR), c = document.createElement("canvas"); c.width = c.height = S; const x = c.getContext("2d"); x.setTransform(DPR, 0, 0, DPR, 0, 0); x.translate(pad, pad);
+  const r = CELL * .2; x.save(); x.shadowColor = "rgba(255,206,110,.95)"; x.shadowBlur = CELL * .16;
+  x.globalAlpha = .55; x.fillStyle = "#ffe6a4"; x.beginPath(); x.roundRect(1.5, 1.5, CELL - 3, CELL - 3, r); x.fill();
+  x.globalAlpha = .35; x.fillStyle = "#fff0c0"; x.beginPath(); x.roundRect(CELL * .02 + 1.5, -CELL * .015 + 1.5, CELL - 3, CELL - 3, r); x.fill();
+  x.globalAlpha = .3; x.fillStyle = "#ffd98a"; x.beginPath(); x.roundRect(-CELL * .015 + 1.5, CELL * .02 + 1.5, CELL - 3, CELL - 3, r); x.fill(); x.restore();
+  x.globalAlpha = .55; x.strokeStyle = "rgba(226,160,52,.9)"; x.lineWidth = Math.max(1.5, CELL * .035); x.beginPath(); x.roundRect(3, 3, CELL - 6, CELL - 6, r * .9); x.stroke();   // the dried rim
+  let sd = 11; const rr = () => { sd = (sd * 1103515245 + 12345) | 0; return ((sd >>> 8) & 65535) / 65535 - .5; };
+  x.globalAlpha = .95; x.strokeStyle = "#5a3818"; x.lineWidth = Math.max(1.6, CELL * .04); x.lineJoin = "round"; x.lineCap = "round"; x.beginPath();
+  const R = CELL * .45, N = 48; for (let i = 0; i <= N; i++) { const a = i / N * 6.2832, ca = Math.cos(a), sa = Math.sin(a), px = CELL / 2 + Math.sign(ca) * Math.pow(Math.abs(ca), .42) * R + rr() * CELL * .02, py = CELL / 2 + Math.sign(sa) * Math.pow(Math.abs(sa), .42) * R + rr() * CELL * .02; i ? x.lineTo(px, py) : x.moveTo(px, py); } x.closePath(); x.stroke();   // the pencil ring
+  x.globalAlpha = .35; x.lineWidth = Math.max(1, CELL * .02); x.beginPath(); for (let i = 0; i <= N; i++) { const a = i / N * 6.2832, ca = Math.cos(a), sa = Math.sin(a), px = CELL / 2 + Math.sign(ca) * Math.pow(Math.abs(ca), .42) * R * 1.03 + rr() * CELL * .03, py = CELL / 2 + Math.sign(sa) * Math.pow(Math.abs(sa), .42) * R * 1.03 + rr() * CELL * .03; i ? x.lineTo(px, py) : x.moveTo(px, py); } x.closePath(); x.stroke();   // a second, lighter pass of the pencil
+  SPR.hint = c; SPR.hintSize = CELL * DPR; return c;
+}
+// a paper petal in a charm's colour: a soft leaf shape, lighter in the middle, the colour pooled at the edge; one per colour per board size
+function petalSprite(i) {
+  if (!SPR.petal || SPR.petalSize !== CELL * DPR) { SPR.petal = []; SPR.petalSize = CELL * DPR; }
+  let c = SPR.petal[i]; if (c) return c;
+  const C = PAL[i] || PAL[0], w = Math.ceil(CELL * .3 * DPR), h = Math.ceil(CELL * .17 * DPR); c = document.createElement("canvas"); c.width = w + 4; c.height = h + 4; const x = c.getContext("2d"); x.translate(c.width / 2, c.height / 2);
+  const leaf = () => { x.beginPath(); x.moveTo(-w / 2, 0); x.quadraticCurveTo(-w * .2, -h / 2, w / 2 * .9, -h * .12); x.quadraticCurveTo(w * .2, h / 2, -w / 2, 0); x.closePath(); };
+  leaf(); x.fillStyle = mixc(C.c, "#ffffff", .22); x.fill(); x.lineWidth = Math.max(1, DPR * .9); x.strokeStyle = mixc(C.c, C.d, .55); x.globalAlpha = .9; x.stroke();
+  x.globalAlpha = .5; leaf(); x.clip(); x.fillStyle = mixc(C.c, "#ffffff", .6); x.beginPath(); x.ellipse(-w * .08, -h * .08, w * .26, h * .3, -.2, 0, 6.2832); x.fill();
+  SPR.petal[i] = c; return c;
+}
+// the lantern charm's circling light and the firefly queen's glow: soft discs painted once per board size
+function lanternSprite() {
+  if (SPR.lantern && SPR.lanternSize === CELL * DPR) return SPR.lantern;
+  const s = CELL * .372, R = s * .3, S = Math.ceil(R * 2 * DPR) + 2, c = document.createElement("canvas"); c.width = c.height = S; const x = c.getContext("2d"), m = S / 2, gl = x.createRadialGradient(m, m, 0, m, m, R * DPR);
+  gl.addColorStop(0, "rgba(255,248,200,1)"); gl.addColorStop(.35, "rgba(255,200,40,.9)"); gl.addColorStop(1, "rgba(255,170,0,0)"); x.fillStyle = gl; x.beginPath(); x.arc(m, m, R * DPR, 0, 6.2832); x.fill();
+  SPR.lantern = c; SPR.lanternSize = CELL * DPR; return c;
+}
+function queenGlow() {
+  if (SPR.queen && SPR.queenSize === CELL * DPR) return SPR.queen;
+  const R = CELL * .36 * 1.25, S = Math.ceil(R * 2 * DPR) + 2, c = document.createElement("canvas"); c.width = c.height = S; const x = c.getContext("2d"), m = S / 2, gg = x.createRadialGradient(m, m, 0, m, m, R * DPR);
+  gg.addColorStop(0, "rgba(255,240,150,.9)"); gg.addColorStop(1, "rgba(255,240,150,0)"); x.fillStyle = gg; x.beginPath(); x.arc(m, m, R * DPR, 0, 6.2832); x.fill();
+  SPR.queen = c; SPR.queenSize = CELL * DPR; return c;
+}
+const MINI_G = Array.from({ length: 12 }, (_, i) => ({ kind: "gem", color: i, special: null, lock: false }));
+function miniSprite(i) { if (!SPR.mini || SPR.miniSize !== CELL * DPR) { SPR.mini = []; SPR.miniSize = CELL * DPR; } return SPR.mini[i] || (SPR.mini[i] = sprite(MINI_G[i])); }
 const easeBack = (t) => { const c = 1.9; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
 const clamp01 = (t) => t < 0 ? 0 : t > 1 ? 1 : t;
 // Six cut-crystal charms. Each has an outline and a way to cut it into facets: "table" (a ring of facets around a flat top),
@@ -4236,7 +4279,7 @@ function gemPath(ctx, shape, s) {
 const SPR = { size: 0, map: new Map() };
 function sprite(g) {
   const key = g.kind === "ing" ? "ing" : PAL[g.color].name + PAL[g.color].c + ":" + (g.special || "") + ":" + (g.lock ? "L" : "");   // keyed by the charm itself, not its slot: the charm in a slot changes every 25 levels and with the colour-blind palette
-  if (SPR.size !== CELL * DPR) { SPR.size = CELL * DPR; SPR.map.clear(); }
+  if (SPR.size !== CELL * DPR) { SPR.size = CELL * DPR; SPR.map.clear(); SPR.mini = null; }
   let sp = SPR.map.get(key); if (sp) return sp;
   const S = Math.ceil(CELL * 1.9 * DPR), c = document.createElement("canvas"); c.width = S; c.height = S;
   const x = c.getContext("2d"); x.setTransform(DPR, 0, 0, DPR, 0, 0); x.translate(S / DPR / 2, S / DPR / 2);
@@ -4250,10 +4293,10 @@ function drawGem(g, px, py, scale, now, sy = 1, rot = 0) {
   else ctx.drawImage(sp, bx, by, bw, bh, px - w / 2 + bx * k, py - h / 2 + by * k * sy, bw * k, bh * k * sy);
   if (g.special === "bomb") {   // the firefly queen: the orb is a cached sprite, her wings and her pulse are drawn live
     const s = CELL * .36 * scale, f = Math.sin(now / 45), pulse = .5 + .5 * Math.sin(now / 160);
-    { const mp = Math.round(CELL * .33 * DPR), ms = s * .82;   // a small copy of every charm in this level circles her: she takes them all
-      for (let i = 0; i < NCOL; i++) { const a = now / 900 + i * 6.2832 / NCOL + rot, x = px + Math.cos(a) * s * 1.02, y = py + Math.sin(a) * s * 1.02 * sy, im = sprite({ kind: "gem", color: i, special: null, lock: false }), iw = ms * im.width / (CELL * .78 * DPR);
-        if (im) ctx.drawImage(im, x - iw / 2, y - iw / 2, iw, iw); else { ctx.beginPath(); ctx.arc(x, y, s * .2, 0, 6.2832); ctx.fillStyle = PAL[i].c; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = "#fff"; ctx.stroke(); } } }
-    ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha *= .55 + .3 * pulse; const gg = ctx.createRadialGradient(px, py, 0, px, py, s * 1.25); gg.addColorStop(0, "rgba(255,240,150,.9)"); gg.addColorStop(1, "rgba(255,240,150,0)"); ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(px, py, s * 1.25, 0, 6.2832); ctx.fill(); ctx.restore();
+    { const ms = s * .82;   // a small copy of every charm in this level circles her: she takes them all (the copies are the board's own cached sprites, looked up once per size)
+      for (let i = 0; i < NCOL; i++) { const a = now / 900 + i * 6.2832 / NCOL + rot, x = px + Math.cos(a) * s * 1.02, y = py + Math.sin(a) * s * 1.02 * sy, im = miniSprite(i), iw = ms * im.width / (CELL * .78 * DPR);
+        ctx.drawImage(im, x - iw / 2, y - iw / 2, iw, iw); } }
+    { const gs = queenGlow(), gw = gs.width / DPR * scale; ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha *= .55 + .3 * pulse; ctx.drawImage(gs, px - gw / 2, py - gw / 2, gw, gw); ctx.restore(); }   // her glow: one cached disc, no gradient per frame
     ctx.fillStyle = "rgba(220,245,255,.9)"; ctx.strokeStyle = "rgba(60,90,140,.7)"; ctx.lineWidth = 1.2; for (const k of [-1, 1]) { ctx.save(); ctx.translate(px + k * s * .85, py - s * .8 * sy); ctx.rotate(k * (.55 + f * .35) + rot); ctx.beginPath(); ctx.ellipse(0, 0, s * .62, s * (.24 + .1 * Math.abs(f)), 0, 0, 6.2832); ctx.fill(); ctx.stroke(); ctx.restore(); }
     ctx.beginPath(); ctx.arc(px, py, s * (.24 + .05 * pulse), 0, 6.2832); ctx.fillStyle = "#fffbe0"; ctx.fill();
   }
@@ -4387,7 +4430,7 @@ const boldCache = new Map();
 // 2026-10-28 İdris "Suluboya masal kitabı... tüm taşlar": the charms are watercolour paintings made on the Mac (anim/src/charm-wc.js, bake-charms.cjs),
 // one file each (anim/ch-<name>.webp). Until a file is in, the old painter below stands in; when they are all in, the board's sprites are made again.
 const CHI = {}; { let left = 0; const all = [...new Set(BL.flat())]; left = all.length;
-  const done = () => { if (--left) return; boldCache.clear(); SPR.map.clear(); if (typeof FSPR !== "undefined") FSPR.clear(); if (G && typeof layout === "function") { SPR.size = 0; layout(); } };
+  const done = () => { if (--left) return; boldCache.clear(); SPR.map.clear(); SPR.mini = null; if (typeof FSPR !== "undefined") FSPR.clear(); if (G && typeof layout === "function") { SPR.size = 0; layout(); } };
   for (const n of all) { const im = new Image(); im.src = "anim/ch-" + n + ".webp" + ART_Q; (im.decode ? im.decode() : new Promise(r => { im.onload = r; })).then(() => { CHI[n] = im; done(); }, done); } }
 function realArt(slot, v, px) {
   const name = BL[slot % 6][Math.min(BL[slot % 6].length - 1, v || 0)], key = "R" + name + ":" + px; if (boldCache.has(key)) return boldCache.get(key);
@@ -4534,7 +4577,7 @@ function drawGemRaw(ctx, g, now) {
   if (!JELLY || GS === "gem" || GS === "facet") { const gx = Q.glint ? Q.glint[0] * s : C.shape === "moon" ? -s * .62 : -s * .42, gy = Q.glint ? Q.glint[1] * s : C.shape === "moon" ? s * .05 : -s * .5, a = s * .3, b = s * .07; ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.beginPath(); ctx.moveTo(gx, gy - a); ctx.lineTo(gx + b, gy - b); ctx.lineTo(gx + a, gy); ctx.lineTo(gx + b, gy + b); ctx.lineTo(gx, gy + a); ctx.lineTo(gx - b, gy + b); ctx.lineTo(gx - a, gy); ctx.lineTo(gx - b, gy - b); ctx.closePath(); ctx.fill(); }
   }
   if (!C3 && (g.special === "h" || g.special === "v")) { ctx.save(); gemPath(ctx, C.shape, s); ctx.clip(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 3.5; for (let i = -2; i <= 2; i++) { ctx.beginPath(); if (g.special === "h") { ctx.moveTo(-s * 1.4, i * s * .42); ctx.lineTo(s * 1.4, i * s * .42); } else { ctx.moveTo(i * s * .42, -s * 1.4); ctx.lineTo(i * s * .42, s * 1.4); } ctx.stroke(); } ctx.restore(); }
-  if (g.special === "wrap") { ctx.shadowColor = "transparent"; const t = now / 900; for (let i = 0; i < 4; i++) { const an = t + i * 1.5708, px2 = Math.cos(an) * s * 1.18, py2 = Math.sin(an) * s * 1.18, gl = ctx.createRadialGradient(px2, py2, 0, px2, py2, s * .3); gl.addColorStop(0, "rgba(255,248,200,1)"); gl.addColorStop(.35, "rgba(255,200,40,.9)"); gl.addColorStop(1, "rgba(255,170,0,0)"); ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(px2, py2, s * .3, 0, 6.2832); ctx.fill(); } }   // 2026-10-20: the lantern charm has four golden lights circling it (it used to wear a white frame, too close to the move hint)
+  if (g.special === "wrap") { ctx.shadowColor = "transparent"; const t = now / 900, li = lanternSprite(), lw = li.width / DPR; for (let i = 0; i < 4; i++) { const an = t + i * 1.5708; ctx.drawImage(li, Math.cos(an) * s * 1.18 - lw / 2, Math.sin(an) * s * 1.18 - lw / 2, lw, lw); } }   // 2026-10-20: the lantern charm has four golden lights circling it (it used to wear a white frame, too close to the move hint); 2026-11-02 the light is one cached sprite, no gradients per frame
   if (g.special === "fly") {   // a firefly: two wings and a glowing belly on the gem
     ctx.shadowColor = "transparent";
     for (const sx of [-1, 1]) { ctx.save(); ctx.translate(sx * s * .98, -s * .78); ctx.rotate(sx * .55); ctx.fillStyle = "rgba(255,255,255,.92)"; ctx.strokeStyle = mixc(C.d, "#000000", .3); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.ellipse(0, 0, s * .6, s * .28, 0, 0, 6.2832); ctx.fill(); ctx.stroke(); ctx.restore(); }
@@ -4613,15 +4656,15 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
   if (sel) { const r = sel[0], c = sel[1], k = .5 + .5 * Math.sin(now / 120); ctx.globalAlpha = selK; ctx.strokeStyle = "#fff"; ctx.lineWidth = 3 + k; ctx.beginPath(); ctx.roundRect(c * CELL + 2, r * CELL + 2, CELL - 4, CELL - 4, 8); ctx.stroke(); ctx.strokeStyle = "#ffd200"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(c * CELL + 6, r * CELL + 6, CELL - 12, CELL - 12, 6); ctx.stroke(); ctx.globalAlpha = 1; }
   const hinting = !G.busy && !G.over && !G.paused && now > G.hintAt; if (hinting && G.ptAt !== G.hintAt) { G.ptAt = G.hintAt; const sp = stagePa(); if (sp && sp.dataset.pa === stageBase()) pogoReact("point"); } let h0 = null, h1 = null, hk = 0;
   if (hinting) { if (!G.hint) G.hint = findMove(); if (G.hint) { h0 = G.hint[0]; h1 = G.hint[1]; hk = Math.min(1, (now - G.hintAt) / 350);
-      { const pu = .5 + .5 * Math.sin(now / 180); ctx.save(); for (const h of [h0, h1]) { const cx = (h[1] + .5) * CELL, cy = (h[0] + .5) * CELL; ctx.globalAlpha = hk * (.35 + .3 * pu); ctx.fillStyle = "#ffcf3a"; ctx.beginPath(); ctx.roundRect(h[1] * CELL + 2, h[0] * CELL + 2, CELL - 4, CELL - 4, CELL * .18); ctx.fill(); ctx.globalAlpha = hk; ctx.strokeStyle = "#c2560e"; ctx.lineWidth = Math.max(2.5, CELL * .06); ctx.stroke(); }
-        const a0 = h0, a1 = h1, mx = (a0[1] + a1[1] + 1) * CELL / 2, my = (a0[0] + a1[0] + 1) * CELL / 2, dx = a1[1] - a0[1], dy = a1[0] - a0[0], k = CELL * .2, w = CELL * (.08 + .03 * pu); ctx.globalAlpha = hk; ctx.fillStyle = "#c2560e";   // a double arrow between the two: swap these
-        ctx.translate(mx, my); ctx.rotate(Math.atan2(dy, dx)); ctx.beginPath(); ctx.moveTo(-k - w, 0); ctx.lineTo(-k + w * .4, -w); ctx.lineTo(-k + w * .4, w); ctx.closePath(); ctx.moveTo(k + w, 0); ctx.lineTo(k - w * .4, -w); ctx.lineTo(k - w * .4, w); ctx.closePath(); ctx.fill(); ctx.restore(); }   // 2026-10-28 İdris "önerilen 2 taş daha belirgin ve animasyonlu": a pulsing golden cell, a dark rim, a swap arrow
-      ctx.globalAlpha = hk * .9; ctx.strokeStyle = "#7a3a08"; ctx.lineWidth = Math.max(2, CELL * .05); ctx.lineCap = "round"; const m = CELL * .04, a = CELL * .22; ctx.beginPath(); for (const h of [h0, h1]) { const x0 = h[1] * CELL + m, y0 = h[0] * CELL + m, x1 = (h[1] + 1) * CELL - m, y1 = (h[0] + 1) * CELL - m; ctx.moveTo(x0, y0 + a); ctx.lineTo(x0, y0); ctx.lineTo(x0 + a, y0); ctx.moveTo(x1 - a, y0); ctx.lineTo(x1, y0); ctx.lineTo(x1, y0 + a); ctx.moveTo(x1, y1 - a); ctx.lineTo(x1, y1); ctx.lineTo(x1 - a, y1); ctx.moveTo(x0 + a, y1); ctx.lineTo(x0, y1); ctx.lineTo(x0, y1 - a); } ctx.stroke(); ctx.globalAlpha = 1; } }   // 2026-10-20 İdris: the hint looked like a special charm's glow. Now it is white corner marks and the two charms nudge toward each other, nothing glows
+      // 2026-11-02 İdris "önerilen hamle dışında diğer tılsımlar dikkat çekmemeli": on a resting board only the hint moves. One hand-keyed 2 s cycle
+      // (ui-keys.js BOARD.hint) from the moment the hint is due: a cream wash with a pencil ring under the two cells breathes once, the two charms are
+      // picked up (their shadows slide out from under them), nudged toward each other twice and set back down. No arrows, no pulsing fill, no corner marks.
+      UI_KEYS.sample("hint", (now - G.hintAt) % HINT_LEN, HP);
+      const ws = hintSprite(), wa = hk * (.55 + .45 * HP.ring), wo = (ws.width / DPR - CELL) / 2; if (wa > .01) { ctx.globalAlpha = wa; for (let q = 0; q < 2; q++) { const h = q ? h1 : h0; ctx.drawImage(ws, Math.round((h[1] * CELL - wo) * DPR) / DPR, Math.round((h[0] * CELL - wo) * DPR) / DPR, ws.width / DPR, ws.height / DPR); } ctx.globalAlpha = 1; } } }
   // gems
   let n = 0; for (let r = 0; r < ROWS; r++) { const row = G.grid[r]; for (let c = 0; c < COLS; c++) { const g = row[c]; if (g) LIST[n++] = g; } } LIST.length = n;
-  // 2026-10-24: now and then one resting charm catches the light and twinkles (the charms themselves do not move: İdris found that confusing)
-  const shd = shadowSprite(), shw = shd.width / DPR, calm = !G.busy && !G.over;
-  if (calm && now - (G.twT || 0) > 1100 && n) { G.twT = now; const g = LIST[rnd(n)]; if (g && !g.dur) (G.tw || (G.tw = [])).push({ g, t: now }); }
+  // 2026-11-02: a resting charm is completely still: no breathing, no twinkle, no light sweep (İdris: only the suggested move may draw the eye)
+  const shd = shadowSprite(), shw = shd.width / DPR;
   for (let i = 0; i < n; i++) {
     const g = LIST[i]; let ox = 0, oy = 0, rot = 0, lift = 0, vel = 0, sc = 1, sy = 1, al = 1;
     if (g.dur) { wakeT = pf0;
@@ -4641,12 +4684,12 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
       }
     } else { g.x = g.c; g.y = g.r; }
     if (al <= 0) continue;
-    if (g.born) { const t = (now - g.born) / 300; if (t <= 0) continue; if (t < 1) sc *= easeBack(t); else g.born = 0; }
-    if (g.pop) { const t = (now - g.pop) / 420; if (t >= 1) { g.pop = 0; g.sp0 = now; } else if (t > 0) { sc *= 1 + (g.sx - 1) * Math.sin(t * Math.PI); rot += 6.2832 * easeOut(t); } }
+    if (g.born) { const el = now - g.born; if (el <= 0) continue; if (el < BORN_LEN) sc *= UI_KEYS.sample("born", el, BP).s; else g.born = 0; }   // keyed arrival (ui-keys.js BOARD.born)
+    if (g.pop) { const el = now - g.pop; if (el >= POP_LEN) { g.pop = 0; g.sp0 = now; } else if (el > 0) { UI_KEYS.sample("popSpecial", el, PP); sc *= 1 + (g.sx - 1) * PP.s; rot += 6.2832 * PP.r; } }   // keyed birth of a special (BOARD.popSpecial)
     else if (g.special) sc *= 1 + .06 * (g.sp0 ? Math.min(1, (now - g.sp0) / 400) : 1) * Math.sin(now / 220 + g.c * .7);
     if (g.wob) { const t = (now - g.wob) / 420; if (t >= 1) g.wob = 0; else if (t > 0) { rot += Math.sin(t * 24) * .22 * (1 - t); ox += Math.sin(t * 24) * .06 * (1 - t); } }
     if (g.fuse && g.fuse <= 3) rot += Math.sin(now / 55) * .06;
-    if (h0 && ((h0[0] === g.r && h0[1] === g.c) || (h1[0] === g.r && h1[1] === g.c))) { const o = h0[0] === g.r && h0[1] === g.c ? h1 : h0, p = Math.max(0, Math.sin(now / 200)), n2 = p * p * .22 * hk; sc *= 1 + .08 * p * hk; ox += (o[1] - g.c) * n2; oy += (o[0] - g.r) * n2; }
+    if (h0 && !g.dur && ((h0[0] === g.r && h0[1] === g.c) || (h1[0] === g.r && h1[1] === g.c))) { const o = h0[0] === g.r && h0[1] === g.c ? h1 : h0, n2 = HP.nudge * .13 * hk; lift = Math.max(lift, HP.lift * .5 * hk); ox += (o[1] - g.c) * n2; oy += (o[0] - g.r) * n2; }   // the hinted pair: picked up and nudged (BOARD.hint), size unchanged
     if (sel && sel[0] === g.r && sel[1] === g.c && !g.dur) { sc *= 1 + .14 * selK; lift = (.6 + .3 * Math.sin(now / 150)) * selK; oy -= (.05 + .03 * Math.sin(now / 150)) * selK; }
     if (g.land) { const t = (now - g.land) / 260; if (t >= 1) g.land = 0; else { const k = Math.sin(t * Math.PI) * (1 - t * .5); sy = 1 - .08 * k; sc *= 1 + .03 * k; } }
     // 2026-10-27 İdris "rahat bırak da aksınlar, kaysın": charms simply slide: no sway, no lean, only a hint of stretch while falling
@@ -4666,11 +4709,6 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
     }
   }
   ctx.globalAlpha = 1;
-  if (G.tw && G.tw.length) { ctx.globalCompositeOperation = "lighter"; ctx.fillStyle = "#fff";
-    for (let i = G.tw.length - 1; i >= 0; i--) { const w = G.tw[i], t = (now - w.t) / 640; if (t >= 1 || w.g.dur || !G.grid[w.g.r] || G.grid[w.g.r][w.g.c] !== w.g) { G.tw.splice(i, 1); continue; }
-      const e = Math.sin(t * Math.PI), x = (w.g.c + .3) * CELL, y = (w.g.r + .28) * CELL, R1 = CELL * .26 * e, r1 = R1 * .13; ctx.globalAlpha = e * .95; ctx.save(); ctx.translate(x, y); ctx.rotate(t * 1.2);
-      ctx.beginPath(); for (let j = 0; j < 8; j++) { const a = j * Math.PI / 4, rr = j % 2 ? r1 : R1; ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.closePath(); ctx.fill(); ctx.restore(); }
-    ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1; }
   // dying gems: a quick eased swell with a white flash, then they spin down to nothing
   for (let i = dying.length - 1; i >= 0; i--) {
     const d = dying[i], t = (now - d.t) / 340; if (t >= 1) { dying.splice(i, 1); continue; }
@@ -4751,20 +4789,24 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
   // particles: shards + confetti (normal), then sparks + dots (additive). Expired ones are swap-removed, nothing is allocated here.
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i], t = (now - p.t) / p.life; if (t >= 1) { const last = particles.pop(); if (i < particles.length) particles[i] = last; continue; } if (t < 0) continue;
-    if (p.k === "conf") { p.vx += Math.sin(now / 180 + p.ph) * 6 * dt; p.vy += 2 * dt; p.vx *= (1 - dt); } else if (!p.nog) { p.vy += (p.k === "spark" ? 6 : 24) * dt; }
+    if (!p.nog) { p.vy += (p.k === "spark" ? 6 : 24) * dt; }
     if (p.k === "spark") { p.vx *= (1 - 2.5 * dt); p.vy *= (1 - 2.5 * dt); }
     p.x += p.vx * dt; p.y += p.vy * dt; if (p.rot !== undefined) p.rot += p.vr * dt;
   }
   const np = particles.length, CD = CELL * DPR;
   for (let i = 0; i < np; i++) {
-    const p = particles[i]; if (p.k !== "shard" && p.k !== "conf") continue; const t = (now - p.t) / p.life; if (t < 0 || t >= 1) continue;
+    const p = particles[i]; if (p.k !== "shard") continue; const t = (now - p.t) / p.life; if (t < 0 || t >= 1) continue;
     const cs = Math.cos(p.rot) * DPR, sn = Math.sin(p.rot) * DPR; ctx.globalAlpha = t > .7 ? (1 - t) / .3 : 1; ctx.fillStyle = p.color;
-    if (p.k === "conf") { const f = Math.sin(p.rot * 1.7); ctx.setTransform(cs, sn, -sn * f, cs * f, p.x * CD + bx, p.y * CD + by); ctx.fillRect(-p.r * CELL / 2, -p.r * CELL * .3, p.r * CELL, p.r * CELL * .6); }
-    else { ctx.setTransform(cs, sn, -sn, cs, p.x * CD + bx, p.y * CD + by); gemPath(ctx, p.shape, p.r * CELL); ctx.fill(); ctx.strokeStyle = "rgba(255,255,255,.75)"; ctx.lineWidth = 1.2; ctx.stroke(); }
+    ctx.setTransform(cs, sn, -sn, cs, p.x * CD + bx, p.y * CD + by); gemPath(ctx, p.shape, p.r * CELL); ctx.fill(); ctx.strokeStyle = "rgba(255,255,255,.75)"; ctx.lineWidth = 1.2; ctx.stroke();
   }
+  // 2026-11-02 paper petals over a won board: every petal follows the same hand-keyed glide (ui-keys.js BOARD.petal), offset in time and place, mirrored every other one
+  if (PETALS.length) { let alive = 0; for (let i = 0; i < PETALS.length; i++) { const p = PETALS[i], el = now - p.t; if (el >= PETAL_LEN) continue; alive++; if (el < 0) continue;
+      UI_KEYS.sample("petal", el, PTL); const sp = petalSprite(p.c), w = sp.width / DPR * p.k, h = sp.height / DPR * p.k, an = (PTL.r * p.m + p.ph) * 6.2832, cs = Math.cos(an) * DPR, sn = Math.sin(an) * DPR, f = PTL.f;
+      ctx.globalAlpha = PTL.a; ctx.setTransform(cs, sn, -sn * f, cs * f, (p.x + PTL.x * p.m) * CD + bx, (p.y + PTL.y) * CD + by); ctx.drawImage(sp, -w / 2, -h / 2, w, h); }
+    if (!alive) PETALS.length = 0; }
   ctx.setTransform(DPR, 0, 0, DPR, bx, by); ctx.globalCompositeOperation = "lighter"; ctx.lineCap = "round";
   for (let i = 0; i < np; i++) {
-    const p = particles[i]; if (p.k === "shard" || p.k === "conf") continue; const t = (now - p.t) / p.life; if (t < 0 || t >= 1) continue;
+    const p = particles[i]; if (p.k === "shard") continue; const t = (now - p.t) / p.life; if (t < 0 || t >= 1) continue;
     const x = p.x * CELL, y = p.y * CELL; ctx.globalAlpha = 1 - t;
     if (p.k === "spark") { ctx.strokeStyle = p.color; ctx.lineWidth = p.r * (1 - t) + .6; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - p.vx * CELL * .035, y - p.vy * CELL * .035); ctx.stroke(); }
     else { ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(x, y, p.r * (1 - t * .6), 0, 6.2832); ctx.fill(); }
@@ -4772,10 +4814,10 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
   ctx.globalCompositeOperation = "source-over"; ctx.lineCap = "butt";
   // score floaters: three fixed fonts, scaled by transform (pop in with a small overshoot, drift up, fade)
   for (let i = floaters.length - 1; i >= 0; i--) {
-    const f = floaters[i], t = (now - f.t) / 850; if (t >= 1) { floaters.splice(i, 1); continue; } if (t <= 0) continue;
-    const sp = floatSprite(f.txt, f.v >= 1000 ? 2 : f.v >= 300 ? 1 : 0), sc = Math.max(.05, easeBack(Math.min(1, t * 4.5)));
-    ctx.globalAlpha = t > .6 ? (1 - t) / .4 : 1;
-    ctx.setTransform(sc, 0, 0, sc, f.x * CD + bx, (f.y - easeOut(t) * 1.1) * CD + by); ctx.drawImage(sp, -sp.width / 2, -sp.bl);
+    const f = floaters[i], el = now - f.t; if (el >= FLT_LEN) { floaters.splice(i, 1); continue; } if (el <= 0) continue;
+    const sp = floatSprite(f.txt, f.v >= 1000 ? 2 : f.v >= 300 ? 1 : 0); UI_KEYS.sample("floater", el, FP);   // keyed pop, drift, fade (ui-keys.js BOARD.floater)
+    ctx.globalAlpha = FP.a;
+    ctx.setTransform(FP.s, 0, 0, FP.s, f.x * CD + bx, (f.y - FP.y) * CD + by); ctx.drawImage(sp, -sp.width / 2, -sp.bl);
   }
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.globalAlpha = 1;
   if (window.__nativeApp && !G.paused && !G.over) perfNote(raw, pf0, G.busy || particles.length > 0 || fx.length > 0 || dying.length > 0);
