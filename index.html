@@ -735,6 +735,93 @@ html.app .boost { width: 58px; height: 58px; flex: none; } html.app .boost svg {
 html.app .boost u { top: -8px; right: -8px; }
 @media (min-width: 420px) { html.app .boost { width: 62px; height: 62px; } html.app .boost svg { width: 42px; height: 42px; } html.app .hud .box { height: 56px; } html.app .hud .box.lvl { width: 52px; height: 52px; margin-top: 14px; } html.app .hud .box:not(.lvl) b { font-size: 22px; } }
 @media (min-width: 421px) and (max-width: 520px) { html.app .logo { font-size: 25px; } html.app .top .pill { padding: 5px 9px; font-size: 14px; gap: 4px; } html.app .top > div { gap: 7px !important; } }   /* 430 px phones: the logo no longer runs into the lives chip */
+/* 2026-11-02 watercolour HUD: the in-game chips, the pause button, the level seal, both bars and the booster tray are painted like the cards
+   and the charms: a flat pigment wash with granulation and a darker dried edge, paper tooth, a soft sepia ink line, a cream die-cut edge, one
+   light high on the left, the card's thickness and its shadow down and to the right. No gloss line, no shine. Layout, sizes and hit areas are
+   unchanged; numbers stay near-black on a bright face. The two textures are tiny SVG noise tiles, rasterised once, nothing animates. */
+:root { --wc-rim: #fcf6e8; --wc-line: rgba(74, 46, 28, .78); --wc-thick: #cdb68c; --wc-cast: rgba(52, 34, 16, .30);
+  --wc-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n' x='0' y='0' width='1' height='1'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .24 0 0 0 0 .14 0 0 0 0 .07 .7 0 0 0 -.31'/></filter><rect width='120' height='120' filter='url(%23n)'/></svg>") 0 0 / 120px 120px;
+  --wc-bloom: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n' x='0' y='0' width='1' height='1'><feTurbulence type='fractalNoise' baseFrequency='.03' numOctaves='3' seed='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .22 0 0 0 0 .12 0 0 0 0 .05 1.1 0 0 0 -.42'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>") 0 0 / 200px 200px;
+  --wc-bloom-l: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n' x='0' y='0' width='1' height='1'><feTurbulence type='fractalNoise' baseFrequency='.03' numOctaves='3' seed='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .22 0 0 0 0 .12 0 0 0 0 .05 .55 0 0 0 -.25'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>") 0 0 / 200px 200px;
+  --wc-cut: 0 0 0 2.5px var(--wc-rim), 0 0 0 3.5px rgba(74, 46, 28, .2), 2px 3px 0 3px var(--wc-thick), 5px 9px 12px 2px var(--wc-cast);
+  --wc-cut-down: 0 0 0 2.5px var(--wc-rim), 0 0 0 3.5px rgba(74, 46, 28, .2), 1px 1px 0 3px var(--wc-thick), 2px 3px 5px 2px var(--wc-cast);
+  --wc-cut-s: 0 0 0 2px var(--wc-rim), 1px 2px 0 2px var(--wc-thick), 3px 4px 5px 1px var(--wc-cast); }
+/* a wash: --pg is the pigment; light in the upper left, a darker edge where the wash dried */
+.boost, .back.pause, html.app #btnPause, .hud .box.lvl, .boost u {
+  background: var(--wc-grain), var(--wc-bloom), radial-gradient(125% 115% at 30% 24%, color-mix(in srgb, var(--pg) 74%, #fff4dc) 0%, var(--pg) 58%, color-mix(in srgb, var(--pg) 88%, #2a1608) 100%) !important; background-blend-mode: normal !important; }
+.boost { border: 1.5px solid color-mix(in srgb, var(--pg) 40%, #2a1608) !important; border-radius: 19px 15px 20px 16px / 15px 20px 16px 19px !important;
+  box-shadow: var(--wc-cut), inset 0 0 0 1.5px color-mix(in srgb, var(--pg) 70%, rgba(30, 14, 4, .9)), inset -3px -4px 7px color-mix(in srgb, var(--pg) 40%, rgba(30, 14, 4, .45)) !important; }
+.boost svg > circle:first-child { fill: color-mix(in srgb, var(--pg) 60%, #1e1008); fill-opacity: .32; stroke: #fcf1d6; stroke-width: 2.5; }
+.boost svg > circle:nth-child(2) { stroke: rgba(255, 246, 225, .45); }
+.boost svg { filter: drop-shadow(1px 1.5px 0 rgba(30, 14, 4, .3)) !important; }
+.boost:active { translate: 1px 2px; box-shadow: var(--wc-cut-down), inset 0 0 0 1.5px color-mix(in srgb, var(--pg) 70%, rgba(30, 14, 4, .9)), inset -3px -4px 7px color-mix(in srgb, var(--pg) 40%, rgba(30, 14, 4, .45)) !important; }
+.boost.on { --pg: #eaa21c !important; }
+.boost.empty { opacity: .55; filter: grayscale(.75) sepia(.25); }
+.boost u { --pg: #c8323c; width: 24px; height: 24px; box-sizing: border-box; border: 1px solid #5a1018 !important; box-shadow: var(--wc-cut-s), inset 0 0 0 1px rgba(90, 12, 22, .5) !important;
+  font: 800 12.5px/22px ui-rounded, system-ui, -apple-system, sans-serif !important; color: #fffaf0 !important; text-shadow: 0 1px 0 rgba(80, 8, 18, .45); font-variant-numeric: tabular-nums; }
+.boost.empty u { --pg: #958873; border-color: #4a3e2e !important; }
+/* the chips: a page of the book (paper, brightened a touch so the numbers stay crisp) */
+.hud .box:not(.lvl) { background: var(--wc-bloom-l), linear-gradient(rgba(255, 253, 246, .5), rgba(255, 253, 246, .5)), url(anim/paper.webp) 0 0 / 200px 200px, #f8f1e2 !important; background-blend-mode: normal !important;
+  border: 1.5px solid var(--wc-line) !important; border-radius: 14px 17px 13px 18px / 17px 13px 18px 14px !important; box-shadow: var(--wc-cut), inset -2px -3px 6px rgba(110, 72, 30, .12) !important; }
+.hud .box:not(.lvl) b { color: #22150b !important; text-shadow: none !important; } .hud .box:not(.lvl) small { color: #7a4a22 !important; }
+.hud .box.goal > span { filter: drop-shadow(1px 1.5px 0 rgba(74, 46, 28, .35)); }
+/* the level seal: madder red, the ribbon behind */
+.hud .box.lvl { --pg: #c2303c; border: 1.5px solid #5a1018 !important; box-shadow: var(--wc-cut), inset 0 0 0 1.5px rgba(110, 14, 26, .55), inset -3px -4px 7px rgba(60, 0, 10, .3) !important; }
+.hud .box.lvl b { color: #fff8e8 !important; text-shadow: 1px 1.5px 0 rgba(80, 8, 18, .55) !important; } .hud .box.lvl small { color: #ffe6bc !important; }
+.hud .box.lvl::before, .hud .box.lvl::after { background: linear-gradient(160deg, #b02a34, #7e1420) !important; filter: drop-shadow(2px 2px 0 rgba(52, 34, 16, .25)); }
+/* pause: warm ochre, cream bars */
+.back.pause, html.app #btnPause { --pg: #ec8a2c; border: 1.5px solid #6a3410 !important; border-radius: 16px 13px 17px 12px / 13px 17px 12px 16px !important; box-shadow: var(--wc-cut), inset 0 0 0 1.5px rgba(150, 64, 8, .55), inset -3px -4px 7px rgba(110, 40, 0, .28) !important; }
+.back.pause .ico { filter: drop-shadow(1px 1.5px 0 rgba(90, 36, 0, .5)) !important; }
+.back.pause:active, html.app #btnPause:active { translate: 1px 2px; box-shadow: var(--wc-cut-down), inset 0 0 0 1.5px rgba(150, 64, 8, .55) !important; }
+/* the bars: a groove pressed into the paper (shaded on its upper left, where the light comes from) and a wash of pigment in it */
+.bar, .fbar { background: var(--wc-bloom-l), url(anim/paper.webp) 0 0 / 160px 160px, #eadcbd !important; background-blend-mode: normal !important; border: 1.5px solid var(--wc-line) !important;
+  box-shadow: 0 0 0 2px var(--wc-rim), 1px 2px 0 2px var(--wc-thick), 3px 5px 7px 1px rgba(52, 34, 16, .22), inset 2px 2px 3px rgba(74, 46, 28, .36) !important; }
+.bar i, html.app #game > .bar i { background: var(--wc-grain), linear-gradient(180deg, #f6c440, #eea02a) !important; box-shadow: inset 0 0 0 1px rgba(170, 90, 10, .45), inset -2px -2px 3px rgba(150, 70, 0, .25) !important; }
+.fbar i { background: var(--wc-grain), linear-gradient(90deg, #e4561e, #f0a024 60%, #f4c23a) !important; }
+.frz span { color: #d07a1a !important; filter: drop-shadow(1px 1px 0 rgba(74, 46, 28, .4)); }
+.frz.full .fbar { border-color: #a8501a !important; }
+.bar s { background: rgba(74, 46, 28, .55) !important; } .bar s::after { color: #7a4a22 !important; text-shadow: none !important; } .bar s.hit { background: #c88a1a !important; } .bar s.hit::after { color: #b06a10 !important; }
+html.app #game > .bar s, html.app #game > .bar s.end { background: var(--wc-bloom-l), url(anim/paper.webp) 0 0 / 90px 90px, #f3e8d0 !important; background-blend-mode: normal !important;
+  border: 1.5px solid var(--wc-line) !important; box-shadow: var(--wc-cut-s) !important; }
+html.app #game > .bar s::after, html.app #game > .bar s.end::after { color: #a8916e !important; }
+html.app #game > .bar s.hit { --pg: #f0b02a; background: var(--wc-grain), var(--wc-bloom), radial-gradient(125% 115% at 30% 24%, #ffe48a, #f0b02a 58%, #d48a16) !important; border-color: #7a4410 !important; }
+html.app #game > .bar s.hit::after { color: #fffaf0 !important; text-shadow: 1px 1px 0 rgba(120, 60, 0, .55) !important; }
+/* 2026-11-02 one look on every screen (map header, cards, HUD, pause, results, settings, album, awards, gifts, story):
+   - one light, high on the left: every outer shadow falls down and to the right (cards 4/8 + 12/20, buttons and chips 2/4 + 5/8, small parts 1/2 + 3/4);
+   - one type scale inside the cards: 11 caps label, 13 small print, 16 body and list titles, 18 buttons, 22 big numbers and icons, 28 headings;
+   - list rows, gift days and the volume control are paper panels with the soft ink line (they were dark see-through slabs from the old glossy look);
+   - one panel radius (12 px, hand-cut) and one panel padding (10 px 12 px). */
+.card { box-shadow: 4px 8px 0 -2px #d8c6a0, 12px 20px 36px rgba(60, 40, 20, .34) !important; }
+.btn { box-shadow: 2px 4px 0 #b9893c, 5px 8px 12px rgba(70, 44, 18, .24) !important; }
+.btn.ghost { box-shadow: 2px 4px 0 #557f99, 5px 8px 12px rgba(30, 50, 70, .2) !important; }
+.btn:active { translate: 1px 3px; box-shadow: 1px 1px 0 #b9893c !important; } .btn.ghost:active { box-shadow: 1px 1px 0 #557f99 !important; }
+.pill, .mapbar button:not(.ready) { box-shadow: 2px 3px 0 #cdb890, 5px 7px 10px rgba(60, 40, 20, .2) !important; }
+.mapbar button.ready, #path .lvplate.go { box-shadow: 2px 4px 0 #b9893c, 5px 7px 10px rgba(70, 44, 18, .22) !important; }
+#path .lvplate { box-shadow: 2px 3px 0 #cdb890, 4px 6px 8px rgba(60, 40, 20, .18) !important; }
+.logo { text-shadow: 2px 3px 0 #123a1c, 6px 9px 18px rgba(0, 0, 0, .3); }
+/* type scale */
+.card .place, .card .chip, .days small, .card .goalrow small { font-size: 11px !important; letter-spacing: .08em; }
+.card p.sub, .card #achHead, .card #albHead, .aset small, .achl small, .racel small { font-size: 13px !important; }
+.setl button, .achl b, .aset b, .card .aroast { font-size: 16px !important; }
+.card .goalrow b, .days b { font-variant-numeric: tabular-nums; }
+/* paper panels */
+.setl button, .achl > div, .achl .aset, .racel div, .days div { background: url(anim/paper.webp) 0 0 / 200px 200px, #f3e8d0 !important; background-blend-mode: normal !important; color: var(--ink) !important;
+  border: 1.5px solid rgba(110, 82, 54, .55) !important; border-radius: 12px 14px 11px 15px / 14px 11px 15px 12px !important; box-shadow: 1px 2px 0 #d8c6a0, 3px 4px 6px rgba(60, 40, 20, .12) !important; text-shadow: none !important; }
+.setl button, .achl > div, .achl .aset, .racel div { padding: 10px 12px !important; }
+.setl button em, .setl button b, .achl b, .aset b, .days b { color: var(--ink) !important; }
+.setl button b { color: #a0581c !important; } .setl button.off b { color: #9a8a74 !important; } .setl button.off { opacity: 1 !important; }
+.achl small, .aset small, .racel small { color: var(--ink2) !important; opacity: 1 !important; }
+.days small { color: #8a5a30 !important; letter-spacing: 0 !important; }
+.achl > div.ok, .days .got { background: url(anim/paper.webp) 0 0 / 200px 200px, #d6eab0 !important; border-color: #5a7a34 !important; }
+.achl > div.due, .days .now { background: radial-gradient(120% 140% at 30% 20%, #ffe390 0%, #f6c24a 60%, #e8a72a 100%) !important; border-color: #7a4a1a !important; }
+.cards span { background: rgba(214, 190, 150, .4) !important; border: 1.5px dashed rgba(110, 82, 54, .55) !important; color: rgba(110, 82, 54, .55) !important; }
+.cards span.got { background: radial-gradient(120% 130% at 30% 25%, #c8a8f0, #8a5ad0 70%) !important; border: 1.5px solid #4a2a7a !important; color: #fff !important; }
+.achl .cards { background: none !important; border: 0 !important; box-shadow: none !important; padding: 2px 0 !important; opacity: 1 !important; }
+/* the shared volume control, inside a card: a paper strip with two painted buttons */
+.card .avol { background: url(anim/paper.webp) 0 0 / 200px 200px, #f3e8d0 !important; border: 1.5px solid rgba(110, 82, 54, .55) !important; box-shadow: 1px 2px 0 #d8c6a0, 3px 4px 6px rgba(60, 40, 20, .12) !important; color: var(--ink) !important; }
+.card .avol b { color: #a0581c !important; }
+.card .avol button { border: 1.5px solid rgba(60, 30, 10, .7) !important; box-shadow: 0 0 0 2px #fcf6e8, 1px 2px 0 2px #cdb68c, 3px 4px 5px 1px rgba(52, 34, 16, .25) !important; }
+.card .avol .dn { background: radial-gradient(125% 115% at 30% 24%, #ec7a78, #c8323c 60%, #a42430) !important; } .card .avol .up { background: radial-gradient(125% 115% at 30% 24%, #8fd07a, #3f9a3a 60%, #2e7a2c) !important; }
 </style>
 </head>
 <body>
@@ -1179,9 +1266,11 @@ function paintVol(x, w, h, o) { try {
 } catch (e) {} }
 // wcify(canvas): a finished 3D picture turned into a watercolour: colour lifted a fifth toward the paper and a little desaturated, pigment settled
 // in the paper's tooth (more where the wash is dark). Run once per picture when it is made, never per frame.
-function wcify(cv) { try { const w = cv.width, h = cv.height, x = cv.getContext("2d"), id = x.getImageData(0, 0, w, h), d = id.data; let sd = 7;
+// s scales the lift and the desaturation (1 = the full pass; the map creatures use less, see stripPump, so their colours stay saturated).
+function wcify(cv, s) { try { const w = cv.width, h = cv.height, x = cv.getContext("2d"), id = x.getImageData(0, 0, w, h), d = id.data; let sd = 7; const k = .32 * (s === undefined ? 1 : s);
   for (let y = 0; y < h; y++) for (let xx = 0; xx < w; xx++) { const i = (y * w + xx) * 4; if (d[i + 3] < 8) continue; sd = (sd * 16807) % 2147483647; const n = ((sd / 2147483647) - .5), r = d[i], g = d[i + 1], b = d[i + 2], l = r * .3 + g * .59 + b * .11, gr = 1 + n * (.06 + (1 - l / 255) * .1);
-    d[i] = ((r + (l - r) * .32) * .68 + 246 * .32) * gr; d[i + 1] = ((g + (l - g) * .32) * .68 + 238 * .32) * gr; d[i + 2] = ((b + (l - b) * .32) * .68 + 220 * .32) * gr; }
+    const q = s === undefined ? k : k * Math.min(1, Math.max(0, (d[i + 3] - 140) / 100)), q1 = 1 - q;   // with s, see-through pixels (the soft ground shadow) keep their colour: lifting them painted a pale disc under the creature
+    d[i] = ((r + (l - r) * q) * q1 + 246 * q) * gr; d[i + 1] = ((g + (l - g) * q) * q1 + 238 * q) * gr; d[i + 2] = ((b + (l - b) * q) * q1 + 220 * q) * gr; }
   x.putImageData(id, 0, 0); } catch (e) {} return cv; }
 // inkOutline(canvas, r): a dark outline r pixels wide round everything solid on a finished picture (the inked line of a cel)
 function inkOutline(cv, r) { try { const w = cv.width, h = cv.height, x = cv.getContext("2d"), id = x.getImageData(0, 0, w, h), d = id.data, n = w * h, m = new Uint8Array(n), a = new Uint8Array(n), b = new Uint8Array(n);
@@ -1483,7 +1572,7 @@ const STAR = 1000, starsOf = (pts) => Math.floor(pts / STAR);
 LEVELS.forEach((L) => { if (L.target) L.target = Math.max(STAR, Math.round(L.target / STAR) * STAR); });
 const BOOST0 = { hammer: 3, moves: 3, switch: 3, cross: 2, undo: 3 };
 // carrots are earned at a quarter of the old rate: every award is scaled, the remainder waits in the jar (save.carrotFrac) until a whole carrot is due
-const ART_Q = location.protocol === "file:" ? "" : "?v=1102a";   /* bump when the painted art in anim/ is baked again, so no browser keeps an old picture (the iOS app reads files, no query there) */
+const ART_Q = location.protocol === "file:" ? "" : "?v=1102b";   /* bump when the painted art in anim/ is baked again, so no browser keeps an old picture (the iOS app reads files, no query there) */
 const RWM = 2, BXM = 4;   /* 2026-10-29 İdris "ödül kazanmayı yarı yarıya indir, çok fazla booster kazanıyorum": carrots and ∞ lives x2 (was 4), boosters x4 (was 8) */
 const CARROT_RATE = .03125;   // 2026-10-27 İdris: rewards come half as often (the amount of each stays the same)
 function addCarrots(n) { save.carrotFrac = (save.carrotFrac || 0) + n * CARROT_RATE; const give = Math.floor(save.carrotFrac + 1e-9); save.carrotFrac -= give; save.carrots = (save.carrots || 0) + RWM * (give); carrotNew += RWM * (give); return give; }
@@ -1677,9 +1766,9 @@ function aniHtml(cls, kind, x, y, w, R, extra) {
 // 2026-10-28: the creatures' motion loops are files now (anim/cr-<kind>.webp, made by anim/src/bake-cr.cjs at 24 drawings a second); frames per strip:
 const CR = {"rabbit":[96,16],"fox":[60,16],"hedgehog":[60,16],"deer":[78,16],"sheep":[78,16],"bear":[96,16],"penguin":[72,16],"butterfly":[156,16],"bee":[120,16],"bat":[96,16],"crab":[72,16],"eagle":[168,16],"magpie":[96,16],"gritt":[96,16],"corvin":[108,16],"flock":[96,16]};
 function aniWake(el) { const im = el.querySelector("img[data-sk]"); if (!im || !D3) return; const k = im.dataset.sk; im.removeAttribute("data-sk");
-  if (CR[k] && !window.__fast) { const [n, cols] = CR[k], b = document.createElement("b"), pre = new Image(); b.className = "crs"; b.style.backgroundImage = `url(anim/cr-${k}.webp)`; b.style.backgroundSize = `${cols * 100}% ${Math.ceil(n / cols) * 100}%`;
+  if (CR[k] && !window.__fast) { const [n, cols] = CR[k], b = document.createElement("b"), pre = new Image(); b.className = "crs"; b.style.backgroundImage = `url(anim/cr-${k}.webp${ART_Q})`; b.style.backgroundSize = `${cols * 100}% ${Math.ceil(n / cols) * 100}%`;
     const go = () => { if (!el.isConnected) return; im.replaceWith(b); el.classList.add("go", "cr60"); b._pa = { cr: 1, n, cols, t0: performance.now() - Math.random() * 6000, f: -1, vis: 1, vt: 0 }; PA_RUN.add(b); if (!paRaf) paRaf = requestAnimationFrame(paTick); };
-    pre.src = "anim/cr-" + k + ".webp"; (pre.decode ? pre.decode() : new Promise(r => { pre.onload = r; })).then(go, go); return; }   // decoded off the main thread first, so a creature waking never costs a frame
+    pre.src = "anim/cr-" + k + ".webp" + ART_Q; (pre.decode ? pre.decode() : new Promise(r => { pre.onload = r; })).then(go, go); return; }   // decoded off the main thread first, so a creature waking never costs a frame
   D3.strip(k, 176, (url) => { if (!url || !el.isConnected) return; im.onload = () => el.classList.add("go"); im.src = url; }); }
 // 2026-10-28 İdris "haritada saçmalıklar var": everything on the ground is layered by where its feet are, so a thing lower on the map (nearer) covers
 // what stands behind it. Stops, signs, Pogo, clouds and the flying things keep fixed layers above all of it (see the CSS).
@@ -2663,6 +2752,7 @@ const D3 = (() => { /* look: watercolour storybook v2 (2026-10-28; changing this
   const sdb = new Promise(res => { try { const q = indexedDB.open("prismSpr", 1); q.onupgradeneeded = () => q.result.createObjectStore("s"); q.onsuccess = () => res(q.result); q.onerror = () => res(null); q.onblocked = () => res(null); } catch (e) { res(null); } });
   const keep = (key, blob) => { sdb.then(db => { if (!db || !blob) return; try { db.transaction("s", "readwrite").objectStore("s").put({ v: SPV, b: blob }, key); } catch (e) {} }); };
   const FR = 24, strips = new Map(), stripQ = [];
+  const CR_WC = +((location.search.match(/[?&]crwc=(-?[\d.]+)/) || [])[1] || -.3);   // 2026-11-02: the creatures take the watercolour pass in reverse (a little richer, not lifted toward the paper): the full pass left the painted volume pale. ?crwc= is for the bake bench
   let stripBusy = false;
   const frOf = (kind) => Math.max(24, Math.min(180, Math.round(RIG.A[kind].d * 60)));   // 2026-10-28 İdris "her hareket en az 60 fps": sixty drawings a second (was 15, then 24)
   function stripMake(kind, px) {
@@ -2676,7 +2766,7 @@ const D3 = (() => { /* look: watercolour storybook v2 (2026-10-28; changing this
     const grounds = []; if (!air) { const sh = new T.Mesh(new T.PlaneGeometry(4, 4), new T.ShadowMaterial({ color: 0x3a2618, opacity: .34 })); sh.rotation.x = -Math.PI / 2; sh.receiveShadow = true; scene.add(sh); grounds.push(sh);
       // a contact shadow right under the body, soft and warm, a little to the right of the light (2026-11-02)
       const cc = document.createElement("canvas"); cc.width = cc.height = 64; const cx = cc.getContext("2d"), cg = cx.createRadialGradient(32, 32, 0, 32, 32, 32); cg.addColorStop(0, "#fff"); cg.addColorStop(.5, "rgba(255,255,255,.6)"); cg.addColorStop(1, "rgba(255,255,255,0)"); cx.fillStyle = cg; cx.fillRect(0, 0, 64, 64);
-      const ct = new T.Mesh(new T.PlaneGeometry(sz.x * fit * 1.05, sz.z * fit * .9 + .1), new T.MeshBasicMaterial({ color: 0x3a2618, alphaMap: new T.CanvasTexture(cc), transparent: true, opacity: .3, depthWrite: false })); ct.rotation.x = -Math.PI / 2; ct.position.set(.05, .003, 0); scene.add(ct); grounds.push(ct); }
+      const ct = new T.Mesh(new T.PlaneGeometry(Math.min(sz.x, sz.z) * fit * .9 + .15, sz.z * fit * .55 + .06), new T.MeshBasicMaterial({ color: 0x3a2618, alphaMap: new T.CanvasTexture(cc), transparent: true, opacity: .2, depthWrite: false })); ct.rotation.x = -Math.PI / 2; ct.position.set(.05, .003, 0); scene.add(ct); grounds.push(ct); }
     const cam = new T.PerspectiveCamera(30, 1, .1, 20); cam.position.set(.35, 1.15, 3.2); cam.lookAt(0, .64, 0);
     const cv = document.createElement("canvas"); cv.width = px * FR; cv.height = px; const x = cv.getContext("2d"); let f = 0;
     const fc = document.createElement("canvas"); fc.width = fc.height = px; const fx = fc.getContext("2d", { willReadFrequently: true });   // each frame gets its painted volume before it goes into the strip
@@ -2684,7 +2774,7 @@ const D3 = (() => { /* look: watercolour storybook v2 (2026-10-28; changing this
     return { cv, step() { R.shadowMap.enabled = true; R.shadowMap.type = T.PCFSoftShadowMap; R.setSize(px, px, false);
       for (const e = Math.min(FR, f + 4); f < e; f++) { R0.p(P, f / FR); R.render(scene, cam); x.drawImage(R.domElement, f * px, 0);   // the frame with its shadows on the ground
         for (const o of grounds) o.visible = false; R.render(scene, cam); for (const o of grounds) o.visible = true;   // the body alone gets its painted volume and goes on top
-        fx.clearRect(0, 0, px, px); fx.drawImage(R.domElement, 0, 0, px, px, 0, 0, px, px); paintVol(fx, px, px, { core: .6, d: px * .022, rim: .5, bounce: .4 }); x.drawImage(fc, f * px, 0); }
+        fx.clearRect(0, 0, px, px); fx.drawImage(R.domElement, 0, 0, px, px, 0, 0, px, px); paintVol(fx, px, px, { core: .8, d: px * .022, rim: .35, bounce: .25 }); x.drawImage(fc, f * px, 0); }   /* 2026-11-02: deeper core shadow, softer rim and bounce, so the volume reads and the colour stays rich */
       R.setSize(RW, RH, false); R.shadowMap.enabled = false; return f >= FR; } };
   }
   let mapMoveT = 0; addEventListener("scroll", () => { mapMoveT = performance.now(); }, { capture: true, passive: true });   // strips wait while the map is being scrolled
@@ -2694,7 +2784,7 @@ const D3 = (() => { /* look: watercolour storybook v2 (2026-10-28; changing this
     const done = (url, blob) => { if (blob) keep("S" + k, blob); const cbs = strips.get(k); strips.set(k, url); if (Array.isArray(cbs)) cbs.forEach(f => { try { f(url); } catch (e) {} }); stripBusy = false; setTimeout(stripPump, window.__fast ? 0 : 60); };
     const tick = () => { if (!window.__fast && performance.now() - mapMoveT < 220) { setTimeout(tick, 120); return; }
       let fin = false; try { fin = !job || job.step(); } catch (e) { console.warn(e); job = null; fin = true; }
-      if (!fin) { setTimeout(tick, window.__fast ? 0 : 24); return; } const cv = job && job.cv; if (cv) { wcify(cv); inkOutline(cv, 3); }
+      if (!fin) { setTimeout(tick, window.__fast ? 0 : 24); return; } const cv = job && job.cv; if (cv) { wcify(cv, CR_WC); inkOutline(cv, 3); }
       if (!cv) done(null); else if (cv.toBlob) cv.toBlob(b => done(b ? URL.createObjectURL(b) : cv.toDataURL(), b)); else done(cv.toDataURL()); };
     setTimeout(tick, window.__fast ? 0 : 16);
   }
