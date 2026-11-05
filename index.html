@@ -1185,7 +1185,11 @@ const paDur = (k) => PA[k] ? PA[k][0] * 1000 / PA[k][2] : 1000;
 // Pogo stands on the edge of the board while a level is played: he idles, reacts to what happens and frets when the moves run low
 const stagePa = () => { const s = $("gStage"); return s && !s.hidden ? s.firstElementChild : null; }, stageBase = () => G && !G.over && G.moves <= 5 ? "worry" : "idle";
 function placeStage() { const bw = $("boardWrap"); let el = $("gStage"); if (!bw) return; if (!el) { el = document.createElement("div"); el.id = "gStage"; el.innerHTML = paHtml("idle"); bw.appendChild(el); }
-  const room = canvas.offsetTop, ok = !window.__fast && !!G && room >= 60, h = Math.min(150, room + 24); el.hidden = !ok; document.documentElement.classList.toggle("stage", ok); if (!ok) return;
+  const room = canvas.offsetTop, side = canvas.offsetLeft + bw.getBoundingClientRect().left, wide = !document.documentElement.classList.contains("app") && room < 60 && side >= 250;   // 2026-11-05: on a wide web page Pogo stands in the left column, at the foot of the board
+  const bo = document.querySelector("#game .boosters"), br = bo ? bo.getBoundingClientRect() : null, bwr = bw.getBoundingClientRect(), below = br ? $("game").getBoundingClientRect().bottom - br.bottom : 0, low = !wide && room < 60 && below >= 150;   // a phone-sized web page: Pogo stands on the ground under the boosters
+  const ok = !window.__fast && !!G && (room >= 60 || wide || low), h = low ? Math.min(190, below - 16) : wide ? Math.min(240, canvas.offsetHeight * .4) : Math.min(150, room + 24); el.hidden = !ok; document.documentElement.classList.toggle("stage", ok && !wide && !low); if (typeof bsPlace === "function") bsPlace(); if (!ok) return;
+  if (low) { const w = h * 400 / 440; el.style.cssText = `left:${Math.round(canvas.offsetLeft + 8)}px;top:${Math.round(br.bottom - bwr.top + below - h - 8)}px;width:${Math.round(w)}px;height:${Math.round(h)}px`; return; }
+  if (wide) { const w = h * 400 / 440; el.style.cssText = `left:${Math.round(canvas.offsetLeft - w - Math.min(80, (side - w) / 2))}px;top:${Math.round(canvas.offsetTop + canvas.offsetHeight - h)}px;width:${Math.round(w)}px;height:${Math.round(h)}px`; return; }
   el.style.cssText = `left:${Math.round(canvas.offsetLeft + 2)}px;top:${Math.round(room - h + 16)}px;width:${Math.round(h * 400 / 440)}px;height:${Math.round(h)}px`; }
 addEventListener("resize", () => setTimeout(() => { if (G && !$("game").hidden) placeStage(); }, 60));
 setInterval(() => { const sp = stagePa(); if (!sp || sp.dataset.pa !== "idle" || !G || G.busy || G.over || document.hidden) return; if (Math.random() < .5) paPlay(sp, Math.random() < .55 ? "look" : "groom", () => paPlay(sp, stageBase())); }, 6000);
@@ -1702,7 +1706,7 @@ const isOpen = (id) => { const el = $(id); return !el.hidden && !el.classList.co
 const KF = (name) => UI_KEYS.waapi(name);
 function bump(el) { if (typeof el === "string") el = $(el); if (!el || !el.animate) return; if (el._b) el._b.cancel(); const k = KF("bump"); el._b = el.animate(k.frames, { duration: k.duration }); }
 let toastA = null;
-function toast(t) { if (!t) return; const el = $("toast"); el.textContent = t; el.style.fontSize = t.length > 13 ? "clamp(18px, 4.6vw, 28px)" : "";
+function toast(t) { if (!t) return; const el = $("toast"); el.textContent = t; delete el.dataset.tier; el.style.fontSize = t.length > 13 ? "clamp(18px, 4.6vw, 28px)" : "";
   // in a level the word sits right above the board, never over the gems
   if (G && !$("game").hidden) { const r = canvas.getBoundingClientRect(); el.style.setProperty("--toastY", Math.max(40, r.top - 64) + "px"); } else el.style.removeProperty("--toastY");
   if (toastA) toastA.cancel(); if (el.animate) { const k = KF("toast"); toastA = el.animate(k.frames, { duration: k.duration }); } }
@@ -3405,7 +3409,7 @@ function startLevel(i, snap) {
   G.t0 = performance.now(); if (!resumed) logEv("start"); if (i < 2) G.hintAt = performance.now() + 900;
   { const k = rotOf(i); if (k > (save.gemSeen3 || 0) && !window.__fast) { save.gemSeen3 = k; persist(); } }
   particles.length = 0; fx.length = 0; floaters.length = 0; dying.length = 0; PETALS.length = 0;
-  tip(""); $("map").hidden = true; $("game").hidden = false; $("gPogo").innerHTML = pogoSvg("", true); layout(); hudInit(); gameDecor(i); gameWeather(i); gameGround(i); placeStage(); { const sp = stagePa(); if (sp) paPlay(sp, "ready", () => paPlay(sp, stageBase())); } SFX.go();
+  tip(""); $("map").hidden = true; $("game").hidden = false; $("gPogo").innerHTML = pogoSvg("", true); layout(); hudInit(); gameDecor(i); gameWeather(i); gameGround(i); placeStage(); bsStart(i, resumed); { const sp = stagePa(); if (sp) paPlay(sp, "ready", () => paPlay(sp, stageBase())); } SFX.go();
   if (window.__lowPower && !window.__lpTold) { window.__lpTold = 1; setTimeout(() => tip("Low Power Mode is on: iPhone holds games at 30 fps", 4800), 1300); }
   if (!resumed) snapshot();
   introDrop();
@@ -3496,7 +3500,7 @@ function hueRot(hex, deg) { const a = Math.cos(deg * Math.PI / 180), b = Math.si
   return "#" + o.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join(""); }
 function dioTheme(i) {
   let box = $("gDio"); if (!box) { box = document.createElement("div"); box.id = "gDio"; box.setAttribute("aria-hidden", "true"); $("gTheme").after(box); }
-  if (window.__fast || !document.documentElement.classList.contains("app")) { box.hidden = true; return; }
+  if (window.__fast || (!document.documentElement.classList.contains("app") && innerWidth >= 900)) { box.hidden = true; return; }   // 2026-11-05: phone-sized web pages get the pop-up book too
   const k = Math.min(THEMES.length - 1, Math.floor(i / 20)), T = THEMES[k], v = i % 2, fam = DIO.fam[T.land] || "hills", hue = ((i % 7) - 3) * 9, key = fam + k + ":" + v + ":" + hue;
   box.hidden = false; if (DIO.key === key && box.childElementCount) { dioPlace(); return; } DIO.key = key;
   const sky = mixc0(v ? T.s1 : T.s2, "#ffffff", .2), tint = { far: mixc0(mixc0(T.far, sky, .45), "#ffffff", .18), mid: mixc0(T.mid, T.g, .45), near: mixc0(T.g, "#14121a", .06) };
@@ -3524,6 +3528,116 @@ function dioTick(now) { DIO.raf = 0; const box = $("gDio"); if (!box || box.hidd
 canvas.addEventListener("pointermove", (e) => { if (!down && e.pointerType !== "mouse") return; const r = canvas.getBoundingClientRect(); dioLean((e.clientX - r.left) / r.width * 2 - 1, (e.clientY - r.top) / r.height * 2 - 1); }, { passive: true });
 for (const ev of ["pointerup", "pointercancel", "pointerleave"]) canvas.addEventListener(ev, () => dioLean(0, 0), { passive: true });
 if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission !== "function") addEventListener("deviceorientation", (e) => { if (e.gamma == null || !G || $("game").hidden || down) return; dioLean((e.gamma || 0) / 25, ((e.beta || 0) - 45) / 30); }, { passive: true });   // phones that give the tilt without asking; iOS asks, so there the finger leads
+// ---- 2026-11-05 the board show (İdris: "oyun tahtasının olduğu ekrana Royal Match / Clash Royale gibi animasyonlar ve grafikler ekle", all of it).
+// Around the board, never on the resting charms (the still board stays still): a sky band with watercolour clouds crossing it and the place's own
+// leaves, petals, snow or fireflies drifting down beside the board; the boss of a tenth level stands over the board with a health bar that drops
+// with the goal (he flinches at every hit and is flung off when the level is won); a goal banner swings down at the start and its icon flies to the
+// counter; tiered chain words; a "5 moves left!" slam and a red beat on the moves box; spare moves fly from the counter into the charms on the
+// winning run and the stars fly off the bar before the result card. Every motion is a keyed table in anim/ui-keys.js (bs*, boost*, fly*).
+// Battery: the sky and the drifting things are compositor-only CSS loops, paused after 20 s without a touch (html.bsIdle), with the page hidden,
+// and left out in Low Power Mode or with reduced motion; nothing here draws per frame.
+const BS = { css: 0, touch: performance.now(), boss: null, hp: 1, hitT: 0, warned: false, calm: matchMedia("(prefers-reduced-motion: reduce)") };
+function bsCss() { if (BS.css) return; BS.css = 1; const st = document.createElement("style"); st.id = "bsCss"; st.textContent = `
+  #game > #gSky, #game > #gAir { position: absolute; inset: 0; margin: 0; padding: 0; pointer-events: none; overflow: hidden; z-index: 0; } #gSky[hidden], #gAir[hidden], #gBoss[hidden], #gBanner[hidden] { display: none; }
+  #gSky .cl { position: absolute; left: 0; width: min(46vw, 300px); aspect-ratio: 2.3; will-change: transform;
+    background: radial-gradient(ellipse 26% 44% at 30% 58%, rgba(255,255,255,.9) 62%, rgba(255,255,255,0) 74%), radial-gradient(ellipse 25% 52% at 52% 44%, rgba(255,255,255,.92) 60%, rgba(255,255,255,0) 73%),
+      radial-gradient(ellipse 22% 40% at 72% 58%, rgba(255,255,255,.88) 60%, rgba(255,255,255,0) 74%), radial-gradient(ellipse 46% 26% at 50% 70%, rgba(255,255,255,.85) 62%, rgba(255,255,255,0) 76%),
+      radial-gradient(ellipse 48% 22% at 52% 80%, var(--cs) 40%, rgba(255,255,255,0) 78%); opacity: var(--co, .85); }
+  #gAir .lf { position: absolute; top: 0; width: 15px; height: 11px; will-change: transform, opacity; opacity: 0; background-size: 100% 100%; }
+  #gAir.flies .lf { width: 7px; height: 7px; border-radius: 50%; background: radial-gradient(circle, #fff9c8 0 30%, rgba(255,226,110,.85) 45%, rgba(255,210,90,0) 72%) !important; top: var(--y); }
+  #gAir.snow .lf { width: 9px; height: 9px; border-radius: 50%; background: radial-gradient(circle at 40% 38%, #fff 0 45%, rgba(255,255,255,.6) 60%, rgba(255,255,255,0) 72%) !important; }
+  #game > #gBoss { position: absolute; z-index: 3; pointer-events: none; display: flex; align-items: flex-end; gap: 4px; flex-direction: row-reverse; }
+  #game > #gBoss.col { flex-direction: column; align-items: center; } #game > #gBoss.small .bb-plate { display: none; }
+  #gBoss .bb-fig { width: var(--bw, 96px); aspect-ratio: 1; flex: none; transform-origin: 50% 90%; filter: drop-shadow(3px 5px 0 rgba(40, 24, 16, .22)); }
+  #gBoss .bb-fig b, #gBoss .bb-fig img { display: block; width: 100%; height: 100%; background-repeat: no-repeat; }
+  #gBoss .bb-plate { min-width: 104px; margin-bottom: 10px; padding: 5px 9px 7px; background: url(anim/paper.webp) 0 0 / 160px 160px, #f6eedc; background-blend-mode: multiply; color: #5c3e28;
+    border: 1.5px solid #5c3e28; border-radius: 12px 9px 13px 10px / 9px 13px 10px 12px; box-shadow: 2px 4px 0 rgba(40, 24, 16, .2); font-weight: 900; font-size: 12px; line-height: 1.1; letter-spacing: .02em; text-transform: uppercase; transition: opacity .3s; }
+  #gBoss.flee .bb-plate { opacity: 0; }
+  #gBoss .bb-hp { position: relative; height: 11px; margin-top: 4px; border-radius: 7px 5px 7px 5px; background: #3a2418; overflow: hidden; box-shadow: inset 0 2px 2px rgba(0, 0, 0, .4); }
+  #gBoss .bb-hp i { position: absolute; inset: 1.5px; border-radius: 5px; transform-origin: 0 50%; } #gBoss .bb-hp .lag { background: #fff0c0; } #gBoss .bb-hp .cur { background: linear-gradient(#ff9a86, #d8324a 70%); box-shadow: inset 0 2px 0 rgba(255, 255, 255, .45); }
+  #game > #gBanner { position: absolute; left: 50%; z-index: 6; pointer-events: none; min-width: min(78vw, 330px); padding: 12px 22px 14px; text-align: center; color: #4a2a14; overflow: hidden;
+    background: url(anim/paper.webp) 0 0 / 160px 160px, #f8f0de; background-blend-mode: multiply; border: 2px solid #5c3e28; border-radius: 22px 16px 24px 18px / 16px 24px 18px 22px; box-shadow: 3px 6px 0 rgba(40, 24, 16, .25), 0 14px 26px rgba(0, 0, 0, .25); }
+  #gBanner .rb { display: inline-block; margin: -2px 0 6px; padding: 3px 14px; border-radius: 999px; background: #3a7a3a; color: #fff6dc; font-weight: 900; font-size: 13px; line-height: 1.2; letter-spacing: .06em; text-transform: uppercase; }
+  #gBanner.boss .rb { background: #b8324a; } #gBanner .gl { display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 900; font-size: clamp(20px, 5.6vw, 28px); line-height: 1.1; letter-spacing: -.02em; }
+  #gBanner .gl .gi { font-size: 30px; display: inline-grid; place-items: center; width: 38px; height: 38px; } #gBanner .gl .gi svg { width: 34px; height: 34px; } #gBanner small { display: block; margin-top: 4px; font-weight: 800; font-size: 14px; line-height: 1.2; opacity: .78; }
+  #gBanner .sheen { position: absolute; top: 0; bottom: 0; left: 0; width: 34%; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.75), rgba(255,255,255,0)); opacity: 0; pointer-events: none; }
+  .bsfly { position: fixed; left: 0; top: 0; z-index: 60; pointer-events: none; width: 30px; height: 30px; display: grid; place-items: center; font-size: 26px; } .bsfly svg { width: 100%; height: 100%; }
+  .bsfly.mv { width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #fffbe0, #ffd34a 45%, #ff9a1a 75%); box-shadow: 0 0 10px 3px rgba(255, 200, 80, .7); }
+  #gWarn { position: fixed; left: 50%; z-index: 30; pointer-events: none; padding: 8px 22px; border-radius: 16px 12px 18px 13px / 12px 18px 13px 16px; background: url(anim/paper.webp) 0 0 / 160px 160px, #ffe6dc; background-blend-mode: multiply;
+    border: 2px solid #8a1e30; color: #b8243c; font-weight: 900; font-size: clamp(22px, 6vw, 32px); line-height: 1.1; letter-spacing: -.02em; white-space: nowrap; box-shadow: 3px 5px 0 rgba(90, 20, 30, .3); }
+  .toast[data-tier="2"] { border-color: #8fe08a; color: #d8ffd0; } .toast[data-tier="3"] { border-color: #ffd23f; color: #ffe27a; background: rgba(60, 30, 10, .92); }
+  .toast[data-tier="4"] { border-color: #ff9ad0; color: #ffe0f2; background: rgba(70, 20, 60, .92); font-size: clamp(30px, 7.6vw, 46px); }
+  .toast[data-tier="5"] { border-color: #fff; color: #fff7c0; background: linear-gradient(90deg, rgba(140, 40, 90, .95), rgba(60, 40, 140, .95)); font-size: clamp(32px, 8.4vw, 52px); box-shadow: 0 6px 0 #2a1440, 0 0 26px rgba(255, 220, 120, .7); }
+  @media (min-width: 900px) { html:not(.app) #gBanner { min-width: 340px; } }`; document.head.appendChild(st); }
+// the sky band and the things drifting down beside the board, for this place
+function bsScene(i) { bsCss(); const T = themeOf(i), g = $("game"); let sky = $("gSky"), air = $("gAir");
+  if (!sky) { sky = document.createElement("div"); sky.id = "gSky"; sky.setAttribute("aria-hidden", "true"); air = document.createElement("div"); air.id = "gAir"; air.setAttribute("aria-hidden", "true"); }
+  const th = $("gTheme"); if (sky.previousElementSibling !== th) th.after(sky); const dio = $("gDio"); if (dio && !dio.hidden) { if (air.previousElementSibling !== dio) dio.after(air); } else if (air.previousElementSibling !== sky) sky.after(air);
+  const off = window.__fast || BS.calm.matches; sky.hidden = air.hidden = off; if (off) return;
+  const key = "s" + Math.floor(i / 20) + ":" + (i % 2); if (sky.dataset.k === key) return; sky.dataset.k = key;
+  const night = /night|glints|flies/.test(T.w) && /moon|night|star/.test(T.sky || "") || T.w === "night", shade = mixc0(T.s1, "#ffffff", .55);
+  sky.innerHTML = [[3, -4, 1, .9], [12, -24, .78, .8], [21, -43, .62, .7]].map(([y, dl, s, o]) => `<i class="cl" style="top:${y}%;--dl:${dl}s;scale:${s};--co:${night ? o * .5 : o};--cs:${shade}"></i>`).join("");
+  const kind = /snow/.test(T.w) ? "snow" : /night|glints|flies|embers|spores/.test(T.w) ? "flies" : /petals|flower/.test(T.w) ? "petal" : "leaf";
+  air.className = kind; if (window.__lowPower) { air.innerHTML = ""; return; }
+  const cols = kind === "petal" ? ["#f6a8c4", "#ffd0e0", "#e8b0f0"] : [mixc0(T.g, "#c87a20", .35), mixc0(T.mid || T.g, "#e8a23a", .5), mixc0(T.g, "#2a6a3a", .25)];
+  const shape = (c) => kind === "petal" ? `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 22'><path d='M2 11C8 1 22 0 28 9 22 20 9 21 2 11z' fill='${c}' fill-opacity='.85' stroke='%235c3e28' stroke-opacity='.35'/></svg>`
+    : `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 22'><path d='M2 12C7 2 20-1 28 4 26 15 15 22 2 12z' fill='${c}' fill-opacity='.9' stroke='%235c3e28' stroke-opacity='.4'/><path d='M3 12C11 9 19 7 27 5' stroke='%235c3e28' stroke-opacity='.35' fill='none'/></svg>`;
+  const X = [4, 93, 12, 84, 46, 70, 26], n = kind === "flies" ? 7 : 6; let h = "";
+  for (let k = 0; k < n; k++) { const c = cols[k % cols.length].replace("#", "%23"), bg = kind === "leaf" || kind === "petal" ? `background-image:url("data:image/svg+xml,${shape(c)}");` : "";
+    h += `<i class="lf" style="left:${X[k]}%;--y:${10 + (k * 37) % 70}%;--dl:-${(k * 1.55 + (k % 3) * .7).toFixed(2)}s;${bg}"></i>`; }
+  air.innerHTML = h; }
+// the boss over the board: an animated figure (the map's keyed creature loop) and a paper plate with his name and health
+function bsBoss(i) { let el = $("gBoss"); if (el) el.remove(); BS.boss = null; if (!isMordo(i) || window.__fast || typeof D3 === "undefined" || !D3) return;
+  const B = bossOf(i); el = document.createElement("div"); el.id = "gBoss"; el.setAttribute("aria-hidden", "true");
+  el.innerHTML = `<div class="bb-fig"><img src="${D3.sprite(B.kind, 192)}" alt=""></div><div class="bb-plate">${B.name}<div class="bb-hp"><i class="lag"></i><i class="cur"></i></div></div>`; $("game").appendChild(el);
+  const fig = el.querySelector(".bb-fig"), im = fig.firstChild;
+  if (CR[B.kind]) { const [n, cols] = CR[B.kind], b = document.createElement("b"), pre = new Image(); b.style.backgroundImage = `url(anim/cr-${B.kind}.webp${ART_Q})`; b.style.backgroundSize = `${cols * 100}% ${Math.ceil(n / cols) * 100}%`;
+    const go = () => { if (!el.isConnected) return; im.replaceWith(b); b._pa = { cr: 1, n, cols, t0: performance.now(), f: -1, vis: 1, vt: 0 }; PA_RUN.add(b); if (!paRaf) paRaf = requestAnimationFrame(paTick); };
+    pre.src = "anim/cr-" + B.kind + ".webp" + ART_Q; (pre.decode ? pre.decode() : new Promise(r => { pre.onload = r; })).then(go, go); }
+  $("gMordo").hidden = true; BS.boss = el; BS.hp = 1; G.bs0 = Math.max(1, G.L.goal === "score" ? G.L.target : goalLeft()); bsPlace(); bsHp(true); el.classList.add("arrive"); setTimeout(() => el.classList.remove("arrive"), 900); }
+function bsPlace() { const el = BS.boss; if (!el || !G) return; const g = $("game").getBoundingClientRect(), c = canvas.getBoundingClientRect(), top = c.top - g.top, right = g.right - c.right;
+  el.classList.remove("col", "small");
+  const room = canvas.offsetTop, bo = document.querySelector("#game .boosters"), br = bo ? bo.getBoundingClientRect() : null, below = br ? g.bottom - br.bottom : 0;
+  if (room >= 60) { const s = Math.round(Math.min(118, top + 4)); el.style.setProperty("--bw", s + "px"); el.style.left = ""; el.style.right = Math.round(right + 2) + "px"; el.style.top = Math.round(top - s + 16) + "px"; }   // over the board, at its right end (Pogo stands at the left)
+  else if (right >= 170) { el.classList.add("col"); el.style.setProperty("--bw", "104px"); el.style.right = ""; el.style.left = Math.round(c.right - g.left + Math.max(20, (right - 150) / 2)) + "px"; el.style.top = Math.round(!br || br.top - g.top - top >= 172 ? top + 4 : br.bottom - g.top + 18) + "px"; }   // above the booster column when it fits, else under it   // wide web: the column right of the board
+  else if (below >= 150) { const s = Math.round(Math.min(116, below - 64)); el.classList.add("col"); el.style.setProperty("--bw", s + "px"); el.style.left = ""; el.style.right = Math.round(right + 18) + "px"; el.style.top = Math.round(br.bottom - g.top + (below - s - 44) / 2) + "px"; }   // a phone-sized web page: on the ground under the boosters, across from Pogo
+  else { el.classList.add("small"); el.style.setProperty("--bw", "64px"); el.style.left = ""; el.style.right = "8px"; el.style.top = Math.round(Math.max(70, top - 60)) + "px"; } }
+function bsHp(snap) { const el = BS.boss; if (!el || !G) return; const left = G.L.goal === "score" ? Math.max(0, G.L.target - G.score) : goalLeft(), hp = Math.max(0, Math.min(1, left / G.bs0));
+  if (Math.abs(hp - BS.hp) < .002 && !snap) return; const cur = el.querySelector(".cur"), lag = el.querySelector(".lag"), hit = hp < BS.hp; BS.hp = hp; cur.style.transform = `scaleX(${hp})`;
+  if (snap || !lag.animate) { lag.style.transform = `scaleX(${hp})`; return; }
+  const from = getComputedStyle(lag).transform; lag.getAnimations().forEach(a => a.cancel()); lag.style.transform = `scaleX(${hp})`; lag.animate([{ transform: from }, { transform: from, offset: .45 }, { transform: `scaleX(${hp})` }], { duration: 700, easing: "cubic-bezier(.45, 0, .55, 1)" });   // the pale chunk holds, then drains
+  const now = performance.now(); if (hit && now - BS.hitT > 260 && !el.classList.contains("flee")) { BS.hitT = now; el.classList.remove("hit", "grab", "away"); void el.offsetWidth; el.classList.add("hit"); setTimeout(() => el.classList.remove("hit"), 420); } }
+function bsFlee() { const el = BS.boss; if (!el) return; el.classList.remove("hit", "grab", "away"); BS.hp = 0; const cur = el.querySelector(".cur"); if (cur) cur.style.transform = "scaleX(0)"; setTimeout(() => { if (el.isConnected) el.classList.add("flee"); }, 250); }
+// the goal banner: what to do, in how many moves; then its icon flies to the goal counter
+function bsBanner(i) { let el = $("gBanner"); if (el) el.remove(); if (window.__fast) return; const L = G.L, n = goalLeft(), B = isMordo(i) ? bossOf(i) : null;
+  const icon = L.goal === "score" ? "⭐" : ico({ jelly: "jelly", ingredients: "key", blockers: "ice" }[L.goal]), what = L.goal === "score" ? "Score " + fmt(L.target) : L.goal === "jelly" ? "Clear " + n + " ash" : L.goal === "ingredients" ? "Bring down " + n + " seeds" : "Break " + n + " brambles";
+  el = document.createElement("div"); el.id = "gBanner"; el.className = B ? "boss" : ""; el.setAttribute("aria-hidden", "true");
+  el.innerHTML = `<span class="rb">${B ? B.own : "Level " + (i + 1)}</span><div class="gl"><span class="gi">${icon}</span><span>${what}</span></div><small>${"in " + G.moves + " moves"}</small><i class="sheen"></i>`;
+  $("game").appendChild(el); const g = $("game").getBoundingClientRect(), c = canvas.getBoundingClientRect(); el.style.top = Math.round(c.top - g.top + c.height * .2) + "px";
+  if (!el.animate) { setTimeout(() => el.remove(), 2000); return; } const k = KF("bsBanner"), a = el.animate(k.frames, { duration: k.duration, fill: "both" });
+  setTimeout(() => el.classList.add("lit"), 560);
+  setTimeout(() => { if (!el.isConnected) return; const gi = el.querySelector(".gi"), r = gi.getBoundingClientRect(), t = $("goalBox").getBoundingClientRect(); bsFly(gi.innerHTML, r.left + r.width / 2, r.top + r.height / 2, t.left + t.width / 2, t.top + t.height / 2, "flyIcon", "", () => bump("goalBox")); gi.style.visibility = "hidden"; }, 1600);
+  a.onfinish = () => el.remove(); }
+// one flying thing along a keyed path (ui-keys.js BOARD.fly*)
+function bsFly(html, x0, y0, x1, y1, path, cls, done) { if (window.__fast) { if (done) done(); return; } const el = document.createElement("div"); el.className = "bsfly" + (cls ? " " + cls : ""); el.innerHTML = html;
+  document.body.appendChild(el); const w = el.offsetWidth / 2, h = el.offsetHeight / 2, base = `translate(${(x0 - w).toFixed(1)}px, ${(y0 - h).toFixed(1)}px)`, k = UI_KEYS.path(path, x1 - x0, y1 - y0, base);
+  el.style.transform = base; const a = el.animate(k.frames, { duration: k.duration, fill: "forwards" }); a.onfinish = () => { el.remove(); if (done) done(); }; }
+const bsCell = (r, c) => { const rc = canvas.getBoundingClientRect(); return [rc.left + (c + .5) * rc.width / COLS, rc.top + (r + .5) * rc.height / ROWS]; };
+function bsFlyMove(g, then) { const m = HUD.moves.getBoundingClientRect(), [x, y] = bsCell(g.r, g.c); bsFly("", m.left + m.width / 2, m.top + m.height / 2, x, y, "flyMove", "mv", then); }
+// the stars won fly off the star bar into the middle, where the result card puts them
+function bsStars(n) { if (window.__fast || !HUD.marks) return 0; for (let k = 0; k < n; k++) setTimeout(() => { const m = HUD.marks[k].getBoundingClientRect(); bsFly(`<svg viewBox="-1 -1 26 26"><path d="M12 1.8l3.1 6.5 7.1 1-5.2 5 1.3 7.1L12 18l-6.3 3.4 1.3-7.1-5.2-5 7.1-1z" fill="#ffd200" stroke="#9a5b00" stroke-width="1.6" stroke-linejoin="round"/></svg>`, m.left + m.width / 2, m.top + m.height / 2, innerWidth / 2 + (k - 1) * 46, innerHeight * .4, "flyStar"); SFX.pop(2 + k); }, k * 170); return 640 + (n - 1) * 170; }
+// the chain words: each step up the chain is a bigger word in a richer plate
+function bsWord(combo) { const W = [null, null, ["Good!", 1], ["Great!", 2], ["Amazing!", 3], ["Wildwood!", 4]], w = combo >= 6 ? ["Charmtastic!", 5] : W[combo]; if (!w) return;
+  toast(w[0]); $("toast").dataset.tier = w[1]; if (combo >= 3) pogoReact(combo === 3 ? "yay" : combo === 4 ? "clap" : "wow"); if (combo >= 5 && G && !G.shake) { G.shake = performance.now(); G.shakeK = .45; } }
+// five moves left: one slam over the board, then a red beat on the moves box with every move
+function bsMoves(prev) { if (!G || G.over || window.__fast) return; const box = HUD.moves.closest(".box"); if (G.moves <= 5 && G.moves > 0 && box) { box.classList.remove("warn"); void box.offsetWidth; box.classList.add("warn"); }
+  if (!BS.warned && prev > 5 && G.moves <= 5 && G.moves > 0 && G.L.moves > 5) { BS.warned = true; const el = document.createElement("div"); el.id = "gWarn"; el.textContent = G.moves + " moves left!"; const c = canvas.getBoundingClientRect(); el.style.top = Math.round(c.top + c.height * .42) + "px"; document.body.appendChild(el);
+    const k = KF("bsWarn"); if (el.animate) el.animate(k.frames, { duration: k.duration, fill: "both" }).onfinish = () => el.remove(); else setTimeout(() => el.remove(), 1500); SFX.bad(); buzz([20, 40, 20]); } }
+function bsBoostGot(el, dl) { el.style.setProperty("--dl", (dl || 0) + "ms"); el.classList.remove("got"); void el.offsetWidth; el.classList.add("got"); setTimeout(() => el.classList.remove("got"), 600 + (dl || 0)); }
+function bsStart(i, resumed) { if (window.__fast) return; BS.warned = G.moves <= 5; G.shakeK = 1; bsScene(i); bsBoss(i); if (!resumed) bsBanner(i);
+  setTimeout(() => { if (!HUD.boosts) return; let n = 0; for (const k in HUD.boosts) if (save.boost[k] > 0 && k !== "undo") bsBoostGot(HUD.boosts[k], 700 + n++ * 90); }, 300); }
+document.addEventListener("pointerdown", () => { BS.touch = performance.now(); document.documentElement.classList.remove("bsIdle"); }, { passive: true, capture: true });
+setInterval(() => { if (G && !$("game").hidden && performance.now() - BS.touch > 20000) document.documentElement.classList.add("bsIdle"); }, 2000);
 // ---- pause / resume (input is blocked by G.paused; a cascade in flight simply finishes underneath)
 // the four things that belong to this chapter's place stand along the top of the board frame (still pictures: they cost nothing while playing)
 function gameWeather(i) { const el = $("gWeather"), ch = chapOf(i), w = themeOf(i).w; $("game").classList.toggle("shore", ch >= 10); if (!el) return; if ($("game").firstElementChild !== el) $("game").prepend(el); { const g = $("gGround"); if (g && g.previousElementSibling !== el) el.after(g); const th = $("gTheme"); if (th && $("game").firstElementChild !== th) $("game").prepend(th); }   // first in the screen, so the bars and the board are drawn over it if (!w || window.__fast) { el.hidden = true; return; }
@@ -3608,14 +3722,15 @@ function hudInit() {
   updateHud();
 }
 function updateHud() {
-  if (G.moves !== HUD.mT) { HUD.mT = G.moves; HUD.moves.textContent = G.moves; bump(HUD.moves); }
+  if (G.moves !== HUD.mT) { const prev = HUD.mT; HUD.mT = G.moves; HUD.moves.textContent = G.moves; if (G.moves <= 5 && !G.over && !window.__fast) bsMoves(prev); else bump(HUD.moves); }
   HUD.moves.style.color = G.moves <= 5 ? "#ff7a95" : ""; $("gPogo").classList.toggle("worry", G.moves <= 5 && !G.over); stageMood();
   if (G.score !== HUD.sG) { if (G.score > HUD.sG) bump(HUD.score); HUD.sG = G.score; }
   const left = goalLeft(); if (left < HUD.left && G.L.goal !== "score") bump(HUD.goalN); HUD.left = left;
   const st = HUD.st, sc = G.score, f = sc >= st[2] ? 1 : sc >= st[1] ? 2 / 3 + (sc - st[1]) / Math.max(1, st[2] - st[1]) / 3 : sc >= st[0] ? 1 / 3 + (sc - st[0]) / Math.max(1, st[1] - st[0]) / 3 : sc / Math.max(1, st[0]) / 3; HUD.bar.style.transform = `translateX(${(f - 1) * 100}%)`; HUD.bar.style.setProperty("--f", f.toFixed(4));
   HUD.marks[0].classList.toggle("hit", G.score >= st[0]); HUD.marks[1].classList.toggle("hit", G.score >= st[1]); HUD.marks[2].classList.toggle("hit", G.score >= st[2]);
   HUD.frzFill.style.transform = `translateX(${Math.min(100, G.frenzy) - 100}%)`; HUD.frz.classList.toggle("full", G.frenzy >= 100);
-  for (const k in HUD.boosts) { const el = HUD.boosts[k]; el.classList.toggle("empty", !save.boost[k] || (k === "undo" && !G.undo)); el.classList.toggle("on", G.boost === k); if (HUD.counts[k].textContent !== String(save.boost[k])) HUD.counts[k].textContent = save.boost[k]; }
+  for (const k in HUD.boosts) { const el = HUD.boosts[k]; el.classList.toggle("empty", !save.boost[k] || (k === "undo" && !G.undo)); el.classList.toggle("on", G.boost === k); if (HUD.counts[k].textContent !== String(save.boost[k])) { if (+HUD.counts[k].textContent < save.boost[k] && !window.__fast) bsBoostGot(el); HUD.counts[k].textContent = save.boost[k]; } }
+  bsHp();
 }
 let hudAcc = 0;
 function hudTick(dt) {
@@ -3724,7 +3839,7 @@ function mordoTurn() {
   const g = pool[rnd(pool.length)]; g.lock = true; g.byMordo = 1; g.wob = performance.now(); ring(g.c + .5, g.r + .5, "#1a1726", 1.2); SFX.bad(); mordoFx("grab");
   if (!G.mordoTold && !window.__fast) { G.mordoTold = 1; tip("Mordo caged a charm. Match it to open the cage. A special charm scares him off.", 3800); }
 }
-function mordoFx(k) { const el = $("gMordo"); if (!el || window.__fast) return; el.classList.remove("grab", "away"); void el.offsetWidth; el.classList.add(k); setTimeout(() => el.classList.remove(k), 1300); }
+function mordoFx(k) { if (BS.boss && !window.__fast) { const b = BS.boss; b.classList.remove("grab", "away", "hit"); void b.offsetWidth; b.classList.add(k); setTimeout(() => b.classList.remove(k), 1300); } const el = $("gMordo"); if (!el || window.__fast) return; el.classList.remove("grab", "away"); void el.offsetWidth; el.classList.add(k); setTimeout(() => el.classList.remove(k), 1300); }
 function spreadChocolate() {
   const chocs = []; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (G.block[r][c] && G.block[r][c].kind === "choc") chocs.push([r, c]);
   if (!chocs.length) return;
@@ -3820,6 +3935,7 @@ async function blast(clear, spawn = [], opts = {}) {
   const keep = new Set(spawn.map(s => s.r * COLS + s.c));
   let popped = 0; const now = performance.now(), step = detonated.size ? 0 : 16, flyDl = G.flyDl; G.flyDl = G.flyTaken = null; flyBudget = 5;
   if (detonated.size) G.scare = 1;   // a special went off: Mordo keeps away for a while
+  if (detonated.size >= 2 && !G.shake && !window.__fast) { G.shake = performance.now(); G.shakeK = .4; }   // 2026-11-05 two or more specials going off at once: a light shake
   for (const k of clear) {
     const r = Math.floor(k / COLS), c = k % COLS, g = cell(r, c);
     // neighbours: frost / chocolate take damage from adjacent clears; direct hits too
@@ -3835,7 +3951,7 @@ async function blast(clear, spawn = [], opts = {}) {
     const C = PAL[g.color], dl = Math.min(popped, 6) * step + (flyDl && flyDl.get(k) || 0); dying.push({ g, t: now + dl }); { const bc = C ? (GS === "bold" ? BLHUE_P[g.color % 6] : GS === "glow" ? GLHUE[g.color % 6] : typeof D3 !== "undefined" && D3 && D3.lpColor ? D3.lpColor(g.color, C) : C.c) : "#fff", n = (g.special ? 14 : 8) + Math.min(8, (G.combo - 1) * 2); burst(c + .5, r + .5, bc, n, C ? C.shape : "tri", dl); if (!window.__lowFx && 0) { fx.push({ k: "star", x: c + .5, y: r + .5, color: bc, t: now + dl + 40, life: 420, size: .55 + Math.min(.4, G.combo * .08) }); fx.push({ k: "ring", x: c + .5, y: r + .5, color: bc, r1: .55 + Math.min(.5, G.combo * .1), t: now + dl, life: 360, w: 5 }); if (popped % 3 === 0) fx.push({ k: "bloom", x: c + .5, y: r + .5, color: bc, t: now + dl + 30, life: 620 }); } } if (g.special) ring(c + .5, r + .5, C ? C.l : "#fff", 1.3); G.grid[r][c] = null; popped++;
     if (detonated.has(k)) addScore(r, c, 200 * G.combo); else if (!opts.silent) G.score += 20 * Math.max(1, G.combo);
   }
-  for (const s of spawn) { let g = cell(s.r, s.c); if (g && g.kind === "gem") { g.special = s.sp; g.color = s.color; } else { g = G.grid[s.r][s.c] = mkGem(s.color, s.r, s.c, s.sp); } g.sx = 1.6; g.pop = performance.now(); if (s.sp === "bomb") save.stats.bombs++; if (s.sp === "fly" && !save.seenFly && !window.__fast) { save.seenFly = 1; tip("Firefly! A 2×2 square makes one. It flies to what you need.", 3800); } sparkle(s.c + .5, s.r + .5, PAL[s.color].c); ring(s.c + .5, s.r + .5, "#fff", 1.3, 500, 9); burst(s.c + .5, s.r + .5, "#fff", 6, "round"); }
+  for (const s of spawn) { let g = cell(s.r, s.c); if (g && g.kind === "gem") { g.special = s.sp; g.color = s.color; } else { g = G.grid[s.r][s.c] = mkGem(s.color, s.r, s.c, s.sp); } g.sx = 1.6; g.pop = performance.now(); if (s.sp === "bomb") save.stats.bombs++; if (s.sp === "fly" && !save.seenFly && !window.__fast) { save.seenFly = 1; tip("Firefly! A 2×2 square makes one. It flies to what you need.", 3800); } sparkle(s.c + .5, s.r + .5, PAL[s.color].c); ring(s.c + .5, s.r + .5, "#fff", 1.3, 500, 9); if (!window.__fast) fx.push({ k: "bloom", x: s.c + .5, y: s.r + .5, color: PAL[s.color].l || PAL[s.color].c, t: performance.now(), life: 620 }); burst(s.c + .5, s.r + .5, "#fff", 6, "round"); }
   if (popped) {
     SFX.pop(Math.min(G.combo, 13)); buzz(detonated.size ? 40 : 12); save.stats.gems += popped;
     if (!G.over && !G.inFrenzy) G.frenzy = Math.min(100, G.frenzy + popped * 2 + (G.combo > 1 ? 3 : 0));
@@ -3845,7 +3961,7 @@ async function blast(clear, spawn = [], opts = {}) {
     fx.push({ k: "whirl", x: cc + .5, y: rr + .8, t: n0, life: 1100 });
     if (G.combo >= 3) fx.push({ k: "spirit", x: cc + .5, y: rr + .5, t: n0 + 120, life: 1500 });
     if (G.combo >= 4) { for (let k = 0; k < 3; k++) fx.push({ k: "comet", x: -1, y: Math.random() * 4, x2: COLS + 1, y2: 3 + Math.random() * 5, color: ["#ffe04a", "#ff8adb", "#7fdcff"][k], t: n0 + k * 160, life: 900 }); } }
-  if (G.combo === 3) { toast("Bloom!"); pogoReact("yay"); } else if (G.combo === 4) { toast("Glow!"); pogoReact("clap"); } else if (G.combo >= 5) { toast("Wildwood!"); pogoReact("wow"); }   // Charmwood's own words for a chain if (detonated.size) G.shake = performance.now();
+  if (!G.over) bsWord(G.combo);   // Charmwood's own words for a chain if (detonated.size) G.shake = performance.now();
   updateHud();
   await sleep(detonated.size ? 210 : 150);
 }
@@ -3943,15 +4059,16 @@ function closePauseIfOpen() { if (G.paused) { G.paused = false; hide("mPause", t
 // the leftover moves play out in about four seconds in all: STRIPE_MS of gems turning striped, then the one big blast and its settle
 const STRIPE_MS = 2850;
 async function win() {
-  G.over = true; G.undo = null; G.boost = null; closePauseIfOpen(); logEv("win"); delete save.fails[G.level]; toast("Charmfall!"); SFX.logo(); setTimeout(() => SFX.win(), 500); confetti(); flash(.4, 500);
+  G.over = true; G.undo = null; G.boost = null; closePauseIfOpen(); logEv("win"); delete save.fails[G.level]; bsFlee(); toast("Charmfall!"); SFX.logo(); setTimeout(() => SFX.win(), 500); confetti(); flash(.4, 500);
   // sugar crush: remaining moves become striped gems and detonate
   let n = G.moves; const gap = Math.min(240, STRIPE_MS / Math.max(1, n));
   while (n-- > 0) { G.moves = n; updateHud();
-    const gems = []; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const g = cell(r, c); if (g && g.kind === "gem" && !g.special) gems.push(g); }
-    if (!gems.length) break; const g = gems[rnd(gems.length)]; g.special = rnd(2) ? "h" : "v"; g.fuse = 0; g.sx = 1.6; g.pop = performance.now(); sparkle(g.c + .5, g.r + .5, PAL[g.color].c); addScore(g.r, g.c, 1000); SFX.pop(3); await sleep(gap);
+    const gems = []; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const g = cell(r, c); if (g && g.kind === "gem" && !g.special && !g.bsPend) gems.push(g); }
+    if (!gems.length) break; const g = gems[rnd(gems.length)], turn = () => { g.bsPend = 0; g.special = rnd(2) ? "h" : "v"; g.fuse = 0; g.sx = 1.6; g.pop = performance.now(); sparkle(g.c + .5, g.r + .5, PAL[g.color].c); addScore(g.r, g.c, 1000); SFX.pop(3); };
+    if (window.__fast) turn(); else { g.bsPend = 1; bsFlyMove(g, turn); } await sleep(gap);   // 2026-11-05 each spare move flies out of the counter into its charm, which turns striped as it lands
   }
   G.moves = 0; updateHud();
-  await sleep(80);
+  await sleep(window.__fast ? 80 : 520);
   // one detonation of everything special, one settle, no further chains: the result card is up about four seconds after the winning move
   { const set = new Set(); for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const g = cell(r, c); if (g && g.special) set.add(r * COLS + c); } if (set.size) { G.combo = 2; await blast(set); G.wrapAgain = []; await gravity(); } }
   const st = starTargets(G.L), stars = G.score >= st[2] ? 3 : G.score >= st[1] ? 2 : 1;
@@ -3967,7 +4084,7 @@ async function win() {
   const lv = G.level; mkBtn("eBtns", next ? "Next level" : "Back to map", () => { hide("mEnd"); showMap(); if (next && !isOpen("mStory")) openLevel(lv + 1); });
   mkBtn("eBtns", window.__nativeApp ? "↻ Replay" : "↻ Replay level", () => { hide("mEnd"); clearProgress(); wipe(() => startLevel(lv)); }, true);
   if (next) mkBtn("eBtns", "Map", () => { hide("mEnd"); wipe(showMap); }, true);
-  await sleep(100); countUp($("eText"), starsOf(G.score), "Stars earned ★ "); show("mEnd"); trRoast(stars);
+  await sleep(100 + bsStars(stars)); countUp($("eText"), starsOf(G.score), "Stars earned ★ "); show("mEnd"); trRoast(stars);
 }
 async function lose(dead) {
   G.over = true; G.undo = null; G.boost = null; closePauseIfOpen(); logEv("lose"); if (!window.__fast && !roomStart) save.fails[G.level] = (save.fails[G.level] || 0) + 1;
@@ -4759,7 +4876,7 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
   const now = ts, dt = Math.min(.05, Math.max(0, (ts - lastTs) / 1000)); lastTs = ts;
   hudTick(dt);
   const W = CELL * COLS;
-  let shx = 0, shy = 0; if (G.shake) { const t = (now - G.shake) / 340; if (t >= 1) G.shake = 0; else if (t > 0) { const k = (1 - t) * (1 - t) * 7 * Math.min(1, t * 10); shx = Math.sin(t * 42) * k; shy = Math.cos(t * 31) * k; } }
+  let shx = 0, shy = 0; if (G.shake) { const t = (now - G.shake) / 340; if (t >= 1) { G.shake = 0; G.shakeK = 1; } else if (t > 0) { const k = (1 - t) * (1 - t) * 7 * Math.min(1, t * 10) * (G.shakeK || 1); shx = Math.sin(t * 42) * k; shy = Math.cos(t * 31) * k; } }
   const bx = Math.round(shx * DPR), by = Math.round(shy * DPR); shx = bx / DPR; shy = by / DPR;
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(ST.bg, bx, by);
@@ -4979,6 +5096,7 @@ function bestMove() {
 // then templates with {n} slots, and lines joined with " · " are translated piece by piece. A MutationObserver catches text as it appears,
 // so nothing else in the game needs to know about languages. Solver runs stay in English (tests read the English titles).
 const TR = {
+  "Good!": "İyi!", "Great!": "Harika!", "Amazing!": "Muhteşem!", "Charmtastic!": "Tılsımlı!", "{0} moves left!": "{0} hamle kaldı!", "in {0} moves": "{0} hamlede", "Score {0}": "{0} puan topla", "Clear {0} ash": "{0} külü temizle", "Bring down {0} seeds": "{0} tohumu indir", "Break {0} brambles": "{0} dikeni kır", "Level {0}": "Seviye {0}",
   "Charmwood works": "Charmwood işleri", "★ Restore": "★ Onar", "Every work of Charmwood stands again.": "Charmwood'un bütün işleri yeniden ayakta.", "Bring Charmwood back: {1} of {2} restored": "Charmwood'u geri getir: {2} işten {1} onarıldı",
   "Reach {1} station (level {2}) to restore {3}": "{3} için önce {1} durağına ulaş (seviye {2})", "Restore {1} {2}": "{1} {2} onar", "{1} restored! +1 {2}": "{1} onarıldı! +1 {2}",
   "Saplings at Ash Gate": "Ash Gate fidanları", "The spring": "Kaynak", "Seed beds": "Tohum yatakları", "The Old Oak": "Yaşlı Meşe", "Nest boxes": "Kuş yuvaları", "Bee hives": "Arı kovanları", "The river bridge": "Nehir köprüsü", "The Crown's light": "Crown'un ışığı",

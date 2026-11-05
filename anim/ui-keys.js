@@ -337,6 +337,93 @@
       [1300, { transform: "rotate(-9deg)" }, SETTLE],
       [1400, { transform: "rotate(-9deg)" }, HOLD],
     ],
+
+    // ---- 2026-11-05 the board show (İdris "oyun tahtasının olduğu ekrana Royal Match / Clash Royale gibi animasyon ve grafikler"): keyed like the rest
+    // a cloud crossing the sky band behind the board: it never just slides, it rises and settles a little as it goes (one pass, then it waits off screen)
+    bsCloud: [
+      [0,     { transform: "translate(-45vw, 0px)" }],
+      [14000, { transform: "translate(-6vw, -5px)" }, SETTLE],
+      [30000, { transform: "translate(40vw, 2px)" }, SETTLE],
+      [46000, { transform: "translate(84vw, -4px)" }, SETTLE],
+      [60000, { transform: "translate(125vw, 0px)" }, SETTLE],
+    ],
+    // a leaf (or petal, or snow puff) coming down beside the board: drops, catches the air, swings back the other way, flips, and is gone; then a pause
+    bsLeaf: [
+      [0,    { transform: "translate(0px, -6vh) rotate(0deg) scaleX(1)", opacity: 0 }],
+      [300,  { transform: "translate(6px, -2vh) rotate(12deg) scaleX(1)", opacity: 1 }, SNAP],
+      [1500, { transform: "translate(34px, 18vh) rotate(48deg) scaleX(.4)", opacity: 1 }, SETTLE],
+      [2700, { transform: "translate(-8px, 36vh) rotate(-22deg) scaleX(-1)", opacity: 1 }, SETTLE],
+      [3900, { transform: "translate(30px, 56vh) rotate(36deg) scaleX(-.3)", opacity: 1 }, SETTLE],
+      [5100, { transform: "translate(-4px, 76vh) rotate(-18deg) scaleX(1)", opacity: 1 }, SETTLE],
+      [6000, { transform: "translate(18px, 92vh) rotate(20deg) scaleX(.6)", opacity: 0 }, "cubic-bezier(.4, 0, .8, .6)"],
+      [9000, { transform: "translate(18px, 92vh) rotate(20deg) scaleX(.6)", opacity: 0 }, HOLD],
+    ],
+    // a firefly over a night board: hangs, darts a little, glows up, dims
+    bsFly: [
+      [0,    { transform: "translate(0px, 0px) scale(.8)", opacity: .2 }],
+      [700,  { transform: "translate(10px, -14px) scale(1)", opacity: 1 }, SETTLE],
+      [1500, { transform: "translate(4px, -20px) scale(1)", opacity: .9 }, HOLD],
+      [1800, { transform: "translate(-14px, -8px) scale(1.1)", opacity: 1 }, SNAP],
+      [3000, { transform: "translate(-6px, 6px) scale(.85)", opacity: .25 }, SETTLE],
+      [4200, { transform: "translate(0px, 0px) scale(.8)", opacity: .2 }, SETTLE],
+    ],
+    // the boss above the board, hit by a match: knocked back with a squash, a wince, and back up on guard
+    bsHit: [
+      [0,   { transform: "translate(0px, 0px) rotate(0deg) scale(1, 1)", filter: "brightness(1)" }],
+      [60,  { transform: "translate(9px, -3px) rotate(9deg) scale(1.08, .9)", filter: "brightness(1.6)" }, SNAP],
+      [170, { transform: "translate(5px, 1px) rotate(4deg) scale(.95, 1.06)", filter: "brightness(1.15)" }, SETTLE],
+      [280, { transform: "translate(-2px, 0px) rotate(-2deg) scale(1.02, .98)", filter: "brightness(1)" }, SETTLE],
+      [400, { transform: "translate(0px, 0px) rotate(0deg) scale(1, 1)", filter: "brightness(1)" }, SETTLE],
+    ],
+    // the boss beaten: a stunned wobble, a crouch, then flung up and off the top of the screen spinning
+    bsFlee: [
+      [0,    { transform: "translate(0px, 0px) rotate(0deg) scale(1)", opacity: 1 }],
+      [180,  { transform: "translate(-4px, 2px) rotate(-12deg) scale(1)", opacity: 1 }, SETTLE],
+      [360,  { transform: "translate(4px, 2px) rotate(12deg) scale(1)", opacity: 1 }, SETTLE],
+      [520,  { transform: "translate(0px, 10px) rotate(0deg) scale(1.1, .82)", opacity: 1 }, LIFT],
+      [700,  { transform: "translate(30px, -70px) rotate(160deg) scale(.9)", opacity: 1 }, SNAP],
+      [1150, { transform: "translate(90px, -260px) rotate(560deg) scale(.5)", opacity: 0 }, DROP],
+    ],
+    // a boss's level opening: he drops in from above, lands with a squash and straightens
+    bsArrive: [
+      [0,   { transform: "translate(0px, -120px) scale(.9, 1.1)", opacity: 0 }],
+      [260, { transform: "translate(0px, 6px) scale(1.12, .86)", opacity: 1 }, DROP],
+      [380, { transform: "translate(0px, -6px) scale(.96, 1.05)", opacity: 1 }, SNAP],
+      [520, { transform: "translate(0px, 0px) scale(1, 1)", opacity: 1 }, SETTLE],
+    ],
+    // the moves box with five moves or fewer left: a hard beat and a red glow, once per move (no loop while you think)
+    bsMoves: [
+      [0,   { transform: "scale(1)", boxShadow: "0 0 0 0 rgba(255, 60, 80, 0)" }],
+      [90,  { transform: "scale(.94)", boxShadow: "0 0 0 2px rgba(255, 60, 80, .5)" }, LIFT],
+      [220, { transform: "scale(1.16)", boxShadow: "0 0 0 7px rgba(255, 60, 80, .45)" }, SNAP],
+      [360, { transform: "scale(.98)", boxShadow: "0 0 0 4px rgba(255, 60, 80, .25)" }, SETTLE],
+      [520, { transform: "scale(1.05)", boxShadow: "0 0 0 5px rgba(255, 60, 80, .3)" }, SETTLE],
+      [760, { transform: "scale(1)", boxShadow: "0 0 0 0 rgba(255, 60, 80, 0)" }, SETTLE],
+    ],
+    // a picked booster: lifted out of the tray with an overshoot, and it stays up while it is armed
+    boostLift: [
+      [0,   { translate: "0px 0px" }],
+      [70,  { translate: "0px 3px" }, LIFT],
+      [210, { translate: "0px -17px" }, SNAP],
+      [300, { translate: "0px -10px" }, SETTLE],
+      [380, { translate: "0px -12px" }, SETTLE],
+    ],
+    // a booster that just got one more (or is ready at the start of a level): a hop with a squash on landing
+    boostGot: [
+      [0,   { translate: "0px 0px", scale: "1 1" }],
+      [80,  { translate: "0px 2px", scale: "1.08 .92" }, LIFT],
+      [220, { translate: "0px -12px", scale: ".94 1.08" }, SNAP],
+      [360, { translate: "0px 0px", scale: "1.1 .9" }, DROP],
+      [460, { translate: "0px -2px", scale: ".98 1.02" }, SETTLE],
+      [560, { translate: "0px 0px", scale: "1 1" }, SETTLE],
+    ],
+    // the sheen that runs over the goal banner once it has landed
+    bsSheen: [
+      [0,   { transform: "translateX(-120%) skewX(-20deg)", opacity: 0 }],
+      [80,  { transform: "translateX(-100%) skewX(-20deg)", opacity: .9 }, SNAP],
+      [520, { transform: "translateX(260%) skewX(-20deg)", opacity: .9 }, SETTLE],
+      [600, { transform: "translateX(280%) skewX(-20deg)", opacity: 0 }, HOLD],
+    ],
   };
   // script-driven motions (Web Animations API): same table shape; UI_KEYS.waapi(name) hands them to element.animate()
   const WAAPI = {
@@ -381,6 +468,27 @@
       [300,  { opacity: 1, transform: "translate(-50%,-95%) scale(1.12)" }, SNAP],
       [420,  { opacity: 1, transform: "translate(-50%,-90%) scale(1)" }, SETTLE],
       [1300, { opacity: 0, transform: "translate(calc(-50% + var(--dx, 0px)),-260%) scale(.9)" }, "cubic-bezier(.4, 0, .8, .7)"],
+    ],
+
+    // the goal banner at the start of a level: swings down from the top of the board on its ribbon, bounces, hangs while the charms rain, is pulled up
+    bsBanner: [
+      [0,    { opacity: 0, transform: "translate(-50%, -150%) rotate(-4deg) scale(.9)" }],
+      [300,  { opacity: 1, transform: "translate(-50%, 6%) rotate(2deg) scale(1.04)" }, SNAP],
+      [430,  { opacity: 1, transform: "translate(-50%, -3%) rotate(-1deg) scale(.99)" }, SETTLE],
+      [560,  { opacity: 1, transform: "translate(-50%, 0%) rotate(0deg) scale(1)" }, SETTLE],
+      [1650, { opacity: 1, transform: "translate(-50%, 0%) rotate(0deg) scale(1)" }, HOLD],
+      [1760, { opacity: 1, transform: "translate(-50%, 4%) rotate(0deg) scale(1.02)" }, LIFT],
+      [2020, { opacity: 0, transform: "translate(-50%, -160%) rotate(3deg) scale(.92)" }, DROP],
+    ],
+    // "5 moves left!": slams in over the board, shudders once, holds, shrinks away
+    bsWarn: [
+      [0,    { opacity: 0, transform: "translate(-50%, -50%) scale(1.8) rotate(-3deg)" }],
+      [160,  { opacity: 1, transform: "translate(-50%, -50%) scale(.94) rotate(1deg)" }, DROP],
+      [240,  { opacity: 1, transform: "translate(-48%, -50%) scale(1.03) rotate(-1deg)" }, SNAP],
+      [320,  { opacity: 1, transform: "translate(-52%, -50%) scale(1) rotate(1deg)" }, SETTLE],
+      [400,  { opacity: 1, transform: "translate(-50%, -50%) scale(1) rotate(0deg)" }, SETTLE],
+      [1200, { opacity: 1, transform: "translate(-50%, -50%) scale(1) rotate(0deg)" }, HOLD],
+      [1420, { opacity: 0, transform: "translate(-50%, -50%) scale(.6) rotate(0deg)" }, DROP],
     ],
   };
   // numbers for the canvas (board cells for distances, 0..1 for amounts). Sampled with UI_KEYS.sample(name, ms, out).
@@ -436,6 +544,30 @@
       [520, { s: 1, y: .62, a: 1 }, HOLD],
       [850, { s: 1, y: 1.1, a: 0 }, "cubic-bezier(.4, 0, .7, .6)"],
     ],
+
+    // flights from the board to the HUD and back (p: how far along the straight line, h: how high the arc lifts, in parts of the distance;
+    // s: size, r: turns, a: alpha). The page turns each into Web Animations frames for the actual distance (UI_KEYS.path).
+    // a goal icon from the banner to the goal counter: lifts, hangs a moment, then shoots in and shrinks into the box
+    flyIcon: [
+      [0,   { p: 0,   h: 0,   s: 1,    r: 0,   a: 1 }],
+      [160, { p: -.04, h: .08, s: 1.25, r: -.04, a: 1 }, LIFT],
+      [520, { p: .62, h: .3,  s: 1.1,  r: .08, a: 1 }, SNAP],
+      [720, { p: 1,   h: 0,   s: .55,  r: 0,   a: .9 }, DROP],
+    ],
+    // a spare move leaving the moves counter for the charm it will turn into a striped one, on the winning run
+    flyMove: [
+      [0,   { p: 0,   h: 0,   s: .4,  r: 0,   a: 0 }],
+      [90,  { p: .02, h: .05, s: 1.2, r: .1,  a: 1 }, SNAP],
+      [330, { p: .7,  h: .28, s: 1,   r: .6,  a: 1 }, SETTLE],
+      [430, { p: 1,   h: 0,   s: .7,  r: 1,   a: .8 }, DROP],
+    ],
+    // a star won: from the star bar to the middle of the screen, growing as it comes
+    flyStar: [
+      [0,   { p: 0,   h: 0,   s: 1,   r: 0,   a: 1 }],
+      [120, { p: -.03, h: .05, s: 1.3, r: -.05, a: 1 }, LIFT],
+      [480, { p: .75, h: .22, s: 2.4, r: .5,  a: 1 }, SNAP],
+      [640, { p: 1,   h: 0,   s: 2.1, r: 1,   a: 0 }, SETTLE],
+    ],
   };
   // how long each motion runs and which element uses it (the page's own durations were two-key tweens of other lengths)
   const L = (k) => KEYS[k].at(-1)[0] + "ms";
@@ -484,6 +616,16 @@
     .pogo .all { animation: pgBreath ${L("pgBreath")} linear infinite; } .pogo .tail { animation: pgTail ${L("pgTail")} linear infinite; }
     #path .mprop:not(.vis) img, #path .ani:not(.vis) > i, #path .ani:not(.vis) > i > img { animation: none !important; }
     body:has(#game:not([hidden])) .prop b, html.pinching #path *, html.petting .prop b, html.petting .node { animation-play-state: paused !important; }
+
+    #gSky .cl { animation: bsCloud ${L("bsCloud")} var(--dl, 0s) linear infinite; }
+    #gAir .lf { animation: bsLeaf ${L("bsLeaf")} var(--dl, 0s) linear infinite; } #gAir.flies .lf { animation-name: bsFly; animation-duration: ${L("bsFly")}; }
+    #gBoss.hit .bb-fig { animation: bsHit ${L("bsHit")} linear 1; } #gBoss.flee .bb-fig { animation: bsFlee ${L("bsFlee")} linear 1 both; } #gBoss.arrive .bb-fig { animation: bsArrive ${L("bsArrive")} 250ms linear both; }
+    #gBoss.grab .bb-fig { animation: mordoGrab ${L("mordoGrab")} linear 1; } #gBoss.away .bb-fig { animation: mordoAway ${L("mordoAway")} linear 1; }
+    .hud .box.warn { animation: bsMoves ${L("bsMoves")} linear 1; }
+    .boost.on { animation: boostLift ${L("boostLift")} linear both, pulse ${L("pulse")} linear infinite; } .boost.got { animation: boostGot ${L("boostGot")} var(--dl, 0ms) linear both; }
+    #gBanner.lit .sheen { animation: bsSheen ${L("bsSheen")} linear 1 both; }
+    html.bsIdle #gSky *, html.bsIdle #gAir *, #game[hidden] #gSky *, #game[hidden] #gAir * { animation-play-state: paused !important; }
+    @media (prefers-reduced-motion: reduce) { #gSky .cl, #gAir .lf, #gBoss .bb-fig, .hud .box.warn, .boost.got, #gBanner .sheen { animation: none !important; } }
     @media (prefers-reduced-motion: reduce) { .card, .modal, .modal.out, .modal.out .card, .modal .card > *, #game .hud, #game .bar, #game .frz, #game .boosters, #game #c, #map, #gDio .dio, #path .mprop > b.pst, #eStars svg, .card .big b i, #wipe b, #wipe i, #pgMoment, #pgMoment::before, .zoomin, .garden span, .cere .cg, .cere .ct, .cere .cs { animation-duration: 1ms !important; animation-delay: 0s !important; }
       .card h2.perfect, #sPlay, #sCont, #stGo, #dClaim, .boost.on, .mapbar button.ready, .days .now, .achl div.due, .lvplate.go, .frz.full span, .lv.now, .lv.now::before, .lv em, .mprop img, .prop b, .garden span.live, #gMordo img, #path .ani > i, .pogo .all, .pogo .tail { animation: none !important; } }`;
   const css = (props) => Object.entries(props).map(([k, v]) => `${k}: ${v};`).join(" ");
@@ -518,7 +660,12 @@
     const keys = WAAPI[name], len = keys.at(-1)[0];
     return { duration: len, frames: keys.map(([t, p], i) => Object.assign({ offset: t / len }, p, keys[i + 1] ? { easing: keys[i + 1][2] } : {})) };
   }
-  window.UI_KEYS = Object.assign(KEYS, { board: BOARD, waapiKeys: WAAPI, sample, waapi, len: (name) => SAMP[name].len });
+  function path(name, dx, dy, base) {
+    const keys = BOARD[name], len = keys.at(-1)[0], d = Math.hypot(dx, dy);
+    return { duration: len, frames: keys.map(([t, v], i) => Object.assign({ offset: t / len, opacity: v.a,
+      transform: `${base || ""} translate(${(dx * v.p).toFixed(1)}px, ${(dy * v.p - d * v.h).toFixed(1)}px) scale(${v.s}) rotate(${(v.r * 360).toFixed(0)}deg)` }, keys[i + 1] ? { easing: keys[i + 1][2] } : {})) };
+  }
+  window.UI_KEYS = Object.assign(KEYS, { path, board: BOARD, waapiKeys: WAAPI, sample, waapi, len: (name) => SAMP[name].len });
   const st = document.createElement("style"); st.id = "uiKeys"; st.textContent = out + USE;
   // after the page's own <style> so these names and rules win
   const put = () => document.head.appendChild(st);
