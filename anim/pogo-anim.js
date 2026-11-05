@@ -99,6 +99,13 @@
       [14, { ear: .55, hx: .32, eye: .5, lx: .25, rx: .25, lz: -.1, rz: .1, sq: .96 }, "io"],
       [22, { sq: .88, hx: .4 }, "io"], [30, { sq: .95 }, "io"], [40, { sq: .92, hz: .06 }, "io"], [56, { sq: .94 }, "io"]],
       fx: [{ k: "gloom", from: 10, to: 56 }, { k: "sigh", from: 20, to: 30 }, { k: "tear", from: 28, to: 56 }] },
+    // 2026-11-05 Lily Hop (mini.js): one leap from pad to pad; the game carries him along the arc, the clip is the body: a push with the arms
+    // swung back, arms thrown up and the feet tucked at the top, the arms coming down and the feet reaching for the pad, a soft landing pose
+    leap: { len: 14, fps: 24, keys: [
+      [0, { sq: .86, lx: .55, rx: .55, hx: .1, eye: .9 }], [3, { sq: 1.14, lx: -2.4, rx: -2.4, lz: .25, rz: -.25, fl: .2, fr: .2, ear: -.28, mo: 1, eye: 1.15, hx: -.14 }, "o"],
+      [8, { sq: 1.03, lx: -1.7, rx: -1.7, lz: .1, rz: -.1, fl: .3, fr: .3, ear: -.12, hx: -.06 }, "io"], [12, { sq: .95, lx: -.5, rx: -.5, lz: -.2, rz: .2, fl: .08, fr: .08, ear: .18, mo: .5, hx: .06 }, "i"],
+      [14, { sq: 1, lx: 0, rx: 0, lz: -.3, rz: .3, fl: 0, fr: 0, ear: 0, mo: 0, eye: 1, hx: 0 }, "io"]],
+      fx: [{ k: "dust", from: 0, to: 5 }] },
     dash: { len: 12, fps: 24, loop: 1, keys: [
       [0, { ry: 1.15, sq: .86, lx: .5, rx: .5, y: 0, hx: .05, mo: .6, eye: .8 }],
       [3, { sq: 1.12, y: .18, lx: -.7, rx: -.7 }, "o"], [6, { sq: 1, y: .3, lx: .7, rx: .7, fl: .15, fr: .15 }, "o"],
