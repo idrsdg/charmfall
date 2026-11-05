@@ -15,6 +15,10 @@
   // (BXM), carrots through RWM, so a tier-2 game is worth about one booster handout. Practice games pay nothing.
   const MINI_REWARD = {
     tiers: [{}, { stars: 1 }, { stars: 1, boost: 1 }, { stars: 2, boost: 1, carrots: 1 }],
+    // 2026-11-06 (story.js): a game bought in the Playground with a carrot (or a free game a boss left) pays stars and at most one booster handout,
+    // never carrots back, so a carrot cannot buy more carrots; one carrot is worth about one tier-2 game
+    ticket: [{}, { stars: 1 }, { stars: 2 }, { stars: 2, boost: 1 }],
+    price: 1,
     need: { carrots: [3, 5, 7], fireflies: [8, 15, 22], lilypads: [4, 8, 12], nests: [1, 2, 3] },
     boosters: ["hammer", "moves", "switch", "cross"]
   };
@@ -31,7 +35,7 @@
     "The mole!": "Köstebek!", "He took half.": "Yarısını aldı.", "All carrots out!": "Bütün havuçlar çıktı!", "Time!": "Süre doldu!", "Splash!": "Şap!", "The far bank!": "Karşı kıyı!",
     "Found it!": "Buldun!", "Not there…": "Orada değil…", "Watch the charm…": "Tılsımı izle…", "Which nest?": "Hangi yuva?", "Round {0}/3": "Tur {0}/3",
     "Pads {0}/12": "Yaprak {0}/12", "Caught {0}": "Yakalanan {0}", "Carrots {0}": "Havuç {0}", "No reward this time.": "Bu sefer ödül yok.", "Well played!": "İyi oynadın!", "Great run!": "Harika!", "Perfect!": "Kusursuz!",
-    "Playground": "Oyun parkı", "Short games with Pogo. In the playground they are practice, no rewards.": "Pogo ile kısa oyunlar. Oyun parkında antrenman olarak oynanır, ödül yok.",
+    "Playground": "Oyun parkı", "For rewards": "Ödüllü", "Practice": "Antrenman", "Free games: {0}": "Bedava oyun: {0}", "One game: {0} carrot · you have {1}": "Bir oyun: {0} havuç · sende {1} var", "No carrots left. Win levels to earn more, or play for practice.": "Havuç kalmadı. Seviye kazanarak havuç topla ya da antrenman oyna.", "Short games with Pogo. In the playground they are practice, no rewards.": "Pogo ile kısa oyunlar. Oyun parkında antrenman olarak oynanır, ödül yok.",
     "Stars": "Yıldız", "Carrots": "Havuç", "Woodpecker": "Ağaçkakan", "+10 Moves": "+10 Hamle", "Free Switch": "Serbest Değiş", "Cross Blast": "Haç Patlaması", "Undo": "Geri al"
   };
   const T = (s, ...a) => { let o = (typeof save === "object" && save && save.lang === "tr" && TRM[s]) || s; a.forEach((v, i) => { o = o.replace("{" + i + "}", v); }); return o; };
@@ -120,6 +124,8 @@
   #miniOv .mmeter b { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(#ff7a1a, #ffc414); }
   .mpgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0 14px; }
   .mpgrid button { border: 0; border-radius: 16px; padding: 10px 6px 8px; font: inherit; font-weight: 900; font-size: 14px; color: #4a2a14; background: #fff8e6; box-shadow: 0 4px 0 #b8925e, 0 8px 16px rgba(0,0,0,.2); cursor: pointer; }
+  .mpmode { display: flex; gap: 6px; justify-content: center; margin: 6px 0 2px; } .mpmode button { display: inline-flex; align-items: center; gap: 4px; border: 2px solid #b8925e; border-radius: 99px; padding: 5px 12px; font: inherit; font-weight: 900; font-size: 13px; color: #4a2a14; background: #fff8e6; cursor: pointer; }
+  .mpmode button.on { background: #4a2a14; color: #fff8e6; border-color: #4a2a14; } .mpmode .ico { width: 18px; height: 18px; display: inline-block; } .mpmode .ico svg { width: 100%; height: 100%; } .mpgrid.poor button { opacity: .55; }
   .mpgrid img { display: block; width: 100%; height: 74px; object-fit: cover; border-radius: 10px; margin-bottom: 6px; }`;
   let ov = null, cv, X, pogoEl, hud, btns, cardEl, say, run = null;
   function build() { if (ov) return; const st = document.createElement("style"); st.id = "miniCss"; st.textContent = css; document.head.appendChild(st);
@@ -316,7 +322,7 @@
   function card(html) { cardEl.innerHTML = `<div class="card">${html}</div>`; cardEl.hidden = false; return cardEl.firstElementChild; }
   function intro(name, practice) { return new Promise((res) => { const c = card(`<h2>${T(TITLE[name])}</h2><p>${T(RULE[name])}</p>${practice ? `<p class="mprac">${T("Practice: no rewards")}</p>` : ""}<button class="btn" type="button">${T("Play")}</button>`); c.querySelector("button").addEventListener("click", () => { cardEl.hidden = true; res(); }); }); }
   // what a tier pays (as counts on the card), then into the save when it is paid
-  function payout(name, tier, practice) { const R0 = MINI_REWARD.tiers[tier] || {}, out = { stars: R0.stars || 0, carrots: R0.carrots || 0, boost: {} };
+  function payout(name, tier, practice, ticket) { const R0 = (ticket ? MINI_REWARD.ticket : MINI_REWARD.tiers)[tier] || {}, out = { stars: R0.stars || 0, carrots: R0.carrots || 0, boost: {} };
     if (R0.boost) { const pool = MINI_REWARD.boosters, k = pool[Math.floor(Math.random() * pool.length)]; out.boost[k] = R0.boost; }
     if (practice || typeof save !== "object" || !save) return { stars: 0, carrots: 0, boost: {}, would: out };   // practice: nothing is paid (what it would have been is kept for the card)
     if (out.stars) save.starBonus = (save.starBonus || 0) + out.stars;
@@ -346,7 +352,7 @@
     ov.hidden = false; document.documentElement.classList.add("minigame"); hud.title.textContent = T(TITLE[name]); hud.stat.textContent = ""; say.style.opacity = 0; pogoEl.innerHTML = ""; pogoEl.style.cssText = ""; setBtns([]); fit();
     const A = await loadArt(name); let ended = false;
     const finish = async (quit) => { if (ended) return; ended = true; const g = run.g, score = quit ? 0 : g.score(), tier = quit ? 0 : g.tier(); if (g.done) g.done(); setBtns([]);
-      const out = payout(name, tier, practice || quit); if (!quit) await result(name, tier, out, practice); close(); resolve({ reward: { game: name, tier, score, practice, stars: out.stars, carrots: out.carrots, boost: out.boost, quit: !!quit } }); };
+      const out = payout(name, tier, practice || quit, !!opts.ticket); if (!quit) await result(name, tier, out, practice); close(); resolve({ reward: { game: name, tier, score, practice, stars: out.stars, carrots: out.carrots, boost: out.boost, quit: !!quit } }); };
     run.quit = () => finish(true);
     // the page is drawn behind the rules card; the game starts when Play is pressed
     run.g = GAMES[name](A, () => finish(false)); fit(); start();
@@ -355,11 +361,23 @@
   function close() { if (!ov) return; ov.hidden = true; cardEl.hidden = true; pogoEl.innerHTML = ""; document.documentElement.classList.remove("minigame"); if (raf) cancelAnimationFrame(raf); raf = 0; run = null; jumpLand = -1; ov.querySelectorAll(".mmeter,.mflyi").forEach(e => e.remove()); }
 
   // ---------------------------------------------------------------- the playground (practice; the reward path is MINI.open(name, { reward: true }))
-  function playground() { build(); const host = document.createElement("div"); host.className = "modal"; host.id = "mPlay";
-    host.innerHTML = `<div class="card"><h2>${T("Playground")}</h2><p style="font-size:14px">${T("Short games with Pogo. In the playground they are practice, no rewards.")}</p><div class="mpgrid">${Object.keys(TITLE).map(k => `<button type="button" data-g="${k}"><img src="anim/mini-${{ carrots: "bg-field", fireflies: "bg-night", lilypads: "bg-pond", nests: "bg-tree" }[k]}.webp${Q}" alt="">${T(TITLE[k])}</button>`).join("")}</div><button class="btn ghost" type="button" data-x>${T("Close")}</button></div>`;
-    document.body.appendChild(host); const shut = () => host.remove();
-    host.addEventListener("click", (e) => { const b = e.target.closest("[data-g]"); if (b) { shut(); open(b.dataset.g, { reward: false }); return; } if (e.target.closest("[data-x]") || e.target === host) shut(); }); }
+  // 2026-11-06 (story.js): the Playground plays for rewards too: one carrot a game, or one of the free games a boss left behind (save.miniFree);
+  // practice stays free and pays nothing. The mode is remembered.
+  function playground() { build(); const host = document.createElement("div"); host.className = "modal"; host.id = "mPlay"; const sv = typeof save === "object" && save;
+    const can = () => sv && ((sv.miniFree || 0) > 0 || (sv.carrots || 0) >= MINI_REWARD.price);
+    let mode = sv && sv.pgMode === "practice" ? "practice" : can() ? "reward" : "practice";
+    const head = () => mode === "practice" ? T("Practice: no rewards") : (sv.miniFree || 0) > 0 ? T("Free games: {0}", sv.miniFree) : T("One game: {0} carrot · you have {1}", MINI_REWARD.price, sv.carrots || 0);
+    host.innerHTML = `<div class="card"><h2>${T("Playground")}</h2><div class="mpmode"><button type="button" data-m="reward">${ICON("carrot")}${T("For rewards")}</button><button type="button" data-m="practice">${T("Practice")}</button></div><p class="mphead" style="font-size:14px"></p><div class="mpgrid">${Object.keys(TITLE).map(k => `<button type="button" data-g="${k}"><img src="anim/mini-${{ carrots: "bg-field", fireflies: "bg-night", lilypads: "bg-pond", nests: "bg-tree" }[k]}.webp${Q}" alt="">${T(TITLE[k])}</button>`).join("")}</div><button class="btn ghost" type="button" data-x>${T("Close")}</button></div>`;
+    const paint = () => { host.querySelectorAll("[data-m]").forEach(b => b.classList.toggle("on", b.dataset.m === mode)); host.querySelector(".mphead").textContent = head(); host.querySelector(".mpgrid").classList.toggle("poor", mode === "reward" && !can()); };
+    document.body.appendChild(host); paint(); const shut = () => host.remove();
+    host.addEventListener("click", (e) => { const m = e.target.closest("[data-m]"); if (m) { mode = m.dataset.m; if (sv) { sv.pgMode = mode; try { persist(); } catch (er) {} } paint(); return; }
+      const b = e.target.closest("[data-g]"); if (b) { if (mode === "reward") { if (!can()) { sfx("bad"); const hd = host.querySelector(".mphead"); hd.textContent = T("No carrots left. Win levels to earn more, or play for practice."); if (window.bump) bump(hd); return; }
+          if ((sv.miniFree || 0) > 0) sv.miniFree--; else sv.carrots -= MINI_REWARD.price; try { persist(); const c = document.getElementById("carrots"); if (c) c.textContent = sv.carrots || 0; } catch (er) {}
+          shut(); open(b.dataset.g, { reward: true, ticket: true }); return; }
+        shut(); open(b.dataset.g, { reward: false }); return; }
+      if (e.target.closest("[data-x]") || e.target === host) shut(); }); }
 
+  window.MINI_T = (g) => T(TITLE[g] || g);
   window.MINI = { open, close, playground, games: Object.keys(GAMES), get running() { return !!run; }, keys: MK, sample: K, reward: MINI_REWARD };
   // test hook: open a game straight into play, read its state, poke it
   for (const k of ["carrot", "fly", "lily", "nest"]) window["__" + k + "Peek"] = () => run && run.g.peek ? run.g.peek() : null;

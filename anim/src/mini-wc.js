@@ -200,13 +200,46 @@
     for (let i = 0; i < 11; i++) { const r = R(10 + i), a = -1.57 + (r() - .5) * 2.4, v = .5 + r() * .5, px = cx + Math.cos(a) * W * .46 * d * v, py = by - H * .75 * v * d * (1 - d) * 2.2 + Math.sin(a + 1.57) * 0, s = (5 + r() * 5) * (1 - d * .4);
       if (d > .04 && d < .98) { const dr = P(p => { p.moveTo(px, py - s * 1.5); p.quadraticCurveTo(px + s, py, px, py + s); p.quadraticCurveTo(px - s, py, px, py - s * 1.5); }); wash(x, dr, "#7ec4e4", 20 + i, { a: .75, layers: 2, rw: 1.2, rim: .35, cx: px, cy: py }); x.fillStyle = "rgba(255,255,255,.85)"; x.beginPath(); x.arc(px - s * .25, py - s * .1, s * .25, 0, 6.2832); x.fill(); } }
     for (const [k, a] of [[0, .9], [.35, .6]]) { const e = Math.max(0, Math.min(1, (d - k) / (1 - k))); if (!e && d) continue; x.save(); x.strokeStyle = `rgba(255,252,240,${a * (1 - e * .8)})`; x.lineWidth = 3.5 * (1 - e * .6); x.beginPath(); x.ellipse(cx, by, W * (.2 + e * .26), H * (.04 + e * .05), 0, 0, 6.2832); x.stroke(); x.restore(); } }
+  // The reward chest (2026-11-06, the story and rewards stage): an old wooden chest with iron bands and a brass lock, eight drawings of the lid
+  // opening on hand-set keys: shut, a first pop against the lock, a creak, then up and back past upright with a little overshoot, and the gold
+  // light inside spilling out. Seen from the front and a little above; the lid turns on its back hinge, so its face shortens and then shows its inside.
+  const CHEST_KEYS = [[0, { o: 0, g: 0 }], [1, { o: .07, g: .15 }, "o"], [2, { o: .2, g: .3 }], [3, { o: .45, g: .55 }], [4, { o: .72, g: .8 }], [5, { o: .95, g: 1 }, "o"], [6, { o: 1.06, g: 1 }, "o"], [7, { o: 1, g: 1 }, "i"]];
+  function chest(x, W, H, f) { const o = keyAt(CHEST_KEYS, f, "o"), g = keyAt(CHEST_KEYS, f, "g"), cx = W / 2, bw = W * .74, bh = H * .3, by = H * .86, top = by - bh, dep = H * .07, lh = H * .17;
+    x.save(); x.filter = "blur(7px)"; x.fillStyle = "rgba(60,30,10,.32)"; x.fill(ell(cx + 8, by + 6, bw * .56, H * .045)); x.restore();
+    const th = o * Math.PI * .62, c = Math.cos(th), sN = Math.sin(th), hingeY = top - dep * .6;
+    // the open mouth of the box and the light in it (drawn first: the box front and the lid go over it)
+    if (o > .01) { const mouth = P(p => { p.moveTo(cx - bw / 2 + 6, top + 2); p.lineTo(cx - bw / 2 + 16, hingeY + 2); p.lineTo(cx + bw / 2 - 16, hingeY + 2); p.lineTo(cx + bw / 2 - 6, top + 2); p.closePath(); });
+      wash(x, mouth, "#3a2014", 1, { a: .8, layers: 3, rw: 2, rim: .2 }); x.save(); x.clip(mouth); const gl = x.createRadialGradient(cx, top, 2, cx, top, bw * .55); gl.addColorStop(0, `rgba(255,236,150,${.95 * g})`); gl.addColorStop(.5, `rgba(255,190,70,${.6 * g})`); gl.addColorStop(1, "rgba(255,160,40,0)"); x.fillStyle = gl; x.fillRect(0, 0, W, H); x.restore();
+      // coins and a charm glint in the gold
+      for (let i = 0; i < 7; i++) { const r = R(30 + i), px = cx + (r() - .5) * bw * .7, py = top - dep * .1 - r() * dep * .4; if (g < .3) continue; const cn = ell(px, py, 9, 5, (r() - .5) * .6); wash(x, cn, "#f2c23a", 31 + i, { a: .8 * g, layers: 2, rw: 1.2, rim: .35, j: .5 }); } }
+    // the box: front face with planks, two iron bands and a shadow side
+    const box = P(p => { p.moveTo(cx - bw / 2, top); p.lineTo(cx + bw / 2, top); p.lineTo(cx + bw / 2 - 4, by); p.lineTo(cx - bw / 2 + 4, by); p.closePath(); });
+    wash(x, box, "#a8663a", 2, { a: .55, layers: 5, rw: 3, cx, cy: top + bh / 2 }); gran(x, box, "#5a2e14", .18, 3, 260, 1.3); shade(x, box, "#a8663a", cx + bw * .34, top + bh * .6, bw * .22, bh * .7, .4, 8); lift(x, box, cx - bw * .25, top + bh * .3, bw * .1, bh * .14, .35);
+    for (let i = 1; i < 3; i++) line(x, [[cx - bw / 2 + 5, top + bh * i / 3], [cx, top + bh * i / 3 + 1.5], [cx + bw / 2 - 5, top + bh * i / 3]], "#5a2e14", 2, .55, 10 + i);
+    for (const s of [-1, 1]) { const band = P(p => p.rect(cx + s * bw * .3 - 9, top, 18, bh)); wash(x, band, "#5a5a66", 20 + s, { a: .7, layers: 3, rw: 2, rim: .35 }); lift(x, band, cx + s * bw * .3 - 3, top + bh * .3, 3, bh * .2, .3, 0); for (const yy of [.2, .8]) { x.fillStyle = "rgba(40,36,44,.85)"; x.beginPath(); x.arc(cx + s * bw * .3, top + bh * yy, 2.6, 0, 6.2832); x.fill(); } pencil(x, band, 22 + s, 1.2, .7); }
+    pencil(x, box, 4, 1.8, .85);
+    // the lid: a rounded top seen from the front; it turns on the hinge: its face shortens (cos), and past upright its inside shows
+    const face = lh * c, liftY = hingeY - (top - hingeY), lidBot = o < .01 ? top : hingeY + (top - hingeY) * c - lh * .0;
+    if (c > 0.02) { const y1 = hingeY + (top - hingeY) * c, y0 = y1 - face - (dep * .9) * sN, lid = P(p => { p.moveTo(cx - bw / 2 - 3, y1); p.lineTo(cx - bw / 2 - 3, y0 + face * .45); p.bezierCurveTo(cx - bw / 2, y0 - face * .15, cx + bw / 2, y0 - face * .15, cx + bw / 2 + 3, y0 + face * .45); p.lineTo(cx + bw / 2 + 3, y1); p.closePath(); });
+      wash(x, lid, "#b4703f", 5, { a: .55, layers: 5, rw: 3, cx, cy: (y0 + y1) / 2 }); gran(x, lid, "#5a2e14", .16, 6, 200, 1.2); shade(x, lid, "#b4703f", cx + bw * .3, y1 - face * .2, bw * .25, face * .6, .35, 7); lift(x, lid, cx - bw * .2, y0 + face * .3, bw * .14, Math.max(2, face * .14), .45);
+      for (const s of [-1, 1]) { const band = P(p => { p.moveTo(cx + s * bw * .3 - 9, y1); p.lineTo(cx + s * bw * .3 - 9, y0 + face * .2); p.quadraticCurveTo(cx + s * bw * .3, y0 + face * .05, cx + s * bw * .3 + 9, y0 + face * .2); p.lineTo(cx + s * bw * .3 + 9, y1); p.closePath(); }); wash(x, band, "#5a5a66", 26 + s, { a: .7, layers: 3, rw: 2, rim: .35 }); pencil(x, band, 28 + s, 1.1, .65); }
+      pencil(x, lid, 7, 1.8, .85); }
+    else { const y1 = hingeY - (top - hingeY) * -c, inner = P(p => { const hh = lh * -c + dep * sN * .9; p.moveTo(cx - bw / 2 - 3, hingeY); p.lineTo(cx - bw / 2 - 3, hingeY - hh); p.bezierCurveTo(cx - bw / 2, hingeY - hh * 1.25, cx + bw / 2, hingeY - hh * 1.25, cx + bw / 2 + 3, hingeY - hh); p.lineTo(cx + bw / 2 + 3, hingeY); p.closePath(); }); void y1;
+      wash(x, inner, "#6a3a20", 8, { a: .6, layers: 4, rw: 3 }); x.save(); x.clip(inner); const gl = x.createLinearGradient(0, hingeY, 0, hingeY - lh); gl.addColorStop(0, `rgba(255,214,110,${.55 * g})`); gl.addColorStop(1, "rgba(255,214,110,0)"); x.fillStyle = gl; x.fillRect(0, 0, W, H); x.restore(); pencil(x, inner, 9, 1.7, .8); }
+    // the brass lock on the front of the box (the hasp lifts away with the lid)
+    const lock = P(p => { p.moveTo(cx - 15, top + 4); p.lineTo(cx + 15, top + 4); p.lineTo(cx + 13, top + 34); p.quadraticCurveTo(cx, top + 42, cx - 13, top + 34); p.closePath(); });
+    wash(x, lock, "#e0a630", 11, { a: .75, layers: 3, rw: 2, rim: .45 }); lift(x, lock, cx - 5, top + 13, 5, 6, .55, 0); x.fillStyle = "rgba(50,28,10,.9)"; x.beginPath(); x.arc(cx, top + 19, 3.4, 0, 6.2832); x.fill(); x.fillRect(cx - 1.3, top + 19, 2.6, 8); pencil(x, lock, 12, 1.3, .8);
+    // the light that spills over the rim once the lid is up
+    if (g > .2 && o > .4) { x.save(); x.globalCompositeOperation = "lighter"; const sp = x.createRadialGradient(cx, top - 6, 4, cx, top - 6, bw * .7); sp.addColorStop(0, `rgba(255,230,140,${.5 * g})`); sp.addColorStop(1, "rgba(255,200,80,0)"); x.fillStyle = sp; x.fillRect(0, 0, W, top + 20); x.restore();
+      for (let i = 0; i < 5; i++) { const r = R(60 + i), a = -Math.PI / 2 + (r() - .5) * 1.6, L = H * (.18 + r() * .2) * g; line(x, [[cx + Math.cos(a) * 20, top - 8 + Math.sin(a) * 20], [cx + Math.cos(a) * L, top - 8 + Math.sin(a) * L]], "#fff1b0", 3, .5 * g); } }
+    void liftY; void lidBot; }
   // the list the bake walks: [name, width, height, frames, painter, options]
   window.MINI_SHEETS = [
     ["bg-field", 780, 1300, 1, BG.field], ["bg-night", 780, 1300, 1, BG.night], ["bg-pond", 1560, 1300, 1, BG.pond], ["bg-tree", 780, 1300, 1, BG.tree],
     ["hole", 240, 150, 1, S.hole], ["lip", 240, 150, 1, S.lip], ["carrot", 170, 330, 1, S.carrot], ["gcarrot", 170, 330, 1, S.carrot, { gold: 1 }], ["star", 128, 128, 1, S.star],
     ["mole", 220, 230, 9, mole], ["jar", 300, 360, 1, S.jar], ["fly", 120, 120, 8, firefly],
     ["pad0", 340, 150, 1, S.pad, { v: 0 }], ["pad1", 340, 150, 1, S.pad, { v: 1 }], ["pad2", 340, 150, 1, S.pad, { v: 2 }], ["reeds0", 170, 440, 1, S.reeds, { v: 0 }], ["reeds1", 170, 440, 1, S.reeds, { v: 1 }],
-    ["ripple", 320, 120, 8, ripple], ["splash", 280, 280, 10, splash], ["nestB", 280, 170, 1, S.nestBack], ["nestF", 280, 170, 1, S.nestFront]];
+    ["ripple", 320, 120, 8, ripple], ["splash", 280, 280, 10, splash], ["nestB", 280, 170, 1, S.nestBack], ["nestF", 280, 170, 1, S.nestFront], ["chest", 320, 320, 8, chest]];
   // paints one sheet: frames side by side (up to 10 a row)
   window.paintMini = function (name) { const sp = MINI_SHEETS.find(s => s[0] === name), [, w, h, n, fn, o] = sp, cols = Math.min(n, 10), rows = Math.ceil(n / cols), cv = document.createElement("canvas"); cv.width = w * cols; cv.height = h * rows; const X = cv.getContext("2d");
     for (let i = 0; i < n; i++) { const f = document.createElement("canvas"); f.width = w; f.height = h; const x = f.getContext("2d", { willReadFrequently: true }); x.lineJoin = "round"; x.lineCap = "round"; fn(x, w, h, i, o); X.drawImage(f, (i % cols) * w, Math.floor(i / cols) * h); }

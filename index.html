@@ -1217,7 +1217,7 @@ function feedPogo() {
   if (!(save.carrots > 0)) { say("No carrots to feed him yet. Carrots are rare: win levels, fill the Frenzy meter, reach a station."); bump("petFeed"); SFX.bad(); pogoMood("cheer", 1600); return; }
   wakePogo(true); save.carrots--; save.fed = (save.fed || 0) + 1; persist(); $("carrots").textContent = save.carrots; petLabel(); bump("carPill"); SFX.swap();
   say("Crunch, crunch…"); for (let i = 0; i < 5; i++) setTimeout(() => { const m = pogoEl(); if (m && m.classList.contains("eat")) SFX.pop(1); }, EAT_BITE(i) * 1000);
-  pogoMood("eat", EAT_S * 1000, () => { pogoMood("happy", 2400); say("Pogo loved it! Carrots eaten: " + save.fed + " · he weighs " + pogoKg() + " kg"); SFX.pop(3); });
+  pogoMood("eat", EAT_S * 1000, () => { pogoMood("happy", 2400); const g = window.STORY && save.fed % 5 === 0; say("Pogo loved it! Carrots eaten: " + save.fed + " · he weighs " + pogoKg() + " kg" + (window.STORY && !g ? " · " + STORY.T("Next present in {0} carrots", STORY.toGift()) : "")); SFX.pop(3); if (g) setTimeout(() => STORY.petGift(), 1300); });   // 2026-11-06 every fifth carrot: a present (story.js)
 }
 // the pet screen: tap Pogo on the map and he comes up close. Stroke him and he shuts his eyes; keep going and he dozes off.
 const PET = { m: 0, down: 0, x: 0, y: 0, moved: 0, t: 0, heart: 0, z: 0 }, SLEEPY = 3200;
@@ -1961,7 +1961,7 @@ function openBook() {
   const sec = (cls, small, h3, ps) => { const s = document.createElement("section"); if (cls) s.className = cls; const sm = document.createElement("small"); sm.textContent = small; const h = document.createElement("h3"); h.textContent = h3; s.append(sm, h); for (const [t, q] of ps) { const p = document.createElement("p"); if (q) p.className = "q"; p.textContent = t; s.append(p); } return s; };
   for (let c = 0; c < CHAPTERS.length; c++) { const C = CHAPTERS[c]; if (c > reach) { out.push(sec("off", "Chapter " + (c + 1) + " · " + C.name, "Not reached yet", [])); continue; }
     const ps = [[C.text]]; if (cur >= c * 10 + 4 || save.stars[c * 10 + 4]) ps.push([RESIDENT[c][1] + " · " + RESIDENT[c][2], 1]); if (save.stars[c * 10 + 9]) ps.push([bossOf(c * 10).name + " · " + BOSS_NOTE[c], 1]); ps.push([F[c] ? "🪶 Feather found" : "🪶 A feather is hidden somewhere in this place."]);
-    const S0 = sec("", "Chapter " + (c + 1) + " · " + C.name, C.title, ps); if (D3) { const im = new Image(); im.className = "who"; im.alt = ""; im.src = D3.sprite(RESIDENT[c][0], 96); S0.prepend(im); } out.push(S0); }
+    const S0 = sec("", "Chapter " + (c + 1) + " · " + C.name, C.title, ps); if (window.STORY) STORY.bookButtons(S0, c); if (D3) { const im = new Image(); im.className = "who"; im.alt = ""; im.src = D3.sprite(RESIDENT[c][0], 96); S0.prepend(im); } out.push(S0); }
   const st = document.createElement("section"); const n = Math.min(STATIONS.length, Math.floor((cur + 1) / STATION_EVERY)); st.append(Object.assign(document.createElement("h3"), { textContent: "Stations of the Green Line" })); for (let k = 0; k < n; k++) st.append(Object.assign(document.createElement("p"), { textContent: STATIONS[k].name + " · " + STATIONS[k].story }));
   if (n) out.push(st);
   $("bkList").replaceChildren(...out); $("bkSub").textContent = "Places reached: " + (reach + 1) + "/" + CHAPTERS.length + " · Mordo's feathers: " + nF + "/" + CHAPTERS.length + " · Seeds saved: " + seedsSaved() + " · Young trees: " + treesGrown(); show("mBook");
@@ -2181,7 +2181,8 @@ function stationCheck() {
   $("snChip").textContent = "Station " + k + " of " + STATIONS.length + " · " + S.name; $("snTitle").textContent = S.task; $("snPct").textContent = forestPct() + "%"; $("snBar").style.width = forestPct() + "%";
   $("snText").textContent = S.story; $("snNext").textContent = k < STATIONS.length ? "Next station: " + STATIONS[k].name + " · " + S.next : S.next; $("snPay").textContent = gift ? "🎁 Station gift: +2 🥕 · +8 of every booster · ∞ lives for 60 min" : "🎁 The next station brings a gift";
   if (D3) D3.show($("snScene"), { props: [{ kind: "forest", x: -2.2, z: .2, s: 1.3 }, { kind: "forest", x: 2.2, z: -.3, s: 1.2, ry: 1 }, { kind: "pogo", x: -.3, z: 1.3, s: 1 }, { kind: ["sprout", "pond", "tulip", "round", "bird", "bee", "bridge", "star", "snowman", "crystal", "cactus", "sun"][(k - 1) % 12], x: 1.2, z: 1.1, s: 1, bob: true }, { kind: "deer", x: .6, z: -1.2, s: .9, ry: -.8 }], ground: 0x3fc85f, hill: 0x2d8b3c });
-  stationCeremony(k, () => { show("mStation"); SFX.reward(); setTimeout(() => pogoMoment("wow", 1500, true), 350); }); return true;
+  const after = () => { show("mStation"); SFX.reward(); setTimeout(() => pogoMoment("wow", 1500, true), 350); };
+  stationCeremony(k, () => { if (gift && window.STORY) STORY.chest({ title: "🎁 " + STORY.T("Station gift"), sub: S.name, prepaid: true, items: [{ k: "carrot", n: RWM * 1 }, { k: "allboost", n: 2 * BXM }, { k: "lives", n: RWM * 30 }] }).then(after); else after(); }); return true;   // 2026-11-06 the gift comes in a chest (already in the save)
 }
 $("snGo").addEventListener("click", () => { hide("mStation"); buildMap(); });
 function storyScene(ch, end) {
@@ -3278,7 +3279,8 @@ $("lives").parentNode.style.cursor = "pointer"; $("lives").parentNode.addEventLi
 }
 $("lifeClose").addEventListener("click", () => hide("mLives"));
 let pendingLevel = 0;
-$("sPlay").addEventListener("click", () => { hide("mStart"); clearProgress(); zoomFromStop(); startLevel(pendingLevel); });
+$("sPlay").addEventListener("click", () => { hide("mStart"); const go = () => { clearProgress(); zoomFromStop(); startLevel(pendingLevel); };
+  if (window.STORY && STORY.wantIntro(pendingLevel)) STORY.comic(chapOf(pendingLevel), "intro").then(go); else go(); });   // 2026-11-06 a boss level opens with its comic, once (story.js)
 $("mStart").addEventListener("click", e => { if (e.target === $("mStart")) hide("mStart"); });
 $("btnBack").addEventListener("click", () => { if (G && !G.over) { snapshot(); logEv("quit"); } wipe(showMap); });
 function showMap() { tip(""); G = null; $("game").hidden = true; $("map").hidden = false; buildMap(); if (!storyCheck()) stationCheck(); }
@@ -4059,6 +4061,7 @@ function closePauseIfOpen() { if (G.paused) { G.paused = false; hide("mPause", t
 // the leftover moves play out in about four seconds in all: STRIPE_MS of gems turning striped, then the one big blast and its settle
 const STRIPE_MS = 2850;
 async function win() {
+  const firstBoss = isMordo(G.level) && !save.stars[G.level] && !window.__fast && !roomStart;   // 2026-11-06 the first win of a tenth level: the ending comic and the boss's chest (story.js)
   G.over = true; G.undo = null; G.boost = null; closePauseIfOpen(); logEv("win"); delete save.fails[G.level]; bsFlee(); toast("Charmfall!"); SFX.logo(); setTimeout(() => SFX.win(), 500); confetti(); flash(.4, 500);
   // sugar crush: remaining moves become striped gems and detonate
   let n = G.moves; const gap = Math.min(240, STRIPE_MS / Math.max(1, n));
@@ -4084,7 +4087,8 @@ async function win() {
   const lv = G.level; mkBtn("eBtns", next ? "Next level" : "Back to map", () => { hide("mEnd"); showMap(); if (next && !isOpen("mStory")) openLevel(lv + 1); });
   mkBtn("eBtns", window.__nativeApp ? "↻ Replay" : "↻ Replay level", () => { hide("mEnd"); clearProgress(); wipe(() => startLevel(lv)); }, true);
   if (next) mkBtn("eBtns", "Map", () => { hide("mEnd"); wipe(showMap); }, true);
-  await sleep(100 + bsStars(stars)); countUp($("eText"), starsOf(G.score), "Stars earned ★ "); show("mEnd"); trRoast(stars);
+  await sleep(100 + bsStars(stars)); if (firstBoss && window.STORY) { const lv0 = G.level; await STORY.afterBoss(lv0); }
+  countUp($("eText"), starsOf(G.score), "Stars earned ★ "); show("mEnd"); trRoast(stars);
 }
 async function lose(dead) {
   G.over = true; G.undo = null; G.boost = null; closePauseIfOpen(); logEv("lose"); if (!window.__fast && !roomStart) save.fails[G.level] = (save.fails[G.level] || 0) + 1;
@@ -4103,7 +4107,8 @@ async function lose(dead) {
   mkBtn("eBtns", "Retry", () => { hide("mEnd"); const lv = G.level; showMap(); openLevel(lv); }, true);
   if (save.lives <= 0) $("eBtns").insertAdjacentHTML("beforeend", `<button class="btn ghost" type="button" data-arcade-room>👥 Play with friends</button>`);
   mkBtn("eBtns", "Map", () => { hide("mEnd"); wipe(showMap); }, true);
-  await sleep(dead ? 800 : 500); show("mEnd"); trRoast(0);
+  const tw = isMordo(G.level) && window.STORY ? STORY.taunt() : 0;   // 2026-11-06 the boss has his say first
+  await sleep((dead ? 800 : 500) + tw); show("mEnd"); trRoast(0);
 }
 // the arcade's one-line verdict is English; in Turkish the card gets its own line
 const TR_CHEER = [["Bir dahakine Pogo ile beraber bakarız.", "Az kaldı, Pogo hâlâ inanıyor.", "Taşlar bugün inatçıydı."], ["Geçtin, Pogo rahat bir nefes aldı.", "Oldu da, bir daha olur mu?", "Kıl payı ama sayılır."], ["İki yıldız, Pogo gururlu.", "Güzel iş, havuçlar hak edildi.", "Sağlam oynadın."], ["Mükemmel! Pogo zıplıyor!", "Üç yıldız, tam puan!", "Efsane el, Mordo bunu görmesin."]];
@@ -5233,5 +5238,6 @@ $("btnPlay").addEventListener("click", () => { if (window.MINI) MINI.playground(
 </script>
 <script src="anim/mini-art.js"></script>
 <script src="mini.js"></script>
+<script src="story.js"></script>
 </body>
 </html>
