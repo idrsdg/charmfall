@@ -1203,6 +1203,7 @@ function pogoMoment(mood, ms = 1600, over) { if (window.__fast || (!over && docu
 const plump = () => Math.min(1, ((typeof save === "object" && save && save.fed) || 0) / 15), pogoKg = () => (1.5 + plump() * 2.5).toFixed(1);
 // carrots: one per rating spark on a win, one for every Frenzy. Tap Pogo on the map to bring him up close and feed him; fresh carrots make him jump for joy when you come back.
 let carrotNew = 0, feedT = 0;
+const EAT_S = 4.6, EAT_BITE = (i) => EAT_S * (.12 + .78 * (i + .1) / 5);   // 2026-11-05: a slower meal, five bites; the crunch sounds land on the bites
 function flyText(t) { const el = document.createElement("div"); el.className = "fly"; el.textContent = t; el.style.cssText = "left:50%;top:150px;font-weight:900;font-size:22px;color:#fff;text-shadow:0 2px 0 #123a1c"; document.body.appendChild(el); if (!el.animate) { el.remove(); return; } const k = KF("flyText"); el.animate(k.frames, { duration: k.duration }).onfinish = () => el.remove(); }
 const pogoEl = () => $("mPet").hidden ? document.querySelector(".pogoMap .pogo") : $("petBox").firstElementChild;
 const say = (t) => { if ($("mPet").hidden) tip(t); else $("petText").textContent = t; };
@@ -1211,8 +1212,8 @@ function feedPogo() {
   const n = pogoEl(); if (!n || n.classList.contains("eat")) return;
   if (!(save.carrots > 0)) { say("No carrots to feed him yet. Carrots are rare: win levels, fill the Frenzy meter, reach a station."); bump("petFeed"); SFX.bad(); pogoMood("cheer", 1600); return; }
   wakePogo(true); save.carrots--; save.fed = (save.fed || 0) + 1; persist(); $("carrots").textContent = save.carrots; petLabel(); bump("carPill"); SFX.swap();
-  say("Crunch, crunch…"); for (let i = 0; i < 5; i++) setTimeout(() => { const m = pogoEl(); if (m && m.classList.contains("eat")) SFX.pop(1); }, 500 + i * 540);
-  pogoMood("eat", 3200, () => { pogoMood("happy", 2400); say("Pogo loved it! Carrots eaten: " + save.fed + " · he weighs " + pogoKg() + " kg"); SFX.pop(3); });
+  say("Crunch, crunch…"); for (let i = 0; i < 5; i++) setTimeout(() => { const m = pogoEl(); if (m && m.classList.contains("eat")) SFX.pop(1); }, EAT_BITE(i) * 1000);
+  pogoMood("eat", EAT_S * 1000, () => { pogoMood("happy", 2400); say("Pogo loved it! Carrots eaten: " + save.fed + " · he weighs " + pogoKg() + " kg"); SFX.pop(3); });
 }
 // the pet screen: tap Pogo on the map and he comes up close. Stroke him and he shuts his eyes; keep going and he dozes off.
 const PET = { m: 0, down: 0, x: 0, y: 0, moved: 0, t: 0, heart: 0, z: 0 }, SLEEPY = 3200;
@@ -1283,7 +1284,7 @@ function inkOutline(cv, r) { try { const w = cv.width, h = cv.height, x = cv.get
 // The flat drawing above stays as the fallback when WebGL is not there.
 const P3 = (() => {
   if (!window.THREE) return null; const T = THREE; let R;
-  try { R = new T.WebGLRenderer({ alpha: true, antialias: true }); } catch (e) { return null; }
+  try { R = new T.WebGLRenderer({ alpha: true, antialias: true }); } catch (e) { return null; } R.localClippingEnabled = true;
   // The drawing buffer is only as large as the largest Pogo on screen needs (the small one on the map is a quarter of the pet-screen one):
   // every frame is copied out of it into a 2D canvas, and on phones that copy and the shading both cost by the pixel.
   const RW = 720, RH = 792; let bufW = RW, bufH = RH, wantW = 0; R.setPixelRatio(1); R.setSize(RW, RH, false); R.setClearColor(0, 0); R.outputEncoding = T.sRGBEncoding; 
@@ -1327,15 +1328,47 @@ const P3 = (() => {
   for (const k of [-1, 1]) { ball(M.fur, k * .62, -.2, .22, .2, .17, .18, head); ball(M.cream, k * .18, -.46, .44, .14, .1, .12, head); }   // cheek fluff and a soft chin
   for (const k of [-1, 1]) for (let i = -1; i <= 1; i++) ball(M.tip, k * .27 + i * .07, .27, .46, .035, .03, .035, fox);   // toe pads on the feet
   const ears = [-1, 1].map(k => { const g = grp(k * .3, .5, -.02, head); ball(M.fur, 0, .48, 0, .17, .56, .1, g); ball(M.tip, 0, 1.0, 0, .185, .2, .115, g); ball(M.dark, 0, .5, .055, .1, .44, .06, g); ball(M.pink, 0, .52, .085, .065, .36, .04, g); g.rotation.z = -k * .1; return g; });
-  // the carrot sits at his mouth and only shows while he eats
-  const carrot = grp(.02, -.36, .7, head); carrot.rotation.set(-1.0, 0, -.5); { const c = new T.Mesh(new T.ConeGeometry(.13, .8, 20), M.carrot); c.position.y = -.4; carrot.add(c); for (let i = -1; i <= 1; i++) { const l = ball(M.leaf, i * .08, -.9, 0, .05, .17, .05, carrot); l.rotation.z = i * .5; } }
+  // 2026-11-05 İdris "havucu gerçekçi yap, hareketleri akıcı değil": a real carrot held in both paws with its root end at the mouth. The body is a lathe
+  // with a tapering, slightly uneven profile, growth rings pressed into the skin, darker rings and root hairs, and a fan of feathery tops at the far end.
+  // Eating no longer shrinks it: each bite slides it a little further into the mouth, a clipping plane cuts it there, and the cut face (bright rind,
+  // paler core, tooth notches) shows while he pulls it back to chew; crumbs fly off every bite. Only shows while he eats.
+  const CL = 1.0, crad = (y) => { const s = Math.min(1, Math.max(0, y / CL)); return .012 + .112 * Math.pow(s, .6) * (1 - Math.pow(Math.max(0, s - .88) / .12, 2) * .4); };   // radius at y, measured from the root tip
+  const carrot = grp(.0, -.4, .66, head); carrot.rotation.set(2.55, 0, .22); const cbody = grp(0, 0, 0, carrot), CLIP = new T.Plane(new T.Vector3(0, 1, 0), 0), ctop = grp(0, CL, 0, cbody);
+  { const prof = []; for (let i = 0; i <= 48; i++) { const y = CL * i / 48; prof.push(new T.Vector2(crad(y), y)); } prof.push(new T.Vector2(.05, CL + .012), new T.Vector2(0, CL + .016));
+    const geo = new T.LatheGeometry(prof, 32), pos = geo.attributes.position, col = new Float32Array(pos.count * 3), base = new T.Color(0xf47b1e), dark = new T.Color(0xb94a14), lite = new T.Color(0xffa046), tmp = new T.Color(), rings = [];
+    let sd = 11; const rr = () => { sd = sd * 16807 % 2147483647; return sd / 2147483647; };
+    for (let i = 0; i < 16; i++) rings.push([.06 + rr() * .86, rr() * 6.283, 1 + rr() * 2.4, .3 + rr() * .6]);   // height, angle, arc, depth
+    for (let i = 0; i < pos.count; i++) { const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i), a = Math.atan2(z, x), r = Math.hypot(x, z); let d = 0;
+      for (const [h, a0, w, dp] of rings) { const dy = (y / CL - h) * 90; if (Math.abs(dy) > 3) continue; const da = Math.abs(((a - a0) % 6.283 + 9.425) % 6.283 - 3.1416); if (da > w / 2) continue; d += Math.exp(-dy * dy) * dp * Math.cos(da / w * 3.1416); }
+      const k = r > 1e-4 ? 1 - d * .13 + Math.sin(a * 4 + y * 7) * .02 : 1; pos.setXYZ(i, x * k, y, z * k);
+      tmp.copy(base).lerp(lite, Math.max(0, Math.sin(a * 3 + y * 5)) * .22).lerp(dark, Math.min(.85, d * .8 + Math.max(0, 1 - y / .1) * .3 + Math.max(0, y / CL - .93) * 6)); col.set([tmp.r, tmp.g, tmp.b], i * 3); }
+    geo.setAttribute("color", new T.BufferAttribute(col, 3)); geo.computeVertexNormals();
+    M.carrot = mat(0xffffff, { vertexColors: true, roughness: .75, clippingPlanes: [CLIP] }); cbody.add(new T.Mesh(geo, M.carrot));
+    const ink = new T.Mesh(geo, new T.MeshBasicMaterial({ color: 0x5c3e28, side: T.BackSide, clippingPlanes: [CLIP] })); ink.scale.set(1.2, 1.006, 1.2); cbody.add(ink);
+    const hairM = mat(0xd9a070, { clippingPlanes: [CLIP] }), HAIR = new T.CylinderGeometry(.0035, .002, 1, 4);
+    for (let i = 0; i < 9; i++) { const y = .12 + rr() * .6, a = rr() * 6.283, r = crad(y), h = new T.Mesh(HAIR, hairM); h.scale.y = .05 + rr() * .05; h.position.set(Math.cos(a) * (r + h.scale.y * .4), y, Math.sin(a) * (r + h.scale.y * .4)); h.rotation.set(Math.sin(a) * 1.3, 0, -Math.cos(a) * 1.3); cbody.add(h); }
+    // the tops: five stems fanning out of the shoulder, each with feathery leaflets in pairs, a little lighter towards the tips
+    const STEM = new T.CylinderGeometry(.008, .012, 1, 5), stemM = mat(0x5aa83a), lf = [mat(0x3f9a34), mat(0x58b443), mat(0x77c552)];
+    for (let i = 0; i < 5; i++) { const g = grp(0, 0, 0, ctop), a = i / 5 * 6.283 + .3, len = .26 + rr() * .1; g.rotation.set(Math.sin(a) * .35, 0, -Math.cos(a) * .35);
+      const st = new T.Mesh(STEM, stemM); st.scale.y = len; st.position.y = len / 2; g.add(st);
+      for (let j = 1; j <= 4; j++) for (const k of [-1, 1]) { const y = len * (.3 + j * .17), l = ball(lf[Math.min(2, j - 1 + (i % 2))], k * .045, y, 0, .05, .016, .022, g); l.rotation.z = k * (.7 - j * .08); }
+      ball(lf[2], 0, len + .03, 0, .022, .05, .02, g); }
+  }
+  // the bitten end: rind and core cut across, with two tooth notches, facing back towards his mouth
+  const cap = grp(0, 0, 0, carrot); { const sh = (r, n) => { const s = new T.Shape(); for (let i = 0; i <= 40; i++) { const a = i / 40 * 6.283; let k = r; for (const c of n) { const d = Math.abs(((a - c) % 6.283 + 9.425) % 6.283 - 3.1416); if (d < .32) k -= r * .2 * Math.cos(d / .32 * 1.5708); } i ? s.lineTo(Math.cos(a) * k, Math.sin(a) * k) : s.moveTo(Math.cos(a) * k, Math.sin(a) * k); } return new T.ShapeGeometry(s); };
+    const rind = new T.Mesh(sh(1, [.6, 1.3]), mat(0xff8a2a, { side: T.DoubleSide })), core = new T.Mesh(sh(.55, [.6]), mat(0xffc46a, { side: T.DoubleSide })); core.position.z = .004; rind.add(core); rind.rotation.x = -Math.PI / 2; cap.add(rind); }
+  // crumbs: little orange flakes thrown off each bite, they fall under gravity to the ground and fade there
+  const crumbs = []; { const G = new T.IcosahedronGeometry(1, 0), m = mat(0xf47b1e); for (let i = 0; i < 12; i++) { const o = new T.Mesh(G, m); o.visible = false; scene.add(o); crumbs.push({ o, v: new T.Vector3(), life: 0, s: 0 }); } }
+  const _v = new T.Vector3(), _n = new T.Vector3();
+  const crumbBurst = () => { cap.getWorldPosition(_v); let n = 0; for (const c of crumbs) { if (c.life > 0 || n >= 4) continue; n++; c.life = 1.1; c.s = .02 + Math.random() * .018; c.o.position.copy(_v); c.v.set((Math.random() - .5) * 1.6, .5 + Math.random() * .9, .4 + Math.random() * .6); c.o.rotation.set(Math.random() * 6, Math.random() * 6, 0); c.o.visible = true; } };
+  const crumbStep = (dt) => { for (const c of crumbs) { if (c.life <= 0) continue; c.life -= dt; const o = c.o; if (o.position.y > .03) { c.v.y -= 7 * dt; o.position.addScaledVector(c.v, dt); o.rotation.x += dt * 9; if (o.position.y < .03) o.position.y = .03; } o.scale.setScalar(c.s * Math.min(1, c.life / .35)); if (c.life <= 0) o.visible = false; } };
   // the inked line: every larger piece gets a dark back-faced shell just outside it (a constant thickness whatever the piece's scale);
   // where one piece pokes out of another the shell draws the inner line too, the way an anime cel is inked
-  { const OUTM = new T.MeshBasicMaterial({ color: 0x5c3e28, side: T.BackSide }), skip = new Set([M.white, M.iris, M.ink, M.whisk, M.blush, M.mouth]), list = []; fox.traverse(o => { if (o.isMesh && !skip.has(o.material) && o.material !== OUTM) list.push(o); });
+  { const OUTM = new T.MeshBasicMaterial({ color: 0x5c3e28, side: T.BackSide }), skip = new Set([M.white, M.iris, M.ink, M.whisk, M.blush, M.mouth]), list = []; fox.traverse(o => { if (o.isMesh && !skip.has(o.material) && o.material !== OUTM) { let q = o; while (q && q !== carrot) q = q.parent; if (!q) list.push(o); } });
     for (const o of list) { const sc = o.scale, mn = Math.min(sc.x, sc.y, sc.z); if (o.geometry.type === "SphereGeometry" && mn < .035) continue; const e = .028, h = new T.Mesh(o.geometry, OUTM);
       if (o.geometry.type === "SphereGeometry") h.scale.set(1 + e / sc.x, 1 + e / sc.y, 1 + e / sc.z); else h.scale.setScalar(o.geometry.type === "TorusGeometry" ? 1.07 : 1.35); h.renderOrder = -1; o.add(h); } }
   // pose values; every frame the current pose eases toward the target one, so acts blend into each other
-  const Z = () => ({ x: 0, y: 0, ry: 0, tz: 0, ty: 0, hz: 0, hx: 0, hy: 0, lz: -.3, lx: 0, rz: .3, rx: 0, fl: 0, fr: 0, ear: 0, ex: 0, car: 0, sq: 1, eye: 1, mo: 0, gx: 0, gy: 0, nz: 1, ef: 0 });
+  const Z = () => ({ x: 0, y: 0, ry: 0, tz: 0, ty: 0, hz: 0, hx: 0, hy: 0, lz: -.3, lx: 0, rz: .3, rx: 0, fl: 0, fr: 0, ear: 0, ex: 0, car: 0, ce: 0, cp: 0, cg: 1, cb: -1, sq: 1, eye: 1, mo: 0, gx: 0, gy: 0, nz: 1, ef: 0 });
   // small things a real rabbit never stops doing: the nose twitches in little bursts, an ear flicks now and then
   const twitch = (t, ph) => { const u = (t + ph) % 3.1; return u < .7 ? 1 + Math.abs(Math.sin(u * 22)) * .22 : 1; }, flick = (t, ph) => { const u = (t + ph * 1.7) % 5.3; return u < .35 ? Math.sin(u / .35 * Math.PI) * .5 : 0; };
   // a hop the way a body really does it: crouch, push off, a ballistic arc with the feet tucked, then a landing that soaks up the fall
@@ -1361,14 +1394,16 @@ const P3 = (() => {
     [1.5, (b, u, p) => spin(u, p, 1, 2.9)],
     [2.4, (b, u, p) => { p.rz = 2.5 + Math.sin(b * 2) * .35; p.hz = .14; p.tz = -.06; p.mo = 1; p.y = Math.abs(Math.sin(b / 2)) * .04; }]   // a wave to the player
   ]; void actsOld;
-  // eating: the paws lift the carrot on an ease, five bites each followed by three rounded chews; the carrot gets shorter while the teeth
-  // are going through it (not in steps), the head nods into every bite and the ears and nose keep time with the chewing
+  // eating (2026-11-05): the paws bring the carrot up on an ease; five bites: a quick snap forward that takes a piece off the end (the carrot slides
+  // into the mouth by that much, smoothly, while the teeth close), then he pulls it back a touch and chews with the jaw and nose, the head barely
+  // moving. After the last bite the green top goes in with a little gulp. Every value is continuous, nothing steps.
   const sm = (x) => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
-  const eatAct = (b, u, p) => { const up = sm(u / .14) * sm((1 - u) / .1), N = 5, f = Math.min(.999, Math.max(0, (u - .12) / .78)), bite = Math.floor(f * N), bu = (f * N) % 1;
-    const snap = f > 0 && bu < .22 ? Math.sin(bu / .22 * Math.PI) : 0, ct = bu > .22 ? (bu - .22) / .78 : 0, chew = ct ? (.5 - .5 * Math.cos(ct * Math.PI * 6)) * (1 - ct * .3) : 0;
-    p.car = u < .93 ? Math.max(.08, 1 - (bite + sm(bu / .22)) * .18) : 0; p.lx = p.rx = -2.05 * up + snap * .08; p.lz = -.3 + .85 * up; p.rz = .3 - .85 * up;
-    p.hx = .28 * up - snap * .14 + chew * .03; p.hz = Math.sin(u * Math.PI * 3) * .06 * up; p.hy = Math.sin(u * Math.PI * 2) * .08 * up; p.tz = Math.sin(u * Math.PI * 4) * .015 * up;
-    p.ear = .2 * up + chew * .05; p.eye = 1 - (.35 + .25 * chew) * up; p.mo = up * (snap ? .25 + .7 * snap : .12 + chew * .4); p.sq = 1 + chew * .012 - snap * .015; p.nz = 1 + chew * .15; };
+  const eatAct = (b, u, p) => { const up = sm(u / .12) * sm((1 - u) / .08), N = 5, f = Math.min(.9999, Math.max(0, (u - .12) / .78)), bite = Math.floor(f * N), bu = (f * N) % 1, on = u >= .12 && u < .9;
+    const sn = on && bu < .26 ? Math.sin(bu / .26 * Math.PI) : 0, ct = on && bu >= .26 ? (bu - .26) / .74 : 0, chew = ct ? .5 - .5 * Math.cos(ct * Math.PI * 6) : 0, pull = ct ? Math.sin(ct * Math.PI) : 0;
+    p.car = u < .985 ? 1 : 0; p.ce = u < .9 ? (bite + sm(bu / .2)) * .17 * (u >= .12) : .85 + sm((u - .9) / .07) * .15; p.cp = .09 * pull - .02 * sn; p.cg = u < .9 ? 1 : 1 - sm((u - .91) / .07) * .9; p.cb = on ? Math.floor(f * N - .12) : -1;
+    p.lx = p.rx = -2.0 * up + sn * .07 - pull * .1; p.lz = -.3 + .86 * up; p.rz = .3 - .86 * up;
+    p.hx = .26 * up - sn * .07 + chew * .012; p.hz = Math.sin(u * Math.PI * 2) * .045 * up; p.hy = Math.sin(u * Math.PI * 1.5) * .06 * up; p.tz = Math.sin(u * Math.PI * 2) * .012 * up;
+    p.ear = .18 * up + chew * .025; p.eye = 1 - (.4 + .15 * chew) * up; p.mo = up * (sn ? .2 + .6 * sn : .1 + chew * .28); p.sq = 1 + chew * .006; p.nz = 1 + chew * .18; };
   const TOTAL = acts.reduce((a, c) => a + c[0], 0), slots = new Map();
   function target(st, t, mood, face) {
     const p = Z(), b = t * Math.PI * 4; p.nz = twitch(t, st.ph); p.ef = flick(t, st.ph);
@@ -1386,7 +1421,7 @@ const P3 = (() => {
     if (mood === "pet") { const l = st.lean || 0; p.eye = .05; p.hz = -l * .26; p.hx = .07; p.tz = -l * .07; p.x = l * .05; p.ear = .16; p.mo = .3; p.sq = .975 + Math.sin(t * 15) * .006; p.lz = -.2; p.rz = .2; p.gx = p.gy = 0; p.hy *= .3; return p; }   // being stroked: eyes shut, leaning into the hand
     if (mood === "calm") { p.hz = Math.sin(t * .9) * .06; p.hy = Math.sin(t * .5) * .28; p.hx = Math.sin(t * .7) * .04; p.ear = Math.max(0, Math.sin(t * 1.7) - .93) * 2; return p; }
     if (mood === "sad") { p.hx = .3 + Math.sin(t * 1.2) * .02; p.ear = .75; p.eye = .5; p.mo = 0; p.lz = -.12; p.rz = .12; p.lx = p.rx = .25; p.sq = .965 + Math.sin(t * 1.6) * .01; p.hz = Math.sin(t * .8) * .05; return p; }   // ears down, head low, a slow sigh
-    if (mood === "eat") { eatAct(b, Math.min(.999, t / 3.2), p); return p; }
+    if (mood === "eat") { eatAct(b, Math.min(.999, t / EAT_S), p); return p; }
     if (mood === "cheer") { p.hz = .2 + Math.sin(t * 1.6) * .06; p.hx = .12; p.ear = .5; p.tz = Math.sin(t * 1.6) * .04; p.lx = -.5; p.rx = -.5; p.lz = -.5; p.rz = .5; return p; }
     let u = t % TOTAL, i = 0; while (u >= acts[i][0]) u -= acts[i++][0]; acts[i][1](b, u / acts[i][0], p);
     p.tz += Math.sin(t * .8) * .012; p.lz += Math.sin(t * 1.3) * .03; p.rz -= Math.sin(t * 1.3 + .6) * .03; p.hx += Math.sin(t * 1.1 + 1) * .015; return p;   // never quite still: weight shifts, the arms hang loose
@@ -1396,7 +1431,7 @@ const P3 = (() => {
     if (st.mood !== mood) { st.mood = mood; st.t0 = now; }
     st.lean = +cv.dataset.lean || 0; st.lx = cv.dataset.lx === undefined ? undefined : +cv.dataset.lx; st.ly = +cv.dataset.ly || 0; const p = fix || target(st, (now - st.t0) / 1000, mood, face), c = st.c, k = fix ? 1 : 1 - Math.exp(-dt * 13);
     const kh = fix ? 1 : 1 - Math.exp(-dt * 7), ke = fix ? 1 : 1 - Math.exp(-dt * 22);
-    for (const q in c) c[q] = (p.spin && (q === "ry" || q === "y")) || q === "car" ? p[q] : c[q] + (p[q] - c[q]) * (q === "hy" || q === "hx" ? kh : q === "gx" || q === "gy" ? ke : p.hop && q === "y" ? 1 - Math.exp(-dt * 40) : k); if (!p.spin && Math.abs(c.ry) > Math.PI) { c.ry -= Math.sign(c.ry) * Math.PI * 2; st.pr = c.ry; }
+    for (const q in c) c[q] = (p.spin && (q === "ry" || q === "y")) || q === "car" || q === "ce" || q === "cp" || q === "cg" || q === "cb" ? p[q] : c[q] + (p[q] - c[q]) * (q === "hy" || q === "hx" ? kh : q === "gx" || q === "gy" ? ke : p.hop && q === "y" ? 1 - Math.exp(-dt * 40) : k); if (!p.spin && Math.abs(c.ry) > Math.PI) { c.ry -= Math.sign(c.ry) * Math.PI * 2; st.pr = c.ry; }
     fox.position.set(c.x, c.y, 0); fox.rotation.y = c.ry + (st.turn || 0); fox.scale.set(2 - c.sq, c.sq, 2 - c.sq);
     const br = 1 + Math.sin(t * 3) * .015, fat = plump(); torso.scale.set(1 + fat * .5, br * (1 + fat * .08), 1 + fat * .46); head.scale.set((1 + fat * .14) / (1 + fat * .5), (1 + fat * .06) / (br * (1 + fat * .08)), (1 + fat * .12) / (1 + fat * .46)); footL.position.x = toeL.position.x = -.27 - fat * .12; footR.position.x = toeR.position.x = .27 + fat * .12; toeL.scale.x = toeR.scale.x = .15 + fat * .04; torso.rotation.set(0, c.ty, c.tz); head.rotation.set(c.hx, c.hy, c.hz);
     armL.rotation.set(c.lx, 0, c.lz); armR.rotation.set(c.rx, 0, c.rz); footL.position.y = .12 + c.fl; footR.position.y = .12 + c.fr; toeL.position.y = .11 + c.fl; toeR.position.y = .11 + c.fr;
@@ -1406,7 +1441,7 @@ const P3 = (() => {
     E.v += ((ta - E.a) * 120 - E.v * 8) * dt; E.a += E.v * dt; E.w += ((tb - E.b) * 120 - E.w * 8) * dt; E.b += E.w * dt;
     ears[0].rotation.set(E.a, 0, .14 + c.ear * 1.3 + E.b + Math.sin(t * 2.3) * .025); ears[1].rotation.set(E.a * .86 - c.ef * .6, 0, -.14 - c.ear * 1.3 + E.b * .9 - Math.sin(t * 2.3 + 1) * .025 - c.ef * .3);
     eyes[0].rotation.set(c.gy, -.3 + c.gx, 0); eyes[1].rotation.set(c.gy, .3 + c.gx, 0); nose.scale.set(c.nz, 1, c.nz);
-    tail.rotation.y = Math.sin(t * 9) * .25 + E.b; tail.position.y = -.2 + E.a * .05; carrot.visible = c.car > .05; carrot.scale.setScalar(Math.max(.05, c.car) * 2.1);
+    tail.rotation.y = Math.sin(t * 9) * .25 + E.b; tail.position.y = -.2 + E.a * .05; carrot.visible = c.car > .05; if (carrot.visible) { const e = c.ce * CL; cbody.position.y = c.cp - e; cap.position.y = c.cp; cap.scale.setScalar(crad(e) * 1.02); cap.visible = e > .005 && e < CL * .97; carrot.scale.setScalar(1.3 * c.cg); scene.updateMatrixWorld(); _n.set(0, 1, 0).transformDirection(cbody.matrixWorld); cbody.localToWorld(_v.set(0, e, 0)); CLIP.setFromNormalAndCoplanarPoint(_n, _v); if (c.cb !== st.cb) { if (c.cb > st.cb) crumbBurst(); st.cb = c.cb; } } else st.cb = -1; crumbStep(dt);
     const bu = (t + st.ph) % 3.4, b2 = st.ph > 1.5 && bu > 3.0 && bu < 3.14 ? (bu - 3.0) / .14 : bu > 3.26 ? (bu - 3.26) / .14 : -1, bl = b2 < 0 ? 1 : 1 - Math.sin(b2 * Math.PI) * .95, ey = Math.min(bl, c.eye); eyes[0].scale.y = eyes[1].scale.y = ey; mouth.scale.set(.11 * c.mo + .001, .1 * c.mo + .001, .08); { const sk = Math.max(0, 1 - c.mo * 4); smile.visible = sk > .02; smile.scale.set(.7 + .3 * sk, sk, 1); }
     const sh = 1 - Math.min(.5, c.y * .8); shadow.scale.set(sh, sh, sh); shadow.position.x = c.x; shadow.visible = !face;
     if (face) { cam.position.set(0, 2.3, 6.6); cam.lookAt(0, 2.28, 0); } else { cam.position.set(0, 2.1, 8.6); cam.lookAt(0, 1.82, 0); }
