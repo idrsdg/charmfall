@@ -1612,7 +1612,7 @@ const STAR = 1000, starsOf = (pts) => Math.floor(pts / STAR);
 LEVELS.forEach((L) => { if (L.target) L.target = Math.max(STAR, Math.round(L.target / STAR) * STAR); });
 const BOOST0 = { hammer: 3, moves: 3, switch: 3, cross: 2, undo: 3 };
 // carrots are earned at a quarter of the old rate: every award is scaled, the remainder waits in the jar (save.carrotFrac) until a whole carrot is due
-const ART_Q = location.protocol === "file:" ? "" : "?v=1110a";   /* bump when the painted art in anim/ is baked again, so no browser keeps an old picture (the iOS app reads files, no query there) */
+const ART_Q = location.protocol === "file:" ? "" : "?v=1111b";   /* bump when the painted art in anim/ is baked again, so no browser keeps an old picture (the iOS app reads files, no query there) */
 const RWM = 2, BXM = 4;   /* 2026-10-29 İdris "ödül kazanmayı yarı yarıya indir, çok fazla booster kazanıyorum": carrots and ∞ lives x2 (was 4), boosters x4 (was 8) */
 const CARROT_RATE = .03125;   // 2026-10-27 İdris: rewards come half as often (the amount of each stays the same)
 function addCarrots(n) { save.carrotFrac = (save.carrotFrac || 0) + n * CARROT_RATE; const give = Math.floor(save.carrotFrac + 1e-9); save.carrotFrac -= give; save.carrots = (save.carrots || 0) + RWM * (give); carrotNew += RWM * (give); return give; }

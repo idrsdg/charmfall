@@ -5,7 +5,7 @@
 // pencil line that wanders and breaks. Uses the game's own shapes (BL, BLA, glowPart, mixc). bake-charms.cjs writes anim/ch-<name>.webp.
 (() => {
   // watercolour pigments for the six colour families (rose madder, cadmium orange, gamboge, sap green, cerulean, violet)
-  const WCHUE = ["#f0305e", "#ff7a1a", "#ffc414", "#1fb84c", "#1a86f0", "#9a3cf0"];   // 2026-10-28 İdris "taşlar çok soluk, belirgin ve parlak yap": full-strength pigments
+  const WCHUE = ["#f56e8e", "#ffa25f", "#ffd65b", "#62cd82", "#5faaf5", "#b877f5"];   // 2026-11-11 İdris "biraz daha pastel", picked B from the side-by-side (full pigments f0305e ff7a1a ffc414 1fb84c 1a86f0 9a3cf0 mixed 30% to white);   // 2026-10-28 İdris "taşlar çok soluk, belirgin ve parlak yap": full-strength pigments
   const SEPIA = "rgba(74,52,40,", PAPER = [246, 239, 224];
   const R = (n) => { let s = (n * 9301 + 49297) % 233280; return () => (s = (s * 9301 + 49297) % 233280) / 233280; };
   // value noise for granulation and the paper's tooth
