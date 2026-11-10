@@ -1,5 +1,22 @@
 # Charmfall tılsımları
 
+## GÜNCEL: Mercan Körfezi (2026-11-10)
+
+İdris suluboya masal kitabı tarzını koruyup dünyayı değiştirdi: orman yerine deniz altı. Taşların tek kaynağı `anim/charms-sea.js` (şekil, İngilizce ad); Türkçe adlar `index.html` içindeki `TR` sözlüğünde; görseller `anim/src/bake-charms.cjs` ile `anim/ch-<ad>.webp` olarak pişirilir. Her 20 seviyede iki renk yuvası bir sonraki taşa geçer (`rotV`).
+
+| Yuva | Renk | Taşlar (geliş sırasıyla) |
+|---|---|---|
+| 1 | Gül | Denizyıldızı, Yengeç, Mercan, Can Simidi, Deniz Şakayığı, Yelkenli, Mercan Balığı, Kalp Midyesi |
+| 2 | Turuncu | Palyaço Balığı, Notilus, Japon Balığı, Denizatı, Şamandıra, Çapa, Dalgıç Başlığı, Karides |
+| 3 | Sarı | Tarak, Balon Balığı, Denizaltı, Melek Balığı, Altın Sikke, Kumdan Kale, Batık Taç |
+| 4 | Yeşil | Deniz Kaplumbağası, Deniz Yosunu, Şişedeki Mektup, Palmiye Adası, Denizkızı Kuyruğu, Müren, Yeşil Lapin |
+| 5 | Mavi | Balina, Yunus, Su Damlası, Dalga, Küçük Köpekbalığı, Deniz Gergedanı, Vatoz |
+| 6 | Mor | Ahtapot, Denizanası, Deniz Kestanesi, Kalamar, İnci Midyesi, Deniz Salyangozu, Fener Balığı |
+
+Yeni şekil çizerken: her gövde parçası ekranda saat yönünde dönmeli (parçalar non-zero kuralıyla birleşir, ters dönen parça delik açar).
+
+Aşağısı orman dönemi kaydıdır (geçmiş).
+
 Bu dosya oyundaki her taşın ne olduğunu, hikâyedeki anlamını ve oyuna ne zaman girdiğini kaydeder.
 
 Kurallar (İdris, 2026-10-16):
