@@ -114,6 +114,20 @@
   .pill + .pill { border-color: #ffd23f; }
   .path { position: relative; width: 420px; margin: 10px 0 0; }
   /* on a phone the whole map is drawn at two thirds: the rails stay as far apart, more of the circuit fits on the screen, the stops stay big enough to tap */
+  /* the flyover map (map3d.js): the land fills the screen under the top chips; glass cards as in the route film */
+  #map.m3d { overflow: hidden; background: #9fd0e8; cursor: default; scroll-snap-type: none; touch-action: none; } #map.m3d .pathWrap { display: none; }
+  #m3d { position: fixed; inset: 0; z-index: 0; } #m3d canvas { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; } #m3d canvas:active { cursor: grabbing; }
+  #m3d::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 58%, transparent 55%, rgba(8, 20, 30, .34) 100%); }
+  .m3dGlass { background: rgba(14, 30, 34, .62); -webkit-backdrop-filter: blur(16px) saturate(1.3); backdrop-filter: blur(16px) saturate(1.3); border: 1px solid rgba(255, 255, 255, .16); box-shadow: 0 10px 30px rgba(0, 0, 0, .3); color: #f4f7f2; }
+  #m3dInfo { position: fixed; left: 12px; top: calc(max(14px, env(safe-area-inset-top)) + 62px); z-index: 2; border-radius: 16px; padding: 9px 13px 10px; text-align: left; font: inherit; display: grid; gap: 1px; max-width: min(250px, 62vw); cursor: pointer; }
+  #m3dInfo b { font-size: 16px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } #m3dInfo small { font-size: 12px; color: #ffd98a; font-weight: 700; font-variant-numeric: tabular-nums; }
+  #m3dInfo i { font-style: normal; font-size: 11px; color: #b9cbc4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } #m3dInfo i::before { content: "→ "; } #m3dInfo.away { border-color: #ffd98a; }
+  #m3dPogo { position: fixed; right: 12px; top: calc(max(14px, env(safe-area-inset-top)) + 62px); z-index: 2; width: 54px; height: 54px; border-radius: 50%; padding: 0; display: grid; place-items: center; cursor: pointer; } #m3dPogo:active { transform: scale(.94); }
+  @media (max-width: 600px) { html:not(.app) #m3dPogo { top: calc(max(14px, env(safe-area-inset-top)) + 96px); } }
+  #m3dTl { position: fixed; left: 12px; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); height: 58px; z-index: 2; border-radius: 16px; padding: 6px 8px; cursor: pointer; touch-action: none; } #m3dTl canvas { width: 100%; height: 100%; display: block; }
+  @media (max-width: 600px) { html:not(.app) #m3dInfo { top: calc(max(14px, env(safe-area-inset-top)) + 96px); } }
+  #map.m3d .mapbar { bottom: calc(max(12px, env(safe-area-inset-bottom)) + 68px); } html:not(.app) #map.m3d .arcade-all { display: none; }
+  #map.m3d .top { background: linear-gradient(rgba(10, 30, 26, .55), rgba(10, 30, 26, 0)); } html.app #map.m3d .top::after { display: none; }
   .pathWrap { position: relative; margin: 0; } .path { position: relative; width: 100%; margin: 0; }
   .path svg { position: absolute; inset: 0; width: 100%; height: 100%; }
   .node { position: absolute; width: calc(150px * var(--ms)); height: calc(150px * var(--ms)); margin: calc(-75px * var(--ms)) 0 0 calc(-75px * var(--ms)); border-radius: calc(46px * var(--ms)); display: grid; place-items: center; font-size: calc(54px * var(--ms)); font-weight: 900; color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); background: radial-gradient(circle at 35% 30%, #ffc48a, #ff7a1a 55%, #d95a00); box-shadow: 0 7px 0 #7a3200, 0 14px 22px rgba(0, 0, 0, .4), inset 0 -4px 0 rgba(0, 0, 0, .12); cursor: pointer; transition: translate .14s cubic-bezier(.3, 1.5, .5, 1); animation: nodeIn .5s var(--e-out) both; animation-delay: var(--d, 0s); }
@@ -201,6 +215,7 @@
   .cere u { position: absolute; bottom: -30px; width: 14px; height: 9px; border-radius: 50% 0; background: #7fe39a; opacity: 0; animation: leafUp 2.6s var(--d) cubic-bezier(.2, .6, .4, 1) forwards; } .cere u:nth-child(3n) { background: #ffd23f; } .cere u:nth-child(4n) { background: #b6f24a; }
   @keyframes leafUp { 10% { opacity: 1; } to { opacity: 0; transform: translate(var(--x), -78vh) rotate(var(--r)); } }
   /* the place's weather, behind the board: night, fog, a storm, fireflies, falling leaves, rising bubbles */
+  #game.g3d > #gGround, #game.g3d #gSky, #game.g3d #gAir { display: none !important; } #gTheme canvas.bgwc { width: 100%; height: 100%; display: block; }
   #game > #gGround { position: absolute !important; left: 0; right: 0; bottom: 0; height: 60px; display: flex; justify-content: space-around; align-items: flex-end; pointer-events: none; z-index: 0; margin: 0 !important; } #gGround img { width: var(--s); height: var(--s); margin-bottom: -4px; }
   #game > #gTheme { position: absolute !important; inset: 0; margin: 0 !important; padding: 0 !important; pointer-events: none; overflow: hidden; z-index: 0; } #gTheme[hidden] { display: none; } #gTheme svg, #gTheme img.bgwc { width: 100%; height: 100%; display: block; object-fit: cover; object-position: 50% 40%; }
   #gWeather.snow u { width: 7px; height: 7px; background: #fff; box-shadow: 0 0 4px rgba(255, 255, 255, .9); } #gWeather.petals u { width: 10px; height: 7px; border-radius: 60% 0; background: #ffc4dc; } #gWeather.petals u:nth-child(3n) { background: #e0c8ff; }
@@ -999,6 +1014,7 @@ html.app #game > .bar s.hit::after { color: #fffaf0 !important; text-shadow: 1px
 <script src="anim/fx-anim.js"></script>
 <script src="anim/ui-keys.js"></script>
 <script src="anim/charms-sea.js"></script>
+<script src="map3d.js"></script>
 <script src="../games/arcade.js"></script>
 <script>Arcade.gfx.matte(1.18, 1.03);</script>
 <script>
@@ -1612,7 +1628,7 @@ const STAR = 1000, starsOf = (pts) => Math.floor(pts / STAR);
 LEVELS.forEach((L) => { if (L.target) L.target = Math.max(STAR, Math.round(L.target / STAR) * STAR); });
 const BOOST0 = { hammer: 3, moves: 3, switch: 3, cross: 2, undo: 3 };
 // carrots are earned at a quarter of the old rate: every award is scaled, the remainder waits in the jar (save.carrotFrac) until a whole carrot is due
-const ART_Q = location.protocol === "file:" ? "" : "?v=1111b";   /* bump when the painted art in anim/ is baked again, so no browser keeps an old picture (the iOS app reads files, no query there) */
+const ART_Q = location.protocol === "file:" ? "" : "?v=1118a";   /* bump when the painted art in anim/ is baked again, so no browser keeps an old picture (the iOS app reads files, no query there) */
 const RWM = 2, BXM = 4;   /* 2026-10-29 İdris "ödül kazanmayı yarı yarıya indir, çok fazla booster kazanıyorum": carrots and ∞ lives x2 (was 4), boosters x4 (was 8) */
 const CARROT_RATE = .03125;   // 2026-10-27 İdris: rewards come half as often (the amount of each stays the same)
 function addCarrots(n) { save.carrotFrac = (save.carrotFrac || 0) + n * CARROT_RATE; const give = Math.floor(save.carrotFrac + 1e-9); save.carrotFrac -= give; save.carrots = (save.carrots || 0) + RWM * (give); carrotNew += RWM * (give); return give; }
@@ -1821,6 +1837,10 @@ function buildMap() {
   // of a second on the phone). When nothing the map shows has changed, only the counters above are refreshed and the map stays as it was.
   let sSum = 0; for (const k in save.stars) sSum += save.stars[k]; const mSig = [highest(), innerWidth, innerHeight, sSum, gardenN(), save.lang, allDone()].join(); $("starsTotal").textContent = Math.max(0, starsFree()); $("carrots").textContent = save.carrots || 0;
   $("btnDaily").classList.toggle("ready", !dailyState().claimed); $("achN").textContent = Object.keys(save.ach).length; $("gdN").textContent = gardenN(); $("albN").textContent = albumN(); const ss = seasonOf(); $("ssN").textContent = tierOf(ss); $("btnSeason").classList.toggle("ready", tierOf(ss) > ss.got); const rc = save.race; $("btnRace").innerHTML = ico(rc && huntWeek(rc.w) ? "hunt" : "race"); $("btnRace").classList.toggle("ready", !!rc && huntWeek(rc.w) && HUNT.filter(c => rc.wins >= c[0]).length > (rc.got || 0));
+  // 2026-11-11 İdris "o mapi bu tarz bir animasyon ve tema olarak değiştir": the map is a flyover of the land now (map3d.js): relief, a chase camera over
+  // the rails, the train riding to the next stop. The painted map below stays for a browser without WebGL.
+  if (window.MAP3D && MAP3D.ok && !/[?&]map2d\b/.test(location.search) && MAP3D.sync({ host: $("map"), N: LEVELS.length, cur: highest, stars: (i) => save.stars[i] || 0, ground: CHAP_GROUNDC, sky: CHAP_SKY, tree: CHAP_TREE, every: STATION_EVERY, stations: STATIONS.length, lang: save.lang, play: save.lang === "tr" ? "Oyna" : "Play",
+    chapName: (c) => CHAPTERS[c].name, stationName: (k) => STATIONS[k - 1].name, open: (i) => { if (i <= highest()) { lvFrom = null; openLevel(i); } else tip("Win level " + (highest() + 1) + " to open the line ahead", 2200); }, openStation: (k) => openStation(k), openPet: () => openPet() })) { lastCur = highest(); mapSig = mSig; window.__buildMs = Math.round(performance.now() - bm0); return; }
   if (mSig === mapSig && lastCur === highest() && $("path").childElementCount > 50) { if (carrotNew) { carrotNew = 0; setTimeout(() => { pogoMood("happy", 2400); bump("carPill"); }, 700); } window.__buildMs = Math.round(performance.now() - bm0); return; }
   mapSig = mSig;
   const path = $("path"), svg = $("pathSvg"), cur = highest(), G_ = GAP(), N = LEVELS.length, B = Math.max(300, innerHeight / 2 + 90), H = B + N * G_ + Math.max(240, innerHeight / 2 + 60), VW = $("map").clientWidth || 420; MAPW = Math.round(VW * (VW <= 600 ? 1.8 : 1.4)); const W = MAPW, big = VW > 600, SW = VW * (VW <= 600 ? 1.6 : 1.3);   // the land is 2.2 screens wide on a phone (twice the sideways pull it had); the rails keep their old swing (SW) down the middle of it   // wider than the screen, so the land can be panned sideways too   // room above and below so even the first and the last stop can sit mid-screen
@@ -3489,7 +3509,11 @@ function gameTheme(i) { const el = $("gTheme"); if (!el) return; const k = Math.
   // evening page by turns, and a slight shift of hue from level to level, so no two levels in a row look the same
   /* 2026-10-29 İdris "arka planı sadeleştir": no painted landscape, only a soft two-colour wash of the theme, lightened, changing level by level */
   const v = i % 2, key = k + "-" + v + "-plain"; if (el.dataset.k !== key) { el.dataset.k = key; el.innerHTML = ""; el.style.background = `linear-gradient(180deg, color-mix(in srgb, ${v ? T.s2 : T.s1} 85%, #ffffff), color-mix(in srgb, ${v ? T.s1 : T.s2} 80%, #ffffff) 55%, ${T.g})`;   /* "solukluğu kaldır": full theme colours */ }
-  el.style.filter = `hue-rotate(${((i % 7) - 3) * 9}deg)`;   /* 2026-10-29 İdris "tema soluk": the page's pigments pushed up */ el.hidden = false;  dioTheme(i); }
+  el.style.filter = `hue-rotate(${((i % 7) - 3) * 9}deg)`;   /* 2026-10-29 İdris "tema soluk": the page's pigments pushed up */ el.hidden = false;  dioTheme(i);
+  // 2026-11-11 İdris "oyun tahtasını da bu temada yap": the board stands in the same land as the flyover map: one picture of the country at this
+  // level's stop (map3d.js still(), made once when the level opens; nothing is drawn per frame), the rails running on toward the next stop
+  g.classList.remove("g3d"); if (window.MAP3D && MAP3D.ok && !window.__fast) { let pic = null; try { const sc = Math.min(1.5, devicePixelRatio || 1); pic = MAP3D.still(i, Math.round(innerWidth * sc), Math.round(innerHeight * sc)); } catch (e) { pic = null; }
+    if (pic) { pic.className = "bgwc"; el.dataset.k = "3d" + i; el.innerHTML = ""; el.appendChild(pic); el.style.background = "none"; el.style.filter = "none"; g.classList.add("g3d"); const box = $("gDio"); if (box) box.hidden = true; } } }
 // 2026-11-02 İdris "suluboya kalsın, derinlik ekle": the game screen is a pop-up book. Three cut-paper layers painted on the Mac in grey
 // (anim/src/dio-wc.js, bake-dio.cjs) are tinted here with this level's colours, once per level: a hazy far one on the horizon behind Pogo, a middle
 // one peeking from under the board, a near one the booster tray rests on. Each gets its lit cut edge and a soft shadow on the sheet behind it.
@@ -4880,6 +4904,9 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
   // 2026-10-24 İdris: "oyun içi animasyonlar çok durgun ve akıcı değil". The board runs at the display's full rate again; only when it has not
   // been touched for twenty seconds does it drop to about 30 frames a second (battery, 2026-10-23)
   if (G.busy) wakeT = pf0;   // 2026-10-28 İdris "her hareket en az 60 fps": a quiet board is no longer drawn at half rate
+  // 2026-11-18 İdris "oynarken telefon ısınıyor, ısınmasın": every move still runs at the full rate; a board nobody has touched for twenty seconds
+  // (nothing falling, no effect playing) is drawn at half rate until the next touch
+  else if (pf0 - wakeT > 20000 && !particles.length && !fx.length && !dying.length && pf0 - lastDraw < 30) return;
   lastDraw = pf0;
   const now = ts, dt = Math.min(.05, Math.max(0, (ts - lastTs) / 1000)); lastTs = ts;
   hudTick(dt);
@@ -4921,7 +4948,7 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
       const el = now - g.t0;
       if (g.ek === "fall") {
         if (el <= 0) { g.x = g.fx; g.y = g.fy; }
-        else if (el < g.dur) { const u = el / g.dur, e2 = u < .6 ? u * u / .6 : 1 - (1 - u) * (1 - u) / .4; g.x = g.fx + (g.c - g.fx) * e2; g.y = g.fy + (g.r - g.fy) * e2; vel = (u < .6 ? 2 * u / .6 : 2 * (1 - u) / .4) * (g.r - g.fy) / g.dur * 16.7; }   // 2026-10-20 "yağ gibi": a gem speeds up, then glides into its cell instead of slamming in
+        else if (el < g.dur) { const u = el / g.dur, e2 = u < .78 ? u * u / .78 : 1 - (1 - u) * (1 - u) / .22; g.x = g.fx + (g.c - g.fx) * e2; g.y = g.fy + (g.r - g.fy) * e2; vel = (u < .78 ? 2 * u / .78 : 2 * (1 - u) / .22) * (g.r - g.fy) / g.dur * 16.7; }   /* 2026-11-18 İdris "tahtadaki animasyonları daha gerçekçi yap": the charm falls under its own weight for most of the way (speed keeps growing) and brakes only in the last fifth, so it lands instead of gliding; same duration, speed still continuous */   // 2026-10-20 "yağ gibi": a gem speeds up, then glides into its cell instead of slamming in
         else {
           g.x = g.c; if (!g.landed) { g.landed = 1; g.land = now; g.fresh = false; g.intro = 0; if (g.fallD >= 3) puff(g.c + .5, g.r + 1); }
           const b = (el - g.dur) / BOUNCE_MS; if (b < 1) g.y = g.r - g.bh * 4 * b * (1 - b); else { g.y = g.r; g.dur = 0; g.fallD = 0; }
@@ -5104,6 +5131,7 @@ function bestMove() {
 // then templates with {n} slots, and lines joined with " · " are translated piece by piece. A MutationObserver catches text as it appears,
 // so nothing else in the game needs to know about languages. Solver runs stay in English (tests read the English titles).
 const TR = {
+  "Win level {0} to open the line ahead": "Önündeki hattı açmak için {0}. seviyeyi kazan",
   "Good!": "İyi!", "Great!": "Harika!", "Amazing!": "Muhteşem!", "Charmtastic!": "Tılsımlı!", "{0} moves left!": "{0} hamle kaldı!", "in {0} moves": "{0} hamlede", "Score {0}": "{0} puan topla", "Clear {0} ash": "{0} külü temizle", "Bring down {0} seeds": "{0} tohumu indir", "Break {0} brambles": "{0} dikeni kır", "Level {0}": "Seviye {0}",
   "Charmwood works": "Charmwood işleri", "★ Restore": "★ Onar", "Every work of Charmwood stands again.": "Charmwood'un bütün işleri yeniden ayakta.", "Bring Charmwood back: {1} of {2} restored": "Charmwood'u geri getir: {2} işten {1} onarıldı",
   "Reach {1} station (level {2}) to restore {3}": "{3} için önce {1} durağına ulaş (seviye {2})", "Restore {1} {2}": "{1} {2} onar", "{1} restored! +1 {2}": "{1} onarıldı! +1 {2}",

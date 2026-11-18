@@ -5,7 +5,7 @@
 // pencil line that wanders and breaks. Uses the game's own shapes (BL, BLA, glowPart, mixc). bake-charms.cjs writes anim/ch-<name>.webp.
 (() => {
   // watercolour pigments for the six colour families (rose madder, cadmium orange, gamboge, sap green, cerulean, violet)
-  const WCHUE = ["#f56e8e", "#ffa25f", "#ffd65b", "#62cd82", "#5faaf5", "#b877f5"];   // 2026-11-11 İdris "biraz daha pastel", picked B from the side-by-side (full pigments f0305e ff7a1a ffc414 1fb84c 1a86f0 9a3cf0 mixed 30% to white);   // 2026-10-28 İdris "taşlar çok soluk, belirgin ve parlak yap": full-strength pigments
+  const WCHUE = ["#f2456e", "#ff8731", "#ffca2c", "#35bf5e", "#3192f2", "#a450f2"];   // 2026-11-18 İdris "taşları daha belirgin yap, daha canlı olsunlar": the full pigments with only a tenth of white, a denser first wash and a firmer dried rim;   // 2026-11-11 İdris "biraz daha pastel", picked B from the side-by-side (full pigments f0305e ff7a1a ffc414 1fb84c 1a86f0 9a3cf0 mixed 30% to white);   // 2026-10-28 İdris "taşlar çok soluk, belirgin ve parlak yap": full-strength pigments
   const SEPIA = "rgba(74,52,40,", PAPER = [246, 239, 224];
   const R = (n) => { let s = (n * 9301 + 49297) % 233280; return () => (s = (s * 9301 + 49297) % 233280) / 233280; };
   // value noise for granulation and the paper's tooth
@@ -56,7 +56,7 @@
     // the cast shadow: a cool grey wash on the paper, soft
     x.save(); x.filter = "blur(2.5px)"; x.translate(2.5, 5); x.fillStyle = "rgba(0,0,0,.22)"; x.fill(body); x.restore();
     // first wash, shadow side, light lifted
-    wash(x, body, hue, seed, { a: .62, layers: 5, rw: 2.6, rim: .6 });   /* 2026-10-29 İdris "taşlar yeterince belirgin değil": a denser first wash */ for (const p of parts) shadowWash(x, p, hue, 50, 50, 46, seed + 1); lift(x, body, 50, 50, 46);
+    wash(x, body, hue, seed, { a: .7, layers: 5, rw: 3.1, rim: .74 });   /* 2026-10-29 İdris "taşlar yeterince belirgin değil": a denser first wash */ for (const p of parts) shadowWash(x, p, hue, 50, 50, 46, seed + 1); lift(x, body, 50, 50, 46);
     // a second, smaller glaze in the middle tones so the colour has depth
     x.save(); x.clip(body); x.filter = "blur(4px)"; x.fillStyle = hexA(hue, .14); x.beginPath(); x.ellipse(54, 56, 30, 26, .3, 0, 6.2832); x.fill(); x.restore();
     // details
