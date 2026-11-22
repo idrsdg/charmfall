@@ -509,7 +509,7 @@
 
   // ---------------------------------------------------------------- the chest
   // items: [{ k: "star" | "carrot" | "boost" | "allboost" | "lives", n, b }]; prepaid: the caller has already put them in the save (station gifts)
-  const BN = { hammer: "Woodpecker", moves: "+10 Moves", switch: "Free Switch", cross: "Cross Blast", undo: "Undo" };
+  const BN = { hammer: "Sandpiper", moves: "+10 Moves", switch: "Free Switch", cross: "Cross Blast", undo: "Undo" };
   const boostTotal = () => { let s = 0; for (const k in save.boost) s += +save.boost[k] || 0; return s; };
   function chest(opts) { if (window.__fast) { if (!opts.prepaid) pay(opts.items); return Promise.resolve({}); }
     return new Promise((resolve) => {

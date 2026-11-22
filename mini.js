@@ -46,7 +46,7 @@
     "Found it!": "Buldun!", "Not there…": "Orada değil…", "Watch the starfish…": "Denizyıldızını izle…", "Which shell?": "Hangi kabuk?", "Round {0}/3": "Tur {0}/3",
     "No reward this time.": "Bu sefer ödül yok.", "Well played!": "İyi oynadın!", "Great run!": "Harika!", "Perfect!": "Kusursuz!",
     "Playground": "Oyun parkı", "For rewards": "Ödüllü", "Practice": "Antrenman", "Free games: {0}": "Bedava oyun: {0}", "One game: {0} carrot · you have {1}": "Bir oyun: {0} havuç · sende {1} var", "No carrots left. Win levels to earn more, or play for practice.": "Havuç kalmadı. Seviye kazanarak havuç topla ya da antrenman oyna.",
-    "Stars": "Yıldız", "Carrots": "Havuç", "Woodpecker": "Ağaçkakan", "+10 Moves": "+10 Hamle", "Free Switch": "Serbest Değiş", "Cross Blast": "Haç Patlaması", "Undo": "Geri al"
+    "Stars": "Yıldız", "Carrots": "Havuç", "Sandpiper": "Kumkuşu", "+10 Moves": "+10 Hamle", "Free Switch": "Serbest Değiş", "Cross Blast": "Haç Patlaması", "Undo": "Geri al"
   };
   const T = (s, ...a) => { let o = (typeof save === "object" && save && save.lang === "tr" && TRM[s]) || s; a.forEach((v, i) => { o = o.replace("{" + i + "}", v); }); return o; };
 
@@ -481,7 +481,7 @@
     if (out.carrots) { const n = (typeof RWM === "number" ? RWM : 1) * out.carrots; save.carrots = (save.carrots || 0) + n; out.carrots = n; try { carrotNew += n; } catch (e) {} }
     try { persist(); } catch (e) {} try { const s = document.getElementById("starsTotal"); if (s && typeof starsFree === "function") s.textContent = Math.max(0, starsFree()); const c = document.getElementById("carrots"); if (c) c.textContent = save.carrots || 0; } catch (e) {}
     return out; }
-  const BN = { hammer: "Woodpecker", moves: "+10 Moves", switch: "Free Switch", cross: "Cross Blast", undo: "Undo" }, BICO = { hammer: "hammer", moves: "moves", switch: "switch", cross: "cross", undo: "undo" };   // booster icons are the tray's own (BICON)
+  const BN = { hammer: "Sandpiper", moves: "+10 Moves", switch: "Free Switch", cross: "Cross Blast", undo: "Undo" }, BICO = { hammer: "hammer", moves: "moves", switch: "switch", cross: "cross", undo: "undo" };   // booster icons are the tray's own (BICON)
   function result(name, tier, out, practice) { return new Promise((res) => {
     const head = tier >= 3 ? "Perfect!" : tier === 2 ? "Great run!" : tier === 1 ? "Well played!" : "No reward this time.", starSrc = "anim/mini-star.webp" + Q;
     const items = []; if (out.stars) items.push(["star", "+" + out.stars, "s"]); if (out.carrots) items.push(["carrot", "+" + out.carrots, "c"]); for (const k in out.boost) items.push([BICO[k], "+" + out.boost[k] + " " + T(BN[k]), "b"]);
