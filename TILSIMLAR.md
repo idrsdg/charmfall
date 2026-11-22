@@ -1,6 +1,27 @@
 # Charmfall tılsımları
 
-## GÜNCEL: Mercan Körfezi (2026-11-10)
+## GÜNCEL: On Krallık (2026-11-23)
+
+İdris: "Tılsım sembolleri çok fazla denize bağlamış. Her 50 seviyede bir krallık olsun: buz, ateş, orman, su, hava... her birinin konsepti olsun." 500 seviye, 50'şer seviyelik on krallık. Tahtada her zaman altı renk yuvası vardır; her krallığın her yuva için kendi tılsımı vardır (oyun `BL[yuva][krallık]` okur). Toplam 60 tılsım. Tek kaynak yine `anim/charms-sea.js` (dosya adı ve `SEA_BL`, `SEA_SHAPES`, `SEA_LBL` değişmedi); Türkçe adlar `index.html` içindeki `TR` sözlüğünde; görseller `anim/src/bake-charms.cjs` ile `anim/ch-<ad>.webp` olarak pişirilir.
+
+| Seviye | Krallık | Gül | Turuncu | Sarı | Turkuaz | Mavi | Mor |
+|---|---|---|---|---|---|---|---|
+| 1-50 | Orman | Benekli Mantar | Tilki | Meşe Palamudu | Çam Ağacı | Kelebek | Böğürtlen |
+| 51-100 | Su | Denizyıldızı | Denizatı | Tarak | Deniz Kaplumbağası | Balina | Ahtapot |
+| 101-150 | Ateş | Acı Biber | Alev | Güneş | Küçük Ejderha | Mum | Yanardağ |
+| 151-200 | Buz | Eldiven | Fener | Buz Pateni | Kar Tanesi | Penguen | İglu |
+| 201-250 | Hava | Sıcak Hava Balonu | Uçurtma | Kanarya | Kâğıt Uçak | Bulut | Rüzgâr Gülü |
+| 251-300 | Kum | Amfora | Deve | Piramit | Kaktüs | Skarabe | Sihirli Lamba |
+| 301-350 | Kristal | Kalp Taşı | Taşlı Yüzük | Kristal Taç | Zümrüt | Elmas | Ametist |
+| 351-400 | Gece | Kedi | Balkabağı Feneri | Hilal | Küçük Hayalet | Baykuş | Yarasa |
+| 401-450 | Fırtına | Şemsiye | Yağmur Çizmesi | Şimşek | Hortum | Yağmur Damlası | Fırtına Bulutu |
+| 451-500 | Yıldız | Roket | Halkalı Gezegen | Yıldız | Uçan Daire | Kuyrukluyıldız | Küçük Uzaylı |
+
+Su krallığı Mercan Körfezi'nden altı taşı korur; Kristal Taç (eski Batık Taç) ve Yağmur Damlası (eski Su Damlası) da eski şekillerdir. Diğer 52 şekil yenidir; kullanılmayan deniz şekilleri ve görselleri silindi.
+
+Yeni şekil çizerken: her gövde parçası ekranda saat yönünde dönmeli (parçalar non-zero kuralıyla birleşir, ters dönen parça delik açar). `charms-sea.js` içindeki `cw()` ters çizilen parçayı kendisi çevirir, test de bunu denetler. Bir krallığın altı silüeti 40 pikselde birbirinden kolayca ayrılmalı.
+
+## Mercan Körfezi (2026-11-10, geçmiş)
 
 İdris suluboya masal kitabı tarzını koruyup dünyayı değiştirdi: orman yerine deniz altı. Taşların tek kaynağı `anim/charms-sea.js` (şekil, İngilizce ad); Türkçe adlar `index.html` içindeki `TR` sözlüğünde; görseller `anim/src/bake-charms.cjs` ile `anim/ch-<ad>.webp` olarak pişirilir. Her 20 seviyede iki renk yuvası bir sonraki taşa geçer (`rotV`).
 
@@ -15,7 +36,7 @@
 
 Yeni şekil çizerken: her gövde parçası ekranda saat yönünde dönmeli (parçalar non-zero kuralıyla birleşir, ters dönen parça delik açar).
 
-Aşağısı orman dönemi kaydıdır (geçmiş).
+Aşağısı ilk orman dönemi kaydıdır (geçmiş).
 
 Bu dosya oyundaki her taşın ne olduğunu, hikâyedeki anlamını ve oyuna ne zaman girdiğini kaydeder.
 
