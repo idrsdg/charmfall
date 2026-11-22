@@ -5033,11 +5033,13 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
   ctx.globalAlpha = 1;
   // dying gems: a quick eased swell with a white flash, then they spin down to nothing
   for (let i = dying.length - 1; i >= 0; i--) {
-    const d = dying[i], t = (now - d.t) / 340; if (t >= 1) { dying.splice(i, 1); continue; }
+    const d = dying[i], t = (now - d.t) / 380; if (t >= 1) { dying.splice(i, 1); continue; }
     const g = d.g, px = (g.c + .5) * CELL, py = (g.r + .5) * CELL;
     if (t <= 0) { drawGem(g, px, py, 1, now); continue; }
-    if (t < .4) { const k = easeOut(t / .4), s = 1 + .3 * k; drawGem(g, px, py, s, now); }
-    else { const k = (t - .4) / .6, kk = k * k; ctx.globalAlpha = 1 - kk; drawGem(g, px, py, 1.35 * (1 - kk), now, 1, kk * 1.6); ctx.globalAlpha = 1; }
+    // 2026-11-22 keyed in three beats, the way a carved piece would go: it sits down into itself (wide and low), springs up tall past its size, then tips over, lifts off the board and is gone
+    if (t < .2) { const k = easeOut(t / .2); drawGem(g, px, py + CELL * .05 * k, 1 + .1 * k, now, 1 - .2 * k); }
+    else if (t < .46) { const u = (t - .2) / .26, k = 1 - (1 - u) * (1 - u) * (1 - u); drawGem(g, px, py + CELL * (.05 - .13 * k), 1.1 + .24 * k, now, .8 + .32 * k); }
+    else { const k = (t - .46) / .54, kk = k * k, side = (g.c + g.r) & 1 ? 1 : -1; ctx.globalAlpha = 1 - kk * k; drawGem(g, px + side * CELL * .06 * k, py - CELL * (.08 + .2 * k), 1.34 * (1 - kk * .86), now, 1.12 - .12 * k, side * kk * 1.1); ctx.globalAlpha = 1; }
   }
   // blockers on top (cached sprites)
   for (let r = 0; r < ROWS; r++) { const br = G.block[r]; for (let c = 0; c < COLS; c++) {
