@@ -1175,7 +1175,9 @@ const PA_RUN = new Set(); let paRaf = 0;
 const paLive = () => !!(window.__P3 && window.PogoClip && !window.__fast); let paTok = 0;
 function paPlay(el, name, then) { if (!el || !PA[name]) return; el.dataset.pa = name; el.dataset.on = 1; const tok = ++paTok;
   if (paLive()) { let s = el._pa; if (!s || !s.cv) { el.style.backgroundImage = "none"; const cv = document.createElement("canvas"); cv.style.cssText = "display:block;width:100%;height:100%"; el.appendChild(cv); const cv3 = document.createElement("canvas");
-      s = { cv, x: cv.getContext("2d"), cv3, st: { x: cv3.getContext("2d"), c: __P3.Z(), es: { a: 0, v: 0, b: 0, w: 0 }, py: 0, px: 0, pr: 0, t0: 0, ph: 0, mood: "", turn: 0 } }; }
+      s = { cv, x: cv.getContext("2d"), cv3, st: { x: cv3.getContext("2d"), c: __P3.Z(), es: { a: 0, v: 0, b: 0, w: 0 }, py: 0, px: 0, pr: 0, t0: 0, ph: 0, mood: "", turn: 0 } };
+      const gl = el.closest("#gStage") && __P3.stage && !window.__noStageGL ? __P3.stage(el) : null;   // beside the board: his own WebGL canvas under a 2D one that only carries the drawn effects
+      if (gl) { const g = gl.domElement, C = PogoClip; g.style.cssText = `position:absolute;left:${C.OX / C.W * 100}%;top:${C.OY / C.H * 100}%;width:${C.PW / C.W * 100}%;height:${C.PH / C.H * 100}%;filter:none!important`; cv.style.cssText = "position:absolute;left:0;top:0;width:100%;height:100%;filter:none!important"; el.insertBefore(g, cv); s.st.gl = gl; } }
     el._pa = Object.assign(s, { name, t0: performance.now(), then, tok, done: 0, last: 0, vis: 1, vt: 0 }); }
   else { const [n, cols] = PA[name]; el.style.backgroundImage = `url(anim/pogo-${name}.webp)`; el.style.backgroundSize = `${cols * 100}% ${Math.ceil(n / cols) * 100}%`; el._pa = { t0: performance.now(), f: -1, then, tok }; }
   PA_RUN.add(el); if (!paRaf) paRaf = requestAnimationFrame(paTick); }
@@ -1187,13 +1189,13 @@ function paTick(now) { paRaf = 0; if (document.hidden) { paRaf = requestAnimatio
       const f = Math.floor((now - s.t0) * .06) % s.n; if (f !== s.f) { s.f = f; const rows = Math.ceil(s.n / s.cols), c = f % s.cols, r = Math.floor(f / s.cols); el.style.backgroundPosition = `${c / (s.cols - 1) * 100}% ${rows > 1 ? r / (rows - 1) * 100 : 0}%`; } continue; }
     if (s.cv) { if (now - s.vt > 250) { s.vt = now; const r = el.getBoundingClientRect(); s.vis = r.width > 0 && r.bottom > -40 && r.top < innerHeight + 40 && r.right > -40 && r.left < innerWidth + 40; } if (!s.vis) continue;   // off screen or hidden: no frame
       const d = Math.min(devicePixelRatio || 1, 2), w = Math.round(el.clientWidth * d * 1.25), h = Math.round(el.clientHeight * d * 1.25); if (!w || !h) continue;
-      if (s.cv.width !== w || s.cv.height !== h) { s.cv.width = w; s.cv.height = h; s.cv3.width = Math.round(w * PogoClip.PW / PogoClip.W); s.cv3.height = Math.round(h * PogoClip.PH / PogoClip.H); }
-      live.push(el); need = Math.max(need, s.cv3.width); continue; }
+      if (s.cv.width !== w || s.cv.height !== h) { s.cv.width = w; s.cv.height = h; s.cv3.width = Math.round(w * PogoClip.PW / PogoClip.W); s.cv3.height = Math.round(h * PogoClip.PH / PogoClip.H); if (s.st.gl) s.st.gl.setSize(s.cv3.width, s.cv3.height, false); }
+      live.push(el); if (!s.st.gl) need = Math.max(need, s.cv3.width); continue; }
     const [n, cols, fps, loop] = PA[el.dataset.pa]; let f = Math.floor((now - s.t0) * fps / 1000), end = false; if (f < 0) f = 0;
     if (f >= n) { if (loop) f %= n; else { f = n - 1; end = true; } }
     if (f !== s.f) { s.f = f; const rows = Math.ceil(n / cols), c = f % cols, r = Math.floor(f / cols); el.style.backgroundPosition = `${cols > 1 ? c / (cols - 1) * 100 : 0}% ${rows > 1 ? r / (rows - 1) * 100 : 0}%`; }
     if (end) fin(s); }
-  if (live.length) { __P3.size(need); for (const el of live) { const s = el._pa, nm = s.name, D = PogoClip.dur(nm), lp = PogoClip.loop(nm); let t = (now - s.t0) / 1000; const dt = s.last ? Math.min(.05, (now - s.last) / 1000) : 1 / 60; s.last = now;
+  if (live.length) { if (need) __P3.size(need); for (const el of live) { const s = el._pa, nm = s.name, D = PogoClip.dur(nm), lp = PogoClip.loop(nm); let t = (now - s.t0) / 1000; const dt = s.last ? Math.min(.05, (now - s.last) / 1000) : 1 / 60; s.last = now;
       if (!lp && t >= D) { t = D; PogoClip.render(s.x, nm, t, __P3, s.st, s.cv3, dt); PA_RUN.delete(el); if (s.then) { const tk = s.tok, th = s.then; setTimeout(() => { if (el.isConnected && el._pa && el._pa.tok === tk) th(); }, 320); } continue; }
       PogoClip.render(s.x, nm, t, __P3, s.st, s.cv3, dt); } }
   if (PA_RUN.size) paRaf = requestAnimationFrame(paTick); }
@@ -1466,6 +1468,7 @@ const P3 = (() => {
     const bu = (t + st.ph) % 3.4, b2 = st.ph > 1.5 && bu > 3.0 && bu < 3.14 ? (bu - 3.0) / .14 : bu > 3.26 ? (bu - 3.26) / .14 : -1, bl = b2 < 0 ? 1 : 1 - Math.sin(b2 * Math.PI) * .95, ey = Math.min(bl, c.eye); eyes[0].scale.y = eyes[1].scale.y = ey; mouth.scale.set(.11 * c.mo + .001, .1 * c.mo + .001, .08); { const sk = Math.max(0, 1 - c.mo * 4); smile.visible = sk > .02; smile.scale.set(.7 + .3 * sk, sk, 1); }
     const sh = 1 - Math.min(.5, c.y * .8); shadow.scale.set(sh, sh, sh); shadow.position.x = c.x; shadow.visible = !face;
     if (face) { cam.position.set(0, 2.3, 6.6); cam.lookAt(0, 2.28, 0); } else { cam.position.set(0, 2.1, 8.6); cam.lookAt(0, 1.82, 0); }
+    if (st.gl) { st.gl.render(scene, cam); return; }   // the Pogo beside the board: straight to his own WebGL canvas, nothing is copied out
     R.render(scene, cam); const x = st.x; x.clearRect(0, 0, cv.width, cv.height);
     if (cv.width > wantW) wantW = cv.width;
     if (face) x.drawImage(R.domElement, 0, (bufH - bufW) / 2, bufW, bufW, 0, 0, cv.width, cv.height); else x.drawImage(R.domElement, 0, 0, bufW, bufH, 0, 0, cv.width, cv.height);
@@ -1494,7 +1497,14 @@ const P3 = (() => {
     if (wantW) { const w = Math.min(RW, Math.max(96, wantW)); if (w !== bufW) { bufW = w; bufH = Math.round(w * RH / RW); R.setSize(bufW, bufH, false); } wantW = 0; }   // takes effect from the next frame
     if (window.__p3) { const d = performance.now() - p3t; window.__p3.ms += d; window.__p3.n++; if (d >= 3 && PERF.cur.length < 12) PERF.cur.push("p3:" + Math.round(d)); }
   }
-  window.__P3 = { draw, Z, size(w) { w = Math.min(RW, Math.max(96, Math.round(w))); if (w !== bufW) { bufW = w; bufH = Math.round(w * RH / RW); R.setSize(bufW, bufH, false); } } };   // the keyed clips (anim/pogo-anim.js) pose him through this
+  // 2026-11-22 "taşlar patlarken kasıyor": the Pogo beside the board was rendered in 3D, copied out of the WebGL buffer into a 2D canvas and
+  // given seven more full-canvas passes for his painted rim, on every frame of a level (the phone's own numbers: frames of 30-50 ms whenever
+  // charms moved while this loop's script took under a millisecond). He now has a WebGL canvas of his own that is shown as it is: one draw, no copy.
+  let R2 = null, R2bad = 0, R2own = null;
+  const stage = (el) => { if (R2bad) return null; if (R2own && R2own !== el && R2own.isConnected) return null;
+    if (!R2) { try { R2 = new T.WebGLRenderer({ alpha: true, antialias: true }); } catch (e) { R2bad = 1; return null; } R2.localClippingEnabled = true; R2.setPixelRatio(1); R2.setClearColor(0, 0); R2.outputEncoding = T.sRGBEncoding; R2.domElement.addEventListener("webglcontextlost", (e) => { e.preventDefault(); }); }
+    R2own = el; return R2; };
+  window.__P3 = { draw, Z, stage, size(w) { w = Math.min(RW, Math.max(96, Math.round(w))); if (w !== bufW) { bufW = w; bufH = Math.round(w * RH / RW); R.setSize(bufW, bufH, false); } } };   // the keyed clips (anim/pogo-anim.js) pose him through this
   if (/[?&]bake\b/.test(location.search)) window.__noPogo = 1;   // the animation bench (anim/src) poses him frame by frame
   setTimeout(() => { try { const c = document.createElement("canvas"); c.width = 96; c.height = 106; draw(c, { x: c.getContext("2d"), c: Z(), es: { a: 0, v: 0, b: 0, w: 0 }, py: 0, px: 0, pr: 0, t0: 0, ph: 0, mood: "", turn: 0 }, 0, 1 / 60); } catch (e) {} }, 60);   // 2026-10-28: shaders compiled before the map asks for him
   requestAnimationFrame(frame); return true;
@@ -3392,7 +3402,7 @@ let saveT = 0; function saveSoon() { clearTimeout(saveT); saveT = setTimeout(() 
 function clearProgress() { delete save.inProgress; persist(); }
 function startLevel(i, snap) {
   { const g = $("game"); gameTheme(i); g.classList.toggle("boss", isMordo(i)); $("gMordo").hidden = !isMordo(i); $("gMordo").innerHTML = isMordo(i) && typeof D3 !== "undefined" && D3 ? `<img src="${D3.sprite(bossOf(i).kind, 128)}" alt="">` : ""; }
-  const L = LEVELS[i]; PAL = palFor(i);
+  const L = LEVELS[i]; PAL = palFor(i); fxbWarmLevel();
   G = { level: i, L, moves: L.moves, score: 0, over: false, busy: false, paused: false, sel: null, selT: 0, boost: null, hintAt: performance.now() + 4000, hint: null, combo: 0,
     collected: 0, spawned: 0, chocEaten: false, shake: 0, frenzy: 0, inFrenzy: false, fuseIn: L.fuse ? L.fuse.every : 0, undo: null,
     grid: [], hole: [], jelly: [], jellyHit: [], block: [], exit: [] };
@@ -3975,7 +3985,7 @@ async function blast(clear, spawn = [], opts = {}) {
     for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) if (G.block[r + dr] && G.block[r + dr][c + dc] && !clear.has((r + dr) * COLS + c + dc)) hitBlock(r + dr, c + dc, false, g.color);
     if (keep.has(k)) continue;
     // a short ripple runs along the match instead of everything popping on the same frame
-    const C = PAL[g.color], dl = Math.min(popped, 6) * step + (flyDl && flyDl.get(k) || 0); dying.push({ g, t: now + dl }); { const bc = C ? (GS === "bold" ? BLHUE_P[g.color % 6] : GS === "glow" ? GLHUE[g.color % 6] : typeof D3 !== "undefined" && D3 && D3.lpColor ? D3.lpColor(g.color, C) : C.c) : "#fff", n = (g.special ? 14 : 8) + Math.min(8, (G.combo - 1) * 2); burst(c + .5, r + .5, bc, n, C ? C.shape : "tri", dl); if (!window.__lowFx && 0) { fx.push({ k: "star", x: c + .5, y: r + .5, color: bc, t: now + dl + 40, life: 420, size: .55 + Math.min(.4, G.combo * .08) }); fx.push({ k: "ring", x: c + .5, y: r + .5, color: bc, r1: .55 + Math.min(.5, G.combo * .1), t: now + dl, life: 360, w: 5 }); if (popped % 3 === 0) fx.push({ k: "bloom", x: c + .5, y: r + .5, color: bc, t: now + dl + 30, life: 620 }); } } if (g.special) ring(c + .5, r + .5, C ? C.l : "#fff", 1.3); G.grid[r][c] = null; popped++;
+    const C = PAL[g.color], dl = Math.min(popped, 6) * step + (flyDl && flyDl.get(k) || 0); dying.push({ g, t: now + dl }); { const bc = popCol(g.color), n = (g.special ? 14 : 8) + Math.min(8, (G.combo - 1) * 2); burst(c + .5, r + .5, bc, n, C ? C.shape : "tri", dl); if (!window.__lowFx && 0) { fx.push({ k: "star", x: c + .5, y: r + .5, color: bc, t: now + dl + 40, life: 420, size: .55 + Math.min(.4, G.combo * .08) }); fx.push({ k: "ring", x: c + .5, y: r + .5, color: bc, r1: .55 + Math.min(.5, G.combo * .1), t: now + dl, life: 360, w: 5 }); if (popped % 3 === 0) fx.push({ k: "bloom", x: c + .5, y: r + .5, color: bc, t: now + dl + 30, life: 620 }); } } if (g.special) ring(c + .5, r + .5, C ? C.l : "#fff", 1.3); G.grid[r][c] = null; popped++;
     if (detonated.has(k)) addScore(r, c, 200 * G.combo); else if (!opts.silent) G.score += 20 * Math.max(1, G.combo);
   }
   for (const s of spawn) { let g = cell(s.r, s.c); if (g && g.kind === "gem") { g.special = s.sp; g.color = s.color; } else { g = G.grid[s.r][s.c] = mkGem(s.color, s.r, s.c, s.sp); } g.sx = 1.6; g.pop = performance.now(); if (s.sp === "bomb") save.stats.bombs++; if (s.sp === "fly" && !save.seenFly && !window.__fast) { save.seenFly = 1; tip("Firefly! A 2×2 square makes one. It flies to what you need.", 3800); } sparkle(s.c + .5, s.r + .5, PAL[s.color].c); ring(s.c + .5, s.r + .5, "#fff", 1.3, 500, 9); if (!window.__fast) fx.push({ k: "bloom", x: s.c + .5, y: s.r + .5, color: PAL[s.color].l || PAL[s.color].c, t: performance.now(), life: 620 }); burst(s.c + .5, s.r + .5, "#fff", 6, "round"); }
@@ -4321,7 +4331,41 @@ function sheetFx(name, x, y, size, color, rot, delay) { if (window.__fast) retur
 function fxLift(sc, x, y, w, h, rot) { const o = CELL * .09, c = Math.cos(-(rot || 0)), s = Math.sin(-(rot || 0)), dx = o * .55 * c - o * s, dy = o * .55 * s + o * c;
   ctx.save(); ctx.globalCompositeOperation = "multiply"; ctx.globalAlpha *= .3; ctx.drawImage(sc, x + dx, y + dy, w, h); ctx.restore(); }
 const FXNULL = document.createElement("canvas").getContext("2d");   // the pass that only wants one layer sends the other one here
+// 2026-11-22 "taşlar patlarken kasıyor": on the phone a cascade drew every burst as live vector paths, twice (once for the colour mask, once
+// for the ink), on every frame. The drawings are the same ones (anim/fx-anim.js); they are now painted once into atlases while nothing is
+// happening (FXB, a few milliseconds at a time) and a burst is two image copies. The small ones (pop, nope) are baked at 48 steps a second so
+// they still move between the 24 keyed drawings; a colour gets its own finished atlas the first time it is needed (the level's colours are
+// made ready when the level opens). Until an effect is baked it is drawn live as before.
+const FXPOOL = {}, FXB = {}, FX_SUB = { pop: 2, nope: 2 }, FX_TINTED = { pop: 1, twinkle: 1 }, FX_ORDER = ["pop", "twinkle", "blast", "beam", "nope", "whirl"], FXB_Q = [];
+function fxbGet(name) { let b = FXB[name]; if (b || !window.FxLive || !FxLive.has(name)) return b; const [w, h] = FxLive.size(name), sub = FX_SUB[name] || 1, N = FXS[name][0] * sub, cols = Math.max(1, Math.min(N, Math.floor(2048 / w))), rows = Math.ceil(N / cols);
+  const mk = () => { const c = document.createElement("canvas"); c.width = cols * w; c.height = rows * h; return c; }, ink = mk(), mask = mk();
+  return FXB[name] = { name, w, h, sub, N, cols, ink, mask, ix: ink.getContext("2d"), mx: mask.getContext("2d"), done: 0, tint: new Map() }; }
+function fxbBakeOne(b) { const i = b.done, x = (i % b.cols) * b.w, y = Math.floor(i / b.cols) * b.h; for (const c of [b.ix, b.mx]) { c.save(); c.beginPath(); c.rect(x, y, b.w, b.h); c.clip(); c.translate(x, y); }
+  try { FxLive.draw(b.name, i / b.sub, b.ix, b.mx); } catch (e) {} b.ix.restore(); b.mx.restore(); b.done++; }
+function fxbTint(b, color) { let t = b.tint.get(color); if (t) { if (b.tint.size > 8) { b.tint.delete(color); b.tint.set(color, t); } return t; } if (b.tint.size >= 12) { const k = b.tint.keys().next().value; const old = b.tint.get(k); old.width = old.height = 0; b.tint.delete(k); }
+  t = document.createElement("canvas"); t.width = b.ink.width; t.height = b.ink.height; const g = t.getContext("2d"); g.drawImage(b.mask, 0, 0); g.globalCompositeOperation = "source-in"; g.fillStyle = color; g.fillRect(0, 0, t.width, t.height); g.globalCompositeOperation = "source-over"; g.drawImage(b.ink, 0, 0); b.tint.set(color, t); return t; }
+// the baker: one short slice of work per call, never while the board is busy
+function fxbStep(budget) { const t0 = performance.now(); if (!window.FxLive || window.__fast) return false;
+  for (const name of FX_ORDER) { const b = fxbGet(name); if (!b) continue; while (b.done < b.N) { fxbBakeOne(b); if (performance.now() - t0 > budget) return true; } }
+  while (FXB_Q.length) { const [name, color] = FXB_Q.shift(), b = FXB[name]; if (b && b.done >= b.N && !b.tint.has(color)) { fxbTint(b, color); if (performance.now() - t0 > budget) return true; } }
+  return false; }
+let fxbTimer = 0;
+function fxbKick() { if (fxbTimer) return; const run = () => { fxbTimer = 0; if (typeof G !== "undefined" && G && (G.busy || fx.length || dying.length)) { fxbTimer = setTimeout(run, 120); return; } if (fxbStep(4)) fxbTimer = setTimeout(run, 24); }; fxbTimer = setTimeout(run, 60); }
+function fxbWarm(name, colors) { for (const c of colors) if (c && !FXB_Q.some(q => q[0] === name && q[1] === c)) FXB_Q.push([name, c]); fxbKick(); }
+function popCol(ci) { const C = PAL[ci]; return C ? (GS === "bold" ? BLHUE_P[ci % 6] : GS === "glow" ? GLHUE[ci % 6] : typeof D3 !== "undefined" && D3 && D3.lpColor ? D3.lpColor(ci, C) : C.c) : "#fff"; }
+function fxbWarmLevel() { try { const a = [], b = []; for (let i = 0; i < PAL.length; i++) { a.push(popCol(i)); b.push(PAL[i].c); } fxbWarm("pop", a.concat(["#fff", "#ff7a4d"])); fxbWarm("twinkle", b); } catch (e) {} }
+fxbKick();
 function drawSheetFx(f, t) { const name = f.name;
+  { const b = FXB[name]; if (b && b.done >= b.N) { const fr = Math.min(b.N - 1, Math.floor(t * b.N)), sx = (fr % b.cols) * b.w, sy = Math.floor(fr / b.cols) * b.h, w = b.w, h = b.h, dw = f.size * CELL, dh = dw * h / w;
+      ctx.translate(OX + f.x * CELL, OY + f.y * CELL); if (f.rot) ctx.rotate(f.rot);
+      if (!f.color) { ctx.drawImage(b.ink, sx, sy, w, h, -dw / 2, -dh / 2, dw, dh); return; }
+      if (FX_TINTED[name]) { const T = fxbTint(b, f.color), o = CELL * .09, c = Math.cos(-(f.rot || 0)), s = Math.sin(-(f.rot || 0)), a = ctx.globalAlpha;
+        ctx.globalCompositeOperation = "multiply"; ctx.globalAlpha = a * .3; ctx.drawImage(T, sx, sy, w, h, -dw / 2 + o * .55 * c - o * s, -dh / 2 + o * .55 * s + o * c, dw, dh);
+        ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = a; ctx.drawImage(T, sx, sy, w, h, -dw / 2, -dh / 2, dw, dh); return; }
+      // a big one (blast, beam, whirl) keeps its own small canvas while it lives and is tinted again only when its drawing changes (24 times a second)
+      let sc = f.sc; if (!sc) { const pool = FXPOOL[name] || (FXPOOL[name] = []); sc = f.sc = pool.pop() || document.createElement("canvas"); if (sc.width !== w || sc.height !== h) { sc.width = w; sc.height = h; } f.fr = -1; }
+      if (f.fr !== fr) { f.fr = fr; const g = sc.getContext("2d"); g.globalCompositeOperation = "copy"; g.drawImage(b.mask, sx, sy, w, h, 0, 0, w, h); g.globalCompositeOperation = "source-in"; g.fillStyle = f.color; g.fillRect(0, 0, w, h); g.globalCompositeOperation = "source-over"; g.drawImage(b.ink, sx, sy, w, h, 0, 0, w, h); }
+      fxLift(sc, -dw / 2, -dh / 2, dw, dh, f.rot); ctx.drawImage(sc, -dw / 2, -dh / 2, dw, dh); return; } }
   if (window.FxLive && FxLive.has(name)) { const [w, h] = FxLive.size(name), fr = Math.min(FXS[name][0] - .001, t * FXS[name][0]), k = f.size * CELL / w;
     ctx.translate(OX + f.x * CELL, OY + f.y * CELL); if (f.rot) ctx.rotate(f.rot);
     if (f.color) { let sc = fxScratch[name]; if (!sc) { sc = fxScratch[name] = document.createElement("canvas"); sc.width = w; sc.height = h; } const g = sc.getContext("2d"); g.globalCompositeOperation = "source-over"; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, w, h); FxLive.draw(name, fr, FXNULL, g); g.globalCompositeOperation = "source-in"; g.fillStyle = f.color; g.fillRect(0, 0, w, h); fxLift(sc, -w * k / 2, -h * k / 2, w * k, h * k, f.rot); ctx.drawImage(sc, -w * k / 2, -h * k / 2, w * k, h * k); }
@@ -4891,7 +4935,7 @@ function perfNote(raw, t0, moving) {
   PERF.iv = [[], []]; PERF.js = [0, 0]; PERF.jsMax = [0, 0]; PERF.pMax = 0; PERF.sent++; api("perf", { p });
 }
 if (window.__nativeApp) {   // time the things that run outside the draw loop, so a long frame can name its cause
-  for (const n of ["persist", "snapshot", "layout", "buildStatic", "updateHud", "hudInit", "checkAch", "cloudPush", "flyGoal", "toast", "tip", "findMatches", "findMove", "startLevel", "openLevel", "showMap", "buildMap", "mordoTurn", "sprite", "floatSprite", "confetti", "burst", "logEv", "evFlush", "pogoReact", "show", "hide", "bump", "spawnIngredient", "shuffle", "pack", "tr"]) {
+  for (const n of ["paTick", "fxbStep", "persist", "snapshot", "layout", "buildStatic", "updateHud", "hudInit", "checkAch", "cloudPush", "flyGoal", "toast", "tip", "findMatches", "findMove", "startLevel", "openLevel", "showMap", "buildMap", "mordoTurn", "sprite", "floatSprite", "confetti", "burst", "logEv", "evFlush", "pogoReact", "show", "hide", "bump", "spawnIngredient", "shuffle", "pack", "tr"]) {
     try { const f = eval(n); if (typeof f !== "function") continue; const w = function () { const t = performance.now(); try { return f.apply(this, arguments); } finally { const d = performance.now() - t; if (d >= 2 && PERF.cur.length < 12) PERF.cur.push(n + Math.round(d)); } }; eval(n + " = w"); } catch (e) {} }
   for (const k in SFX) { const f = SFX[k]; if (typeof f === "function") SFX[k] = function () { const t = performance.now(); try { return f.apply(this, arguments); } finally { const d = performance.now() - t; if (d >= 1 && PERF.cur.length < 12) PERF.cur.push("sfx." + k + Math.round(d)); } }; }
   { const v = navigator.vibrate; navigator.vibrate = function (p) { const t = performance.now(), r = v.call(navigator, p), d = performance.now() - t; if (d >= 1 && PERF.cur.length < 12) PERF.cur.push("buzz" + Math.round(d)); return r; }; }
@@ -5004,7 +5048,7 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
   } }
   // fx: beams, rings, shocks, bolts, stars, nope
   for (let i = fx.length - 1; i >= 0; i--) {
-    const f = fx[i], t = (now - f.t) / f.life; if (t >= 1) { fx.splice(i, 1); continue; } if (t < 0) continue;
+    const f = fx[i], t = (now - f.t) / f.life; if (t >= 1) { if (f.sc) { FXPOOL[f.name].push(f.sc); f.sc = null; } fx.splice(i, 1); continue; } if (t < 0) continue;
     ctx.save();
     if (f.k === "sheet") drawSheetFx(f, t);
     else if (f.k === "ash") { const im = f.img, N = 4, sw = im.width / N, sh = im.height / N, q = CELL / N, x0 = OX + f.c * CELL, y0 = OY + f.r * CELL, R0 = (f.r * 31 + f.c * 17 + 7) % 997;

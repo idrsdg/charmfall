@@ -167,9 +167,15 @@
   };
   // live playback (2026-10-28, İdris: "kasmasın, her animasyon en az 60 fps"): the game plays these same keyed clips at the display's rate.
   // render(x, name, t, P, st, cv3, dt): poses Pogo for time t (seconds) of the clip into the 3D canvas cv3 and composes it with the drawn effects on x
-  window.PogoClip = { has: (k) => !!A[k], loop: (k) => !!A[k].loop, dur: (k) => A[k].len / 24, W, H, PW, PH,
+  window.PogoClip = { has: (k) => !!A[k], loop: (k) => !!A[k].loop, dur: (k) => A[k].len / 24, W, H, PW, PH, OX, OY,
     render(x, name, t, P, st, cv3, dt) { const an = A[name], f = t * 24, p = Object.assign(P.Z(), poseDragged(an, an.loop ? f : Math.min(f, an.len), P.Z)); if (an.jitter) p.x += Math.sin(f * Math.PI * 1.5) * an.jitter;
       P.draw(cv3, st, t * 1000, dt, p); const cv = x.canvas, k = cv.width / W, lift = -p.y * UNIT, ff = an.loop ? f % an.len : Math.min(f, an.len);
+      if (st.gl) {   // beside the board (2026-11-22): Pogo is already on his own WebGL canvas; this 2D canvas over it carries only the drawn effects, and is left alone while there are none
+        let any = 0; for (const e of an.fx || []) if (ff >= e.from && ff <= e.to) { any = 1; break; }
+        if (!any && !st.ovd) return; x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, cv.width, cv.height); st.ovd = any; if (!any) return;
+        x.setTransform(k * S, 0, 0, k * S, 0, 0);
+        for (const e of an.fx) { if (ff < e.from || ff > e.to) continue; const u = (ff - e.from) / Math.max(1, e.to - e.from); if (e.k === "speed") { FX.speed(x, u, {}, e, ff); continue; } const at = { x: CX + (e.x || 0), y: HEADY + (e.y || 0) + (e.follow ? lift : 0) }; x.save(); if (!e.follow && /blush|eyestar|tear|sweat/.test(e.k)) x.translate(0, lift); FX[e.k](x, u, at, e, ff); x.restore(); }
+        x.setTransform(1, 0, 0, 1, 0, 0); return; }
       x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, cv.width, cv.height);
       x.setTransform(k * S, 0, 0, k * S, 0, 0); for (const e of an.fx || []) if (e.k === "speed" && ff >= e.from && ff <= e.to) FX.speed(x, (ff - e.from) / Math.max(1, e.to - e.from), {}, e, ff);
       x.setTransform(k, 0, 0, k, 0, 0); x.drawImage(cv3, OX, OY, PW, PH);
