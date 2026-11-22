@@ -49,43 +49,55 @@
     for (let i = T; i >= 1; i--) { const f = i / T; x.globalAlpha = 1; x.drawImage(lite, i * sh, i - up); x.globalAlpha = .25 + .75 * f; x.drawImage(dark, i * sh, i - up); }
     x.globalAlpha = 1; x.drawImage(o, 0, -up);
   }
+  // 2026-11-22 İdris: "taşlar jel gibi, şekerli jel gibi duruyor; jel görünümünü ve etrafındaki gri dumanı kaldır, daha net olsunlar, daha 3 boyutlu
+  // olsunlar, renkleri de değiştir, beni şaşırt". The charms are no longer glossy stickers on a grey card: each one is a small carved, matte figure.
+  // One light, high on the left. The face runs from a light tone to a deeper neighbouring hue (never to grey), a hard crescent of light sits on the
+  // near edge and a hard crescent of shade on the far one, every part is cut from the next by a line in the charm's own dark, the piece has a side
+  // wall in its own deep colour and one small, tight shadow under it. No gloss spot, no white sticker edge, no card, no blur haze, no paper grain.
+  // SCULPT[slot] = [light, base, deep, ink]: coral rose, tangerine, sun yellow, lagoon turquoise, ocean blue, urchin violet.
+  const SCULPT = [["#ffa79a", "#ff4f72", "#cf1f5f", "#6b0f3c"], ["#ffc963", "#ff8a1f", "#dc531a", "#7a2a0a"], ["#fff486", "#ffd21f", "#eb9b12", "#7d4706"],
+    ["#8df5cf", "#14caa2", "#0b8f88", "#064650"], ["#86ccff", "#2e7dff", "#2348cc", "#131f6b"], ["#dcadff", "#a550ff", "#6c2bc8", "#36126b"]];
+  window.CHARM_HUES = SCULPT.map(c => c[1]);
   window.paintCharmWC = function (name, slot, px) {
-    const A = BLA[name], hue = WCHUE[slot % 6], cv = document.createElement("canvas"); cv.width = cv.height = px; const x = cv.getContext("2d"), k = px * .8 / 100;   // a little smaller, so the sticker edge fits
-    x.translate(px / 2, px / 2 - px * .02); x.scale(k, k); x.translate(-50, -50); x.lineJoin = "round"; x.lineCap = "round";
-    const parts = A.b.map(glowPart), body = new Path2D(); for (const p of parts) body.addPath(p); const seed = [...name].reduce((a, c) => a * 31 + c.charCodeAt(0), 7) % 9973;
-    // the cast shadow: a cool grey wash on the paper, soft
-    x.save(); x.filter = "blur(2.5px)"; x.translate(2.5, 5); x.fillStyle = "rgba(0,0,0,.22)"; x.fill(body); x.restore();
-    // first wash, shadow side, light lifted
-    wash(x, body, hue, seed, { a: .7, layers: 5, rw: 3.1, rim: .74 });   /* 2026-10-29 İdris "taşlar yeterince belirgin değil": a denser first wash */ for (const p of parts) shadowWash(x, p, hue, 50, 50, 46, seed + 1); lift(x, body, 50, 50, 46);
-    // a second, smaller glaze in the middle tones so the colour has depth
-    x.save(); x.clip(body); x.filter = "blur(4px)"; x.fillStyle = hexA(hue, .14); x.beginPath(); x.ellipse(54, 56, 30, 26, .3, 0, 6.2832); x.fill(); x.restore();
-    // details
+    const A = BLA[name], [LT, BASE, DEEP, INK] = SCULPT[slot % 6], k = px * .76 / 100, K = px / 256, TH = Math.round(11 * K), OL = 4.6 * K;
+    const mk = () => { const c = document.createElement("canvas"); c.width = c.height = px; return c; };
+    const face = mk(), x = face.getContext("2d"); x.translate(px / 2, px / 2 - TH * .55); x.scale(k, k); x.translate(-50, -50); x.lineJoin = "round"; x.lineCap = "round"; const T = x.getTransform();
+    const parts = A.b.map(glowPart), body = new Path2D(); for (const p of parts) body.addPath(p);
+    // the face: light to a deeper neighbouring hue across the form
+    { const g = x.createLinearGradient(18, 12, 84, 92); g.addColorStop(0, LT); g.addColorStop(.42, BASE); g.addColorStop(1, mixc0(BASE, DEEP, .8)); x.fillStyle = g; x.fill(body); }
+    // a crescent cut from the silhouette: the body minus the body moved by (dx, dy), hard edged
+    const crescent = (dx, dy, col, a, path) => { const t = mk(), y = t.getContext("2d"); y.setTransform(T); y.fillStyle = col; y.fill(path || body); y.globalCompositeOperation = "destination-out"; y.translate(dx, dy); y.fill(path || body);
+      x.save(); x.clip(body); x.setTransform(1, 0, 0, 1, 0, 0); x.globalAlpha = a; x.drawImage(t, 0, 0); x.restore(); };
+    crescent(-5.5, -6.5, DEEP, .62);                       // the far side turns away from the light
+    crescent(-2.4, -2.8, INK, .28);                        // and is darkest right at the edge
+    for (const p of parts) if (parts.length > 1) crescent(3.2, 3.8, LT, .5, p);   // each part catches the light on its own near edge
+    crescent(3.4, 4, "#fffdf2", .78);                      // the lit edge of the whole piece
+    // the parts are cut from each other
+    if (parts.length > 1) { x.save(); x.clip(body); x.strokeStyle = INK; x.globalAlpha = .2; x.lineWidth = 1.1; for (const p of parts) x.stroke(p); x.restore(); }
+    // details, flat and crisp
+    const line = mixc0(DEEP, INK, .6);
     for (const o of A.d) { const t = o[0]; x.save();
-      if (t === "s" || t === "S") { const P2 = new Path2D(o[1]); if (t === "s") { x.strokeStyle = "rgba(255,252,242,.88)"; x.lineWidth = (o[2] || 3) * .8; x.stroke(P2); } else { x.strokeStyle = hexA(mixc0(hue, "#3a2436", .55), .75); x.lineWidth = (o[2] || 3) * .8; x.stroke(P2); x.filter = "blur(.6px)"; x.strokeStyle = SEPIA + ".35)"; x.lineWidth = .9; x.stroke(P2); } }
-      else if (t === "d") { x.fillStyle = "rgba(255,252,242,.95)"; x.beginPath(); x.arc(o[1], o[2], o[3], 0, 6.2832); x.fill(); }
-      else if (t === "k") { x.fillStyle = "#4a362c"; x.beginPath(); x.arc(o[1], o[2], o[3] * .95, 0, 6.2832); x.fill(); x.fillStyle = "rgba(255,252,242,.92)"; x.beginPath(); x.arc(o[1] - o[3] * .32, o[2] - o[3] * .36, Math.max(.7, o[3] * .3), 0, 6.2832); x.fill(); }
-      else if (t === "w") { const p = glowPart(o[1]); wash(x, p, "#fffaf0", seed + 7, { a: .5, layers: 3, rw: 1.2, rim: .2, j: .8 }); pencil(x, p, seed + 8, 1); }
-      else if (t === "y") { x.fillStyle = "rgba(196,150,60,.85)"; x.beginPath(); x.ellipse(o[1], o[2], 2, 3.1, 0, 0, 6.2832); x.fill(); x.fillStyle = "rgba(255,240,190,.7)"; x.beginPath(); x.ellipse(o[1] - .5, o[2] - .9, .8, 1.2, 0, 0, 6.2832); x.fill(); }
-      else if (t === "o") { x.fillStyle = hexA(mixc0(hue, "#3a2436", .45), .55); x.beginPath(); x.arc(o[1], o[2], 1.6, 0, 6.2832); x.fill(); }
+      if (t === "s") { const P2 = new Path2D(o[1]); x.strokeStyle = mixc0(LT, "#ffffff", .55); x.lineWidth = (o[2] || 3) * .78; x.stroke(P2); }
+      else if (t === "S") { const P2 = new Path2D(o[1]); x.strokeStyle = line; x.lineWidth = (o[2] || 3) * .8; x.stroke(P2); }
+      else if (t === "d") { x.fillStyle = "#fffdf5"; x.beginPath(); x.arc(o[1], o[2], o[3], 0, 6.2832); x.fill(); }
+      else if (t === "k") { x.fillStyle = "#241426"; x.beginPath(); x.arc(o[1], o[2], o[3], 0, 6.2832); x.fill(); x.fillStyle = "#fffdf5"; x.beginPath(); x.arc(o[1] - o[3] * .3, o[2] - o[3] * .34, Math.max(.8, o[3] * .34), 0, 6.2832); x.fill(); }
+      else if (t === "w") { const p = glowPart(o[1]); x.fillStyle = "#fffaf0"; x.fill(p); x.save(); x.clip(p); x.translate(-2.2, -2.6); x.strokeStyle = "rgba(120,96,120,.45)"; x.lineWidth = 3; x.stroke(p); x.restore(); x.strokeStyle = INK; x.lineWidth = 1.5; x.stroke(p); }
+      else if (t === "y") { x.fillStyle = "#e9b23c"; x.beginPath(); x.ellipse(o[1], o[2], 2, 3.1, 0, 0, 6.2832); x.fill(); x.fillStyle = "#fff1b8"; x.beginPath(); x.ellipse(o[1] - .5, o[2] - .9, .8, 1.2, 0, 0, 6.2832); x.fill(); }
+      else if (t === "o") { x.fillStyle = line; x.globalAlpha = .7; x.beginPath(); x.arc(o[1], o[2], 1.6, 0, 6.2832); x.fill(); }
       else if (t === "f") { const p = glowPart(o[1]), solid = /^#/.test(o[2]);
-        if (solid) { const bb = bbox(o[1]), cx = (bb[0] + bb[2]) / 2, cy = (bb[1] + bb[3]) / 2, Rr = Math.max(4, Math.max(bb[2] - bb[0], bb[3] - bb[1]) / 2), six = /^#[0-9a-f]{6}$/i.test(o[2]), n = six ? parseInt(o[2].slice(1), 16) : 0, lum = six ? ((n >> 16) * .3 + (n >> 8 & 255) * .59 + (n & 255) * .11) / 255 : .5;
-          const col = !six ? o[2] : lum < .3 ? mixc0(o[2], "#7a6050", .6) : mixc0(o[2], "#a08070", .15);   // the cel's near-black parts become a brown-sepia wash, never black
-          wash(x, p, col, seed + 3 + cx, { a: lum < .3 ? .5 : .5, layers: 4, cx, cy, rw: 1.8, j: 1 }); shadowWash(x, p, col, cx, cy, Rr, seed + 4); pencil(x, p, seed + 5 + cy, 1.1); }
+        if (solid) { const six = /^#[0-9a-f]{6}$/i.test(o[2]), n = six ? parseInt(o[2].slice(1), 16) : 0, lum = six ? ((n >> 16) * .3 + (n >> 8 & 255) * .59 + (n & 255) * .11) / 255 : .5, col = !six ? o[2] : lum < .3 ? mixc0(o[2], INK, .55) : o[2];
+          x.fillStyle = col; x.fill(p); x.save(); x.clip(p); x.translate(-1.8, -2.1); x.strokeStyle = six ? hexA(mixc0(col, "#1a0c1c", .55), .5) : "rgba(30,14,30,.3)"; x.lineWidth = 2.6; x.stroke(p); x.restore();   // its own small shade on the far side
+          x.strokeStyle = INK; x.globalAlpha = .8; x.lineWidth = 1.2; x.stroke(p); }
         else { x.fillStyle = o[2]; x.fill(p); } }
       x.restore(); }
-    // 2026-11-02 İdris "suluboya kalsın, derinlik ekle": painted volume over the whole face, details included. One light, high on the left:
-    // the form turns away from it into a core shadow on the lower right, paper light bounces back into the far rim, and the near rim catches the light.
-    if (!window.__flatCharms) volume(x, body, hue, seed);
-    // warm light, cool shade: two faint glazes of other pigments, the way a painter shifts temperature across a form
-    /* (the warm and cool glazes of other pigments are gone: each charm is one clean colour) */
-    // the pencil round the whole charm, on its silhouette only: drawn twice as wide on a sheet of its own, the inside rubbed out
-    { const t = document.createElement("canvas"); t.width = t.height = px; const y = t.getContext("2d"); y.setTransform(x.getTransform()); for (let i = 0; i < parts.length; i++) pencil(y, parts[i], seed + 11 + i, 5.6);
-      y.globalCompositeOperation = "destination-out"; y.fillStyle = "#000"; y.fill(body); x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.drawImage(t, 0, 0); x.restore(); }
-    // granulation and the paper's tooth: pigment settles in the hollows, more of it where the wash is darker
-    granulate(cv, .35);
-    // 2026-10-28 İdris "taşlar daha belirgin, sınırları belirgin olsun": a sticker edge round the silhouette, cream inside a dark line
-    { const o = document.createElement("canvas"); o.width = o.height = px; const ox = o.getContext("2d"), stamp = (r, col) => { const t = document.createElement("canvas"); t.width = t.height = px; const tx = t.getContext("2d"); for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; tx.drawImage(cv, Math.cos(a) * r, Math.sin(a) * r); } tx.globalCompositeOperation = "source-in"; tx.fillStyle = col; tx.fillRect(0, 0, px, px); ox.drawImage(t, 0, 0); };
-      const k2 = px / 256; stamp(9 * k2, "#1a0e08"); stamp(6.5 * k2, "#ffffff"); { const v = document.createElement("canvas"); v.width = v.height = px; const vx = v.getContext("2d"); vx.filter = "saturate(1.55) contrast(1.18) brightness(1.04)"; vx.drawImage(cv, 0, 0); ox.drawImage(v, 0, 0); } x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, px, px); if (window.__flatCharms) x.drawImage(o, 0, 0); else card(x, o, px); }   /* 2026-10-29 İdris "daha canlı ve belirgin şekiller ve renkler": pigments pushed, a crisp white sticker edge in a near-black line */
+    // the outline, in the charm's own dark
+    const sil = (src, col) => { const t = mk(), y = t.getContext("2d"); y.drawImage(src, 0, 0); y.globalCompositeOperation = "source-in"; y.fillStyle = col; y.fillRect(0, 0, px, px); return t; };
+    const lined = mk(), lx = lined.getContext("2d"); { const ink = sil(face, INK); for (let i = 0; i < 32; i++) { const a2 = i / 32 * Math.PI * 2; lx.drawImage(ink, Math.cos(a2) * OL, Math.sin(a2) * OL); } lx.drawImage(face, 0, 0); }
+    // the piece: a tight shadow, the side wall in the deep colour (darker toward the table), the face on top
+    const cv = mk(), c = cv.getContext("2d"), wallA = sil(lined, mixc0(DEEP, INK, .35)), wallB = sil(lined, INK), dark = sil(lined, "#170a1c");
+    c.save(); c.filter = `blur(${2.2 * K}px)`; c.globalAlpha = .42; c.drawImage(dark, 1.5 * K, TH + 3.5 * K); c.restore();
+    c.drawImage(wallB, 0, TH); for (let i = TH - 1; i >= 1; i--) { c.globalAlpha = 1; c.drawImage(wallA, 0, i); c.globalAlpha = .55 * (i / TH); c.drawImage(wallB, 0, i); }
+    c.globalAlpha = 1; c.drawImage(lined, 0, 0);
     return cv; };
   // granulation and the paper's tooth on a finished picture: pigment settles in the hollows, more where the wash is darker; a tenth of paper shows through
   function granulate(cv, amt) { const x = cv.getContext("2d"), px = cv.width, py = cv.height; x.setTransform(1, 0, 0, 1, 0, 0); const id = x.getImageData(0, 0, px, py), dd = id.data, sc = 256 / Math.max(px, 256) * (amt || 1);
