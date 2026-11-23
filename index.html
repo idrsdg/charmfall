@@ -127,7 +127,7 @@
   #m3dTl { position: fixed; left: 12px; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); height: 58px; z-index: 2; border-radius: 16px; padding: 6px 8px; cursor: pointer; touch-action: none; } #m3dTl canvas { width: 100%; height: 100%; display: block; }
   @media (max-width: 600px) { html:not(.app) #m3dInfo { top: calc(max(14px, env(safe-area-inset-top)) + 96px); } }
   #map.m3d .mapbar { bottom: calc(max(12px, env(safe-area-inset-bottom)) + 68px); } html:not(.app) #map.m3d .arcade-all { display: none; }
-  #map.m3d .top { background: linear-gradient(rgba(10, 30, 26, .55), rgba(10, 30, 26, 0)); } html.app #map.m3d .top::after { display: none; }
+  #map.m3d .top { background: linear-gradient(rgba(10, 30, 26, .2), rgba(10, 30, 26, 0)); }   /* 2026-11-23 always day: only a faint shade behind the logo */ html.app #map.m3d .top::after { display: none; }
   .pathWrap { position: relative; margin: 0; } .path { position: relative; width: 100%; margin: 0; }
   .path svg { position: absolute; inset: 0; width: 100%; height: 100%; }
   .node { position: absolute; width: calc(150px * var(--ms)); height: calc(150px * var(--ms)); margin: calc(-75px * var(--ms)) 0 0 calc(-75px * var(--ms)); border-radius: calc(46px * var(--ms)); display: grid; place-items: center; font-size: calc(54px * var(--ms)); font-weight: 900; color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); background: radial-gradient(circle at 35% 30%, #ffc48a, #ff7a1a 55%, #d95a00); box-shadow: 0 7px 0 #7a3200, 0 14px 22px rgba(0, 0, 0, .4), inset 0 -4px 0 rgba(0, 0, 0, .12); cursor: pointer; transition: translate .14s cubic-bezier(.3, 1.5, .5, 1); animation: nodeIn .5s var(--e-out) both; animation-delay: var(--d, 0s); }
