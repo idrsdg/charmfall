@@ -3345,7 +3345,7 @@ $("sPlay").addEventListener("click", () => { hide("mStart"); const go = () => { 
   if (window.STORY && STORY.wantKingdom && STORY.wantKingdom(pendingLevel)) STORY.kingdom(kingdomOf(pendingLevel)).then(cm, cm); else cm(); });   // 2026-11-06 a boss level opens with its comic, once (story.js)
 $("mStart").addEventListener("click", e => { if (e.target === $("mStart")) hide("mStart"); });
 $("btnBack").addEventListener("click", () => { if (G && !G.over) { snapshot(); logEv("quit"); } wipe(showMap); });
-function showMap() { tip(""); G = null; $("game").hidden = true; $("map").hidden = false; buildMap(); if (!storyCheck()) stationCheck(); }
+function showMap() { tip(""); G = null; try { fxKingdom(kingdomOf(highest())); fxbKick(); } catch (e) {}   /* 2026-11-23 the kingdom's effects are painted while the map is up, so nothing is drawn live in a level */ $("game").hidden = true; $("map").hidden = false; buildMap(); if (!storyCheck()) stationCheck(); }
 const STARK = { jelly: [.75, 1, 1.3], ingredients: [.5, .8, 1.1], blockers: [.25, .38, .62] };   // 2026-10-14: set from bot wins so that about two wins in three earn all three stars
 function starTargets(L) { if (L.target) return [L.target, Math.round(L.target * 1.3), Math.round(L.target * 1.65)]; const base = { jelly: 20000, ingredients: 18000, blockers: 18000 }[L.goal] * (1 + L.moves / 40); return STARK[L.goal].map(k => Math.round(base * k)); }   // 2026-10-13: the climb above the winning score halved
 
@@ -4388,11 +4388,11 @@ const FXNULL = document.createElement("canvas").getContext("2d");   // the pass 
 // they still move between the 24 keyed drawings; a colour gets its own finished atlas the first time it is needed (the level's colours are
 // made ready when the level opens). Until an effect is baked it is drawn live as before.
 // 2026-11-23 kingdoms: each of the ten has its own pop and its own chain flourish (FX_KINGDOM in fx-anim.js). Only the kingdom being played is baked; the last one's atlases are let go.
-const FXPOOL = {}, FXB = {}, FXB_Q = [], FXK = { k: -1, pop: "pop", combo: "" }, fxSub = (n) => n.startsWith("pop") || n === "nope" ? 2 : 1, fxTinted = (n) => n.startsWith("pop") || n === "twinkle";
+const FXPOOL = {}, FXB = {}, FXB_Q = [], FXK = { k: -1, pop: "pop", combo: "", blast: "blast", beam: "beam" }, fxSub = (n) => n.startsWith("pop") || n === "nope" ? 2 : 1, fxTinted = (n) => n.startsWith("pop") || n === "twinkle";
 let FX_ORDER = ["pop", "twinkle", "blast", "beam", "nope", "whirl"];
-function fxKingdom(k) { if (FXK.k === k) return; const has = (n) => !!(window.FxLive && FxLive.has(n)), pop = has("pop" + k) ? "pop" + k : "pop", combo = has("combo" + k) ? "combo" + k : "";
-  for (const n of [FXK.pop, FXK.combo]) if (n && n !== pop && n !== combo && FXB[n]) { const b = FXB[n]; for (const c of [b.ink, b.mask, ...b.tint.values()]) c.width = c.height = 0; delete FXB[n]; }
-  FXK.k = k; FXK.pop = pop; FXK.combo = combo; FX_ORDER = [pop, "twinkle", "blast", "beam", "nope", "whirl"].concat(combo ? [combo] : []); }
+function fxKingdom(k) { if (FXK.k === k) return; const has = (n) => !!(window.FxLive && FxLive.has(n)), pop = has("pop" + k) ? "pop" + k : "pop", combo = has("combo" + k) ? "combo" + k : "", blast = has("blast" + k) ? "blast" + k : "blast", beam = has("beam" + k) ? "beam" + k : "beam";
+  for (const n of [FXK.pop, FXK.combo, FXK.blast, FXK.beam]) if (n && n !== pop && n !== combo && n !== blast && n !== beam && FXB[n]) { const b = FXB[n]; for (const c of [b.ink, b.mask, ...b.tint.values()]) c.width = c.height = 0; delete FXB[n]; }
+  FXK.k = k; FXK.pop = pop; FXK.combo = combo; FXK.blast = blast; FXK.beam = beam; FX_ORDER = [pop].concat(combo ? [combo] : [], [blast, beam, "twinkle", "nope", "whirl"]); }
 function fxbGet(name) { let b = FXB[name]; if (b || !window.FxLive || !FxLive.has(name)) return b; const [w, h] = FxLive.size(name), sub = fxSub(name), N = FXS[name][0] * sub, cols = Math.max(1, Math.min(N, Math.floor(2048 / w))), rows = Math.ceil(N / cols);
   const mk = () => { const c = document.createElement("canvas"); c.width = cols * w; c.height = rows * h; return c; }, ink = mk(), mask = mk();
   return FXB[name] = { name, w, h, sub, N, cols, ink, mask, ix: ink.getContext("2d"), mx: mask.getContext("2d"), done: 0, tint: new Map() }; }
@@ -4409,7 +4409,7 @@ let fxbTimer = 0;
 function fxbKick() { if (fxbTimer) return; const run = () => { fxbTimer = 0; if (typeof G !== "undefined" && G && (G.busy || fx.length || dying.length)) { fxbTimer = setTimeout(run, 120); return; } if (fxbStep(4)) fxbTimer = setTimeout(run, 24); }; fxbTimer = setTimeout(run, 60); }
 function fxbWarm(name, colors) { for (const c of colors) if (c && !FXB_Q.some(q => q[0] === name && q[1] === c)) FXB_Q.push([name, c]); fxbKick(); }
 function popCol(ci) { const C = PAL[ci]; return C ? (GS === "bold" ? BLHUE_P[ci % 6] : GS === "glow" ? GLHUE[ci % 6] : typeof D3 !== "undefined" && D3 && D3.lpColor ? D3.lpColor(ci, C) : C.c) : "#fff"; }
-function fxbWarmLevel(k) { try { fxKingdom(k || 0); const a = [], b = []; for (let i = 0; i < PAL.length; i++) { a.push(popCol(i)); b.push(PAL[i].c); } fxbWarm(FXK.pop, a.concat(["#fff", "#ff7a4d"])); fxbWarm("twinkle", b); } catch (e) {} }
+function fxbWarmLevel(k) { try { fxKingdom(k || 0); fxbStep(45); const a = [], b = []; for (let i = 0; i < PAL.length; i++) { a.push(popCol(i)); b.push(PAL[i].c); } fxbWarm(FXK.pop, a.concat(["#fff", "#ff7a4d"])); fxbWarm("twinkle", b); } catch (e) {} }
 fxbKick();
 function drawSheetFx(f, t) { const name = f.name;
   { const b = FXB[name]; if (b && b.done >= b.N) { const fr = Math.min(b.N - 1, Math.floor(t * b.N)), sx = (fr % b.cols) * b.w, sy = Math.floor(fr / b.cols) * b.h, w = b.w, h = b.h, dw = f.size * CELL, dh = dw * h / w;
@@ -4433,8 +4433,8 @@ function drawSheetFx(f, t) { const name = f.name;
 function burst(x, y, color, n, shape, delay) { sheetFx(FXK.pop, x, y, 2.2, color, (x * 7 + y * 3) % 6.28, delay); }   // a charm, a frost, a crate popping
 function ring(x, y, color, r1 = 1.1, life = 420, w = 7) { fx.push({ k: "ring", x, y, color, r1, t: performance.now(), life, w }); }
 function flash(a = .5, life = 280, color = "#fff") { fx.push({ k: "flash", a: Math.min(a, .35), color, t: performance.now(), life }); }
-function beam(dir, r, c, color) { sheetFx("beam", c + .5, r + .5, COLS * 1.8, color, dir === "v" ? Math.PI / 2 : 0); }   // 2026-10-28 İdris: a little smaller
-function shock(x, y, color) { sheetFx("blast", x, y, 4.2, color === "#fff" ? "#ffd23a" : color); }   // 2026-10-28 İdris: a little smaller
+function beam(dir, r, c, color) { sheetFx(FXK.beam, c + .5, r + .5, COLS * 1.8, color, dir === "v" ? Math.PI / 2 : 0); }   // 2026-10-28 İdris: a little smaller
+function shock(x, y, color) { sheetFx(FXK.blast, x, y, 4.2, color === "#fff" ? "#ffd23a" : color); }   // 2026-10-28 İdris: a little smaller
 function bolt(x1, y1, x2, y2, color) {
   const pts = [[x1, y1]], n = 7, dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
   for (let i = 1; i < n; i++) { const t = i / n, j = (Math.random() - .5) * .5 * Math.min(1, L / 3); pts.push([x1 + dx * t + nx * j, y1 + dy * t + ny * j]); }
@@ -4997,6 +4997,31 @@ if (window.__nativeApp) {   // time the things that run outside the draw loop, s
   { const v = navigator.vibrate; navigator.vibrate = function (p) { const t = performance.now(), r = v.call(navigator, p), d = performance.now() - t; if (d >= 1 && PERF.cur.length < 12) PERF.cur.push("buzz" + Math.round(d)); return r; }; }
   window.__p3 = { ms: 0, n: 0 }; let scrSent = 0; setInterval(() => { if (document.hidden || scrSent >= 14) return; const where = document.documentElement.classList.contains("petting") ? "pet" : !$("map").hidden ? "map" : ""; if (!where) return; const st = Arcade.gfx.stats, p3 = window.__p3, p3ms = p3.n ? +(p3.ms / p3.n).toFixed(2) : 0; p3.ms = p3.n = 0; scrSent++; api("perf", { p: { v: 6, where, p3ms, anims: document.getAnimations ? document.getAnimations().filter(a => a.playState === "running").length : -1, els: document.querySelectorAll("#map *").length, fps: st.fps, med: +(+st.med).toFixed(1), p90: +(+st.p90).toFixed(1), worst: st.worst, q: Arcade.gfx.quality, low: !!window.__lowPower } }); }, 7000);
 }
+// one drawing call per popped charm, whatever the language: dg(sx, sy, rot) draws the charm scaled apart on its two axes (a flip edge-on is sx near 0)
+const dg = (g, px, py, sx, sy, rot, now) => { const k = Math.max(.03, sx); drawGem(g, px, py, k, now, sy / k, rot || 0); }, e3 = (u) => 1 - (1 - u) * (1 - u) * (1 - u), i3 = (u) => u * u * u, c01 = (u) => u < 0 ? 0 : u > 1 ? 1 : u;
+const KPOP = [
+  // forest, wooden toy: a knock that rocks it, it turns over, it sinks into its well
+  (g, px, py, t, now, sd) => { if (t < .25) { const u = t / .25; dg(g, px, py, 1, 1, Math.sin(u * Math.PI * 3) * .2 * (1 - u * .4), now); } else if (t < .5) { const u = (t - .25) / .25; dg(g, px, py, 1 + .06 * Math.sin(u * Math.PI), Math.max(.06, Math.abs(Math.cos(u * Math.PI))), 0, now); } else { const q = (t - .5) / .5; ctx.globalAlpha = 1 - i3(q); dg(g, px, py + CELL * .04 * q, 1 - .8 * i3(q), 1 - .8 * i3(q), 0, now); } },
+  // water, ink and water: a small settle, then it thins away under the blot (no jelly: one small squash only)
+  (g, px, py, t, now) => { if (t < .2) { const u = e3(t / .2); dg(g, px, py + CELL * .03 * u, 1 + .1 * u, 1 - .12 * u, 0, now); } else { const q = (t - .2) / .8; ctx.globalAlpha = 1 - e3(q); dg(g, px, py + CELL * .03, 1.1 - .5 * e3(q), .88 - .4 * e3(q), 0, now); } },
+  // fire, cartoon spring: it sits down into itself, springs up tall past its size, tips over and is gone
+  (g, px, py, t, now, sd) => { if (t < .2) { const k = e3(t / .2); dg(g, px, py + CELL * .05 * k, 1 + .1 * k, (1 + .1 * k) * (1 - .2 * k), 0, now); } else if (t < .46) { const k = e3((t - .2) / .26), s = 1.1 + .24 * k; dg(g, px, py + CELL * (.05 - .13 * k), s, s * (.8 + .32 * k), 0, now); } else { const k = (t - .46) / .54, kk = k * k, s = 1.34 * (1 - kk * .86); ctx.globalAlpha = 1 - kk * k; dg(g, px + sd * CELL * .06 * k, py - CELL * (.08 + .2 * k), s, s * (1.12 - .12 * k), sd * kk * 1.1, now); } },
+  // ice, crystal shatter: a hard flash of size, then it snaps askew and drops out
+  (g, px, py, t, now, sd) => { if (t < .14) { const u = t / .14; dg(g, px, py, 1 + .14 * u, 1 + .14 * u, 0, now); } else { const q = (t - .14) / .86, k = 1.14 - .62 * e3(q); ctx.globalAlpha = 1 - c01(q * 1.6); dg(g, px + sd * CELL * .05 * q, py + CELL * .1 * q * q, k, k, sd * (.22 + .5 * q), now); } },
+  // sky, soap bubble: it swells, then floats up and away
+  (g, px, py, t, now, sd) => { if (t < .34) { const u = e3(t / .34), k = 1 + .3 * u; dg(g, px, py, k, k, 0, now); } else { const q = (t - .34) / .66, k = 1.3 - .75 * i3(q); ctx.globalAlpha = 1 - i3(q); dg(g, px + sd * CELL * .05 * Math.sin(q * 6), py - CELL * .38 * e3(q), k, k, sd * Math.sin(q * 5) * .2, now); } },
+  // sand, origami: folded in half, in half again, then it darts off
+  (g, px, py, t, now, sd) => { if (t < .26) { const u = t / .26; dg(g, px - CELL * .2 * u, py, 1 - .5 * u, 1, 0, now); } else if (t < .5) { const u = (t - .26) / .24; dg(g, px - CELL * .2, py - CELL * .2 * u, .5, 1 - .5 * u, 0, now); } else { const q = (t - .5) / .5, e = i3(q), k = .5 * (1 - .5 * q); ctx.globalAlpha = 1 - i3(q); dg(g, px - CELL * .2 + sd * e * CELL * 1.3, py - CELL * .2 - e * CELL * 1.5, k, k, .785 + q * 5, now); } },
+  // crystal, light trail: it closes to a thin upright line of itself, the line shortens to nothing
+  (g, px, py, t, now) => { if (t < .36) { const u = i3(t / .36); dg(g, px, py, 1 - .94 * u, 1 + .45 * u, 0, now); } else { const q = (t - .36) / .64; ctx.globalAlpha = 1 - q; dg(g, px, py, .06, 1.45 * (1 - e3(q)), 0, now); } },
+  // night, paper cut: it lifts and flips edge-on three times, then is confetti
+  (g, px, py, t, now) => { if (t < .42) { const u = t / .42, k = 1 + .16 * Math.sin(u * Math.PI); dg(g, px, py - CELL * .1 * e3(u), k * Math.max(.06, Math.abs(Math.cos(u * Math.PI * 3))), k, 0, now); } else { const q = (t - .42) / .58, k = 1 - .9 * e3(q); ctx.globalAlpha = 1 - e3(q); dg(g, px, py - CELL * .1, k, k, 0, now); } },
+  // storm, vortex: it is wound into a twist and spun away
+  (g, px, py, t, now, sd) => { const e = i3(c01(t / .85)), a = sd * e * 8.2, R = CELL * .16 * Math.sin(c01(t / .85) * Math.PI), k = 1 - .9 * e; ctx.globalAlpha = 1 - i3(t); dg(g, px + Math.cos(a) * R, py + Math.sin(a) * R, k, k, a * 1.1, now); },
+  // star, stardust: one bright beat of size, then it spins up to a point
+  (g, px, py, t, now, sd) => { if (t < .18) { const u = t / .18, k = 1 + .22 * Math.sin(u * Math.PI * .5); dg(g, px, py, k, k, 0, now); } else { const q = (t - .18) / .82, k = 1.22 * (1 - e3(q)); ctx.globalAlpha = 1 - i3(q); dg(g, px, py - CELL * .18 * e3(q), k, k, sd * q * 3.4, now); } }];
+// how a charm settles when it lands, per kingdom: [squash, swell, tilt]. Wood and ice land hard, fire springs, paper and the storm rock a little.
+const KLAND = [[.05, .01, 0], [.06, .03, 0], [.11, .05, 0], [.03, 0, 0], [.05, .03, .03], [.05, .01, .06], [.03, .01, 0], [.05, .02, .08], [.06, .02, .1], [.06, .03, .04]];
 function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
   requestAnimationFrame(render); if (!G) { lastTs = ts; return; }
   // the frame's own timestamp drives every animation, so motion advances by exactly one display interval per frame
@@ -5068,7 +5093,7 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
     if (g.fuse && g.fuse <= 3) rot += Math.sin(now / 55) * .06;
     if (h0 && !g.dur && ((h0[0] === g.r && h0[1] === g.c) || (h1[0] === g.r && h1[1] === g.c))) { const o = h0[0] === g.r && h0[1] === g.c ? h1 : h0, n2 = HP.nudge * .13 * hk; lift = Math.max(lift, HP.lift * .5 * hk); ox += (o[1] - g.c) * n2; oy += (o[0] - g.r) * n2; }   // the hinted pair: picked up and nudged (BOARD.hint), size unchanged
     if (sel && sel[0] === g.r && sel[1] === g.c && !g.dur) { sc *= 1 + .14 * selK; lift = (.6 + .3 * Math.sin(now / 150)) * selK; oy -= (.05 + .03 * Math.sin(now / 150)) * selK; }
-    if (g.land) { const t = (now - g.land) / 260; if (t >= 1) g.land = 0; else { const k = Math.sin(t * Math.PI) * (1 - t * .5); sy = 1 - .08 * k; sc *= 1 + .03 * k; } }
+    if (g.land) { const t = (now - g.land) / 260; if (t >= 1) g.land = 0; else { const k = Math.sin(t * Math.PI) * (1 - t * .5), KL = KLAND[FXK.k >= 0 ? FXK.k : 0]; sy = 1 - KL[0] * k; sc *= 1 + KL[1] * k; if (KL[2]) rot += KL[2] * Math.sin(t * Math.PI * 2) * (1 - t) * ((g.c + g.r) & 1 ? 1 : -1); } }
     // 2026-10-27 İdris "rahat bırak da aksınlar, kaysın": charms simply slide: no sway, no lean, only a hint of stretch while falling
     if (vel > .01) sy *= 1 + Math.min(.05, vel * .4);
     const br = 1;   // 2026-10-24 İdris: resting charms breathing on their own was confusing; they keep still again
@@ -5091,10 +5116,9 @@ function render(raw) { const pf0 = performance.now(), ts = Arcade.gfx.time(raw);
     const d = dying[i], t = (now - d.t) / 380; if (t >= 1) { dying.splice(i, 1); continue; }
     const g = d.g, px = (g.c + .5) * CELL, py = (g.r + .5) * CELL;
     if (t <= 0) { drawGem(g, px, py, 1, now); continue; }
-    // 2026-11-22 keyed in three beats, the way a carved piece would go: it sits down into itself (wide and low), springs up tall past its size, then tips over, lifts off the board and is gone
-    if (t < .2) { const k = easeOut(t / .2); drawGem(g, px, py + CELL * .05 * k, 1 + .1 * k, now, 1 - .2 * k); }
-    else if (t < .46) { const u = (t - .2) / .26, k = 1 - (1 - u) * (1 - u) * (1 - u); drawGem(g, px, py + CELL * (.05 - .13 * k), 1.1 + .24 * k, now, .8 + .32 * k); }
-    else { const k = (t - .46) / .54, kk = k * k, side = (g.c + g.r) & 1 ? 1 : -1; ctx.globalAlpha = 1 - kk * k; drawGem(g, px + side * CELL * .06 * k, py - CELL * (.08 + .2 * k), 1.34 * (1 - kk * .86), now, 1.12 - .12 * k, side * kk * 1.1); ctx.globalAlpha = 1; }
+    // 2026-11-23 İdris: "her krallıkta animasyonlar o krallığın konusuna uysun" + the ten animation languages he chose. The popped charm itself moves in its
+    // kingdom's language (KPOP below); the drawn burst over it is that kingdom's pop (fx-anim.js). Same length everywhere (380 ms), so the board feels the same to play.
+    KPOP[FXK.k >= 0 ? FXK.k : 0](g, px, py, t, now, (g.c + g.r) & 1 ? 1 : -1); ctx.globalAlpha = 1;
   }
   // blockers on top (cached sprites)
   for (let r = 0; r < ROWS; r++) { const br = G.block[r]; for (let c = 0; c < COLS; c++) {
