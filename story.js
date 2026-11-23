@@ -208,7 +208,7 @@
   // ---------------------------------------------------------------- the pages of one comic, as plain data (no DOM): what stands where and what is said
   // { scene: skin + "|" + lit, mem, l, r, c, say: [[side, who, text]], caps: [[small, text]], beat }
   const SKIN = (c) => KID[kOf(c)];
-  function pages(c, which) { const kind = KIND(c), P = place(c), B = BEATS[c] || {}, skin = SKIN(c), out = [], boss = bossName(c);
+  function pages(c, which) { figArt = { kind: KIND(c), art: SD.bosses[Math.max(0, Math.min(NCH - 1, c))].art }; const kind = KIND(c), P = place(c), B = BEATS[c] || {}, skin = SKIN(c), out = [], boss = bossName(c);
     const name = (id) => { const k = id.split(":")[0]; return k === kind ? boss : L2(WHO[k]); };
     const talk = (b, lit) => ({ scene: skin + (lit ? "|lit" : "|grey"), l: b.l, r: b.r, say: b.say.map(([side, pair]) => [side, name(side === "l" ? b.l : b.r), L2(pair)]) });
     const extra = (b) => b.mem ? { scene: "mem|" + b.mem, mem: b.mem, caps: b.caps.map((p, n) => [n ? "" : T("A memory"), L2(p)]) } : b.cap ? { scene: skin + "|grey", l: "pogo:look", caps: [["", L2(b.cap)]] } : talk(b);
@@ -496,7 +496,7 @@
   // [width as a share of the page, place on the floor page from the fold (0-1), lift above the floor on a paper stick (share of the page), height / width]
   const ACT = { pogo: [.36, .56, 0, 396 / 360], crab: [.3, .8, 0, .8], pip: [.2, .5, .2, 1], charm: [.3, .34, .22, 1], boss: [.42, .46, .13, 1],
     fox: [.34, .78, 0, 1], bear: [.4, .78, 0, 1], penguin: [.3, .78, 0, 1], hedgehog: [.28, .8, 0, 1], deer: [.38, .78, 0, 1], sheep: [.34, .78, 0, 1], rabbit: [.32, .78, 0, 1], eagle: [.4, .5, .12, 1], butterfly: [.24, .5, .2, 1] };
-  const SHEET = { pip: "bee" };   // Pip the post-bee is the map's bee
+  let figArt = {}; const SHEET = { pip: "bee" };   // Pip the post-bee is the map's bee
   function crEl(kind) { const d = document.createElement("div"); d.className = "bs"; const n = (typeof CR === "object" && CR[kind]) || null;
     if (n) { const b = document.createElement("b"), [frames, cols] = n; b.style.backgroundImage = `url(anim/cr-${kind}.webp${Q})`; b.style.backgroundSize = `${cols * 100}% ${Math.ceil(frames / cols) * 100}%`; d.appendChild(b);
       b._pa = { cr: 1, n: frames, cols, t0: performance.now(), f: -1, vis: 1, vt: 0 }; try { PA_RUN.add(b); if (!paRaf) paRaf = requestAnimationFrame(paTick); } catch (e) {} }
@@ -511,7 +511,7 @@
     if (lift && !afloat) el.insertAdjacentHTML("beforeend", k === "charm" ? SPRING(lift + 14) : `<i class="stick" style="height:${lift + Math.round(w * .42)}px"></i>`);
     if (k === "pogo") { inn.innerHTML = paHtml(arg || "idle") + (skin === "mem" ? "" : BOAT()); }
     else if (k === "charm") { inn.innerHTML = `<i class="rays"></i><img alt="" src="anim/ch-${arg}.webp${Q}" style="position:relative">`; }
-    else { inn.appendChild(crEl(SHEET[k] || k)); if (side === "r" && k !== "crab") inn.firstChild.style.transform = "scaleX(-1)"; }   /* the birds are drawn looking right: on the right they turn to face Pogo */
+    else { inn.appendChild(crEl(k === figArt.kind && figArt.art && typeof CR === "object" && CR[figArt.art] ? figArt.art : SHEET[k] || k)); if (side === "r" && k !== "crab") inn.firstChild.style.transform = "scaleX(-1)"; }   /* the birds are drawn looking right: on the right they turn to face Pogo */
     el.appendChild(inn); return { el, inn, pre, who: k, arg }; }
 
   // ---------------------------------------------------------------- the comic: a pop-up book. It is put down shut, the back page swings up and the

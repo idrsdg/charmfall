@@ -565,7 +565,7 @@
   u.mote { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: rgba(226, 224, 234, .95); z-index: 2; pointer-events: none; opacity: 0; animation: moteUp 1.9s var(--dl, 0s) ease-out both; } @keyframes moteUp { 0% { opacity: 0; transform: translate(0, 0) scale(.6); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx, 18px), -110px) scale(1.5); } }
   #gMordo.grab img { animation: mordoGrab .75s ease-in-out 1; } @keyframes mordoGrab { 0%, 100% { translate: 0 0; scale: 1; } 45% { translate: -70px 110px; scale: 1.35; } }
   #gMordo.away img { animation: mordoAway 1.2s ease-out 1; } @keyframes mordoAway { 0%, 100% { translate: 0 0; opacity: 1; } 45% { translate: 40px -70px; opacity: .15; } }
-  .mprop.mordo { z-index: 2; } .mprop.mordo img, #gMordo img { animation: mordoBob 1.5s ease-in-out infinite alternate; } @keyframes mordoBob { from { translate: 0 0; rotate: -3deg; } to { translate: 0 -6px; rotate: 3deg; } }
+  .mprop.mordo { z-index: 2; } .mprop.mordo .bossart { display: block; width: 100%; aspect-ratio: 1; background-size: 1600% 600%; background-position: 0 0; animation: mordoBob 1.5s ease-in-out infinite alternate; } .mprop.mordo img, #gMordo img { animation: mordoBob 1.5s ease-in-out infinite alternate; } @keyframes mordoBob { from { translate: 0 0; rotate: -3deg; } to { translate: 0 -6px; rotate: 3deg; } }
   #gMordo { position: absolute; right: 10px; top: calc(max(12px, env(safe-area-inset-top)) + 84px); width: 50px; z-index: 3; pointer-events: none; } #gMordo img { display: block; width: 100%; }
   #mStation .card, #mStory .card, #mSign .card, #mGuide .card { background: linear-gradient(160deg, #3a9a55, #1c5e34 70%); }
   .guideArt { display: flex; justify-content: center; margin: 2px 0 6px; } .guideArt img { width: 150px; height: 150px; filter: drop-shadow(0 10px 10px rgba(0, 0, 0, .35)); }
@@ -1863,7 +1863,7 @@ function aniHtml(cls, kind, x, y, w, R, extra) {
   return `<div class="${cls} ani m-${mo.m} f${mo.fr}" data-kind="${kind}" style="${st};--fd:${mo.d}s;--fr:${mo.fr};--dl:-${(R() * 12).toFixed(1)}s;--wx:${wx}px;--wd:${wd}s${extra || ""}"><i><img data-sk="${kind}" src="${src}" alt=""></i></div>`;
 }
 // 2026-10-28: the creatures' motion loops are files now (anim/cr-<kind>.webp, made by anim/src/bake-cr.cjs at 24 drawings a second); frames per strip:
-const CR = {"rabbit":[96,16],"fox":[60,16],"hedgehog":[60,16],"deer":[78,16],"sheep":[78,16],"bear":[96,16],"penguin":[72,16],"butterfly":[156,16],"bee":[120,16],"bat":[96,16],"crab":[72,16],"eagle":[168,16],"magpie":[96,16],"gritt":[96,16],"corvin":[108,16],"flock":[96,16]};
+const CR = {"rabbit":[96,16],"fox":[60,16],"hedgehog":[60,16],"deer":[78,16],"sheep":[78,16],"bear":[96,16],"penguin":[72,16],"butterfly":[156,16],"bee":[120,16],"bat":[96,16],"crab":[72,16],"eagle":[168,16],"magpie":[96,16],"gritt":[96,16],"corvin":[108,16],"flock":[96,16],"boss0":[96,16],"boss1":[96,16],"boss2":[96,16],"boss3":[96,16],"boss4":[96,16],"boss5":[96,16],"boss6":[96,16],"boss7":[96,16],"boss8":[96,16],"boss9":[96,16]};
 function aniWake(el) { const im = el.querySelector("img[data-sk]"); if (!im || !D3) return; const k = im.dataset.sk; im.removeAttribute("data-sk");
   if (CR[k] && !window.__fast) { const [n, cols] = CR[k], b = document.createElement("b"), pre = new Image(); b.className = "crs"; b.style.backgroundImage = `url(anim/cr-${k}.webp${ART_Q})`; b.style.backgroundSize = `${cols * 100}% ${Math.ceil(n / cols) * 100}%`;
     const go = () => { if (!el.isConnected) return; im.replaceWith(b); el.classList.add("go", "cr60"); b._pa = { cr: 1, n, cols, t0: performance.now() - Math.random() * 6000, f: -1, vis: 1, vt: 0 }; PA_RUN.add(b); if (!paRaf) paRaf = requestAnimationFrame(paTick); };
@@ -1974,7 +1974,7 @@ function buildMap() {
       ["train", "wagon", "wagon"].forEach((k, n) => { const b = to[n], a = moved ? b - per : b; h += `<div class="mtrain${left ? " flip" : ""}" data-a="${a.toFixed(1)}" data-b="${b.toFixed(1)}" style="width:${tw}px;offset-path:path('${d}');offset-distance:${b.toFixed(1)}px"><img src="${D3.sprite(k, 192)}" alt="" decoding="async"></div>`; }); }
     for (let k = 1; k <= GARDEN.length; k++) { const si = k * STATION_EVERY - 1, p = pts[si], side = p[0] > W / 2 ? -1 : 1, ww = big ? 170 : 124, x = Math.max(ww * .5, Math.min(W - ww * .5, p[0] + side * (big ? 185 : 122))), reached = si <= cur, built = gardenN() >= k;
       h += `<div class="mprop work${!reached ? " lock" : built ? " won" : " ruin"}" style="left:${Math.round(x)}px;top:${p[1] + 46}px;width:${ww}px;--dl:-${k * .4}s"><img src="${D3.sprite(GARDEN[k - 1][6], 160)}" alt="" decoding="async">${reached && !built ? `<i class="lvplate st">★ Restore</i>` : ""}</div>`; }
-    if (!allDone()) { const mi = Math.min(N - 1, cur + 2), mp = pts[mi], ms = mp[0] > W / 2 ? -1 : 1; h += aniHtml(`mprop mordo${lastCur >= 0 && cur > lastCur && !window.__fast ? " arrive" : ""}`, bossOf(Math.floor(mi / 10) * 10).kind, mp[0] + ms * (big ? 120 : 80), mp[1] - 6, big ? 160 : 120, R); } }
+    if (!allDone()) { const mi = Math.min(N - 1, cur + 2), mp = pts[mi], ms = mp[0] > W / 2 ? -1 : 1; const mb = bossOf(Math.floor(mi / 10) * 10), mc = `mprop mordo${lastCur >= 0 && cur > lastCur && !window.__fast ? " arrive" : ""}`, mx = mp[0] + ms * (big ? 120 : 80), mw = big ? 160 : 120; h += mb.art && CR[mb.art] ? `<div class="${mc}" style="left:${Math.round(mx)}px;top:${Math.round(mp[1] - 6)}px;width:${mw}px"><i class="bossart" style="background-image:url(anim/cr-${mb.art}.webp${ART_Q})"></i></div>` : aniHtml(mc, mb.kind, mx, mp[1] - 6, mw, R); } }
   // stops
   // the stops of a far place come in with its scenery (four hundred stops were a third of everything laid out on each visit)
   pts.forEach((p, i) => { const fc = Math.floor(i / 10), hs = h; h = ""; const st = save.stars[i] ? "done" : i === cur ? "now" : "lock", hd = hardOf(i), md = isMordo(i) && !save.stars[i], pl = (i === cur ? p[0] <= W / 2 : p[0] > W / 2) ? " l" : "";   // signs hang on the roomier side of the stop; at the current stop Pogo takes that side, so its sign hangs on the other
@@ -2182,7 +2182,7 @@ const bossOf0 = (i) => { const ch = Math.min(CHAPTERS.length - 1, Math.floor(i /
 const SD = window.STORY_DATA || null;
 if (SD) { CHAPTERS.length = 0; SD.places.forEach(p => CHAPTERS.push({ name: p.name[0], props: p.props, title: p.title[0], text: p.text[0] })); CHAP_SHORT.length = 0; SD.places.forEach(p => CHAP_SHORT.push(p.short[0])); BOSS_NOTE.length = 0; SD.bosses.forEach(b => BOSS_NOTE.push(b.note[0])); }
 for (const A of [CHAPTERS, RESIDENT, BOSS_NOTE, BOSS_BEAT, CHAP_SHORT, CHAP_TREE, CHAP_SKY, CHAP_GROUNDC, CHAP_DETAIL]) while (A.length < 50) A.push(A[A.length - 10]);
-const bossOf = (i) => { const b = SD && SD.bosses[Math.min(SD.bosses.length - 1, Math.floor(i / 10))]; return b ? { kind: b.kind, name: b.name[0], own: b.own[0], loot: b.loot[0] } : bossOf0(i); };
+const bossOf = (i) => { const b = SD && SD.bosses[Math.min(SD.bosses.length - 1, Math.floor(i / 10))]; return b ? { kind: b.kind, art: b.art, name: b.name[0], own: b.own[0], loot: b.loot[0] } : bossOf0(i); };
 // the seeds the player has brought down to the soil, kept for the whole game; ten wins after it was planted a seed counts as a young tree
 const seedsSaved = () => (save.stats && save.stats.seeds) || 0, treesGrown = () => { const r = save.seedRing || []; return r.length >= 10 ? r[0] : 0; };
 function seedWin() { const r = save.seedRing = save.seedRing || []; r.push(seedsSaved()); while (r.length > 10) r.shift(); }
@@ -3673,9 +3673,9 @@ function bsBoss(i) { let el = $("gBoss"); if (el) el.remove(); BS.boss = null; i
   const B = bossOf(i); el = document.createElement("div"); el.id = "gBoss"; el.setAttribute("aria-hidden", "true");
   el.innerHTML = `<div class="bb-fig"><img src="${D3.sprite(B.kind, 192)}" alt=""></div><div class="bb-plate">${B.name}<div class="bb-hp"><i class="lag"></i><i class="cur"></i></div></div>`; $("game").appendChild(el);
   const fig = el.querySelector(".bb-fig"), im = fig.firstChild;
-  if (CR[B.kind]) { const [n, cols] = CR[B.kind], b = document.createElement("b"), pre = new Image(); b.style.backgroundImage = `url(anim/cr-${B.kind}.webp${ART_Q})`; b.style.backgroundSize = `${cols * 100}% ${Math.ceil(n / cols) * 100}%`;
+  const ART = B.art && CR[B.art] ? B.art : B.kind; if (CR[ART]) { const [n, cols] = CR[ART], b = document.createElement("b"), pre = new Image(); b.style.backgroundImage = `url(anim/cr-${ART}.webp${ART_Q})`; b.style.backgroundSize = `${cols * 100}% ${Math.ceil(n / cols) * 100}%`;
     const go = () => { if (!el.isConnected) return; im.replaceWith(b); b._pa = { cr: 1, n, cols, t0: performance.now(), f: -1, vis: 1, vt: 0 }; PA_RUN.add(b); if (!paRaf) paRaf = requestAnimationFrame(paTick); };
-    pre.src = "anim/cr-" + B.kind + ".webp" + ART_Q; (pre.decode ? pre.decode() : new Promise(r => { pre.onload = r; })).then(go, go); }
+    pre.src = "anim/cr-" + ART + ".webp" + ART_Q; (pre.decode ? pre.decode() : new Promise(r => { pre.onload = r; })).then(go, go); }
   $("gMordo").hidden = true; BS.boss = el; BS.hp = 1; G.bs0 = Math.max(1, G.L.goal === "score" ? G.L.target : goalLeft()); bsPlace(); bsHp(true); el.classList.add("arrive"); setTimeout(() => el.classList.remove("arrive"), 900); }
 function bsPlace() { const el = BS.boss; if (!el || !G) return; const g = $("game").getBoundingClientRect(), c = canvas.getBoundingClientRect(), top = c.top - g.top, right = g.right - c.right;
   el.classList.remove("col", "small");

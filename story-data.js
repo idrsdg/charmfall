@@ -345,7 +345,7 @@
     world: ["The Ten Kingdoms", "On Krallık"], line: ["The Lantern Line", "Fener Hattı"],
     kingdoms: KINGDOMS.map(([id, en, tr, l0, l1]) => ({ id, name: [en, tr], line: [l0, l1] })),
     places: PLACES.map((p) => ({ name: [p[0], p[1]], title: [p[2], p[3]], text: [p[4], p[5]], short: [p[6], p[7]], props: p[8] })),
-    bosses: BOSSES.map(([who, en, tr], c) => { const w = WHO[who], k = Math.floor(c / 5); return { kind: w[0], who, name: w[1], own: w[2], loot: k === 8 ? w[4] : k === 9 ? w[5] : w[3], note: [en, tr] }; }),
+    bosses: BOSSES.map(([who, en, tr], c) => { const w = WHO[who], k = Math.floor(c / 5); return { kind: w[0], art: "boss" + (k < 8 ? k : who === "nyx" ? (k === 9 ? 9 : 7) : { mordo: 8, flock: 1, gritt: 3, corvin: 5 }[who]), who, name: w[1], own: w[2], loot: k === 8 ? w[4] : k === 9 ? w[5] : w[3], note: [en, tr] }; }),
     stations: STATIONS.map((s) => ({ name: [s[0], s[1]], task: [s[2], s[3]], story: [s[4], s[5]] })),
     end: END
   };
