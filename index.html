@@ -1798,7 +1798,7 @@ icons();
 setTimeout(() => { for (let i = 0; i < 16; i++) { const C = COLORS[i % NCOL], o = SHAPES[C.shape].o, sz = 26 + Math.random() * 34, dur = 16 + Math.random() * 16;
     $("bg").insertAdjacentHTML("beforeend", `<svg viewBox="-1.5 -1.5 3 3" width="${sz}" height="${sz}" style="left:${(i * 6.4 + Math.random() * 4).toFixed(1)}%;animation-duration:${dur.toFixed(1)}s;animation-delay:-${(Math.random() * dur).toFixed(1)}s;--r0:${Math.round(Math.random() * 60 - 30)}deg;--r1:${Math.round(Math.random() * 240 - 120)}deg"><polygon points="${o.map(q => q[0].toFixed(2) + "," + q[1].toFixed(2)).join(" ")}" fill="${C.c}" stroke="${C.l}" stroke-width=".14" stroke-linejoin="round"/></svg>`); } }, 0);
 // night theme by the local clock (19:00 to 06:00); ?night=1 or ?night=0 forces it for testing
-{ const q = new URLSearchParams(location.search).get("night"), setNight = () => document.documentElement.classList.toggle("night", q !== null ? q === "1" : (h => h >= 19 || h < 6)(new Date().getHours())); setNight(); setInterval(setNight, 60000); }
+{ const q = new URLSearchParams(location.search).get("night"), setNight = () => document.documentElement.classList.toggle("night", q === "1");   /* 2026-11-23 İdris "hiçbir karanlık, gece olmasın, hep gündüz, parlak": the evening no longer turns the game dark (it used to after 19:00); ?night=1 still shows it for review */ setNight(); setInterval(setNight, 60000); }
 const bg = $("bg"); for (let i = 0; i < 70; i++) { const s = document.createElement("i"); s.style.left = Math.random() * 100 + "%"; s.style.top = Math.random() * 100 + "%"; s.style.animationDelay = Math.random() * 3 + "s"; bg.appendChild(s); }
 function highest() { let h = 0; while (save.stars[h]) h++; return Math.min(h, LEVELS.length - 1); }
 const totalStars = () => Object.values(save.best).reduce((a, b) => a + starsOf(b), 0);
@@ -3423,7 +3423,7 @@ function snapshot() { if (!G || G.over || G.busy) return; save.inProgress = pack
 let saveT = 0; function saveSoon() { clearTimeout(saveT); saveT = setTimeout(() => { if (G && G.busy) saveSoon(); else { checkAch(); snapshot(); } }, 350); }
 function clearProgress() { delete save.inProgress; persist(); }
 function startLevel(i, snap) {
-  { const g = $("game"); gameTheme(i); g.classList.toggle("boss", isMordo(i)); $("gMordo").hidden = !isMordo(i); $("gMordo").innerHTML = isMordo(i) && typeof D3 !== "undefined" && D3 ? `<img src="${D3.sprite(bossOf(i).kind, 128)}" alt="">` : ""; }
+  { const g = $("game"); gameTheme(i); boardFrame(i); g.classList.toggle("boss", isMordo(i)); $("gMordo").hidden = !isMordo(i); $("gMordo").innerHTML = isMordo(i) && typeof D3 !== "undefined" && D3 ? `<img src="${D3.sprite(bossOf(i).kind, 128)}" alt="">` : ""; }
   const L = LEVELS[i]; PAL = palFor(i); fxbWarmLevel(kingdomOf(i));
   G = { level: i, L, moves: L.moves, score: 0, over: false, busy: false, paused: false, sel: null, selT: 0, boost: null, hintAt: performance.now() + 4000, hint: null, combo: 0,
     collected: 0, spawned: 0, chocEaten: false, shake: 0, frenzy: 0, inFrenzy: false, fuseIn: L.fuse ? L.fuse.every : 0, undo: null,
@@ -4245,24 +4245,41 @@ function mkCan(w, h) { const c = document.createElement("canvas"); c.width = Mat
 const WCB = {}; { const names = ["paper", "cell-0", "cell-1", "ob-ash1", "ob-ash2", "ob-clean", "ob-bramble1", "ob-bramble2", "ob-bramble3", "ob-choc", "ob-stone", "ob-crate"]; let left = names.length;
   const done = () => { if (--left) return; if (G && typeof layout === "function") { SPR.size = 0; layout(); } };
   for (const n of names) { const im = new Image(); im.src = "anim/" + n + ".webp" + ART_Q; (im.decode ? im.decode() : new Promise(r => { im.onload = r; })).then(() => { WCB[n] = im; done(); }, done); } }
+// 2026-11-23 İdris: "oyun tahtasını farklı şekiller, farklı konseptlerde yap, her seferinde konsept değişsin". The board is no longer one charcoal card:
+// every kingdom has its own board (colour of the card and of its wells, light ones too: ice, sky, sand) and its own frame, and inside a kingdom the
+// cut of the wells changes from level to level (soft squares, rounds, cushions, close-set tiles) with a plain, checked or striped lay. Painted once per level.
+const BOARD_SKINS = [   // [card, well a, well b, light?, frame: lip, band, edge, under, stitch]
+  ["#21402b", "#2d5237", "#33593d", 0, "#f3ead2", "#b08a52", "#5c3f22", "#3a2814", "#e2c890"],   // forest: moss card in an oak frame
+  ["#143f5c", "#1d5273", "#235d82", 0, "#e9fbff", "#57b7c9", "#1f6c86", "#124a5e", "#b8f0f6"],   // water: deep lagoon in sea glass
+  ["#3a1812", "#4e231a", "#58291e", 0, "#ffd9a8", "#c8552a", "#6a2014", "#3d100a", "#ffb060"],   // fire: basalt in hot iron
+  ["#c9e3f4", "#e2f1fb", "#d5eaf7", 1, "#ffffff", "#9fcbe8", "#5b93bd", "#3d6f96", "#d8f0ff"],   // ice: a pale sheet of ice
+  ["#bcdaf6", "#d8eafc", "#cbe3fa", 1, "#ffffff", "#f3c95a", "#c18a2a", "#8a5f17", "#fff0b8"],   // sky: cloud paper in a gilded frame
+  ["#e3cb97", "#f1deb2", "#ead4a3", 1, "#fff6e0", "#cf7f4a", "#8e4a26", "#5f2f16", "#f3c79a"],   // sand: warm stone in terracotta
+  ["#281f47", "#372b5e", "#3f326a", 0, "#f0e6ff", "#8f6fe0", "#3fb3b0", "#2a2356", "#c9b6ff"],   // crystal: amethyst in teal and violet
+  ["#3a3e73", "#474b86", "#4f5490", 0, "#f4f0ff", "#b9b6e6", "#6d6aa8", "#444276", "#e2defa"],   // moon meadow: lilac in silver
+  ["#405266", "#4f6377", "#566b80", 0, "#f2f6fa", "#f2c94c", "#5a6f84", "#36475a", "#ffe58a"],   // storm: slate with a brass band
+  ["#242852", "#313667", "#383d72", 0, "#fff7dc", "#f2c14e", "#b07e1c", "#6e4c0c", "#ffe9a6"]];  // star: night blue in gold
+const boardSkin = (i) => { const S = BOARD_SKINS[kingdomOf(i)], v = i % 4, lay = Math.floor(i / 4) % 3; return { card: S[0], a: S[1], b: S[2], light: S[3], R: [.14, .5, .3, .05][v], p: [1.5, 2, 1.5, .5][v], lay, frame: S.slice(4) }; };
+function boardFrame(i) { const c = $("c"); if (!c) return; if (isMordo(i)) { c.style.boxShadow = c.style.outlineColor = ""; return; } const [lip, band, edge, under, stitch] = boardSkin(i).frame;
+  c.style.boxShadow = `0 0 0 3px ${lip}, 0 0 0 8px ${band}, 0 0 0 10px ${edge}, 0 10px 0 10px ${under}, 0 24px 40px rgba(0, 0, 0, .5), inset 0 0 0 1px rgba(255, 255, 255, .06)`; c.style.outlineColor = stitch; }
 function buildStatic() {
-  const W = CELL * COLS; let [cv, x] = mkCan(W, W);
+  const W = CELL * COLS; let [cv, x] = mkCan(W, W); const SK = boardSkin(G ? G.level : 0), dk = SK.light ? .3 : 1;
   if (WCB.paper) { x.save(); x.beginPath(); x.roundRect(0, 0, W, W, 16); x.clip();
     /* 2026-10-29 İdris "renkler çok karışmış": a plain, even board: flat charcoal cells with the faintest checker, no paper tooth, no glazes; only the charms carry colour */
-    x.fillStyle = "#2c2e36"; x.fillRect(0, 0, W, W);
+    x.fillStyle = SK.card; x.fillRect(0, 0, W, W);
     /* 2026-11-02 İdris "suluboya kalsın, derinlik ekle": the same quiet charcoal, but as a paper diorama: every cell a shallow well pressed into the
        card (the rim above it throws a shadow in, the lip below catches the light), the frame's own shadow falls across the top rows, and the card's
        tooth shows through. Painted once per layout; nothing here is drawn per frame. */
-    const well = (fill) => { const [c2, k] = mkCan(CELL, CELL), R = CELL * .14, p = 1.5, s = CELL - 3; k.fillStyle = fill; k.beginPath(); k.roundRect(p, p, s, s, R); k.fill(); k.save(); k.clip();
-      let g = k.createLinearGradient(0, p, 0, p + s * .3); g.addColorStop(0, "rgba(8,9,14,.55)"); g.addColorStop(1, "rgba(8,9,14,0)"); k.fillStyle = g; k.fillRect(0, 0, CELL, CELL);
-      g = k.createLinearGradient(p, 0, p + s * .2, 0); g.addColorStop(0, "rgba(8,9,14,.32)"); g.addColorStop(1, "rgba(8,9,14,0)"); k.fillStyle = g; k.fillRect(0, 0, CELL, CELL);
+    const well = (fill) => { const [c2, k] = mkCan(CELL, CELL), p = SK.p, s = CELL - p * 2, R = Math.min(s / 2, CELL * SK.R); k.fillStyle = fill; k.beginPath(); k.roundRect(p, p, s, s, R); k.fill(); k.save(); k.clip();
+      let g = k.createLinearGradient(0, p, 0, p + s * .3); g.addColorStop(0, `rgba(8,9,14,${.55 * dk})`); g.addColorStop(1, "rgba(8,9,14,0)"); k.fillStyle = g; k.fillRect(0, 0, CELL, CELL);
+      g = k.createLinearGradient(p, 0, p + s * .2, 0); g.addColorStop(0, `rgba(8,9,14,${.32 * dk})`); g.addColorStop(1, "rgba(8,9,14,0)"); k.fillStyle = g; k.fillRect(0, 0, CELL, CELL);
       g = k.createLinearGradient(0, p + s, 0, p + s * .82); g.addColorStop(0, "rgba(255,255,255,.10)"); g.addColorStop(1, "rgba(255,255,255,0)"); k.fillStyle = g; k.fillRect(0, 0, CELL, CELL); k.restore();
       k.strokeStyle = "rgba(255,255,255,.13)"; k.lineWidth = 1; k.beginPath(); k.moveTo(p + R, p + s + .5); k.lineTo(p + s - R, p + s + .5); k.stroke(); return c2; };
-    const wells = [well("#353843"), well("#3a3d48")];
-    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { if (G.hole[r][c]) continue; x.drawImage(wells[(r + c) % 2], c * CELL, r * CELL, CELL, CELL); }
+    const wells = [well(SK.a), well(SK.b)];
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { if (G.hole[r][c]) continue; x.drawImage(wells[SK.lay === 0 ? (r + c) % 2 : SK.lay === 1 ? r % 2 : 0], c * CELL, r * CELL, CELL, CELL); }
     x.save(); x.globalCompositeOperation = "overlay"; x.globalAlpha = .22; x.fillStyle = x.createPattern(WCB.paper, "repeat"); x.fillRect(0, 0, W, W); x.restore();   // the card's tooth
-    { let g = x.createLinearGradient(0, 0, 0, CELL * .55); g.addColorStop(0, "rgba(0,0,0,.42)"); g.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = g; x.fillRect(0, 0, W, CELL * .55);   // the frame stands above the board: its shadow across the top rows and down the left
-      g = x.createLinearGradient(0, 0, CELL * .4, 0); g.addColorStop(0, "rgba(0,0,0,.28)"); g.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = g; x.fillRect(0, 0, CELL * .4, W);
+    { let g = x.createLinearGradient(0, 0, 0, CELL * .55); g.addColorStop(0, `rgba(0,0,0,${.42 * dk})`); g.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = g; x.fillRect(0, 0, W, CELL * .55);   // the frame stands above the board: its shadow across the top rows and down the left
+      g = x.createLinearGradient(0, 0, CELL * .4, 0); g.addColorStop(0, `rgba(0,0,0,${.28 * dk})`); g.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = g; x.fillRect(0, 0, CELL * .4, W);
       g = x.createLinearGradient(0, W, 0, W - CELL * .25); g.addColorStop(0, "rgba(255,255,255,.07)"); g.addColorStop(1, "rgba(255,255,255,0)"); x.fillStyle = g; x.fillRect(0, W - CELL * .25, W, CELL * .25); }
     x.restore(); ST.bg = cv;
     /* 2026-11-02 depth: a blocker is a raised piece standing in its well (lifted a little toward the light, its shadow down and to the right, inside the cell);
