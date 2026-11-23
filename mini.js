@@ -1,3 +1,6 @@
+// 2026-11-23 the world became ten kingdoms: the four games keep their mechanics and their painted look, and each now comes from a kingdom
+// (HOME and FLAV below: Buried Treasure from the Sand Kingdom, Glow Catch from the Night Kingdom, Turtle Hop from the Water Kingdom, Mordo's Shells
+// from the Forest Kingdom; story.js says which kingdom's boss chests offer which). Mordo is the magpie of the story. What they pay fell by a quarter.
 // Charmfall side games (2026-11-05, İdris: "yan oyunlar veya ödüller için kısa oyunlar ekle"; he picked all four). 2026-11-22: the world moved to
 // Coral Cove, so the four games moved to the sea and each got a second mechanic. The names MINI.open takes are the old ones (the page and the save
 // know them):
@@ -7,7 +10,7 @@
 //                               four in a row without a miss is one more, and twice a lantern fish darts by, worth three
 //   lilypads   Turtle Hop       hold to crouch, let go to jump; Pogo hops over turtles and lifebuoys to the boat. A turtle dives soon after he lands,
 //                               a buoy stays; a long jump over one of them counts two; a miss ends in a splash
-//   nests      Mordo's Shells   Mordo the cormorant drops a starfish under one of three shells and shuffles them, faster each round and with feints
+//   nests      Mordo's Shells   Mordo the magpie drops a starfish under one of three shells and shuffles them, faster each round and with feints
 //                               from the second; find it, or keep what you have. A wrong shell has a crab under it
 // MINI.open(name, { reward }) shows the game in its own layer over the page and resolves { reward } when it is closed:
 //   { game, tier 0-3, score, practice, stars, carrots, boost: { name: count } }. Only `reward: true` pays into the save (MINI_REWARD),
@@ -22,15 +25,21 @@
   // A game ends on a tier from 0 to 3; the thresholds are the score each tier needs. Boosters count through the save's booster multiplier
   // (BXM), carrots through RWM, so a tier-2 game is worth about one booster handout. Practice games pay nothing.
   const MINI_REWARD = {
-    tiers: [{}, { stars: 1 }, { stars: 1, boost: 1 }, { stars: 2, boost: 1, carrots: 1 }],
+    // 2026-11-23 (İdris: "oyundaki booster ve ödül sayısını %25 azalt") every count is three quarters of what it was. A count with a fraction is
+    // an expected value: its whole part always lands and the fraction is the chance of one more (0.75 = three games in four, 1.5 = one, and a
+    // second every other game). was: tiers [{}, 1 star, 1 star + 1 booster, 2 stars + 1 booster + 1 carrot], ticket [{}, 1 star, 2 stars, 2 stars + 1 booster]
+    tiers: [{}, { stars: .75 }, { stars: .75, boost: .75 }, { stars: 1.5, boost: .75, carrots: .75 }],
     // 2026-11-06 (story.js): a game bought in the Playground with a carrot (or a free game a boss left) pays stars and at most one booster handout,
     // never carrots back, so a carrot cannot buy more carrots; one carrot is worth about one tier-2 game
-    ticket: [{}, { stars: 1 }, { stars: 2 }, { stars: 2, boost: 1 }],
+    ticket: [{}, { stars: .75 }, { stars: 1.5 }, { stars: 1.5, boost: .75 }],
+    was: { tiers: [{}, { stars: 1 }, { stars: 1, boost: 1 }, { stars: 2, boost: 1, carrots: 1 }], ticket: [{}, { stars: 1 }, { stars: 2 }, { stars: 2, boost: 1 }] },
     price: 1,
     need: { carrots: [3, 5, 7], fireflies: [8, 15, 22], lilypads: [4, 8, 12], nests: [1, 2, 3] },
     boosters: ["hammer", "moves", "switch", "cross"]
   };
   window.MINI_REWARD = MINI_REWARD;
+  // a count from the table as a whole number: the whole part, and one more with the chance of the fraction
+  const roll = (n, rnd) => { n = +n || 0; const w = Math.floor(n), f = n - w; return w + (f > 1e-9 && (rnd || Math.random)() < f ? 1 : 0); };
 
   // ---------------------------------------------------------------- words (English in the code, Turkish beside it)
   const TRM = {
@@ -39,6 +48,8 @@
     "Tap the glowing jellyfish into the jar. Leave the urchins alone: they sting. Four in a row without a miss is one more. You have 15 seconds.": "Parlayan denizanalarına dokun, kavanoza topla. Deniz kestanelerine dokunma: batar. Iskalamadan dört tane, bir tane daha kazandırır. 15 saniyen var.",
     "Hold to crouch, let go to jump. Turtles dive soon after you land, buoys stay. A long jump over one counts two. Twelve hops to the boat.": "Basılı tut, eğil; bırak, zıpla. Kaplumbağalar konduktan az sonra dalar, simitler kalır. Birinin üstünden aşan uzun zıplayış iki sayılır. Tekneye on iki sıçrama.",
     "Mordo hides a starfish under a shell and shuffles them. From round two he feints. Find it three times. A miss keeps half of what you won.": "Mordo bir denizyıldızını kabuğun altına saklayıp kabukları karıştırıyor. İkinci turdan sonra şaşırtmaca da yapar. Üç kez bul. Iskalarsan kazandığının yarısı kalır.",
+    "A game from the Sand Kingdom: the well-diggers play it while the tea brews.": "Kum Krallığı'ndan bir oyun: kuyucular çay demlenirken oynar.", "A game from the Night Kingdom: the lantern-lighters play it before bed.": "Gece Krallığı'ndan bir oyun: fenerciler yatmadan önce oynar.",
+    "A game from the Water Kingdom: Barnacle taught it to Pogo. Sideways.": "Su Krallığı'ndan bir oyun: Pogo'ya Kıskaç öğretti. Yan yan.", "A game from the Forest Kingdom: Mordo plays it for buttons now, not charms.": "Orman Krallığı'ndan bir oyun: Mordo artık tılsımına değil, düğmesine oynuyor.",
     "Play": "Oyna", "Keep": "Bırak", "Next round": "Sonraki tur", "Collect": "Topla", "Close": "Kapat", "Practice: no rewards": "Antrenman: ödül yok",
     "The crab!": "Yengeç!", "He took half.": "Yarısını aldı.", "All the treasure!": "Bütün hazine çıktı!", "Bubbles! The crab is near.": "Kabarcık! Yengeç yakında.", "The crown! +2": "Taç! +2", "Coins {0}": "Sikke {0}",
     "Time!": "Süre doldu!", "Ouch! -2": "Ay! -2", "Streak! +1": "Seri! +1", "Lantern fish! +3": "Fener balığı! +3", "Caught {0}": "Yakalanan {0}",
@@ -470,11 +481,15 @@
   const TITLE = { carrots: "Buried Treasure", fireflies: "Glow Catch", lilypads: "Turtle Hop", nests: "Mordo's Shells" };
   const RULE = { carrots: "Dig the sand for coins. The crown counts two. One mound hides the crab: he takes half. Bubbles over a dug mound mean he is next door. Stop with Keep whenever you like.", fireflies: "Tap the glowing jellyfish into the jar. Leave the urchins alone: they sting. Four in a row without a miss is one more. You have 15 seconds.",
     lilypads: "Hold to crouch, let go to jump. Turtles dive soon after you land, buoys stay. A long jump over one counts two. Twelve hops to the boat.", nests: "Mordo hides a starfish under a shell and shuffles them. From round two he feints. Find it three times. A miss keeps half of what you won." };
+  // where each game comes from (the kingdom's number, 0-9) and the line its rules card says about it
+  const HOME = { carrots: 5, fireflies: 7, lilypads: 1, nests: 0 };
+  const FLAV = { carrots: "A game from the Sand Kingdom: the well-diggers play it while the tea brews.", fireflies: "A game from the Night Kingdom: the lantern-lighters play it before bed.",
+    lilypads: "A game from the Water Kingdom: Barnacle taught it to Pogo. Sideways.", nests: "A game from the Forest Kingdom: Mordo plays it for buttons now, not charms." };
   function card(html) { cardEl.innerHTML = `<div class="card">${html}</div>`; cardEl.hidden = false; return cardEl.firstElementChild; }
-  function intro(name, practice) { return new Promise((res) => { const c = card(`<h2>${T(TITLE[name])}</h2><p>${T(RULE[name])}</p>${practice ? `<p class="mprac">${T("Practice: no rewards")}</p>` : ""}<button class="btn" type="button">${T("Play")}</button>`); c.querySelector("button").addEventListener("click", () => { cardEl.hidden = true; res(); }); }); }
+  function intro(name, practice) { return new Promise((res) => { const c = card(`<h2>${T(TITLE[name])}</h2><p>${T(RULE[name])}</p><p style="font-size:13px;font-style:italic;opacity:.8;margin-top:-4px">${T(FLAV[name])}</p>${practice ? `<p class="mprac">${T("Practice: no rewards")}</p>` : ""}<button class="btn" type="button">${T("Play")}</button>`); c.querySelector("button").addEventListener("click", () => { cardEl.hidden = true; res(); }); }); }
   // what a tier pays (as counts on the card), then into the save when it is paid
-  function payout(name, tier, practice, ticket) { const R0 = (ticket ? MINI_REWARD.ticket : MINI_REWARD.tiers)[tier] || {}, out = { stars: R0.stars || 0, carrots: R0.carrots || 0, boost: {} };
-    if (R0.boost) { const pool = MINI_REWARD.boosters, k = pool[Math.floor(Math.random() * pool.length)]; out.boost[k] = R0.boost; }
+  function payout(name, tier, practice, ticket) { const R0 = (ticket ? MINI_REWARD.ticket : MINI_REWARD.tiers)[tier] || {}, out = { stars: roll(R0.stars), carrots: roll(R0.carrots), boost: {} }, nb = roll(R0.boost);
+    if (nb) { const pool = MINI_REWARD.boosters, k = pool[Math.floor(Math.random() * pool.length)]; out.boost[k] = nb; }
     if (practice || typeof save !== "object" || !save) return { stars: 0, carrots: 0, boost: {}, would: out };   // practice: nothing is paid (what it would have been is kept for the card)
     if (out.stars) save.starBonus = (save.starBonus || 0) + out.stars;
     for (const k in out.boost) { const before = save.boost[k] || 0; save.boost[k] = before + out.boost[k]; out.boost[k] = (save.boost[k] || 0) - before; }   // the save's booster multiplier applies: report what really landed
@@ -529,8 +544,8 @@
       if (e.target.closest("[data-x]") || e.target === host) shut(); }); }
 
   window.MINI_T = (g) => T(TITLE[g] || g);
-  window.MINI = { open, close, playground, thumb, games: Object.keys(GAMES), get running() { return !!run; }, keys: MK, sample: K, reward: MINI_REWARD };
+  window.MINI = { open, close, playground, thumb, games: Object.keys(GAMES), get running() { return !!run; }, keys: MK, sample: K, reward: MINI_REWARD, home: HOME, flavor: (g) => T(FLAV[g] || "") };
   // test hook: open a game straight into play, read its state, poke it
   for (const k of ["carrot", "fly", "lily", "nest"]) window["__" + k + "Peek"] = (a) => run && run.g.peek ? run.g.peek(a) : null;
-  window.__mini = { open: (n, o) => open(n, Object.assign({ skipIntro: true }, o)), get run() { return run; }, view: () => view, toScreen, tierOf, near, dealSand, makePads, landOn, HOP, shellPlan, shellEnd, SHELL };
+  window.__mini = { open: (n, o) => open(n, Object.assign({ skipIntro: true }, o)), get run() { return run; }, view: () => view, toScreen, tierOf, roll, near, dealSand, makePads, landOn, HOP, shellPlan, shellEnd, SHELL };
 })();
