@@ -6,18 +6,18 @@
 
 | Seviye | Krallık | Gül | Turuncu | Sarı | Turkuaz | Mavi | Mor |
 |---|---|---|---|---|---|---|---|
-| 1-50 | Orman | Benekli Mantar | Tilki | Meşe Palamudu | Çam Ağacı | Kelebek | Böğürtlen |
-| 51-100 | Su | Denizyıldızı | Denizatı | Tarak | Deniz Kaplumbağası | Balina | Ahtapot |
-| 101-150 | Ateş | Acı Biber | Alev | Güneş | Küçük Ejderha | Mum | Yanardağ |
-| 151-200 | Buz | Eldiven | Fener | Buz Pateni | Kar Tanesi | Penguen | İglu |
-| 201-250 | Hava | Sıcak Hava Balonu | Uçurtma | Kanarya | Kâğıt Uçak | Bulut | Rüzgâr Gülü |
-| 251-300 | Kum | Amfora | Deve | Piramit | Kaktüs | Skarabe | Sihirli Lamba |
-| 301-350 | Kristal | Kalp Taşı | Taşlı Yüzük | Kristal Taç | Zümrüt | Elmas | Ametist |
-| 351-400 | Gece | Kedi | Balkabağı Feneri | Hilal | Küçük Hayalet | Baykuş | Yarasa |
-| 401-450 | Fırtına | Şemsiye | Yağmur Çizmesi | Şimşek | Hortum | Yağmur Damlası | Fırtına Bulutu |
-| 451-500 | Yıldız | Roket | Halkalı Gezegen | Yıldız | Uçan Daire | Kuyrukluyıldız | Küçük Uzaylı |
+| 1-50 | Orman | Tilki | Sincap | Meşe Palamudu | Çam Ağacı | Kelebek | Benekli Mantar |
+| 51-100 | Su | Denizyıldızı | Yengeç | Denizatı | Deniz Kaplumbağası | Balina | Ahtapot |
+| 101-150 | Ateş | Anka Kuşu | Alev | Semender | Küçük Ejderha | Kor Taşı | Yanardağ |
+| 151-200 | Buz | Fok | Kardan Adam | Kutup Ayısı | Kar Tanesi | Penguen | İglu |
+| 201-250 | Hava | Sıcak Hava Balonu | Uçurtma | Serçe | Yusufçuk | Bulut | Kartal |
+| 251-300 | Kum | Akrep | Deve | Piramit | Kaktüs | Skarabe | Kertenkele |
+| 301-350 | Kristal | Yakut | Mağara Salyangozu | Kristal Taç | Zümrüt | Elmas | Ametist |
+| 351-400 | Gece | Kedi | Kirpi | Hilal | Ateş Böceği | Baykuş | Yarasa |
+| 401-450 | Fırtına | Rüzgâr Gülü | Martı | Şimşek | Hortum | Yağmur Damlası | Fırtına Bulutu |
+| 451-500 | Yıldız | Roket | Halkalı Gezegen | Yıldız | Ay Taşı | Kuyrukluyıldız | Küçük Uzaylı |
 
-Su krallığı Mercan Körfezi'nden altı taşı korur; Kristal Taç (eski Batık Taç) ve Yağmur Damlası (eski Su Damlası) da eski şekillerdir. Diğer 52 şekil yenidir; kullanılmayan deniz şekilleri ve görselleri silindi.
+Aynı gün ikinci karar (İdris): "Her krallıkta tılsımlar o krallıkla, konusuyla ve temasıyla daha alakalı olsun; buz krallığıysa buz, kar, soğuk, oraya ait hayvanlar ve canlılar." Bu yüzden her tılsım krallığının bir canlısı ya da doğa parçasıdır; gündelik eşyalar (eldiven, fener, çizme, şemsiye, lamba, yüzük...) çıkarıldı. Hiçbir tılsım iki krallıkta yer almaz. Tabloda olmayıp duran görseller: `ch-bottle` (hikâye, kum krallığının sonu) ve yan oyunların kullandıkları (`ch-coin`, `ch-jellyfish`, `ch-urchin`, `ch-angler`, `ch-lifebuoy`, `ch-sailboat`, `ch-shell`). Su krallığının altı taşı ve Kristal Taç, Yağmur Damlası, Mağara Salyangozu Mercan Körfezi şekillerinden gelir.
 
 Yeni şekil çizerken: her gövde parçası ekranda saat yönünde dönmeli (parçalar non-zero kuralıyla birleşir, ters dönen parça delik açar). `charms-sea.js` içindeki `cw()` ters çizilen parçayı kendisi çevirir, test de bunu denetler. Bir krallığın altı silüeti 40 pikselde birbirinden kolayca ayrılmalı.
 

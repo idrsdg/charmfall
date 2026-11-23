@@ -201,9 +201,9 @@
   const KGAMES = [["nests", "carrots"], ["lilypads", "nests"], ["nests", "carrots"], ["lilypads", "fireflies"], ["nests", "lilypads"], ["carrots", "nests"], ["fireflies", "carrots"], ["fireflies", "lilypads"], ["lilypads", "fireflies"], ["fireflies", "carrots"]];
   const GAME_OF = (c) => KGAMES[kOf(c)][c % 2];
   // the charm that comes home at the end of each place (anim/ch-<name>.webp, each from its own kingdom's painted set; the letter in the bottle ends the sand, a star ends the game)
-  const CHARM = ["berry", "pine", "mushroom", "acorn", "lantern", "wave", "goldfish", "drop", "dolphin", "shell", "flame", "chili", "candle", "dragon", "volcano", "snowflake", "mitten", "skate", "penguin", "igloo",
-    "cloud", "kite", "pinwheel", "balloon", "plane", "cactus", "amphora", "camel", "pyramid", "bottle", "diamond", "emerald", "cluster", "ring", "heartgem", "cat", "lamp", "owl", "bat", "moon",
-    "umbrella", "bolt", "tornado", "thunder", "sun", "rocket", "comet", "saturn", "ufo", "star"];
+  const CHARM = ["squirrel", "pine", "mushroom", "acorn", "fox", "starfish", "seahorse", "turtle", "octopus", "crab", "flame", "salamander", "phoenix", "dragon", "volcano", "snowflake", "seal", "snowman", "penguin", "igloo",
+    "cloud", "kite", "sparrow", "balloon", "eagle", "cactus", "scorpion", "camel", "pyramid", "bottle", "diamond", "emerald", "cluster", "snail", "ruby", "cat", "firefly", "owl", "bat", "moon",
+    "gull", "bolt", "tornado", "thunder", "pinwheel", "rocket", "comet", "saturn", "moonrock", "star"];
 
   // ---------------------------------------------------------------- the pages of one comic, as plain data (no DOM): what stands where and what is said
   // { scene: skin + "|" + lit, mem, l, r, c, say: [[side, who, text]], caps: [[small, text]], beat }
