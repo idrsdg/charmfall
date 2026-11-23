@@ -1646,6 +1646,10 @@ const CAL4 = window.__cal4 || [47000,36000,9,30000,8,8,9,14,25000,9,7,25,43000,2
 const CAL5 = window.__cal5 || [29,13,18,21000,34,12,18000,20,15,34,41,16,27,18000,26,40,15000,20,27,29,35,21,16,19000,34,15,13000,22,5,32,30,25,32,42000,24,11,8000,28,25,40,36,35,25,27000,24,24,22000,22,26,34,14,13,28,27000,32,19,13000,24,18,39,52,23,35,25000,23,36,42000,26,16,33,23,11,33,33000,29,12,29000,20,4,39,36,26,28,23000,26,26,12000,21,7,31,18,38,25,32000,39,40,37000,24,11,31];
 const slackOf = (i) => Math.max(.75, 1.9 - .9 * i / 399);
 LEVELS.forEach((L, i) => { const v = CAL4[i] || CAL5[i - 400] || CAL4[i - 100]; if (!v) return; if (L.goal === "score") L.target = Math.max(1000, Math.round(v / slackOf(i) / 1000) * 1000); else L.moves = Math.max(8, Math.min(50, Math.ceil(v * slackOf(i)))); });
+// 2026-11-23 İdris: "oyunu %25 zorlaştır, bütün levellere aynı oranda uygula". One rule over all five hundred, after everything above: a quarter fewer moves
+// (never under 6), and on score levels, which keep their moves, a target a quarter higher. HARD_X is the one number to turn.
+const HARD_X = 1.25;
+LEVELS.forEach((L) => { if (L.goal === "score") L.target = Math.max(1000, Math.round(L.target * HARD_X / 1000) * 1000); else L.moves = Math.max(6, Math.round(L.moves / HARD_X)); });
 // One star is always 1,000 points inside (10 as shown): the HUD, goals and results talk in stars, never in raw points.
 // From level 51 on the solver wins under 40% of the time, from 86 on under 15%: those levels are labelled, and pay extra carrots.
 // The curve is a saw inside every chapter, not a straight slide: positions 5 and 8 are hard, 10 is Mordo's (super hard from chapter 6 on) and the level after a hard one is a breather.
