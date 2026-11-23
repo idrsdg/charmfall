@@ -26,10 +26,11 @@
     // 2026-11-23 (İdris: "oyundaki booster ve ödül sayısını %25 azalt") every count is three quarters of what it was. A count with a fraction is
     // an expected value: its whole part always lands and the fraction is the chance of one more (0.75 = three games in four, 1.5 = one, and a
     // second every other game). was: tiers [{}, 1 star, 1 star + 1 booster, 2 stars + 1 booster + 1 carrot], ticket [{}, 1 star, 2 stars, 2 stars + 1 booster]
-    tiers: [{}, { stars: .75 }, { stars: .75, boost: .75 }, { stars: 1.5, boost: .75, carrots: .75 }],
+    // 2026-11-24 (İdris: "%50 azalt") stars halved here; boosters and carrots are halved by the save's own multipliers (BXM, RWM)
+    tiers: [{}, { stars: .375 }, { stars: .375, boost: .75 }, { stars: .75, boost: .75, carrots: .75 }],
     // 2026-11-06 (story.js): a game bought in the Playground with a carrot (or a free game a boss left) pays stars and at most one booster handout,
     // never carrots back, so a carrot cannot buy more carrots; one carrot is worth about one tier-2 game
-    ticket: [{}, { stars: .75 }, { stars: 1.5 }, { stars: 1.5, boost: .75 }],
+    ticket: [{}, { stars: .375 }, { stars: .75 }, { stars: .75, boost: .75 }],
     was: { tiers: [{}, { stars: 1 }, { stars: 1, boost: 1 }, { stars: 2, boost: 1, carrots: 1 }], ticket: [{}, { stars: 1 }, { stars: 2 }, { stars: 2, boost: 1 }] },
     price: 1,
     need: { carrots: [3, 5, 7], fireflies: [8, 15, 22], lilypads: [4, 8, 12], nests: [1, 2, 3] },
@@ -617,7 +618,7 @@
     if (practice || typeof save !== "object" || !save) return { stars: 0, carrots: 0, boost: {}, would: out };   // practice: nothing is paid (what it would have been is kept for the card)
     if (out.stars) save.starBonus = (save.starBonus || 0) + out.stars;
     for (const k in out.boost) { const before = save.boost[k] || 0; save.boost[k] = before + out.boost[k]; out.boost[k] = (save.boost[k] || 0) - before; }   // the save's booster multiplier applies: report what really landed
-    if (out.carrots) { const n = (typeof RWM === "number" ? RWM : 1) * out.carrots; save.carrots = (save.carrots || 0) + n; out.carrots = n; try { carrotNew += n; } catch (e) {} }
+    if (out.carrots) { const x = (typeof RWM === "number" ? RWM : 1) * out.carrots; if (typeof window.__jarCarrots === "function") out.carrots = window.__jarCarrots(x); else { save.carrots = (save.carrots || 0) + x; out.carrots = x; } }
     try { persist(); } catch (e) {} try { const s = document.getElementById("starsTotal"); if (s && typeof starsFree === "function") s.textContent = Math.max(0, starsFree()); const c = document.getElementById("carrots"); if (c) c.textContent = save.carrots || 0; } catch (e) {}
     return out; }
   const BN = { hammer: "Sandpiper", moves: "+10 Moves", switch: "Free Switch", cross: "Cross Blast", undo: "Undo" }, BICO = { hammer: "hammer", moves: "moves", switch: "switch", cross: "cross", undo: "undo" };   // booster icons are the tray's own (BICON)

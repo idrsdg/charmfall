@@ -631,17 +631,17 @@
   function pay(list) { for (const it of list) { if (it.k === "star") save.starBonus = (save.starBonus || 0) + it.n; else if (it.k === "carrot") save.carrots = (save.carrots || 0) + it.n;
       else if (it.k === "boost") { save.boost[it.b] = (save.boost[it.b] || 0) + it.raw; } else if (it.k === "allboost") { for (const k in BOOST0) save.boost[k] = (save.boost[k] || 0) + it.raw; } } try { persist(); } catch (e) {} }
   const BXMn = () => typeof BXM === "number" ? BXM : 1;
-  const boostItem = (b, raw) => ({ k: "boost", b, raw, n: raw * BXMn() });
+  const boostItem = (b, raw) => ({ k: "boost", b, raw, n: typeof window.__bxPeek === "function" ? window.__bxPeek(b, raw) : raw * BXMn() });
 
   // ---------------------------------------------------------------- the boss's chest, on the first win of a tenth level (no carrots: the boss
   // level already pays its loot in carrots), and the side game he leaves behind. 2026-11-23 a quarter less than before (İdris: "oyundaki booster ve
   // ödül sayısını %25 azalt"): it was two stars and one booster handout in every chest; now the chests take turns over four places, so that four
   // of them hold six stars (was eight) and three booster handouts (was four). The chest without a booster is one of the two with two stars.
-  const CHEST_BOSS = { stars: 2, boost: 1, cycle: [{ stars: 1, boost: 1 }, { stars: 2, boost: 0 }, { stars: 1, boost: 1 }, { stars: 2, boost: 1 }], was: { stars: 2, boost: 1 } };
+  const CHEST_BOSS = { stars: 2, boost: 1, cycle: [{ stars: 1, boost: 1 }, { stars: 1, boost: 0 }, { stars: 1, boost: 1 }, { stars: 0, boost: 1 }], was: { stars: 2, boost: 1 } };
   const bossChest = (c) => CHEST_BOSS.cycle[((c % 4) + 4) % 4];
   async function afterBoss(lv) { const c = Math.floor(lv / 10); if (window.__fast || c < 0 || c >= NCH) return;
     if (!seen(c, "outro")) await comic(c, "outro");
-    const pool = ["hammer", "moves", "switch", "cross"], b = pool[(c + (save.stats && save.stats.wins || 0)) % pool.length], B = SD.bosses[c], name = L2(B.name), pay0 = bossChest(c), items = [{ k: "star", n: pay0.stars }]; if (pay0.boost) items.push(boostItem(b, pay0.boost));
+    const pool = ["hammer", "moves", "switch", "cross"], b = pool[(c + (save.stats && save.stats.wins || 0)) % pool.length], B = SD.bosses[c], name = L2(B.name), pay0 = bossChest(c), items = pay0.stars ? [{ k: "star", n: pay0.stars }] : []; if (pay0.boost) items.push(boostItem(b, pay0.boost));
     await chest({ title: L2(CHEST_OF[B.who] || CHEST_OF[B.kind] || CHEST_OF.magpie), items, invite: GAME_OF(c), from: name }); }
 
   // ---------------------------------------------------------------- the boss's line when he wins
@@ -652,9 +652,9 @@
 
   // ---------------------------------------------------------------- Pogo's present: every fifth carrot he eats, a small chest. It used to be a
   // booster handout and two stars by turns; 2026-11-23, a quarter less: over eight presents three booster handouts (was four) and six stars (was eight)
-  const FULL = 5, GIFTS = [{ stars: 1 }, { boost: 1 }, { stars: 2 }, { boost: 1 }, { stars: 1 }, { boost: 1 }, { stars: 1 }, { stars: 1 }];
+  const FULL = 5, GIFTS = [{ stars: 1 }, { boost: 1 }, {}, { boost: 1 }, { stars: 1 }, { boost: 1 }, {}, { stars: 1 }];   /* 2026-11-24 "%50 azalt": three stars (was six); boosters are halved by BXM; two meals in eight bring no present */
   const giftOf = (n) => GIFTS[((n % 8) + 8) % 8];
-  function petGift() { const n = Math.floor((save.fed || 0) / FULL); if (!n || (save.fed || 0) % FULL) return Promise.resolve(); const pool = ["hammer", "moves", "switch", "cross"], g = giftOf(n);
+  function petGift() { const n = Math.floor((save.fed || 0) / FULL); if (!n || (save.fed || 0) % FULL) return Promise.resolve(); const pool = ["hammer", "moves", "switch", "cross"], g = giftOf(n); if (!g.boost && !g.stars) return Promise.resolve();
     const items = g.boost ? [boostItem(pool[n % pool.length], g.boost)] : [{ k: "star", n: g.stars }];
     return chest({ title: T("Pogo brought you a present!"), sub: T("He ate five carrots and he is full. This is for you."), items, small: true }); }
   const toGift = () => FULL - ((save.fed || 0) % FULL);
