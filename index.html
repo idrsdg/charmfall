@@ -1178,7 +1178,8 @@ const paHtml = (name, cls) => `<div class="pogo pa${cls ? " " + cls : ""}" data-
 const PA_RUN = new Set(); let paRaf = 0;
 // 2026-10-28 İdris "kasmasın, her animasyon ve hareket en az 60 fps": the keyed clips are played live, a new pose every screen frame (60, or 120 on
 // ProMotion), through the 3D rig; the sheets in anim/ are only the fallback for a phone without WebGL.
-const paLive = () => !!(window.__P3 && window.PogoClip && !window.__fast); let paTok = 0;
+// 2026-11-24: the clips now play from the baked 3D sheets (anim/pogo-<name>.webp, rendered in Blender), so no WebGL skinning runs for them; the pet screen keeps its live Pogo.
+const paLive = () => !!(window.__liveClips && window.__P3 && window.PogoClip && !window.__fast); let paTok = 0;
 function paPlay(el, name, then) { if (!el || !PA[name]) return; el.dataset.pa = name; el.dataset.on = 1; const tok = ++paTok;
   if (paLive()) { let s = el._pa; if (!s || !s.cv) { el.style.backgroundImage = "none"; const cv = document.createElement("canvas"); cv.style.cssText = "display:block;width:100%;height:100%"; el.appendChild(cv); const cv3 = document.createElement("canvas");
       s = { cv, x: cv.getContext("2d"), cv3, st: { x: cv3.getContext("2d"), c: __P3.Z(), es: { a: 0, v: 0, b: 0, w: 0 }, py: 0, px: 0, pr: 0, t0: 0, ph: 0, mood: "", turn: 0 } };
