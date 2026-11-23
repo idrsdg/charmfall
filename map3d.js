@@ -478,6 +478,8 @@
   function paintLand(o, j0, j1) { const pos = o.land.geometry.attributes.position, nrm = o.land.geometry.attributes.normal, col = o.land.geometry.attributes.color;
     for (let n = j0 * (NX + 1), e = j1 * (NX + 1); n < e; n++) { landColour(pos.getX(n), pos.getZ(n), pos.getY(n), nrm.getY(n), tc); col.setXYZ(n, tc[0], tc[1], tc[2]); } col.needsUpdate = true; }
   function paintChunk(o) { paintLand(o, 0, NZ + 1); paintRest(o); }
+  const PQ = []; function queuePaint(o) { const q = PQ.find((e) => e.o === o); if (q) q.j = 0; else PQ.push({ o, j: 0 }); }
+  function pumpPaint(ms) { const t0 = performance.now(); while (PQ.length) { const q = PQ[0]; if (chunks.get(q.o.k) !== q.o) { PQ.shift(); continue; } if (q.j <= NZ) { paintLand(q.o, q.j, Math.min(NZ + 1, q.j + 4)); q.j += 4; } else { paintRest(q.o); PQ.shift(); } if (performance.now() - t0 > ms) return; } }
   function paintRest(o) {
     // the crowns: no two neighbours the same green, the same width or quite upright; fuller and richer where the player has been, pale ahead
     if (o.leaf) { const cols = o.cols, wind = o.kc === 8; for (let n = 0; n < o.spots.length; n++) { const s = o.spots[n], u = -s[2] / SEG, base = cols[Math.floor(hash(s[0] * .37, s[2] * .53) * cols.length) % cols.length], lk = lockAmt(u), dn = doneAmt(u), h1 = hash(s[0], s[2]), h2 = hash(s[2] * .71, s[0] * .29), m = (.88 + h1 * .2) * o.bright * (1 + .06 * dn), hv = (h2 - .5) * .1;
@@ -498,11 +500,12 @@
   // all: everything in reach is built now (when the map is opened, and for a level's backdrop). Otherwise one chunk is in the making at a time, the
   // one nearest the camera first, and each frame gives it a few milliseconds (more while the camera's own piece of land is still missing).
   let job = null, jobK = -1, jobMs = 0;
+  // 2026-11-23 İdris "asla kasmasın": the phone's reports showed 130-180 ms frames when the map opened, because sync built every chunk in reach at once. all === 2 (sync) builds at once only the two chunks the camera stands on; the others follow in 3 ms slices.
   function needChunks(all) { const kc = Math.floor(f / CHS), lo = Math.max(0, kc - 1), hi = Math.min(Math.ceil(N / CHS), kc + 4);
     if (job && (jobK < lo - 1 || jobK > hi + 1)) job = null;
     for (;;) { if (!job) { let nk = -1, bd = 1e9; for (let k = lo; k <= hi; k++) if (!chunks.has(k)) { const d = Math.abs(k - kc - .6); if (d < bd) { bd = d; nk = k; } } if (nk < 0) break; job = buildChunk(nk); jobK = nk; jobMs = 0; }
-      const t0 = performance.now(); DL = all ? Infinity : t0 + (chunks.has(kc) && chunks.has(Math.min(hi, kc + 1)) ? 3 : 10); const r = job.next(), el = performance.now() - t0; DL = Infinity; jobMs += el; if (!all) { BT.slice = Math.max(BT.slice, el); BT.slices++; }
-      if (!r.done) break; chunks.set(jobK, r.value); job = null; BT.last = jobMs; BT.max = Math.max(BT.max, jobMs); BT.n++; BT.sum += jobMs; if (!all) break; }
+      const near = chunks.has(kc) && chunks.has(Math.min(hi, kc + 1)), must = all === true || (all === 2 && !near); if (all === 2 && near) break; const t0 = performance.now(); DL = must ? Infinity : t0 + (near ? 3 : 10); const r = job.next(), el = performance.now() - t0; DL = Infinity; jobMs += el; if (!must) { BT.slice = Math.max(BT.slice, el); BT.slices++; }
+      if (!r.done) break; chunks.set(jobK, r.value); job = null; BT.last = jobMs; BT.max = Math.max(BT.max, jobMs); BT.n++; BT.sum += jobMs; if (!must) break; }
     for (const [k, o] of chunks) if (k < lo - 1 || k > hi + 1) { dropChunk(o); chunks.delete(k); } }
   // only the chunks the camera can see are handed to the renderer (instanced forests are never culled by three.js itself, so the land behind the
   // camera used to be drawn every frame)
@@ -668,11 +671,11 @@
   function frame(ts) { raf = 0; if (!host || host.hidden || document.hidden) return;
     // heat (2026-11-18 İdris "telefon ısınıyor"): the land is drawn at the screen's full rate only while something is being pulled, flung or ridden;
     // a still map (water, clouds, birds) is drawn at half rate, and at a quarter after twenty seconds without a touch
-    const live = drag || pinch || ride || fv !== 0 || Math.abs(fc - f) > .004 || ts - touchT < 500; if (!live && ts - last < (ts - touchT > 20000 ? 60 : 30)) { raf = requestAnimationFrame(frame); return; }
+    const live = drag || pinch || ride || fv !== 0 || PQ.length > 0 || job || Math.abs(fc - f) > .004 || ts - touchT < 500; if (!live && ts - last < (ts - touchT > 20000 ? 60 : 30)) { raf = requestAnimationFrame(frame); return; }
     const dt = Math.min(live ? .05 : .1, (ts - last) / 1000 || .016); last = ts; clock += dt; let speed = 0;
     if (ride) { ride.t += dt / ride.dur; const e = eio(ride.t), u0 = trainU; trainU = lerp(ride.from, ride.to, e); speed = (trainU - u0) / dt; f = lerp(f, trainU, 1 - Math.exp(-dt / .25)); yaw = Math.sin(ride.t * Math.PI) * .22 * ride.dir; if (ride.t >= 1) { trainU = ride.to; ride = null; yaw = 0; if (api.arrived) api.arrived(); } }
     else { if (!drag) { f += fv * dt; fv *= Math.exp(-dt / .32); if (Math.abs(fv) < .02) fv = 0; yaw *= Math.exp(-dt / .4); } f = clamp(f, 0, N - 1); }
-    needChunks(false); air(f); syncStops(); syncStations(); placeTrain(dt, speed); if (Math.abs(fc - f) > 6) fc = f; fc = lerp(fc, f, 1 - Math.exp(-dt / .075)); SWAY.value = clock; placeCam(fc, clock, false); cull(); birds(dt); if (motes.visible) { P(fc + MOTEA, V); motes.position.set(V.x, V.y, V.z); }
+    pumpPaint(3); needChunks(false); air(f); syncStops(); syncStations(); placeTrain(dt, speed); if (Math.abs(fc - f) > 6) fc = f; fc = lerp(fc, f, 1 - Math.exp(-dt / .075)); SWAY.value = clock; placeCam(fc, clock, false); cull(); birds(dt); if (motes.visible) { P(fc + MOTEA, V); motes.position.set(V.x, V.y, V.z); }
     water.position.set(cam.position.x, 0, cam.position.z - 300); waterTex.offset.set(clock * .012, clock * .02);
     for (const s of clouds) { const o = s.userData.o; s.position.set(cam.position.x + o[0] + Math.sin(clock * .02 + o[3]) * 40, cam.position.y + lerp(o[1], o[1] * .45 - 62, skyK), cam.position.z - 250 - o[2]); const cs = o[3] * (1 + .7 * stormK); s.scale.set(cs * 2.2, cs, 1); s.material.opacity = .55 + .3 * stormK; }
     R.render(scene, cam); if (Math.abs(f - lastMark) > .05 || ride) drawMarker(); drawInfo(); fps.n++; if (ts - fps.t > 1000) { fps.v = fps.n; fps.n = 0; fps.t = ts; }
@@ -740,10 +743,10 @@
   function kick() { if (!raf && host && !host.hidden) { last = performance.now(); raf = requestAnimationFrame(frame); } }
   // called whenever the map is shown: takes the player's place in; when it has moved on since last time, the train rides there
   function sync(a) { if (!ok) return false; if (!R) { if (!init(a)) return false; } api = Object.assign(api, a); N = a.N || N; const c = api.cur();
-    if (c !== cur) { const from = cur; cur = c; { const a = Math.min(from, c) - 2, b = Math.max(from, c) + 2.6; for (const o of chunks.values()) if (o.u0 < b && o.u0 + CHS > a) paintChunk(o); } infoKey = ""; if (c > from && c - from <= 3 && !window.__fast) { trainU = from; f = from; ride = { from, to: c, t: 0, dur: 2.6 + (c - from) * .5, dir: c % 2 ? 1 : -1 }; } else { trainU = f = c; ride = null; } }
-    if (!W || W !== (host.clientWidth || innerWidth)) size(); else drawProfile(); needChunks(true); kick(); return true; }
+    if (c !== cur) { const from = cur; cur = c; { const a = Math.min(from, c) - 2, b = Math.max(from, c) + 2.6; for (const o of chunks.values()) if (o.u0 < b && o.u0 + CHS > a) queuePaint(o); } infoKey = ""; if (c > from && c - from <= 3 && !window.__fast) { trainU = from; f = from; ride = { from, to: c, t: 0, dur: 2.6 + (c - from) * .5, dir: c % 2 ? 1 : -1 }; } else { trainU = f = c; ride = null; } }
+    if (!W || W !== (host.clientWidth || innerWidth)) size(); else drawProfile(); needChunks(2); kick(); return true; }
   // a level's backdrop: the same land from low beside the rails at that stop, as one picture
-  function still(i, w, h) { if (!R || !ok) return null; const keep = [f, yaw, W, Hh, cam.aspect, cam.fov]; try { f = i; yaw = 0; W = w; Hh = h; R.setPixelRatio(1); R.setSize(w, h, false); cam.aspect = w / h; cam.fov = 60; cam.updateProjectionMatrix(); needChunks(true); inStill = true; air(i); for (const s of stopPool) s.visible = false; train.visible = false; steam.visible = false; syncStations(); placeCam(i, 0, true); cull(); water.position.set(cam.position.x, 0, cam.position.z - 300);
+  function still(i, w, h) { if (!R || !ok) return null; pumpPaint(Infinity); const keep = [f, yaw, W, Hh, cam.aspect, cam.fov]; try { f = i; yaw = 0; W = w; Hh = h; R.setPixelRatio(1); R.setSize(w, h, false); cam.aspect = w / h; cam.fov = 60; cam.updateProjectionMatrix(); needChunks(true); inStill = true; air(i); for (const s of stopPool) s.visible = false; train.visible = false; steam.visible = false; syncStations(); placeCam(i, 0, true); cull(); water.position.set(cam.position.x, 0, cam.position.z - 300);
       for (const s of clouds) { const o = s.userData.o; s.position.set(cam.position.x + o[0], cam.position.y + o[1] * .6, cam.position.z - 250 - o[2]); s.scale.set(o[3] * 2.2, o[3], 1); }
       R.render(scene, cam); const k = document.createElement("canvas"); k.width = w; k.height = h; const x = k.getContext("2d"), g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, css(skyA)); g.addColorStop(.4, css(skyB)); g.addColorStop(1, css(skyB)); x.fillStyle = g; x.fillRect(0, 0, w, h); if (starO > 0) { x.globalAlpha = starO; x.drawImage(starsEl, 0, 0, w, h * .46); } if (moonO > 0) { x.globalAlpha = moonO; x.fillStyle = "#f8faff"; x.beginPath(); x.arc(w * .72, h * .16, Math.min(w, h) * .07, 0, TAU); x.fill(); } x.globalAlpha = 1; x.drawImage(cv, 0, 0, w, h); return k; }
     finally { inStill = false; train.visible = true; steam.visible = true; [f, yaw, W, Hh] = keep; cam.aspect = keep[4]; cam.fov = keep[5]; cam.updateProjectionMatrix(); R.setPixelRatio(dpr); R.setSize(W, Hh, false); } }
