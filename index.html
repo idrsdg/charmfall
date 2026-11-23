@@ -1347,17 +1347,22 @@ const P3 = (() => {
   const scarf = new T.Mesh(new T.TorusGeometry(.29, .07, 12, 32), M.red); scarf.rotation.x = Math.PI / 2; scarf.position.y = .47; torso.add(scarf); ball(M.gold, 0, .4, .31, .085, .085, .085, torso);
   const tail = grp(0, -.2, -.31, torso); ball(M.cream, 0, 0, -.14, .24, .22, .22, tail); ball(M.fur, .11, .07, -.22, .11, tail); ball(M.fur, -.1, -.06, -.2, .1, tail);
   const head = grp(0, 1.02, .04, torso);
-  ball(M.fur, 0, 0, 0, .8, .68, .7, head); ball(M.cream, -.27, -.3, .3, .34, .21, .34, head); ball(M.cream, .27, -.3, .3, .34, .21, .34, head); ball(M.cream, 0, -.24, .5, .24, .18, .24, head);
+  ball(M.fur, 0, 0, 0, .76, .68, .7, head); ball(M.cream, -.27, -.3, .3, .34, .21, .34, head); ball(M.cream, .27, -.3, .3, .34, .21, .34, head); ball(M.cream, 0, -.24, .5, .24, .18, .24, head);
+  // 2026-11-23 İdris "tavşanın yüzünü daha detaylı, gerçekçi yap": a real rabbit's face in small things: the bridge of the muzzle, the split lip under the nose, whisker pads with their dots, lids over the eyes and a dark rim round them, a tuft between the ears, fluff where the ears meet the head
+  ball(M.cream, 0, -.07, .56, .2, .17, .2, head); ball(M.fur, 0, .06, .6, .15, .2, .12, head);
+  { const lip = new T.Mesh(new T.CylinderGeometry(.008, .008, .1, 5), M.mouth); lip.position.set(0, -.2, .752); head.add(lip); }
+  for (const k of [-1, 1]) { ball(M.cream, k * .15, -.22, .64, .13, .1, .1, head); for (let i = 0; i < 3; i++) ball(M.dark, k * (.12 + i * .045), -.2 - (i % 2) * .035, .735 - i * .012, .009, .009, .006, head); }
+  for (let i = -1; i <= 1; i++) ball(i ? M.fur : M.cream, i * .09, .62 - Math.abs(i) * .03, .2, .09, .12, .1, head);
   const nose = new T.Mesh(new T.ConeGeometry(.085, .09, 3), M.pink); nose.rotation.x = Math.PI; nose.position.set(0, -.15, .75); head.add(nose); ball(M.pink, 0, -.12, .74, .06, .04, .05, head);
-  for (const k of [-1, 1]) for (let i = 0; i < 3; i++) { const w = new T.Mesh(new T.CylinderGeometry(.007, .003, .5, 4), M.whisk); w.position.set(k * .4, -.3 + i * .06, .58); w.rotation.set((i - 1) * .18, 0, k * (1.42 + i * .16)); head.add(w); }
+  for (const k of [-1, 1]) for (let i = 0; i < 4; i++) { const w = new T.Mesh(new T.CylinderGeometry(.006, .002, .5 + (i % 2) * .12, 4), M.whisk); w.position.set(k * (.4 + (i % 2) * .05), -.31 + i * .045, .58); w.rotation.set((i - 1.5) * .16, 0, k * (1.36 + i * .13)); head.add(w); }
   ball(M.white, -.045, -.36, .7, .04, .07, .03, head); ball(M.white, .045, -.36, .7, .04, .07, .03, head); const mouth = ball(M.mouth, 0, -.36, .62, .11, .1, .08, head);
   // a small smile under the nose for whenever the mouth is shut: two short arcs that meet in the middle, the way a rabbit's mouth is drawn
   const smile = grp(0, -.245, .735, head); for (const k of [-1, 1]) { const a = new T.Mesh(new T.TorusGeometry(.062, .011, 8, 18, Math.PI * .8), M.mouth); a.position.x = k * .06; a.rotation.z = Math.PI + Math.PI * .1; a.rotation.y = k * .35; smile.add(a); }
-  const eyes = [-1, 1].map(k => { const g = grp(k * .31, .1, .61, head); g.rotation.y = k * .3; ball(M.white, 0, 0, -.01, .16, .19, .08, g); ball(M.iris, 0, 0, .03, .12, .15, .07, g); ball(M.ink, 0, -.01, .07, .075, .1, .04, g); ball(M.white, .05, .07, .1, .045, .045, .03, g); ball(M.white, -.04, -.06, .1, .022, .022, .015, g); return g; });
+  const eyes = [-1, 1].map(k => { const g = grp(k * .31, .1, .61, head); g.rotation.y = k * .3; ball(M.dark, 0, 0, -.025, .178, .208, .075, g); ball(M.white, 0, 0, -.01, .16, .19, .08, g); ball(M.iris, 0, 0, .03, .12, .15, .07, g); ball(M.fur, 0, .2, .0, .17, .034, .085, g); ball(M.ink, 0, -.01, .07, .075, .1, .04, g); ball(M.white, .05, .07, .1, .045, .045, .03, g); ball(M.white, -.04, -.06, .1, .022, .022, .015, g); return g; });
   ball(M.blush, -.56, -.12, .4, .11, .07, .06, head); ball(M.blush, .56, -.12, .4, .11, .07, .06, head);
   for (const k of [-1, 1]) { ball(M.fur, k * .62, -.2, .22, .2, .17, .18, head); ball(M.cream, k * .18, -.46, .44, .14, .1, .12, head); }   // cheek fluff and a soft chin
-  for (const k of [-1, 1]) for (let i = -1; i <= 1; i++) ball(M.tip, k * .27 + i * .07, .27, .46, .035, .03, .035, fox);   // toe pads on the feet
-  const ears = [-1, 1].map(k => { const g = grp(k * .3, .5, -.02, head); ball(M.fur, 0, .54, 0, .16, .64, .1, g); ball(M.tip, 0, 1.13, 0, .172, .2, .112, g); ball(M.dark, 0, .56, .055, .094, .52, .06, g); ball(M.pink, 0, .58, .085, .06, .43, .04, g); g.rotation.z = -k * .1; return g; });
+  for (const k of [-1, 1]) for (let i = -1; i <= 1; i++) ball(M.tip, k * .22 + i * .06, .25, .46, .03, .027, .03, fox);   // toe pads on the feet
+  const ears = [-1, 1].map(k => { const g = grp(k * .3, .5, -.02, head); ball(M.cream, 0, .08, .06, .13, .1, .09, g); ball(M.fur, 0, .54, 0, .16, .64, .1, g); ball(M.tip, 0, 1.13, 0, .172, .2, .112, g); ball(M.dark, 0, .56, .055, .094, .52, .06, g); ball(M.pink, 0, .58, .085, .06, .43, .04, g); g.rotation.z = -k * .1; return g; });
   // 2026-11-05 İdris "havucu gerçekçi yap, hareketleri akıcı değil": a real carrot held in both paws with its root end at the mouth. The body is a lathe
   // with a tapering, slightly uneven profile, growth rings pressed into the skin, darker rings and root hairs, and a fan of feathery tops at the far end.
   // Eating no longer shrinks it: each bite slides it a little further into the mouth, a clipping plane cuts it there, and the cut face (bright rind,
