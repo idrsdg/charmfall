@@ -225,6 +225,12 @@
   const LASTCH = [0, 0, 0, 0];
   function house(B, w, d, h, o) { const f = .5, top = f + h, hr = o.hr, xe = w / 2 + .55, ze = d / 2 + .5, ye = top - hr * .55 / (w / 2), yr = top + hr + .04, wc = o.wall, rc = o.roof, dk = [rc[0] * .6, rc[1] * .6, rc[2] * .6], fx = -w / 2 - .04, dz = o.dz || 0, wy = f + h * .4, gc = o.cell === "wall" ? null : o.cell;
     if (o.stilt) { B.box(w + 1.8, .18, d + 1.8, 0, f - .1, 0, WOODC, "plank"); for (const a of [-1, 1]) for (const b of [-1, 1]) B.cyl(.17, o.stilt + 2, a * (w / 2 + .5), f - .2 - (o.stilt + 2) / 2, b * (d / 2 + .5), DARKW, 0, 6); } else B.box(w + .5, 3, d + .5, 0, f - 1.5, 0, STONEC, "stone"); B.box(w, h, d, 0, f + h / 2, 0, wc, o.cell, 0, .7);
+    // 2026-11-24 İdris: "her binayı 3D model et": corner posts, a stone plinth, a lintel over the door and sills and lintels round the windows, so a
+    // house reads as built, not as a box (a few boxes each, merged into the chunk's one mesh like everything else)
+    { const log = o.cell === "plank", cc = log ? DARKW : [wc[0] * .74, wc[1] * .74, wc[2] * .74]; for (const a of [-1, 1]) for (const b of [-1, 1]) B.box(.36, h, .36, a * w / 2, f + h / 2, b * d / 2, cc, log ? "plank" : "stone");
+      if (!o.stilt) B.box(w + .18, .5, d + .18, 0, f + .25, 0, [wc[0] * .62, wc[1] * .62, wc[2] * .62], "stone"); B.box(.3, .24, 1.7, fx - .1, f + 2.27, dz, DARKW);
+      for (const z of o.wins || [dz + (dz > 0 ? -1 : 1) * (d * .3 + .3)]) B.box(.24, .16, 2, fx - .08, wy + 1.38, z, cc);
+      for (const z of [-d * .25, d * .25]) { B.box(.26, .14, 2, -fx + .1, wy - .07, z, cc); B.box(.24, .16, 2, -fx + .08, wy + 1.38, z, cc); } }
     for (const s of [-1, 1]) { B.tri([-w / 2 * s, top, d / 2 * s], [w / 2 * s, top, d / 2 * s], [0, top + hr, d / 2 * s], wc, gc);
       B.quad([-xe * s, ye, -ze * s], [-xe * s, ye, ze * s], [0, yr, ze * s], [0, yr, -ze * s], rc, o.rcell || "roof"); B.quad([-xe * s, ye - .26, -ze], [-xe * s, ye - .26, ze], [-xe * s, ye, ze], [-xe * s, ye, -ze], dk);
       for (const t of [-1, 1]) B.quad([-xe * s, ye - .26, ze * t], [0, yr - .26, ze * t], [0, yr, ze * t], [-xe * s, ye, ze * t], dk);
@@ -241,7 +247,7 @@
     B.quad([-2.37, .1, .6], [-2.37, .1, -.6], [-2.13, 2.2, -.6], [-2.13, 2.2, .6], null, "door"); B.quad([-1.92, 4.2, .5], [-1.92, 4.2, -.5], [-1.82, 5.3, -.5], [-1.82, 5.3, .5], null, "glass"); B.cyl(.22, 1.2, -1.9, 6.6, 0, DARKW, 1, 8);
     for (let i = 0; i < 4; i++) { const an = .5 + i * Math.PI / 2, c = Math.cos(an), s = Math.sin(an), P2 = (r, t) => [-2.45, 6.6 + c * r - s * t, s * r + c * t]; B.quad(P2(.7, -.1), P2(.7, 1.2), P2(5.4, 1.2), P2(5.4, -.1), CREAM, "fence"); B.quad(P2(0, -.1), P2(0, .1), P2(5.5, .1), P2(5.5, -.1), DARKW); } return B; }
   // ---- what each kingdom builds. Lazy shared shapes first (three.js is not there when the tests load this file).
-  const gSp8 = () => gk("sp8", () => new T3.SphereGeometry(1, 14, 10)), gSp14 = () => gk("sp14", () => new T3.SphereGeometry(1, 14, 10)), gCone = () => gk("cone14", () => new T3.ConeGeometry(1, 1, 14)), gDome = () => gk("dome12", () => new T3.SphereGeometry(1, 12, 5, 0, TAU, 0, Math.PI / 2)), gOct = () => gk("oct", () => new T3.OctahedronGeometry(1, 0));
+  const gSp8 = () => gk("sp8", () => new T3.SphereGeometry(1, 14, 10)), gSp14 = () => gk("sp14", () => new T3.SphereGeometry(1, 14, 10)), gCone = () => gk("cone14", () => new T3.ConeGeometry(1, 1, 14)), gDome = () => gk("dome12", () => new T3.SphereGeometry(1, 22, 8, 0, TAU, 0, Math.PI / 2)), gOct = () => gk("oct", () => new T3.OctahedronGeometry(1, 0));
   const EMBER = [1.9, .75, .2], ICEC = hex("#dcecf8"), ICEB = [.7, .92, 1.15], IRONC = hex("#3a4048"), WARM = [1.4, 1.2, .7], GLOWC = [.5, 1.5, 1.4], PALMT = hex("#9a7a52"), REDC = hex("#c8402f"), GOLDC = hex("#e2ad3f"), STARC = [1.5, 1.2, .5];
   const HAS = { fence: [1, 0, 0, 0, 1, 0, 0, 1, 1, 1], mill: [.42, 0, 0, 0, .9, 0, 0, 0, 0, .3], field: [1, 0, 0, 0, 1, 0, 0, 1, 0, 1], reed: [1, 1, 0, 0, 1, 0, 0, 1, 1, 1], pad: [1, 0, 0, 0, 0, 0, 0, 1, 0, 1], pier: [1, 0, 0, 0, 0, 1, 0, 1, 1, 1], flower: [1, 1, 0, 0, 1, 0, 0, 1, 0, 1], bush: [1, 1, 0, 1, 1, 0, 0, 1, 1, 1] };
   const KIND = [["round", "pine"], ["palm"], ["dead"], ["pine"], ["round"], ["cactus"], ["gem"], ["pine", "round"], ["pine"], ["round"]], kindOf = (kc, k) => KIND[kc][k % KIND[kc].length];
@@ -260,7 +266,7 @@
     else if (kc === 7) { house(B, w, d, h, { hr: 2 + r1 * 1.2, wall, roof, cell: r2 < .4 ? "wall" : r2 < .6 ? "stone" : null, dz, porch: r1 > .35, chim: r2 > .2 }); B.cyl(.08, 2.8, fx - 1.9, 1.7, dz + 1.7, IRONC, 0, 6); B.add(gSp8(), fx - 1.9, 3.2, dz + 1.7, WARM, "lamp", 0, 0, 0, .36); }
     else if (kc === 8) house(B, w + .6, d, h * .85, { hr: 1.5 + r1 * .6, wall, roof, cell: "stone", dz, chim: true, plain: true });
     else if (kc === 9 && r1 < .45) { const r = 2.4 + r2 * .8, hh = 2.6 + r1 * 3; B.cyl(r, hh + 2, 0, hh / 2 - .5, 0, wall, 0, 14, "brick"); B.cyl(r + .14, .26, 0, hh + .55, 0, GOLDC, 0, 14); B.add(gDome(), 0, hh + .66, 0, roof, null, 0, r2 * 6, 0, r * .97, r * .97, r * .97);
-      B.add(gk("tube", () => new T3.CylinderGeometry(.8, 1, 1, 8)), 0, hh + .66 + r * .62, r * .52, GOLDC, null, .85, 0, 0, .36, 2.6, .36); B.quad([-r - .03, 0, .6], [-r - .03, 0, -.6], [-r - .03, 2.1, -.6], [-r - .03, 2.1, .6], null, "door"); }
+      B.add(gk("tube", () => new T3.CylinderGeometry(.8, 1, 1, 14)), 0, hh + .66 + r * .62, r * .52, GOLDC, null, .85, 0, 0, .36, 2.6, .36); B.quad([-r - .03, 0, .6], [-r - .03, 0, -.6], [-r - .03, 2.1, -.6], [-r - .03, 2.1, .6], null, "door"); }
     else house(B, w, d, h + (kc === 4 ? .3 : 0), { hr: (kc === 4 ? 2.6 : 2.1) + r1 * 1.2, wall, roof, cell: kc === 0 ? "plank" : r2 < .5 ? "wall" : null, dz, porch: r1 > .35, chim: r2 > .2 }); }
   // the gate into kingdom kb, across the rails between the last stop of the kingdom before it and its own first: two towers and an arch in the new
   // kingdom's stone, with its banner and its own tops (pointed roofs, domes, great crystals, bowls of fire, lamps)
